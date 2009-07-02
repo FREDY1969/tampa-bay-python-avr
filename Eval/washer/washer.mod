@@ -1,5 +1,30 @@
 # washer.cpl
 
+output-pin
+    pin-number
+    on-is               high/low
+
+input-pint
+    pin-number
+    use-pullup          True/False
+    on-is               high/low
+
+translate
+    input (repeat)
+        output
+
+pwm
+    type                fast/phase-correct
+    pin-number
+    on-is               high/low
+    freq
+
+multi-position-switch
+    use-pullups         True/False
+    selected-pin-is     high/low
+    pin-number (repeat)
+        value
+
 translate 1 wash_temp: hot
 translate 2 wash_temp: hot
 translate 3 wash_temp: warm
