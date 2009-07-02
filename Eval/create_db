@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# create_db directory
+
+set -e
+
+usage() {
+    echo "usage: create_db directory" >&2
+    exit 2
+}
+
+[ $# -eq 1 ] || usage
+
+directory="$1"
+
+if [ ! -d "$directory" ]
+then
+    mkdir "$directory"
+fi
+
+database="$directory/python-avr.db"
+
+rm -f "$database"
+
+sqlite3 "$database" < schema.ddl
+
+sqlite3 "$database" < init.sql

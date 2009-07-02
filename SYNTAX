@@ -1,0 +1,43 @@
+Singleton words:
+    literals
+    functions with max arguments == 0 (which includes constants and variables)
+
+foo a b + c is taken as: foo a (b + c), rather than (foo a b) + c
+
+So operators only act on singletons.
+
+Note:
+    - don't need (x) without operator before or after
+    - (a b) not normally legal as expr
+
+Functions can be turned into singletons by enclosing them in parens:
+
+(foo a b) + c
+
+Or enclosing their argument lists:
+
+foo(a b) + c            # No! (see next issue)
+
+But, then, what is:
+
+foo (a + b) * c ??      # This must be: foo ((a + b) * c)
+                        # Unless written without a space between foo and '('?
+
+If foo and bar both take 2 or 3 arguments, what is:
+
+foo a bar b c d         # foo a (bar b c) d or foo a (bar b c d)?
+
+The latter seems right.
+
+Can indenting indicate the end of intermediate parameter lists (where the
+NEWLINE (NL) is not preceeded by a ':')?
+
+fun1 fun2 a b           # NL is end of fun2 parameters
+     fun3 c d e f       # NL is end of fun3 and fun1 parameters
+
+fun1 fun2 fun3 a b c    # NL is end of fun3 parameters
+          d e f         # NL is end of fun2 parameters
+     g h i              # NL doesn't end parameters (indent level unchanged)
+     j k l m            # NL is end of fun1 parameters
+
+Indenting after ':' has to be 4 spaces (no tabs)

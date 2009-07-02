@@ -1,0 +1,8 @@
+syntax: glob
+
+.pyhist
+.*.swp
+*.pyc
+*.pyo
+*.db
+*~

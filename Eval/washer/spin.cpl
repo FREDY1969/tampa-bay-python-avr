@@ -1,0 +1,14 @@
+with drain open:
+    with clutch-on neutral:
+        with motor-on medium:
+            wait until water-level is empty
+        wait 3 sec  # for motor to stop
+    with clutch-on spin:
+        with motor-on medium:
+            wait 10 sec
+        with motor-on high:
+            wait how-long - 10 sec
+        wait 5 sec  # for motor to stop
+
+
+
