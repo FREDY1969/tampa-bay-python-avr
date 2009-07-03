@@ -1,0 +1,13 @@
+- Figure out how to dump/merge/restore db.
+- Figure out how to upgrade db schema.
+B Separate the GUI code from the app code to make it easier to switch GUIs.
+B Create separate question table in db.
+- Assembler
+- Base words
+- Pins
+- Interfacing with avrdude
+- Figure out which GUI package to use for keeps.
+- Add packages.
+
+
+B means "Background task"
