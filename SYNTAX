@@ -40,4 +40,4 @@ fun1 fun2 fun3 a b c    # NL is end of fun3 parameters
      g h i              # NL doesn't end parameters (indent level unchanged)
      j k l m            # NL is end of fun1 parameters
 
-Indenting after ':' has to be 4 spaces (no tabs)
+Indenting after ':' has to be 4 spaces
