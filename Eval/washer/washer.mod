@@ -4,7 +4,7 @@ output-pin
     pin-number
     on-is               high/low
 
-input-pint
+input-pin
     pin-number
     use-pullup          True/False
     on-is               high/low
