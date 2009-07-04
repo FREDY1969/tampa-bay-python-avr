@@ -142,3 +142,171 @@ defining_word	1
 
 fixed_data	0
 
+----------------
+
+id	18
+
+name	u'drain'
+
+kind	13
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	19
+
+name	u'open'
+
+kind	2
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	20
+
+name	u'HIGH'
+
+kind	2
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	21
+
+name	u'LOW'
+
+kind	2
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	22
+
+name	u'cold-water'
+
+kind	13
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	23
+
+name	u'hot-water'
+
+kind	13
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	24
+
+name	u'I/O-register'
+
+kind	1
+
+defining_word	1
+
+fixed_data	0
+
+----------------
+
+id	25
+
+name	u'ATmega328-port'
+
+kind	1
+
+defining_word	1
+
+fixed_data	0
+
+----------------
+
+id	26
+
+name	u'Port-B'
+
+kind	25
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	27
+
+name	u'Port-C'
+
+kind	25
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	28
+
+name	u'Port-D'
+
+kind	25
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	29
+
+name	u'Arduino-pin-Port'
+
+kind	15
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	30
+
+name	u'Arduino-pin-bit#'
+
+kind	15
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	31
+
+name	u'temp-switch'
+
+kind	17
+
+defining_word	0
+
+fixed_data	0
+
