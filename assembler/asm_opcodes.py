@@ -7,7 +7,7 @@ ADD = inst1('ADD', '0000 11rd dddd rrrr', 1)
 ADC = inst1('ADC', '0001 11rd dddd rrrr', 1)
 ADIW = inst1('ADIW', '1001 0110 KKdd KKKK', 2)
 SUB = inst1('SUB', '0001 10rd dddd rrrr', 1)
-SUBI = inst1('SUBI', '0101 0000 dddd 00KK', 1, d=(16,31))
+SUBI = inst1('SUBI', '0101 KKKK dddd KKKK', 1, d=(16,31))
 SBC = inst1('SBC', '0000 10rd dddd rrrr', 1)
 SBCI = inst1('SBCI', '0100 KKKK dddd KKKK', 1, d=(16,31))
 SBIW = inst1('SBIW', '1001 0111 KKdd KKKK', 2, d=(24,30))
@@ -103,19 +103,19 @@ CLH = inst1('CLH', '1001 0100 1101 1000', 1)
 # Data transfer instructions
 MOV = inst1('MOV', '0010 11rd dddd rrrr', 1)
 MOVW = inst1('MOVW', '0000 0001 dddd rrrr', 1, d=(0,30), r=(0,30))
-LDI = inst1('LDI', '1110 0000 dddd 00KK', 1, d=(16,31))
+LDI = inst1('LDI', '1110 KKKK dddd KKKK', 1, d=(16,31))
 LD = inst1('LD', '1001 000d dddd xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
                                            # pp=00 no inc/dec
                                            #    01 post inc
                                            #    10 pre dec
 LDD = inst1('LDD', '10q0 qq0d dddd yqqq', 2) # y=1 for Y, 0 for Z
-LDS = inst2('LDS', '1001 000d dddd 0000 0000 0000 0000 kkkk', 2)
+LDS = inst2('LDS', '1001 000d dddd 0000 kkkk kkkk kkkk kkkk', 2)
 ST = inst1('ST', '1001 001r rrrr xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
                                            # pp=00 no inc/dec
                                            #    01 post inc
                                            #    10 pre dec
 STD = inst1('STD', '10q0 qq1r rrrr yqqq', 2) # y=1 for Y, 0 for Z
-STS = inst2('STS', '1001 001r rrrr 0000 0000 0000 0000 kkkk', 2)
+STS = inst2('STS', '1001 001r rrrr 0000 kkkk kkkk kkkk kkkk', 2)
 #LPM = inst1('LPM', '1001 0101 1100 1000', 3) # R0 implied
 LPM = inst1('LPM', '1001 000d dddd 010p', 3) # pp=00 no inc/dec
                                              #    01 post inc

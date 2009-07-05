@@ -57,12 +57,12 @@ inst1('INC',	'1001 010d dddd 0011', 1)
 inst1('IN',	'1011 0AAd dddd AAAA', 1)
 inst2('JMP',	'1001 010k kkkk 110k kkkk kkkk kkkk kkkk', 3)
 inst1('LDD',	'10q0 qq0d dddd yqqq', 2) # y=1 for Y, 0 for Z
-inst1('LDI',	'1110 0000 dddd 00KK', 1, d=(16,31))
+inst1('LDI',	'1110 KKKK dddd KKKK', 1, d=(16,31))
 inst1('LD',	'1001 000d dddd xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
                                           # pp=00 no inc/dec
                                           #    01 post inc
                                           #    10 pre dec
-inst2('LDS',	'1001 000d dddd 0000 0000 0000 0000 kkkk', 2)
+inst2('LDS',	'1001 000d dddd 0000 kkkk kkkk kkkk kkkk', 2)
 inst1('LPM',	'1001 000d dddd 010p', 3) # pp=00 no inc/dec
                                           #    01 post inc
 inst1('LSL',	'0000 11Dd dddd DDDD', 1, D='d')
@@ -110,8 +110,8 @@ inst1('ST',	'1001 001r rrrr xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
                                           # pp=00 no inc/dec
                                           #    01 post inc
                                           #    10 pre dec
-inst2('STS',	'1001 001r rrrr 0000 0000 0000 0000 kkkk', 2)
-inst1('SUBI',	'0101 0000 dddd 00KK', 1, d=(16,31))
+inst2('STS',	'1001 001r rrrr 0000 kkkk kkkk kkkk kkkk', 2)
+inst1('SUBI',	'0101 KKKK dddd KKKK', 1, d=(16,31))
 inst1('SUB',	'0001 10rd dddd rrrr', 1)
 inst1('SWAP',	'1001 010d dddd 0010', 1)
 inst1('TST',	'0010 00Dd dddd DDDD', 1, D='d')

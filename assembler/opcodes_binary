@@ -22,12 +22,12 @@ inst1('OR',	'0010 10rd dddd rrrr', 1)
 inst1('MOV',	'0010 11rd dddd rrrr', 1)
 inst1('CPI',	'0011 KKKK dddd KKKK', 1, d=(16,31))
 inst1('SBCI',	'0100 KKKK dddd KKKK', 1, d=(16,31))
-inst1('SUBI',	'0101 0000 dddd 00KK', 1, d=(16,31))
+inst1('SUBI',	'0101 KKKK dddd KKKK', 1, d=(16,31))
 inst1('ORI',	'0110 KKKK dddd KKKK', 1, d=(16,31))
 inst1('SBR',	'0110 KKKK dddd KKKK', 1, d=(16,31))
 inst1('ANDI',	'0111 KKKK dddd KKKK', 1, d=(16,31))
 inst1('CBR',	'0111 KKKK dddd KKKK', 1, d=(16,31), K='~')
-inst2('LDS',	'1001 000d dddd 0000 0000 0000 0000 kkkk', 2)
+inst2('LDS',	'1001 000d dddd 0000 kkkk kkkk kkkk kkkk', 2)
 inst1('LPM',	'1001 000d dddd 010p', 3) # pp=00 no inc/dec
                                           #    01 post inc
 inst1('POP',	'1001 000d dddd 1111', 2)
@@ -36,7 +36,7 @@ inst1('LD',	'1001 000d dddd xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
                                           #    01 post inc
                                           #    10 pre dec
 inst1('PUSH',	'1001 001d dddd 1111', 2)
-inst2('STS',	'1001 001r rrrr 0000 0000 0000 0000 kkkk', 2)
+inst2('STS',	'1001 001r rrrr 0000 kkkk kkkk kkkk kkkk', 2)
 inst1('ST',	'1001 001r rrrr xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
                                           # pp=00 no inc/dec
                                           #    01 post inc
@@ -90,7 +90,7 @@ inst1('LDD',	'10q0 qq0d dddd yqqq', 2) # y=1 for Y, 0 for Z
 inst1('STD',	'10q0 qq1r rrrr yqqq', 2) # y=1 for Y, 0 for Z
 inst1('RJMP',	'1100 kkkk kkkk kkkk', 2, k=(-2048,2047))
 inst1('RCALL',	'1101 kkkk kkkk kkkk', 3, k=(-2048,2047))
-inst1('LDI',	'1110 0000 dddd 00KK', 1, d=(16,31))
+inst1('LDI',	'1110 KKKK dddd KKKK', 1, d=(16,31))
 inst1('SER',	'1110 1111 dddd 1111', 1, d=(16,31))
 inst1('BRCS',	'1111 00kk kkkk k000', (1, 2), k=(-64,63))
 inst1('BRLO',	'1111 00kk kkkk k000', (1, 2), k=(-64,63))
