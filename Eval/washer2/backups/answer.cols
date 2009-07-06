@@ -2222,3 +2222,19 @@ answer	u'5'
 
 fixed_data	0
 
+----------------
+
+id	165
+
+question_id	4
+
+parent	None
+
+position	2
+
+word_id	32
+
+answer	u'asm'
+
+fixed_data	0
+

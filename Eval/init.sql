@@ -2,7 +2,7 @@
 
 -- words:
 insert into word (id, name, kind, defining_word)
-values (1, 'compiler', 1, 1);
+values (1, 'declaration', 1, 1);
 
 insert into word (id, name, kind, defining_word)
 values (2, 'const', 1, 1);
@@ -11,7 +11,7 @@ insert into word (id, name, kind, defining_word)
 values (3, 'var', 1, 1);
 
 insert into word (id, name, kind, defining_word)
-values (4, 'to', 1, 1);
+values (4, 'function', 1, 1);
 
 insert into word (id, name, kind, defining_word)
 values (5, 'task', 1, 1);
@@ -40,7 +40,7 @@ values (5, 'task', 1, 1);
 -- 5||4:filename suffix|1|      17|cpl
 
 
--- for 'compiler':
+-- for 'declaration':
 
 -- answers to: 'question':
 
@@ -84,7 +84,7 @@ values (5, 'task', 1, 1);
 
     -- 'filename suffix':
     insert into answer (id, question_id, word_id, answer)
-    values (9, 4, 1, '');
+    values (9, 4, 1, 'py');
 
 
 -- for 'const':
@@ -105,7 +105,7 @@ insert into answer (id, question_id, word_id, answer)
 values (15, 4, 3, '');                  -- 'filename suffix'
 
 
--- for 'to':
+-- for 'function':
 insert into answer (id, question_id, word_id, answer)
 values (16, 1, 4, 'argument');          -- 'question'
     insert into answer (id, question_id, parent, word_id, answer)
