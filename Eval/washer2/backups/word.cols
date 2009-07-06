@@ -310,3 +310,51 @@ defining_word	0
 
 fixed_data	0
 
+----------------
+
+id	32
+
+name	u'assembler-word'
+
+kind	1
+
+defining_word	1
+
+fixed_data	0
+
+----------------
+
+id	33
+
+name	u'do-const'
+
+kind	32
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	34
+
+name	u'next'
+
+kind	32
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	35
+
+name	u'do-var'
+
+kind	32
+
+defining_word	0
+
+fixed_data	0
+
