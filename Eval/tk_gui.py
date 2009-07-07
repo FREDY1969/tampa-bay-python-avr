@@ -34,14 +34,14 @@ class App(object):
                                     hull_width=1200,
                                     hull_height=900)
         vert_pane.pack(expand=1, fill='both')
-        vert_pane.add('list', min=200)
+        vert_pane.add('word-list', min=200)
         db_cur.execute("select name, id from word order by name")
         self.words = dict(db_cur)
         self.words_by_id = dict(zip(self.words.itervalues(),
                                     self.words.iterkeys()))
         word_list = sorted(self.words.keys())
         if debug: print "word_list:", word_list
-        self.word_list = Pmw.ScrolledListBox(vert_pane.pane('list'),
+        self.word_list = Pmw.ScrolledListBox(vert_pane.pane('word-list'),
                                              items=word_list,
                                              labelpos='nw',
                                              label_text="Words",
@@ -54,18 +54,18 @@ class App(object):
         horz_pane = Pmw.PanedWidget(vert_pane.pane('word-view'),
                                     orient='vertical')
         horz_pane.pack(expand=1, fill='both')
-        horz_pane.add('top', min=320)
-        self.top_pane = Pmw.ScrolledFrame(horz_pane.pane('top'),
-                                          horizflex='elastic',
-                                          hscrollmode='none',
-                                          labelpos='n',
-                                          vertflex='expand',
-                                          vertfraction=0.15,
-                                          usehullsize=1)
-        self.top_pane.pack(expand=1, fill='both')
+        horz_pane.add('questions', min=320)
+        self.question_pane = Pmw.ScrolledFrame(horz_pane.pane('questions'),
+                                               horizflex='elastic',
+                                               hscrollmode='none',
+                                               labelpos='n',
+                                               vertflex='expand',
+                                               vertfraction=0.15,
+                                               usehullsize=1)
+        self.question_pane.pack(expand=1, fill='both')
 
-        horz_pane.add('bottom')
-        self.word_body = Pmw.ScrolledText(horz_pane.pane('bottom'),
+        horz_pane.add('file-text')
+        self.word_body = Pmw.ScrolledText(horz_pane.pane('file-text'),
                                           usehullsize=1)
         self.word_body.pack(expand=1, fill='both')
 
@@ -103,7 +103,7 @@ class App(object):
 
 class new_word(object):
     def __init__(self, parent, **kws):
-        self.top = Toplevel(parent, height=200, takefocus=True, width=200)
+        self.top = Toplevel(parent, height=200, takefocus=True, width=250)
         self.top.title("New Word")
         self.top.transient(app.root)
 
@@ -115,14 +115,14 @@ class new_word(object):
 
         self.kind = Pmw.ComboBox(frame, labelpos='w', label_text="Kind of Word",
                                  scrolledlist_items=sorted(self.kinds.keys()))
-        self.kind.grid(row=1, column=1, columnspan=2)
+        self.kind.grid(row=1, column=1, columnspan=2, padx=5, pady=5)
 
-        Label(frame, anchor='w', text="Name").grid(row=2, column=1)
+        Label(frame, anchor='w', text="Name").grid(row=2, column=1, pady=5)
         self.name = Entry(frame)
-        self.name.grid(row=2, column=2, sticky=E+W)
+        self.name.grid(row=2, column=2, sticky=E+W, padx=5)
 
         Button(self.top, anchor=CENTER, text="Ok", command=self.ok) \
-          .grid(row=2, column=1)
+          .grid(row=2, column=1, pady=5)
         Button(self.top, anchor=CENTER, text="Apply", command=self.apply) \
           .grid(row=2, column=2)
         Button(self.top, anchor=CENTER, text="Cancel", command=self.cancel) \
@@ -200,12 +200,15 @@ class word(object):
         return ans
 
     def display(self):
-        app.top_pane.configure(label_text="%s %s" % (self.kind_name, self.name))
-        for w in app.top_pane.interior().grid_slaves():
+        app.question_pane.configure(label_text="%s %s %s" %
+                                                 (self.kind_name,
+                                                  self.name,
+                                                  self.id))
+        for w in app.question_pane.interior().grid_slaves():
             if debug > 2: print "word.display: destroying", w
             w.destroy()
         answer.display_list(self.answers)
-        app.top_pane.reposition()
+        app.question_pane.reposition()
         if self.filename:
             app.word_body.setvalue(self.file_contents)
         else:
@@ -257,11 +260,11 @@ class placeholder(object):
         return "<placeholder %s.%s>" % (self.the_word.name, self.question_text)
 
     def display(self, indent, row, next):
-        frame = app.top_pane.interior()
+        frame = app.question_pane.interior()
         Button(frame, anchor=W,
                text=' ' * (indent - 1) + "Add " + self.question_text,
                padx=3, pady=0, command=self.add) \
-          .grid(row=row, column=2, sticky=E+W)
+          .grid(row=row, column=2, sticky=W)
         return row + 1
 
     def add(self):
@@ -380,7 +383,9 @@ class answer(placeholder):
         return row
 
     def display(self, indent, row, next):
-        frame = app.top_pane.interior()
+        frame = app.question_pane.interior()
+        #frame.columnconfigure(2, weight=2)
+        frame.columnconfigure(4, weight=5)
         if self.repeatable:
             Button(frame, anchor=CENTER, text="Del", padx=3, pady=0,
                    command=self.delete) \
@@ -391,7 +396,7 @@ class answer(placeholder):
                   .grid(row=row, column=3, sticky=E+W)
         Label(frame, text=' ' * indent + self.question_text, anchor=W) \
           .grid(row=row, column=2, sticky=E+W)
-        self.entry = Entry(frame)
+        self.entry = Entry(frame, width=40)
         self.entry.insert(END, self.text)
         self.entry.grid(row=row, column=4, sticky=E+W)
         self.entry.bind("<FocusOut>", self.check_entry)
@@ -403,7 +408,7 @@ class answer(placeholder):
             Button(frame, anchor=W,
                    text=' ' * (indent - 1) + "Add " + self.question_text,
                    padx=3, pady=0, command=self.add) \
-              .grid(row=row, column=2, sticky=E+W)
+              .grid(row=row, column=2, sticky=W)
             return row + 1
         return row
 

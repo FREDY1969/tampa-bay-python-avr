@@ -2262,7 +2262,7 @@ question_id	1
 
 parent	None
 
-position	1
+position	2
 
 word_id	36
 
@@ -2331,6 +2331,54 @@ position	3
 word_id	40
 
 answer	u'false-branch'
+
+fixed_data	0
+
+----------------
+
+id	172
+
+question_id	1
+
+parent	None
+
+position	1
+
+word_id	36
+
+answer	u'syntax'
+
+fixed_data	0
+
+----------------
+
+id	173
+
+question_id	3
+
+parent	172
+
+position	1
+
+word_id	36
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	174
+
+question_id	172
+
+parent	None
+
+position	1
+
+word_id	40
+
+answer	u'if condition series [else series]'
 
 fixed_data	0
 
