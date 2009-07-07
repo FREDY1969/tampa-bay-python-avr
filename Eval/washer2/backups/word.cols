@@ -218,7 +218,7 @@ fixed_data	0
 
 id	24
 
-name	u'I/O-register'
+name	u'IO-register'
 
 kind	1
 
@@ -353,6 +353,66 @@ id	35
 name	u'do-var'
 
 kind	32
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	36
+
+name	u'macro'
+
+kind	1
+
+defining_word	1
+
+fixed_data	0
+
+----------------
+
+id	37
+
+name	u'jmp'
+
+kind	32
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	38
+
+name	u'jmp-true'
+
+kind	32
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	39
+
+name	u'jmp-false'
+
+kind	32
+
+defining_word	0
+
+fixed_data	0
+
+----------------
+
+id	40
+
+name	u'if'
+
+kind	36
 
 defining_word	0
 
