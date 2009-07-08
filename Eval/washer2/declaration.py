@@ -31,7 +31,7 @@ class declaration(object):
                              and question.word_id = ?
                            order by answer.parent, question.position,
                                     answer.position
-                       """, ())
+                       """, (repeatable_qid, self.id, self.kind))
 
         ans = {}
         ans_index = {}  # {id: children_dict}
@@ -47,4 +47,5 @@ class declaration(object):
             else:
                 where[question] = [answer, children_dict]
         return ans
+
 
