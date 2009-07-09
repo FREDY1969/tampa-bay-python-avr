@@ -103,7 +103,7 @@ def load_file(cols_file, db_cur):
         f_iter = iter(f)
         for line in f_iter:
             if line.startswith('-----'):
-                assert next(f_iter).strip() == '', \
+                 assert f_iter.next().strip() == '', \
                        'expected blank link after ----- record delimiter'
             row = {}
             ncols = 0
@@ -112,7 +112,7 @@ def load_file(cols_file, db_cur):
                 print "col_info:", col_info
                 assert len(col_info) == 2, \
                        "expected: 'col_name\tvalue\n'; got: " + line
-                assert next(f_iter).strip() == '', \
+                 assert f_iter.next().strip() == '', \
                        'expected blank link after column ' + col_info[0]
                 row[col_info[0]] = eval(col_info[1])
                 ncols += 1
