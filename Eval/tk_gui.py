@@ -11,6 +11,7 @@ import functools
 import subprocess
 
 from Tkinter import *
+import tkFont
 import Pmw
 import sqlite3 as db
 
@@ -35,16 +36,20 @@ class App(object):
                                     hull_height=900)
         vert_pane.pack(expand=1, fill='both')
         vert_pane.add('word-list', min=200)
-        db_cur.execute("select name, id from word order by name")
+        db_cur.execute("select name, id from word")
         self.words = dict(db_cur)
         self.words_by_id = dict(zip(self.words.itervalues(),
                                     self.words.iterkeys()))
-        word_list = sorted(self.words.keys())
+        word_list = sorted(self.words.keys(), key=lambda x: x.lower())
         if debug: print "word_list:", word_list
         self.word_list = Pmw.ScrolledListBox(vert_pane.pane('word-list'),
                                              items=word_list,
                                              labelpos='nw',
                                              label_text="Words",
+                                             label_font=
+                                               tkFont.Font(size=14,
+                                                           weight='bold'),
+                                             label_pady=5,
                                              selectioncommand=self.select_word,
                                              usehullsize=1)
         self.word_list.pack(expand=1, fill='both')
@@ -74,7 +79,8 @@ class App(object):
 
     def add_word(self, name, id):
         assert name not in self.words, "Duplicate word name: " + name
-        self.word_list.setlist(sorted((name,) + self.word_list.get()))
+        self.word_list.setlist(sorted((name,) + self.word_list.get(),
+                                      key=lambda x: x.lower()))
         self.words[name] = id
         self.word_list.setvalue(name)
 
@@ -200,10 +206,13 @@ class word(object):
         return ans
 
     def display(self):
-        app.question_pane.configure(label_text="%s %s %s" %
+        app.question_pane.configure(label_text="%s: %s [%s]" %
                                                  (self.kind_name,
                                                   self.name,
-                                                  self.id))
+                                                  self.id),
+                                    label_font=
+                                      tkFont.Font(size=14, weight='bold'),
+                                    label_pady=5)
         for w in app.question_pane.interior().grid_slaves():
             if debug > 2: print "word.display: destroying", w
             w.destroy()
