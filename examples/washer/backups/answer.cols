@@ -1,257 +1,5 @@
 ----------------
 
-id	1
-
-question_id	1
-
-parent	None
-
-position	1
-
-word_id	1
-
-answer	u'question'
-
-----------------
-
-id	2
-
-question_id	2
-
-parent	1
-
-position	2
-
-word_id	1
-
-answer	u'1'
-
-----------------
-
-id	3
-
-question_id	2
-
-parent	1
-
-position	1
-
-word_id	1
-
-answer	u'repeatable'
-
-----------------
-
-id	4
-
-question_id	1
-
-parent	None
-
-position	2
-
-word_id	1
-
-answer	u'filename suffix'
-
-----------------
-
-id	5
-
-question_id	3
-
-parent	1
-
-position	1
-
-word_id	1
-
-answer	u'True'
-
-----------------
-
-id	6
-
-question_id	3
-
-parent	3
-
-position	1
-
-word_id	1
-
-answer	u'False'
-
-----------------
-
-id	8
-
-question_id	3
-
-parent	4
-
-position	1
-
-word_id	1
-
-answer	u'False'
-
-----------------
-
-id	9
-
-question_id	4
-
-parent	None
-
-position	1
-
-word_id	1
-
-answer	u''
-
-----------------
-
-id	10
-
-question_id	1
-
-parent	None
-
-position	1
-
-word_id	2
-
-answer	u'value'
-
-----------------
-
-id	11
-
-question_id	3
-
-parent	10
-
-position	1
-
-word_id	2
-
-answer	u'False'
-
-----------------
-
-id	12
-
-question_id	4
-
-parent	None
-
-position	1
-
-word_id	2
-
-answer	u''
-
-----------------
-
-id	13
-
-question_id	1
-
-parent	None
-
-position	1
-
-word_id	3
-
-answer	u'initial value'
-
-----------------
-
-id	14
-
-question_id	3
-
-parent	13
-
-position	1
-
-word_id	3
-
-answer	u'False'
-
-----------------
-
-id	15
-
-question_id	4
-
-parent	None
-
-position	1
-
-word_id	3
-
-answer	u''
-
-----------------
-
-id	16
-
-question_id	4
-
-parent	None
-
-position	1
-
-word_id	4
-
-answer	u'cpl'
-
-----------------
-
-id	17
-
-question_id	4
-
-parent	None
-
-position	1
-
-word_id	5
-
-answer	u'cpl'
-
-----------------
-
-id	18
-
-question_id	1
-
-parent	None
-
-position	1
-
-word_id	5
-
-answer	u'argument'
-
-----------------
-
-id	19
-
-question_id	3
-
-parent	18
-
-position	1
-
-word_id	5
-
-answer	u'True'
-
-----------------
-
 id	20
 
 question_id	18
@@ -263,6 +11,8 @@ position	1
 word_id	9
 
 answer	u'how-long'
+
+fixed_data	0
 
 ----------------
 
@@ -278,6 +28,8 @@ word_id	10
 
 answer	u'how-long'
 
+fixed_data	0
+
 ----------------
 
 id	22
@@ -291,6 +43,8 @@ position	1
 word_id	8
 
 answer	u'how-long'
+
+fixed_data	0
 
 ----------------
 
@@ -306,33 +60,7 @@ word_id	7
 
 answer	u'temp-label'
 
-----------------
-
-id	24
-
-question_id	1
-
-parent	None
-
-position	1
-
-word_id	4
-
-answer	u'argument'
-
-----------------
-
-id	25
-
-question_id	3
-
-parent	24
-
-position	1
-
-word_id	4
-
-answer	u'True'
+fixed_data	0
 
 ----------------
 
@@ -348,6 +76,8 @@ word_id	11
 
 answer	u'cpl'
 
+fixed_data	0
+
 ----------------
 
 id	27
@@ -361,6 +91,8 @@ position	1
 word_id	11
 
 answer	u'argument'
+
+fixed_data	0
 
 ----------------
 
@@ -376,6 +108,8 @@ word_id	11
 
 answer	u'True'
 
+fixed_data	0
+
 ----------------
 
 id	29
@@ -389,4 +123,2262 @@ position	1
 word_id	12
 
 answer	u'temp'
+
+fixed_data	0
+
+----------------
+
+id	30
+
+question_id	4
+
+parent	None
+
+position	2
+
+word_id	13
+
+answer	None
+
+fixed_data	0
+
+----------------
+
+id	31
+
+question_id	4
+
+parent	None
+
+position	2
+
+word_id	14
+
+answer	None
+
+fixed_data	0
+
+----------------
+
+id	32
+
+question_id	4
+
+parent	None
+
+position	2
+
+word_id	15
+
+answer	None
+
+fixed_data	0
+
+----------------
+
+id	33
+
+question_id	4
+
+parent	None
+
+position	2
+
+word_id	16
+
+answer	None
+
+fixed_data	0
+
+----------------
+
+id	34
+
+question_id	4
+
+parent	None
+
+position	2
+
+word_id	17
+
+answer	None
+
+fixed_data	0
+
+----------------
+
+id	35
+
+question_id	1
+
+parent	None
+
+position	1
+
+word_id	13
+
+answer	u'pin-number'
+
+fixed_data	0
+
+----------------
+
+id	36
+
+question_id	3
+
+parent	35
+
+position	1
+
+word_id	13
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	37
+
+question_id	1
+
+parent	None
+
+position	2
+
+word_id	13
+
+answer	u'on-is'
+
+fixed_data	0
+
+----------------
+
+id	38
+
+question_id	3
+
+parent	37
+
+position	1
+
+word_id	13
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	43
+
+question_id	1
+
+parent	None
+
+position	1
+
+word_id	17
+
+answer	u'use-pullups?'
+
+fixed_data	0
+
+----------------
+
+id	44
+
+question_id	3
+
+parent	43
+
+position	1
+
+word_id	17
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	45
+
+question_id	1
+
+parent	None
+
+position	2
+
+word_id	17
+
+answer	u'selected-pin-is'
+
+fixed_data	0
+
+----------------
+
+id	46
+
+question_id	3
+
+parent	45
+
+position	1
+
+word_id	17
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	47
+
+question_id	1
+
+parent	None
+
+position	3
+
+word_id	17
+
+answer	u'pin-number'
+
+fixed_data	0
+
+----------------
+
+id	48
+
+question_id	3
+
+parent	47
+
+position	1
+
+word_id	17
+
+answer	u'True'
+
+fixed_data	0
+
+----------------
+
+id	49
+
+question_id	2
+
+parent	47
+
+position	1
+
+word_id	17
+
+answer	u'value'
+
+fixed_data	0
+
+----------------
+
+id	50
+
+question_id	3
+
+parent	49
+
+position	1
+
+word_id	17
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	51
+
+question_id	1
+
+parent	None
+
+position	1
+
+word_id	14
+
+answer	u'pin-number'
+
+fixed_data	0
+
+----------------
+
+id	52
+
+question_id	3
+
+parent	51
+
+position	1
+
+word_id	14
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	53
+
+question_id	1
+
+parent	None
+
+position	2
+
+word_id	14
+
+answer	u'use-pullup?'
+
+fixed_data	0
+
+----------------
+
+id	54
+
+question_id	3
+
+parent	53
+
+position	1
+
+word_id	14
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	55
+
+question_id	1
+
+parent	None
+
+position	3
+
+word_id	14
+
+answer	u'on-is'
+
+fixed_data	0
+
+----------------
+
+id	56
+
+question_id	3
+
+parent	55
+
+position	1
+
+word_id	14
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	57
+
+question_id	1
+
+parent	None
+
+position	1
+
+word_id	16
+
+answer	u'type'
+
+fixed_data	0
+
+----------------
+
+id	58
+
+question_id	3
+
+parent	57
+
+position	1
+
+word_id	16
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	59
+
+question_id	1
+
+parent	None
+
+position	2
+
+word_id	16
+
+answer	u'pin-number'
+
+fixed_data	0
+
+----------------
+
+id	60
+
+question_id	3
+
+parent	59
+
+position	1
+
+word_id	16
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	61
+
+question_id	1
+
+parent	None
+
+position	3
+
+word_id	16
+
+answer	u'on-is'
+
+fixed_data	0
+
+----------------
+
+id	62
+
+question_id	3
+
+parent	61
+
+position	1
+
+word_id	16
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	63
+
+question_id	1
+
+parent	None
+
+position	4
+
+word_id	16
+
+answer	u'freq'
+
+fixed_data	0
+
+----------------
+
+id	64
+
+question_id	3
+
+parent	63
+
+position	1
+
+word_id	16
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	65
+
+question_id	1
+
+parent	None
+
+position	1
+
+word_id	15
+
+answer	u'input'
+
+fixed_data	0
+
+----------------
+
+id	66
+
+question_id	3
+
+parent	65
+
+position	1
+
+word_id	15
+
+answer	u'True'
+
+fixed_data	0
+
+----------------
+
+id	67
+
+question_id	2
+
+parent	65
+
+position	1
+
+word_id	15
+
+answer	u'output'
+
+fixed_data	0
+
+----------------
+
+id	68
+
+question_id	3
+
+parent	67
+
+position	1
+
+word_id	15
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	69
+
+question_id	35
+
+parent	None
+
+position	1
+
+word_id	18
+
+answer	u'4'
+
+fixed_data	0
+
+----------------
+
+id	70
+
+question_id	37
+
+parent	None
+
+position	2
+
+word_id	18
+
+answer	u'HIGH'
+
+fixed_data	0
+
+----------------
+
+id	71
+
+question_id	10
+
+parent	None
+
+position	1
+
+word_id	19
+
+answer	u'HIGH'
+
+fixed_data	0
+
+----------------
+
+id	72
+
+question_id	10
+
+parent	None
+
+position	1
+
+word_id	20
+
+answer	u'1'
+
+fixed_data	0
+
+----------------
+
+id	73
+
+question_id	10
+
+parent	None
+
+position	1
+
+word_id	21
+
+answer	u'0'
+
+fixed_data	0
+
+----------------
+
+id	74
+
+question_id	35
+
+parent	None
+
+position	1
+
+word_id	22
+
+answer	u'1'
+
+fixed_data	0
+
+----------------
+
+id	75
+
+question_id	37
+
+parent	None
+
+position	2
+
+word_id	22
+
+answer	u'HIGH'
+
+fixed_data	0
+
+----------------
+
+id	76
+
+question_id	35
+
+parent	None
+
+position	1
+
+word_id	23
+
+answer	u'2'
+
+fixed_data	0
+
+----------------
+
+id	77
+
+question_id	37
+
+parent	None
+
+position	2
+
+word_id	23
+
+answer	u'HIGH'
+
+fixed_data	0
+
+----------------
+
+id	78
+
+question_id	4
+
+parent	None
+
+position	2
+
+word_id	24
+
+answer	None
+
+fixed_data	0
+
+----------------
+
+id	79
+
+question_id	1
+
+parent	None
+
+position	1
+
+word_id	24
+
+answer	u'address'
+
+fixed_data	0
+
+----------------
+
+id	80
+
+question_id	3
+
+parent	79
+
+position	1
+
+word_id	24
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	81
+
+question_id	4
+
+parent	None
+
+position	2
+
+word_id	25
+
+answer	None
+
+fixed_data	0
+
+----------------
+
+id	82
+
+question_id	1
+
+parent	None
+
+position	1
+
+word_id	25
+
+answer	u'data-register-address'
+
+fixed_data	0
+
+----------------
+
+id	83
+
+question_id	3
+
+parent	82
+
+position	1
+
+word_id	25
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	84
+
+question_id	1
+
+parent	None
+
+position	2
+
+word_id	25
+
+answer	u'data-direction-register-address'
+
+fixed_data	0
+
+----------------
+
+id	85
+
+question_id	3
+
+parent	84
+
+position	1
+
+word_id	25
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	86
+
+question_id	1
+
+parent	None
+
+position	3
+
+word_id	25
+
+answer	u'input-pins-register-address'
+
+fixed_data	0
+
+----------------
+
+id	87
+
+question_id	3
+
+parent	86
+
+position	1
+
+word_id	25
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	88
+
+question_id	82
+
+parent	None
+
+position	1
+
+word_id	26
+
+answer	u'0x25'
+
+fixed_data	0
+
+----------------
+
+id	89
+
+question_id	84
+
+parent	None
+
+position	2
+
+word_id	26
+
+answer	u'0x24'
+
+fixed_data	0
+
+----------------
+
+id	90
+
+question_id	86
+
+parent	None
+
+position	3
+
+word_id	26
+
+answer	u'0x23'
+
+fixed_data	0
+
+----------------
+
+id	91
+
+question_id	82
+
+parent	None
+
+position	1
+
+word_id	27
+
+answer	u'0x28'
+
+fixed_data	0
+
+----------------
+
+id	92
+
+question_id	84
+
+parent	None
+
+position	2
+
+word_id	27
+
+answer	u'0x27'
+
+fixed_data	0
+
+----------------
+
+id	93
+
+question_id	86
+
+parent	None
+
+position	3
+
+word_id	27
+
+answer	u'0x26'
+
+fixed_data	0
+
+----------------
+
+id	94
+
+question_id	82
+
+parent	None
+
+position	1
+
+word_id	28
+
+answer	u'0x2B'
+
+fixed_data	0
+
+----------------
+
+id	95
+
+question_id	84
+
+parent	None
+
+position	2
+
+word_id	28
+
+answer	u'0x2A'
+
+fixed_data	0
+
+----------------
+
+id	96
+
+question_id	86
+
+parent	None
+
+position	3
+
+word_id	28
+
+answer	u'0x29'
+
+fixed_data	0
+
+----------------
+
+id	97
+
+question_id	65
+
+parent	None
+
+position	1
+
+word_id	29
+
+answer	u'0'
+
+fixed_data	0
+
+----------------
+
+id	98
+
+question_id	67
+
+parent	97
+
+position	1
+
+word_id	29
+
+answer	u'Port-D'
+
+fixed_data	0
+
+----------------
+
+id	99
+
+question_id	65
+
+parent	None
+
+position	2
+
+word_id	29
+
+answer	u'1'
+
+fixed_data	0
+
+----------------
+
+id	100
+
+question_id	67
+
+parent	99
+
+position	1
+
+word_id	29
+
+answer	u'Port-D'
+
+fixed_data	0
+
+----------------
+
+id	101
+
+question_id	65
+
+parent	None
+
+position	3
+
+word_id	29
+
+answer	u'2'
+
+fixed_data	0
+
+----------------
+
+id	102
+
+question_id	67
+
+parent	101
+
+position	1
+
+word_id	29
+
+answer	u'Port-D'
+
+fixed_data	0
+
+----------------
+
+id	103
+
+question_id	65
+
+parent	None
+
+position	4
+
+word_id	29
+
+answer	u'3'
+
+fixed_data	0
+
+----------------
+
+id	104
+
+question_id	67
+
+parent	103
+
+position	1
+
+word_id	29
+
+answer	u'Port-D'
+
+fixed_data	0
+
+----------------
+
+id	105
+
+question_id	65
+
+parent	None
+
+position	5
+
+word_id	29
+
+answer	u'4'
+
+fixed_data	0
+
+----------------
+
+id	106
+
+question_id	67
+
+parent	105
+
+position	1
+
+word_id	29
+
+answer	u'Port-D'
+
+fixed_data	0
+
+----------------
+
+id	107
+
+question_id	65
+
+parent	None
+
+position	6
+
+word_id	29
+
+answer	u'5'
+
+fixed_data	0
+
+----------------
+
+id	108
+
+question_id	67
+
+parent	107
+
+position	1
+
+word_id	29
+
+answer	u'Port-D'
+
+fixed_data	0
+
+----------------
+
+id	109
+
+question_id	65
+
+parent	None
+
+position	7
+
+word_id	29
+
+answer	u'6'
+
+fixed_data	0
+
+----------------
+
+id	110
+
+question_id	67
+
+parent	109
+
+position	1
+
+word_id	29
+
+answer	u'Port-D'
+
+fixed_data	0
+
+----------------
+
+id	111
+
+question_id	65
+
+parent	None
+
+position	8
+
+word_id	29
+
+answer	u'7'
+
+fixed_data	0
+
+----------------
+
+id	112
+
+question_id	67
+
+parent	111
+
+position	1
+
+word_id	29
+
+answer	u'Port-D'
+
+fixed_data	0
+
+----------------
+
+id	113
+
+question_id	65
+
+parent	None
+
+position	9
+
+word_id	29
+
+answer	u'8'
+
+fixed_data	0
+
+----------------
+
+id	114
+
+question_id	67
+
+parent	113
+
+position	1
+
+word_id	29
+
+answer	u'Port-B'
+
+fixed_data	0
+
+----------------
+
+id	115
+
+question_id	65
+
+parent	None
+
+position	10
+
+word_id	29
+
+answer	u'9'
+
+fixed_data	0
+
+----------------
+
+id	116
+
+question_id	67
+
+parent	115
+
+position	1
+
+word_id	29
+
+answer	u'Port-B'
+
+fixed_data	0
+
+----------------
+
+id	117
+
+question_id	65
+
+parent	None
+
+position	11
+
+word_id	29
+
+answer	u'10'
+
+fixed_data	0
+
+----------------
+
+id	118
+
+question_id	67
+
+parent	117
+
+position	1
+
+word_id	29
+
+answer	u'Port-B'
+
+fixed_data	0
+
+----------------
+
+id	119
+
+question_id	65
+
+parent	None
+
+position	12
+
+word_id	29
+
+answer	u'11'
+
+fixed_data	0
+
+----------------
+
+id	120
+
+question_id	67
+
+parent	119
+
+position	1
+
+word_id	29
+
+answer	u'Port-B'
+
+fixed_data	0
+
+----------------
+
+id	121
+
+question_id	65
+
+parent	None
+
+position	13
+
+word_id	29
+
+answer	u'12'
+
+fixed_data	0
+
+----------------
+
+id	122
+
+question_id	67
+
+parent	121
+
+position	1
+
+word_id	29
+
+answer	u'Port-B'
+
+fixed_data	0
+
+----------------
+
+id	123
+
+question_id	65
+
+parent	None
+
+position	14
+
+word_id	29
+
+answer	u'13'
+
+fixed_data	0
+
+----------------
+
+id	124
+
+question_id	67
+
+parent	123
+
+position	1
+
+word_id	29
+
+answer	u'Port-B'
+
+fixed_data	0
+
+----------------
+
+id	125
+
+question_id	65
+
+parent	None
+
+position	1
+
+word_id	30
+
+answer	u'0'
+
+fixed_data	0
+
+----------------
+
+id	126
+
+question_id	67
+
+parent	125
+
+position	1
+
+word_id	30
+
+answer	u'0x01'
+
+fixed_data	0
+
+----------------
+
+id	127
+
+question_id	65
+
+parent	None
+
+position	2
+
+word_id	30
+
+answer	u'1'
+
+fixed_data	0
+
+----------------
+
+id	128
+
+question_id	67
+
+parent	127
+
+position	1
+
+word_id	30
+
+answer	u'0x02'
+
+fixed_data	0
+
+----------------
+
+id	129
+
+question_id	65
+
+parent	None
+
+position	3
+
+word_id	30
+
+answer	u'2'
+
+fixed_data	0
+
+----------------
+
+id	130
+
+question_id	67
+
+parent	129
+
+position	1
+
+word_id	30
+
+answer	u'0x04'
+
+fixed_data	0
+
+----------------
+
+id	131
+
+question_id	65
+
+parent	None
+
+position	4
+
+word_id	30
+
+answer	u'3'
+
+fixed_data	0
+
+----------------
+
+id	132
+
+question_id	67
+
+parent	131
+
+position	1
+
+word_id	30
+
+answer	u'0x08'
+
+fixed_data	0
+
+----------------
+
+id	133
+
+question_id	65
+
+parent	None
+
+position	5
+
+word_id	30
+
+answer	u'4'
+
+fixed_data	0
+
+----------------
+
+id	134
+
+question_id	67
+
+parent	133
+
+position	1
+
+word_id	30
+
+answer	u'0x10'
+
+fixed_data	0
+
+----------------
+
+id	135
+
+question_id	65
+
+parent	None
+
+position	6
+
+word_id	30
+
+answer	u'5'
+
+fixed_data	0
+
+----------------
+
+id	136
+
+question_id	67
+
+parent	135
+
+position	1
+
+word_id	30
+
+answer	u'0x20'
+
+fixed_data	0
+
+----------------
+
+id	137
+
+question_id	65
+
+parent	None
+
+position	7
+
+word_id	30
+
+answer	u'6'
+
+fixed_data	0
+
+----------------
+
+id	138
+
+question_id	67
+
+parent	137
+
+position	1
+
+word_id	30
+
+answer	u'0x40'
+
+fixed_data	0
+
+----------------
+
+id	139
+
+question_id	65
+
+parent	None
+
+position	8
+
+word_id	30
+
+answer	u'7'
+
+fixed_data	0
+
+----------------
+
+id	140
+
+question_id	67
+
+parent	139
+
+position	1
+
+word_id	30
+
+answer	u'0x80'
+
+fixed_data	0
+
+----------------
+
+id	141
+
+question_id	65
+
+parent	None
+
+position	9
+
+word_id	30
+
+answer	u'8'
+
+fixed_data	0
+
+----------------
+
+id	142
+
+question_id	67
+
+parent	141
+
+position	1
+
+word_id	30
+
+answer	u'0x01'
+
+fixed_data	0
+
+----------------
+
+id	143
+
+question_id	65
+
+parent	None
+
+position	10
+
+word_id	30
+
+answer	u'9'
+
+fixed_data	0
+
+----------------
+
+id	144
+
+question_id	67
+
+parent	143
+
+position	1
+
+word_id	30
+
+answer	u'0x02'
+
+fixed_data	0
+
+----------------
+
+id	145
+
+question_id	65
+
+parent	None
+
+position	11
+
+word_id	30
+
+answer	u'10'
+
+fixed_data	0
+
+----------------
+
+id	146
+
+question_id	67
+
+parent	145
+
+position	1
+
+word_id	30
+
+answer	u'0x04'
+
+fixed_data	0
+
+----------------
+
+id	147
+
+question_id	65
+
+parent	None
+
+position	12
+
+word_id	30
+
+answer	u'11'
+
+fixed_data	0
+
+----------------
+
+id	148
+
+question_id	67
+
+parent	147
+
+position	1
+
+word_id	30
+
+answer	u'0x08'
+
+fixed_data	0
+
+----------------
+
+id	149
+
+question_id	65
+
+parent	None
+
+position	13
+
+word_id	30
+
+answer	u'12'
+
+fixed_data	0
+
+----------------
+
+id	150
+
+question_id	67
+
+parent	149
+
+position	1
+
+word_id	30
+
+answer	u'0x10'
+
+fixed_data	0
+
+----------------
+
+id	151
+
+question_id	65
+
+parent	None
+
+position	14
+
+word_id	30
+
+answer	u'13'
+
+fixed_data	0
+
+----------------
+
+id	152
+
+question_id	67
+
+parent	151
+
+position	1
+
+word_id	30
+
+answer	u'0x20'
+
+fixed_data	0
+
+----------------
+
+id	153
+
+question_id	43
+
+parent	None
+
+position	1
+
+word_id	31
+
+answer	u'True'
+
+fixed_data	0
+
+----------------
+
+id	154
+
+question_id	45
+
+parent	None
+
+position	2
+
+word_id	31
+
+answer	u'LOW'
+
+fixed_data	0
+
+----------------
+
+id	155
+
+question_id	47
+
+parent	None
+
+position	1
+
+word_id	31
+
+answer	u'5'
+
+fixed_data	0
+
+----------------
+
+id	156
+
+question_id	49
+
+parent	155
+
+position	1
+
+word_id	31
+
+answer	u'1'
+
+fixed_data	0
+
+----------------
+
+id	157
+
+question_id	47
+
+parent	None
+
+position	2
+
+word_id	31
+
+answer	u'6'
+
+fixed_data	0
+
+----------------
+
+id	158
+
+question_id	49
+
+parent	157
+
+position	1
+
+word_id	31
+
+answer	u'2'
+
+fixed_data	0
+
+----------------
+
+id	159
+
+question_id	47
+
+parent	None
+
+position	3
+
+word_id	31
+
+answer	u'7'
+
+fixed_data	0
+
+----------------
+
+id	160
+
+question_id	49
+
+parent	159
+
+position	1
+
+word_id	31
+
+answer	u'3'
+
+fixed_data	0
+
+----------------
+
+id	161
+
+question_id	47
+
+parent	None
+
+position	4
+
+word_id	31
+
+answer	u'8'
+
+fixed_data	0
+
+----------------
+
+id	162
+
+question_id	49
+
+parent	161
+
+position	1
+
+word_id	31
+
+answer	u'4'
+
+fixed_data	0
+
+----------------
+
+id	163
+
+question_id	47
+
+parent	None
+
+position	5
+
+word_id	31
+
+answer	u'9'
+
+fixed_data	0
+
+----------------
+
+id	164
+
+question_id	49
+
+parent	163
+
+position	1
+
+word_id	31
+
+answer	u'5'
+
+fixed_data	0
+
+----------------
+
+id	165
+
+question_id	4
+
+parent	None
+
+position	2
+
+word_id	32
+
+answer	u'asm'
+
+fixed_data	0
+
+----------------
+
+id	166
+
+question_id	4
+
+parent	None
+
+position	2
+
+word_id	36
+
+answer	u'py'
+
+fixed_data	0
+
+----------------
+
+id	167
+
+question_id	1
+
+parent	None
+
+position	2
+
+word_id	36
+
+answer	u'argument'
+
+fixed_data	0
+
+----------------
+
+id	168
+
+question_id	3
+
+parent	167
+
+position	1
+
+word_id	36
+
+answer	u'True'
+
+fixed_data	0
+
+----------------
+
+id	169
+
+question_id	167
+
+parent	None
+
+position	1
+
+word_id	40
+
+answer	u'condition'
+
+fixed_data	0
+
+----------------
+
+id	170
+
+question_id	167
+
+parent	None
+
+position	2
+
+word_id	40
+
+answer	u'true-branch'
+
+fixed_data	0
+
+----------------
+
+id	171
+
+question_id	167
+
+parent	None
+
+position	3
+
+word_id	40
+
+answer	u'false-branch'
+
+fixed_data	0
+
+----------------
+
+id	172
+
+question_id	1
+
+parent	None
+
+position	1
+
+word_id	36
+
+answer	u'syntax'
+
+fixed_data	0
+
+----------------
+
+id	173
+
+question_id	3
+
+parent	172
+
+position	1
+
+word_id	36
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	174
+
+question_id	172
+
+parent	None
+
+position	1
+
+word_id	40
+
+answer	u'if condition series [else series]'
+
+fixed_data	0
 

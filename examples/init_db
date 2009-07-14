@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# create_db directory
+# init_db directory
 
 set -e
 
 usage() {
-    echo "usage: create_db directory" >&2
+    echo "usage: init_db directory" >&2
     exit 2
 }
 
