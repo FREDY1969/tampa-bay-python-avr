@@ -3,6 +3,9 @@
 # tk_gui.py
 
 from __future__ import with_statement
+from __future__ import absolute_import
+
+import setpath
 
 import sys
 import os.path
