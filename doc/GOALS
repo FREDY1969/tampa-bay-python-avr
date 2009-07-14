@@ -11,8 +11,8 @@ It seems that conceptually syntax is composed of 4 things:
 4.  Declarations
 
 I'm thinking that the first two are not extensible, but that the last two are
-(at least to some degree, declarations being perhaps more extensible than
-statements).  I'm thinking that some kind of keyword parameter syntax should
+(though declarations may not require any more than the question/answer
+facility).  I'm thinking that some kind of keyword parameter syntax should
 provide enough flexibility for expresions.
 
 It doesn't seem, at first glance, that there should be a need for reserved
