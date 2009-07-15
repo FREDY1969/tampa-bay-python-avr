@@ -3,7 +3,9 @@
 # tk_gui.py
 
 from __future__ import with_statement
-from __future__ import absolute_import
+
+# This causes doctest program to fail...
+#from __future__ import absolute_import
 
 import setpath
 
