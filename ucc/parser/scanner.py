@@ -29,7 +29,6 @@ tokens = (
     'RATIO_TOK',
     'START_SERIES_TOK',
     'STRING_TOK',
-    'WORD_TOK',
 )
 
 literals = '()[]'
@@ -139,27 +138,32 @@ def t_hex_char_tok(t):
 
 def t_start_string(t):
     r'"'
-    global String_value
+    global String_value, Start
     t.lexer.begin('string')
+    Start = t.lexpos
     String_value = ""
 
 t_string_ignore = ''
 
 def t_string_char(t):
     r'[^\\"]'
+    global String_value
     String_value += t.value[0]
 
 def t_string_escaped_char(t):
     r'\\[^xX]'
+    global String_value
     String_value += escapes.get(t.value[1].lower(), t.value[1])
 
 def t_string_hex_char(t):
     r'\\[xX][0-9a-fA-F]{2}'
-    String_value += int(t.value[2:], 16)
+    global String_value
+    String_value += chr(int(t.value[2:], 16))
 
 def t_string_STRING_TOK(t):
     r'"'
     t.value = String_value
+    t.lexpos = Start
     t.lexer.begin('INITIAL')
     return t
 
@@ -187,6 +191,7 @@ def t_hex_INTEGER_TOK(t):
         (?=[]) \r\n])   # followed by ], ), space or newline
     '''
     t.value = int(t.value, 16)
+    t.type = 'INTEGER_TOK'
     return t
 
 def t_RATIO_TOK(t):
@@ -218,7 +223,7 @@ def t_ratio_3(t):
         (?=[]) \r\n])   # followed by ], ), space or newline
     '''
     dot = t.value.index('.')
-    denominator = 10**(len(t.value) - dot - 1)
+    denominator = 10**(len(t.value) - dot - 2)
     t.value = (int(t.value[:dot]) * denominator + int(t.value[dot + 1:-1]),
                denominator)
     t.type = 'RATIO_TOK'
@@ -235,8 +240,8 @@ def t_ratio_4(t):
     return t
 
 def t_hex_RATIO_TOK(t):
-    r'''0[xX][0-9]+/[0-9]+ # ratio
-        (?=[]) \r\n])        # followed by ], ), space or newline
+    r'''0[xX][0-9a-fA-F]+/[0-9a-fA-F]+ # ratio
+        (?=[]) \r\n])                  # followed by ], ), space or newline
     '''
     slash = t.value.index('/')
     t.value = (int(t.value[:slash], 16), int(t.value[slash+1:], 16))
@@ -244,10 +249,10 @@ def t_hex_RATIO_TOK(t):
     return t
 
 def t_hex_ratio_2(t):
-    r'''0[xX][0-9]+
-        \.[0-9]+        # decimal point
-        /[0-9]+         # denominator
-        (?=[]) \r\n])   # followed by ], ), space or newline
+    r'''0[xX][0-9a-fA-F]+
+        \.[0-9a-fA-F]+        # decimal point
+        /[0-9a-fA-F]+         # denominator
+        (?=[]) \r\n])         # followed by ], ), space or newline
     '''
     dot = t.value.index('.')
     slash = t.value.index('/')
@@ -259,13 +264,13 @@ def t_hex_ratio_2(t):
     return t
 
 def t_hex_ratio_3(t):
-    r'''0[xX][0-9]+
-        \.[0-9]+        # decimal point
-        /               # implied denominator
-        (?=[]) \r\n])   # followed by ], ), space or newline
+    r'''0[xX][0-9a-fA-F]+
+        \.[0-9a-fA-F]+        # decimal point
+        /                     # implied denominator
+        (?=[]) \r\n])         # followed by ], ), space or newline
     '''
     dot = t.value.index('.')
-    denominator = 16**(len(t.value) - dot - 1)
+    denominator = 16**(len(t.value) - dot - 2)
     t.value = (int(t.value[:dot], 16) * denominator +
                  int(t.value[dot + 1:-1], 16),
                denominator)
@@ -274,9 +279,9 @@ def t_hex_ratio_3(t):
 
 def t_hex_ratio_4(t):
     r'''0[xX]
-        \.[0-9]+        # decimal point
-        /               # implied denominator
-        (?=[]) \r\n])   # followed by ], ), space or newline
+        \.[0-9a-fA-F]+        # decimal point
+        /                     # implied denominator
+        (?=[]) \r\n])         # followed by ], ), space or newline
     '''
     denominator = 16**(len(t.value) - 4)
     t.value = (int(t.value[3:-1], 16), denominator)
@@ -295,7 +300,7 @@ def t_APPROX_NUMBER_TOK(t):
 
 def t_approx_2(t):
     # All decimal forms without a '.':
-    r'''[0-9]+ (?: ~[0-9] )? [eE] [+-]?[0-9]+
+    r'''[0-9]+ (?: (?: ~[0-9] )? [eE] [+-]?[0-9]+ | ~[0-9] )
         (?=[]) \r\n])    # followed by ], ), space or newline
     '''
     t.value = approx(t.value.lower())
@@ -315,7 +320,9 @@ def t_hex_APPROX_NUMBER_TOK(t):
 
 def t_hex_approx_2(t):
     # All hex forms without a '.':
-    r'''0[xX] [0-9a-fA-F]+ (?: ~[0-9a-fA-F] )? [xX] [+-]?[0-9]+
+    r'''0[xX] [0-9a-fA-F]+
+        (?: (?: ~[0-9a-fA-F] )? [xX] [+-]?[0-9]+
+          | ~[0-9a-fA-F] )
         (?=[]) \r\n])    # followed by ], ), space or newline
     '''
     t.value = approx(t.value[2:].lower(), 16)
@@ -325,20 +332,20 @@ def t_hex_approx_2(t):
 def t_NAME_TOK(t):
     r'''[^[( \r\n"'#-]     # first character
         [^[( \r\n]*        # middle characters
-        [^])[( \r\n]       # last character
+        [^])[( \r\n:]      # last character
     '''
     if t.value in Word_dict:
         t.value = Word_dict[t.value]
-        t.type = 'WORD_TOK'
+        t.type = t.value.token
     return t
 
 def t_NAME_TOK_1(t):
-    r'''[^])[( \r\n"'#-]
+    r'''[^])[( \r\n:"'#-]
         (?=[][() \r\n])    # followed by [, ], (, ), space or newline
     '''
     if t.value in Word_dict:
         t.value = Word_dict[t.value]
-        t.type = 'WORD_TOK'
+        t.type = t.value.token
     else:
         t.type = 'NAME_TOK'
     return t
@@ -349,7 +356,7 @@ def t_negate(t):
     '''
     if 'negate' in Word_dict:
         t.value = Word_dict['negate']
-        t.type = 'WORD_TOK'
+        t.type = t.value.token
     else:
         t.value = 'negate'
         t.type = 'NAME_TOK'
@@ -361,7 +368,7 @@ def t_minus(t):
     '''
     if '-' in Word_dict:
         t.value = Word_dict['-']
-        t.type = 'WORD_TOK'
+        t.type = t.value.token
     else:
         t.value = '-'
         t.type = 'NAME_TOK'
@@ -378,7 +385,7 @@ def approx(s, base = 10):
     The format for s is: digit* .digit* ~digit e[+-]?digit*
     Note that this does not accept negative numbers.
 
-    >>> approx('123')
+    >>> approx('123.')
     (123, 0)
     >>> approx('123~1')
     (123, 0)
@@ -417,8 +424,12 @@ def approx(s, base = 10):
         n = int(s[:tilde], base)
     else:
         decimal_places = tilde - dot - 1
-        n = int(s[:dot], base) * base**decimal_places + \
-            int(s[dot + 1:tilde], base)
+        if dot > 0:
+            n = int(s[:dot], base) * base**decimal_places
+        else:
+            n = 0
+        if decimal_places:
+            n += int(s[dot + 1:tilde], base)
 
     number = n * base**(exp - decimal_places)
     precision = prec / base**(decimal_places + prec_place - exp)
@@ -523,6 +534,7 @@ def tokenize(this_module, word_dict, s):
     init(this_module, word_dict, 0, True)
     lexer.filename = 'tokenize'
     lexer.lineno = 1
+    if s[-1] not in ' \n': s += ' '
     lexer.input(s)
     lexer.begin('INITIAL')
     while True:
