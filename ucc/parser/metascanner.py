@@ -79,10 +79,11 @@ t_CHAR_TOKEN = r"'[^\\\t\r\n ]'"
 
 def t_start_python_code(t):
     r'='
-    global Python_code, Python_current_quote
+    global Python_code, Python_current_quote, Python_lexpos
     t.lexer.begin('python')
     Python_code = ''
     Python_current_quote = None
+    Python_lexpos = t.lexpos + 1
 
 t_python_ignore = ''
 
@@ -100,13 +101,19 @@ def t_python_quote(t):
         Python_current_quote = None
     Python_code += t.value
 
-def t_PYTHON_CODE(t):
+def t_python_chars(t):
+    r'''[^'",)\\]+'''
+    global Python_code
+    Python_code += t.value
+
+def t_python_PYTHON_CODE(t):
     r'''[,)]'''
     global Python_code, Python_current_quote
     if Python_current_quote is None:
         t.lexer.begin('INITIAL')
         t.lexer.skip(-1)
         t.value = Python_code
+        t.lexpos = Python_lexpos
         return t
     Python_code += t.value
 
