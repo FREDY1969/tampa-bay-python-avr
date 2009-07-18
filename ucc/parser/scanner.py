@@ -5,8 +5,7 @@
 from __future__ import with_statement, division
 
 import math
-import os.path
-from ply import lex
+from ucc.parser import scanner_init
 
 debug = 0
 
@@ -31,20 +30,20 @@ tokens = (
     'STRING_TOK',
 )
 
-literals = '()[]'
+literals = '()[]:'
 
 t_ignore = ' '
 
-t_ignore_comment = r'\#.*'
+t_ignore_comment = r'\#[^\t\r\n]*'
 
 def t_START_SERIES_TOK(t):
-    r''':                       # :
-        (?:\ \ *(?:\#.*)?)?     # optional spaces, optional comment
-        (?:\r)?\n               # newline
+    r''':                               # :
+        (?:\ \ *(?:\#[^\t\r\n]*)?)?     # optional spaces, optional comment
+        (?:\r)?\n                       # newline
     '''
     t.lexer.lineno += 1
     t.lexer.begin('colonindent')
-    t.lexer.skip(-1)            # push back the final '\n'
+    t.lexer.skip(-1)                    # push back the final '\n'
     return t
 
 Last_colonindent = 0
@@ -52,7 +51,7 @@ Last_colonindent = 0
 t_colonindent_ignore = ''
 
 def t_colonindent_blank_line(t):
-    r'\n(?:\ *(?:\#.*)?(?:\r)?\n)+'
+    r'\n (?: \ * (?: \# [^\t\r\n]* )? (?:\r)? \n )+'
     t.lexer.lineno += t.value.count('\n') - 1
 
 def t_colonindent_INDENT_TOK(t):
@@ -60,7 +59,8 @@ def t_colonindent_INDENT_TOK(t):
     global Last_colonindent
     indent = len(t.value) - 1
     if indent != Last_colonindent + 4:
-        raise SyntaxError("improper indent level after :", syntaxerror_params())
+        raise SyntaxError("improper indent level after :",
+                          scanner_init.syntaxerror_params())
     Last_colonindent = indent
     t.lexer.begin('INITIAL')
     return t
@@ -75,7 +75,7 @@ def t_NEWLINE_TOK(t):
 t_indent_ignore = ''
 
 def t_indent_blank_line(t):
-    r'\n(?:\ *(?:\#.*)?(?:\r)?\n)+'
+    r'\n(?: \ * (?: \# [^\t\r\n]* )? (?:\r)? \n )+'
     t.lexer.lineno += t.value.count('\n') - 1
     t.lexer.skip(-1)                   # push back the final '\n'
 
@@ -94,7 +94,7 @@ def t_indent_sp(t):
         return
     if indent % 4:
         raise SyntaxError("invalid indent level, must be multiple of 4 spaces",
-                          syntaxerror_params())
+                          scanner_init.syntaxerror_params())
     if not Sent_newline:
         t.lexer.lineno += 1
         t.lexer.skip(-len(t.value))     # come back here after NEWLINE_TOK
@@ -110,7 +110,7 @@ def t_indent_sp(t):
     return t
 
 def t_CHAR_TOK(t):
-    r"'[^\\]'"
+    r"'[^\\\t\r\n]'"
     t.value = ord(t.value[1])
     return t
 
@@ -125,7 +125,7 @@ escapes = {
 }
 
 def t_escaped_char_tok(t):
-    r"'\\[^xX]'"
+    r"'\\[^xX\t\r\n]'"
     t.value = ord(escapes.get(t.value[2].lower(), t.value[2]))
     t.type = 'CHAR_TOK'
     return t
@@ -146,12 +146,12 @@ def t_start_string(t):
 t_string_ignore = ''
 
 def t_string_char(t):
-    r'[^\\"]'
+    r'[^\\"\t\r\n]'
     global String_value
     String_value += t.value[0]
 
 def t_string_escaped_char(t):
-    r'\\[^xX]'
+    r'\\[^xX\t\r\n]'
     global String_value
     String_value += escapes.get(t.value[1].lower(), t.value[1])
 
@@ -195,7 +195,7 @@ def t_hex_INTEGER_TOK(t):
     return t
 
 def t_RATIO_TOK(t):
-    r'''[0-9]+/[0-9]+ # ratio
+    r'''[0-9]+/[0-9]+   # ratio
         (?=[]) \r\n])   # followed by ], ), space or newline
     '''
     slash = t.value.index('/')
@@ -377,7 +377,7 @@ def t_minus(t):
 def t_ANY_error(t):
     raise SyntaxError("Scanner error: possible illegal character %r" %
                         t.value[0],
-                      syntaxerror_params())
+                      scanner_init.syntaxerror_params())
 
 def approx(s, base = 10):
     r'''Return the approx value for s as (integer, binary_pt).
@@ -474,70 +474,22 @@ def approx(s, base = 10):
             binary_pt -= 1
     return largest_ok
 
-def syntaxerror_params():
-    pos = lexer.lexpos
-    start = lexer.lexdata.rfind('\n', 0, pos) + 1
-    lineno = lexer.lineno
-    column = pos - start + 1
-    end = lexer.lexdata.find('\n', start)
-    if end < 0: end = len(lexer.lexdata)
-    if debug:
-        print "pos", pos, "lineno", lineno, "column", column, \
-              "start", start, "end", end
-    return (lexer.filename, lineno, column, lexer.lexdata[start:end])
-
-lexer = None
-
-def init(this_module, word_dict, debug_param, check_tables = False):
-    global Last_colonindent, debug, lexer
-    global Word_dict
-    Last_colonindent = 0
-    debug = debug_param
-    Word_dict = word_dict
-    if lexer is None:
-        if debug_param:
-            lexer = lex.lex(module=this_module, debug=1)
-        else:
-            if check_tables:
-                scanner_mtime = os.path.getmtime(this_module.__file__)
-                tables_name = \
-                    os.path.join(os.path.dirname(this_module.__file__),
-                                 'scanner_tables.py')
-                try:
-                    ok = os.path.getmtime(tables_name) >= scanner_mtime
-                except OSError:
-                    ok = False
-                if not ok:
-                    #print "regenerating scanner_tables"
-                    try: os.remove(tables_name)
-                    except OSError: pass
-                    try: os.remove(tables_name + 'c')
-                    except OSError: pass
-                    try: os.remove(tables_name + 'o')
-                    except OSError: pass
-            lexer = lex.lex(module=this_module, optimize=1,
-                            lextab='scanner_tables',
-                            outputdir=os.path.dirname(this_module.__file__))
-
-def tokenize(this_module, word_dict, s):
+def init(debug_param, word_dict = {}):
     r'''
         >>> import scanner
-        >>> scanner.tokenize(scanner, {}, '22\n')
+        >>> import scanner_init
+        >>> scanner_init.tokenize(scanner, '22\n')
         LexToken(INTEGER_TOK,22,1,0)
         LexToken(NEWLINE_TOK,'\n',1,2)
-        >>> scanner.tokenize(scanner, {},
-        ...                  '# comment1\n\n    \n    # comment2\n44\n')
+        >>> scanner_init.tokenize(scanner,
+        ...                       '# comment1\n\n    \n    # comment2\n44\n')
         LexToken(NEWLINE_TOK,'\n',4,31)
         LexToken(INTEGER_TOK,44,5,32)
         LexToken(NEWLINE_TOK,'\n',5,34)
     '''
-    init(this_module, word_dict, 0, True)
-    lexer.filename = 'tokenize'
-    lexer.lineno = 1
-    if s[-1] not in ' \n': s += ' '
-    lexer.input(s)
-    lexer.begin('INITIAL')
-    while True:
-        t = lex.token()
-        if not t: break
-        print t
+    global Last_colonindent, debug
+    global Word_dict
+    Last_colonindent = 0
+    debug = debug_param
+    Word_dict = word_dict
+
