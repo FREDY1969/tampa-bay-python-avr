@@ -51,8 +51,6 @@ def p_rule1(p):
     rule_name = p[1]
     param_list = p[2]
     for words in p[4]:
-        import sys
-        sys.stderr.write("words: %r\n" % (words,))
         p_fn_name = ast.gensym('p_' + rule_name)
         print """
 def %s(p):
@@ -330,7 +328,7 @@ def p_parameter(p):
     '''
     p[0] = (p[1], p[2])
 
-def p_ANY_error(t):
+def p_error(t):
     if t is None:
         raise SyntaxError("invalid syntax", scanner_init.syntaxerror_params())
     else:
