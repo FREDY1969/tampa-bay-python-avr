@@ -51,7 +51,6 @@ def t_NEWLINE_TOK2(t):
           )*                                # any number of blank lines
     '''
     # assume we're at EOF here...
-    print "t_NEWLINE_TOK2"
     pass
 
 def t_AS_TOK(t):

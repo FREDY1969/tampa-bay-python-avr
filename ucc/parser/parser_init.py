@@ -8,6 +8,7 @@ Parser = None
 
 def init(parser_module, check_tables = False, debug = 0):
     global Parser
+    parser_module.init()
     if Parser is None:
         outputdir = os.path.dirname(parser_module.__file__)
         module_name = parser_module.__name__.split('.')[-1]
@@ -41,8 +42,8 @@ def init(parser_module, check_tables = False, debug = 0):
 # Use the debug = 0 for normal use, and debug = 1 for testing changes in the
 # grammer (debug = 0 does not report grammer errors!).
 def parse(parser_module, scanner_module, filename, check_tables = False,
-#          debug = 0, text = None):
-          debug = 1, text = None):
+          debug = 0, text = None):
+#          debug = 1, text = None):
     init(parser_module, check_tables, debug)
     scanner_init.init(scanner_module, debug, check_tables)
     scanner_init.Lexer.lineno = 1
