@@ -101,8 +101,16 @@ def t_python_quote(t):
         Python_current_quote = None
     Python_code += t.value
 
+def t_python_percent(t):
+    r'''%'''
+    global Python_code
+    if Python_current_quote is None:
+        Python_code += '%(offset)'
+    else:
+        Python_code += '%'
+
 def t_python_chars(t):
-    r'''[^'",)\\]+'''
+    r'''[^'",)\\%]+'''
     global Python_code
     Python_code += t.value
 
