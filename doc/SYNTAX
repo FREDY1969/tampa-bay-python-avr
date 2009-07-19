@@ -1,0 +1,77 @@
+Lexical conventions:
+
+1. The language is case-insensitive.
+2. Comments go from # to the end of the line.
+3. Tokens are delimited by spaces, the start or end of the line, may not start
+   with -'" or end with :'" or contain any of the characters: ()[]{}
+4. The characters ()[]{} are always a separate single character token.  But
+   the ( character is treated as different tokens if it is preceded by a
+   space or not.  E.g: foo(a b) vs foo (a b).
+5. A - following a space is treated as different tokens if it is followed by
+   a space or not.  E.g: a - b vs a -b.
+6. A : at the end of a word is treated as a separate token.
+7. Literals must be delimited like any other word.  Literal formats:
+    Legend: [x]   means x is optional
+            x+    means 1 or more x
+            x*    means 0 or more x
+            digit means any of the 10 digits from 0 to 9
+            hexit means a digit or any of the characters from 'a' to 'f'
+
+    bool:   true/false
+    int:    [-]digit+       (no space allowed between - and first digit)
+            [-]0xhexit+
+            'char'
+    ratio:  [-][digit+.]digit+/digit+
+            [-]digit*.digit+/
+            [-]0x[hexit+.]hexit+/hexit+
+            [-]0xhexit*.hexit+/
+    approx: [-]digit+.digit*[e[-]digit+]
+            [-].digit+[e[-]digit+]
+            [-]digit+e[-]digit+
+            [-]0xhexit+.hexit*[e[-]digit+]
+            [-]0x.hexit+[e[-]digit+]
+            [-]0xhexit+e[-]digit+
+    string: "char*"        (same escaping as python)
+8. Lines may be continued by indenting more than the first non-continuation
+   line.
+9. A ':' as the last token of a line requires the next line to be indented 4
+   more spaces.  All lines at this new indent level are taken as one block.
+10. Tab characters are not allowed (even within string literals or comments).
+
+
+Syntax:
+
+expr ::= literal
+       | word
+       | (expr)
+       | expr(expr*)
+       | bit-not expr
+       | expr bit-and expr
+       | expr bit-xor expr
+       | expr bit-or expr
+       | -expr
+       | expr * expr
+       | expr / expr
+       | expr % expr
+       | expr + expr
+       | expr - expr
+       | word< expr
+       | expr >word
+       | expr < expr
+       | expr <= expr
+       | expr == expr
+       | expr != expr
+       | expr > expr
+       | expr >= expr
+       | not expr
+       | expr and expr
+       | expr or expr
+
+statement ::= word expr* NL
+            | word expr* : statement
+            | word expr* : NL INDENT statement+ DEINDENT
+
+Note:
+    - don't need (x) without operator before or after
+    - (a b) not normally legal as expr
+

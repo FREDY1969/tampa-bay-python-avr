@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# backup db
+
+usage() {
+    echo "usage: backup directory" >&2
+    exit 2
+}
+
+[ $# -eq 1 ] || usage
+
+set -e
+
+db_filename=python-avr.db
+db_backup_dir=backups
+
+dir="$1"
+db="$1/$db_filename"
+
+if [ \! -e "$db" ]
+then
+    echo "backup: no database file: $db" >&2
+    exit 1
+fi
+
+rm -f "$dir/$db_backup_dir"/*.csv
+
+db_update/backup.py "$db"

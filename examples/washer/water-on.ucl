@@ -1,0 +1,8 @@
+start:
+    if temp is warm or cold: turn-on cold-water
+    if temp is hot or warm: turn-on hot-water
+
+stop:
+    if temp is warm or cold: turn-off cold-water
+    if temp is hot or warm: turn-off hot-water
+

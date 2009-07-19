@@ -1,0 +1,10 @@
+fill wash-temp
+agitate 10 >min
+spin 3 >min
+
+fill rinse-temp
+agitate 3 >min
+spin 5 >min
+
+buzz 3 >sec
+
