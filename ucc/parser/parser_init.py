@@ -68,5 +68,5 @@ def test(parser_module, scanner_module, text):
     '''
     import pprint
     import StringIO
-    pprint.pprint(parse(parser_module, scanner_module, 'test', True, 1, text))
+    pprint.pprint(parse(parser_module, scanner_module, 'test', True, 0, text))
 
