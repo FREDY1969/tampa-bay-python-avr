@@ -24,6 +24,33 @@ debug = 1
 
 db_filename = 'python-avr.db'
 
+class node(object):
+    def __init__(self, name, id, parent_id):
+        self.name = name
+        self.id = id
+        self.children = []
+        self.parent_id = parent_id
+    @classmethod
+    def from_iter(cls, iterator, parent = None):
+        nodes = {}
+        for parent, name, id in iterator:
+            nodes[id] = cls(name, id, parent)
+        for n in nodes:
+            if n.parent_id is not None:
+                nodes[n.parent_id].add_child(n)
+    def depth(self):
+        if not self.parent: return 0
+        return 1 + self.parent.depth()
+    def long_name(self):
+        return ' ' * self.depth() + self.parent.name + ': ' + self.name
+    def add_child(self, child):
+        child.parent = self
+        self.children.append(child)
+    def __iter__(self):
+        yield self
+        for child in self.children:
+            for n in child: yield n
+
 class App(object):
     def __init__(self):
         self.root = Tk()
@@ -41,14 +68,9 @@ class App(object):
                                     hull_height=900)
         vert_pane.pack(expand=1, fill='both')
         vert_pane.add('word-list', min=200)
-        db_cur.execute("select name, id from word")
-        self.words = dict(db_cur)
-        self.words_by_id = dict(zip(self.words.itervalues(),
-                                    self.words.iterkeys()))
-        word_list = sorted(self.words.keys(), key=lambda x: x.lower())
-        if debug: print "word_list:", word_list
+
         self.word_list = Pmw.ScrolledListBox(vert_pane.pane('word-list'),
-                                             items=word_list,
+                                             #items=word_list,
                                              labelpos='nw',
                                              label_text="Words",
                                              label_font=
@@ -58,7 +80,9 @@ class App(object):
                                              selectioncommand=self.select_word,
                                              usehullsize=1)
         self.word_list.pack(expand=1, fill='both')
-        self.word_list.setvalue(word_list[0].encode())
+
+        self.update_word_list(1)
+
         vert_pane.add('word-view')
 
         horz_pane = Pmw.PanedWidget(vert_pane.pane('word-view'),
@@ -79,15 +103,49 @@ class App(object):
                                           usehullsize=1)
         self.word_body.pack(expand=1, fill='both')
 
+    def update_word_list(self, selected_id):
+        db_cur.execute("select name from word where id = 1")
+        self.words = {db_cur.fetchone()[0] + ':': 1}
+        word_list = self.words.keys()
+
+        db_cur.execute("""
+              select kind.name, kind.id, word.name, word.id
+                from word as kind left outer join word
+                  on kind.id = word.kind
+               where kind.defining_word = 1 and kind.id != 1
+               order by lower(kind.name), lower(word.name)
+          """)
+
+        last_kind = None
+        for kind_name, kind_id, name, id in db_cur:
+            kind_name += ':'
+            if kind_name != last_kind:
+                self.words[kind_name] = kind_id
+                word_list.append(kind_name)
+                last_kind = kind_name
+            if id is not None:
+                long_name = '   %s' % (name,)
+                self.words[long_name] = id
+                word_list.append(long_name)
+
+        self.words_by_id = dict(zip(self.words.itervalues(),
+                                    self.words.iterkeys()))
+        #word_list = sorted(self.words.keys(), key=lambda x: x.lower())
+        if debug: print "word_list:", word_list
+
+        self.word_list.setlist(word_list)
+        self.word_list.setvalue(self.words_by_id[selected_id].encode())
+
     def new(self):
         new_word(app.root)
 
-    def add_word(self, name, id):
+    def add_word(self, name, id, kind):
         assert name not in self.words, "Duplicate word name: " + name
-        self.word_list.setlist(sorted((name,) + self.word_list.get(),
+        long_name = kind + ': ' + name
+        self.word_list.setlist(sorted((long_name,) + self.word_list.get(),
                                       key=lambda x: x.lower()))
-        self.words[name] = id
-        self.word_list.setvalue(name)
+        self.words[long_name] = id
+        self.word_list.setvalue(long_name)
 
     def edit(self):
         if self.selected_word.filename:
@@ -158,7 +216,7 @@ class new_word(object):
             db_conn.rollback()
             raise
         db_conn.commit()
-        app.add_word(name, id)
+        app.update_word_list(id)
 
     def ok(self):
         self.apply()
@@ -171,7 +229,7 @@ class word(object):
         self.id = id
         self.name = name
         self.kind = kind
-        self.kind_name = app.words_by_id[kind]
+        self.kind_name = app.words_by_id[kind].rstrip(':')
         self.defining_word = defining_word
         self.read_suffix()
 
