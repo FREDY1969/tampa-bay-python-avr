@@ -42,10 +42,10 @@ def init(parser_module, check_tables = False, debug = 0):
 # Use the debug = 0 for normal use, and debug = 1 for testing changes in the
 # grammer (debug = 0 does not report grammer errors!).
 def parse(parser_module, scanner_module, filename, check_tables = False,
-          debug = 0, text = None):
-#          debug = 1, text = None):
+          debug = 0, text = None, extra_arg = None):
+#          debug = 1, text = None, extra_arg = None):
     init(parser_module, check_tables, debug)
-    scanner_init.init(scanner_module, debug, check_tables)
+    scanner_init.init(scanner_module, debug, check_tables, extra_arg)
     scanner_init.Lexer.lineno = 1
     scanner_init.Lexer.filename = filename
     if text is None:
