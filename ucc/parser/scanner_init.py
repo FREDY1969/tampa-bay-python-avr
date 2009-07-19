@@ -1,5 +1,6 @@
 # scanner_init.py
 
+import sys
 import os.path
 from ply import lex
 
@@ -38,6 +39,16 @@ def get_col_line(lexdata, lexpos):
 def syntaxerror_params(t = None):
     return (Lexer.filename, Lexer.lineno) + \
            get_col_line(Lexer.lexdata, (t.lexpos if t else Lexer.lexpos))
+
+def syntaxerror(msg, t = None):
+    r'''Prints out syntax error info to stderr, then raises SyntaxError.'''
+    filename, lineno, column, line = syntaxerror_params(t)
+    sys.stderr.write("SyntaxError in file %r at line %d:\n" % 
+                       (filename, lineno))
+    sys.stderr.write("    %s\n" % line)
+    sys.stderr.write("    %s^\n" % (' ' * (column - 1)))
+    sys.stderr.write(msg + '\n')
+    raise SyntaxError
 
 def init(scanner_module, debug_param, check_tables = False, extra_arg = None):
     global Lexer
