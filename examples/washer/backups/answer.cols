@@ -2378,7 +2378,7 @@ position	1
 
 word_id	40
 
-answer	u'if condition series [else series]'
+answer	u'IF() expr as condition [series] {ELSE_TOK [series]}'
 
 fixed_data	0
 
