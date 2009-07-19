@@ -4,16 +4,21 @@
 """ 
 
 from __future__ import with_statement
-from ply import yacc
 from ucc.parser import metascanner, scanner_init
 from ucc.ast import ast
 
 tokens = metascanner.tokens
 
-def p_none(p):
+Tokens_used = set()
+
+def p_file(p):
     ''' file : file2
              | file2 rule
-        file2 :
+    '''
+    p[0] = Tokens_used
+
+def p_none(p):
+    ''' file2 :
               | file2 NEWLINE_TOK
               | file2 rule NEWLINE_TOK
         param_list_opt :
@@ -58,6 +63,8 @@ def %s(p):
     '''""" % (p_fn_name, rule_name, ' '.join(word[0] for word in words))
         prep = []
         args = []
+        last_arg = None
+        has_ellipsis = False
         if param_list is not None:
             fn_word_params = param_list
             fn_word_offset = None
@@ -78,29 +85,35 @@ def %s(p):
                     pass
                 elif type == 'single_arg':
                     args.append('args.append(p[%d])' % (offset + i + 1))
+                    last_arg = offset + i + 1
                 elif type == 'tuple':
                     args.append('args.append(p[%d])' % (offset + i + 1))
                 elif type == 'ellipsis':
                     args.append('args.extend(p[%d])' % (offset + i + 1))
-        if fn_word_params is None:
-            scanner_init.syntaxerror("missing function word in production")
+                    has_ellipsis = True
+
         if prep:
             print '\n'.join('    ' + p for p in prep)
 
-        print "    args = []"
-        for arg in args: print "    " + arg
-        if fn_word_params:
-            print "    p[0] = ast.ast(p[1], p[len(p) - 1], %s, *args)" % (
-                     ', '.join("%s=%s" %
-                                 (key, value % {'offset': fn_word_offset})
-                               for key, value in fn_word_params.iteritems())
-                  )
-        elif fn_word_offset is None:
-            scanner_init.syntaxerror(
-              "empty parameter list on nonterminal declaration")
+        if fn_word_params is None:
+            if has_ellipsis or len(args) != 1 or last_arg is None:
+                scanner_init.syntaxerror("missing function word in production")
+            print "    p[0] = p[%s]" % last_arg
         else:
-            print "    p[0] = ast.ast(p[1], p[len(p) - 1], " \
-                  "word_id=p[%s], *args)" % fn_word_offset
+            print "    args = []"
+            for arg in args: print "    " + arg
+            if fn_word_params:
+                print "    p[0] = ast.ast(p[1], p[len(p) - 1], %s, *args)" % (
+                         ', '.join("%s=%s" %
+                                     (key, value % {'offset': fn_word_offset})
+                                   for key, value in fn_word_params.iteritems())
+                      )
+            elif fn_word_offset is None:
+                scanner_init.syntaxerror(
+                  "empty parameter list on nonterminal declaration")
+            else:
+                print "    p[0] = ast.ast(p[1], p[len(p) - 1], " \
+                      "word_id=p[%s], *args)" % fn_word_offset
 
 def p_rule2(p):
     ''' rule : TUPLE_NONTERMINAL ':' alternatives
@@ -142,7 +155,7 @@ def %s(p):
             print '\n'.join('    ' + p for p in prep)
         if fn_word_offset is not None:
             print "    args = []"
-            for arg in args: print "    ", arg
+            for arg in args: print "    " + arg
             if fn_word_params:
                 print "    p[0] = (ast.ast(p[1], p[len(p) - 1], %s, *args),)" \
                       % ', '.join("%s=%s" %
@@ -153,7 +166,7 @@ def %s(p):
         elif tuple_offset is None:
             if len(args) == 1:
                 print "    args = []"
-                print '    ', args[0]
+                print '    ' + args[0]
                 print "    p[0] = tuple(args,)"
             else:
                 scanner_init.SyntaxError("no tuple in production")
@@ -164,7 +177,6 @@ def %s(p):
               "ellipsis in production without function word")
         else:
             print "    p[0] = p[%d]" % (tuple_offset + 1)
-
 
 def p_opt_word(p):
     ''' word : sub_rule '?'
@@ -285,15 +297,27 @@ def p_sub_rule2(p):
     '''
     assert False, "{ alternatives } not yet implemented"
 
-def p_ignored_word(p):
+def p_token_ignore(p):
     ''' simple_word : TOKEN_IGNORE
-                    | CHAR_TOKEN
+    '''
+    global Tokens_used
+    Tokens_used.add(p[1])
+    p[0] = p[1], 'ignore', 0, None, None
+
+def p_char_token(p):
+    ''' simple_word : CHAR_TOKEN
     '''
     p[0] = p[1], 'ignore', 0, None, None
 
-def p_simple_word(p):
+def p_token(p):
     ''' simple_word : TOKEN
-                    | NONTERMINAL
+    '''
+    global Tokens_used
+    Tokens_used.add(p[1])
+    p[0] = p[1], 'single_arg', 0, None, None
+
+def p_nonterminal(p):
+    ''' simple_word : NONTERMINAL
     '''
     p[0] = p[1], 'single_arg', 0, None, None
 
@@ -334,3 +358,6 @@ def p_error(t):
     else:
         raise SyntaxError("invalid syntax", scanner_init.syntaxerror_params(t))
 
+def init():
+    global Tokens_used
+    Tokens_used = set()

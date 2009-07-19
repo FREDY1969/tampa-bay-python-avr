@@ -16,18 +16,18 @@ states = (
 )
 
 tokens = (
-    'APPROX_NUMBER_TOK',
-    'CHAR_TOK',
+    'APPROX_NUMBER',
+    'CHAR',
     'DEINDENT_TOK',
     'INDENT_TOK',
-    'INTEGER_TOK',
+    'INTEGER',
     'LB_TOK',
     'LP_TOK',
-    'NAME_TOK',
+    'NAME',
     'NEWLINE_TOK',
-    'RATIO_TOK',
+    'RATIO',
     'START_SERIES_TOK',
-    'STRING_TOK',
+    'STRING',
 )
 
 literals = '()[]:'
@@ -109,7 +109,7 @@ def t_indent_sp(t):
         t.lexer.skip(-len(t.value))     # come back here after DEINDENT_TOK
     return t
 
-def t_CHAR_TOK(t):
+def t_CHAR(t):
     r"'[^\\\t\r\n]'"
     t.value = ord(t.value[1])
     return t
@@ -127,13 +127,13 @@ escapes = {
 def t_escaped_char_tok(t):
     r"'\\[^xX\t\r\n]'"
     t.value = ord(escapes.get(t.value[2].lower(), t.value[2]))
-    t.type = 'CHAR_TOK'
+    t.type = 'CHAR'
     return t
 
 def t_hex_char_tok(t):
     r"'\\[xX][0-9a-fA-F]{2}'"
     t.value = int(t.value[3:-1], 16)
-    t.type = 'CHAR_TOK'
+    t.type = 'CHAR'
     return t
 
 def t_start_string(t):
@@ -160,7 +160,7 @@ def t_string_hex_char(t):
     global String_value
     String_value += chr(int(t.value[2:], 16))
 
-def t_string_STRING_TOK(t):
+def t_string_STRING(t):
     r'"'
     t.value = String_value
     t.lexpos = Start
@@ -179,22 +179,22 @@ def t_LB_TOK(t):
     '''
     return t
 
-def t_INTEGER_TOK(t):
+def t_INTEGER(t):
     r'''[0-9]+
         (?=[]) \r\n])   # followed by ], ), space or newline
     '''
     t.value = int(t.value)
     return t
 
-def t_hex_INTEGER_TOK(t):
+def t_hex_INTEGER(t):
     r'''0[xX][0-9]+
         (?=[]) \r\n])   # followed by ], ), space or newline
     '''
     t.value = int(t.value, 16)
-    t.type = 'INTEGER_TOK'
+    t.type = 'INTEGER'
     return t
 
-def t_RATIO_TOK(t):
+def t_RATIO(t):
     r'''[0-9]+/[0-9]+   # ratio
         (?=[]) \r\n])   # followed by ], ), space or newline
     '''
@@ -213,7 +213,7 @@ def t_ratio_2(t):
     denominator = int(t.value[slash+1:])
     t.value = (int(t.value[:dot]) * denominator + int(t.value[dot+1:slash]),
                denominator)
-    t.type = 'RATIO_TOK'
+    t.type = 'RATIO'
     return t
 
 def t_ratio_3(t):
@@ -226,7 +226,7 @@ def t_ratio_3(t):
     denominator = 10**(len(t.value) - dot - 2)
     t.value = (int(t.value[:dot]) * denominator + int(t.value[dot + 1:-1]),
                denominator)
-    t.type = 'RATIO_TOK'
+    t.type = 'RATIO'
     return t
 
 def t_ratio_4(t):
@@ -236,16 +236,16 @@ def t_ratio_4(t):
     '''
     denominator = 10**(len(t.value) - 2)
     t.value = (int(t.value[1:-1]), denominator)
-    t.type = 'RATIO_TOK'
+    t.type = 'RATIO'
     return t
 
-def t_hex_RATIO_TOK(t):
+def t_hex_RATIO(t):
     r'''0[xX][0-9a-fA-F]+/[0-9a-fA-F]+ # ratio
         (?=[]) \r\n])                  # followed by ], ), space or newline
     '''
     slash = t.value.index('/')
     t.value = (int(t.value[:slash], 16), int(t.value[slash+1:], 16))
-    t.type = 'RATIO_TOK'
+    t.type = 'RATIO'
     return t
 
 def t_hex_ratio_2(t):
@@ -260,7 +260,7 @@ def t_hex_ratio_2(t):
     t.value = (int(t.value[:dot], 16) * denominator +
                  int(t.value[dot + 1:slash], 16),
                denominator)
-    t.type = 'RATIO_TOK'
+    t.type = 'RATIO'
     return t
 
 def t_hex_ratio_3(t):
@@ -274,7 +274,7 @@ def t_hex_ratio_3(t):
     t.value = (int(t.value[:dot], 16) * denominator +
                  int(t.value[dot + 1:-1], 16),
                denominator)
-    t.type = 'RATIO_TOK'
+    t.type = 'RATIO'
     return t
 
 def t_hex_ratio_4(t):
@@ -285,10 +285,10 @@ def t_hex_ratio_4(t):
     '''
     denominator = 16**(len(t.value) - 4)
     t.value = (int(t.value[3:-1], 16), denominator)
-    t.type = 'RATIO_TOK'
+    t.type = 'RATIO'
     return t
 
-def t_APPROX_NUMBER_TOK(t):
+def t_APPROX_NUMBER(t):
     # All decimal forms with a '.':
     r'''(?: [0-9]+ \.[0-9]* | \.[0-9]+ )
         (?: ~[0-9] )?
@@ -304,10 +304,10 @@ def t_approx_2(t):
         (?=[]) \r\n])    # followed by ], ), space or newline
     '''
     t.value = approx(t.value.lower())
-    t.type = 'APPROX_NUMBER_TOK'
+    t.type = 'APPROX_NUMBER'
     return t
 
-def t_hex_APPROX_NUMBER_TOK(t):
+def t_hex_APPROX_NUMBER(t):
     # All hex forms with a '.':
     r'''0[xX] (?: [0-9a-fA-F]+ \.[0-9a-fA-F]* | \.[0-9a-fA-F]+ )
               (?: ~[0-9a-fA-F] )?
@@ -315,7 +315,7 @@ def t_hex_APPROX_NUMBER_TOK(t):
         (?=[]) \r\n])    # followed by ], ), space or newline
     '''
     t.value = approx(t.value[2:].lower(), 16)
-    t.type = 'APPROX_NUMBER_TOK'
+    t.type = 'APPROX_NUMBER'
     return t
 
 def t_hex_approx_2(t):
@@ -326,10 +326,10 @@ def t_hex_approx_2(t):
         (?=[]) \r\n])    # followed by ], ), space or newline
     '''
     t.value = approx(t.value[2:].lower(), 16)
-    t.type = 'APPROX_NUMBER_TOK'
+    t.type = 'APPROX_NUMBER'
     return t
 
-def t_NAME_TOK(t):
+def t_NAME(t):
     r'''[^[( \r\n"'#-]     # first character
         [^[( \r\n]*        # middle characters
         [^])[( \r\n:]      # last character
@@ -339,7 +339,7 @@ def t_NAME_TOK(t):
         t.type = t.value.token
     return t
 
-def t_NAME_TOK_1(t):
+def t_NAME_1(t):
     r'''[^])[( \r\n:"'#-]
         (?=[][() \r\n])    # followed by [, ], (, ), space or newline
     '''
@@ -347,7 +347,7 @@ def t_NAME_TOK_1(t):
         t.value = Word_dict[t.value]
         t.type = t.value.token
     else:
-        t.type = 'NAME_TOK'
+        t.type = 'NAME'
     return t
 
 def t_negate(t):
@@ -359,7 +359,7 @@ def t_negate(t):
         t.type = t.value.token
     else:
         t.value = 'negate'
-        t.type = 'NAME_TOK'
+        t.type = 'NAME'
     return t
 
 def t_minus(t):
@@ -371,7 +371,7 @@ def t_minus(t):
         t.type = t.value.token
     else:
         t.value = '-'
-        t.type = 'NAME_TOK'
+        t.type = 'NAME'
     return t
 
 def t_ANY_error(t):
@@ -479,12 +479,12 @@ def init(debug_param, word_dict = {}):
         >>> import scanner
         >>> import scanner_init
         >>> scanner_init.tokenize(scanner, '22\n')
-        LexToken(INTEGER_TOK,22,1,0)
+        LexToken(INTEGER,22,1,0)
         LexToken(NEWLINE_TOK,'\n',1,2)
         >>> scanner_init.tokenize(scanner,
         ...                       '# comment1\n\n    \n    # comment2\n44\n')
         LexToken(NEWLINE_TOK,'\n',4,31)
-        LexToken(INTEGER_TOK,44,5,32)
+        LexToken(INTEGER,44,5,32)
         LexToken(NEWLINE_TOK,'\n',5,34)
     '''
     global Last_colonindent, debug

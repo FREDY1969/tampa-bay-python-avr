@@ -9,7 +9,7 @@ def p_hi_0001(p):
     '''
     args = []
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[1], *args)
-None
+set(['DAD_TOK'])
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() dad")
 <BLANKLINE>
@@ -19,7 +19,7 @@ def p_hi_0002(p):
     args = []
     args.append(p[2])
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[1], *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() '+' dad")
 <BLANKLINE>
@@ -29,7 +29,7 @@ def p_hi_0003(p):
     args = []
     args.append(p[3])
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[1], *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom '+'() dad")
 <BLANKLINE>
@@ -40,7 +40,7 @@ def p_hi_0004(p):
     args.append(p[1])
     args.append(p[3])
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[2], *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom dad()")
 <BLANKLINE>
@@ -50,7 +50,7 @@ def p_hi_0005(p):
     args = []
     args.append(p[1])
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[2], *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom as cond dad()")
 <BLANKLINE>
@@ -61,7 +61,7 @@ def p_hi_0006(p):
     args = []
     args.append(p[1])
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[2], *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi(kind='foobar'): mom dad")
 <BLANKLINE>
@@ -72,7 +72,7 @@ def p_hi_0007(p):
     args.append(p[1])
     args.append(p[2])
     p[0] = ast.ast(p[1], p[len(p) - 1], kind='foobar', *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom(foo=1,bar='baz') DAD")
 <BLANKLINE>
@@ -82,7 +82,7 @@ def p_hi_0008(p):
     args = []
     args.append(p[2])
     p[0] = ast.ast(p[1], p[len(p) - 1], foo=1, bar='baz', *args)
-None
+set(['DAD'])
 
 >>> parser_init.test(metaparser, metascanner,
 ...                  "hi: mom(w_id=p[%s]) [dad]")
@@ -93,7 +93,7 @@ def p_hi_0009(p):
     args = []
     args.append(p[2])
     p[0] = ast.ast(p[1], p[len(p) - 1], w_id=p[1], *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() | dad()")
 <BLANKLINE>
@@ -108,7 +108,7 @@ def p_hi_0011(p):
     '''
     args = []
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[1], *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() dad?")
 <BLANKLINE>
@@ -129,7 +129,7 @@ def p_hi_0012(p):
     args = []
     args.append(p[2])
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[1], *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() dad+")
 <BLANKLINE>
@@ -151,7 +151,7 @@ def p_hi_0013(p):
     args = []
     args.append(p[2])
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[1], *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() dad*")
 <BLANKLINE>
@@ -172,7 +172,7 @@ def p_hi_0014(p):
     args = []
     args.append(p[2])
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[1], *args)
-None
+set()
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() dad...")
 <BLANKLINE>
@@ -193,5 +193,5 @@ def p_hi_0015(p):
     args = []
     args.extend(p[2])
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[1], *args)
-None
+set()
 
