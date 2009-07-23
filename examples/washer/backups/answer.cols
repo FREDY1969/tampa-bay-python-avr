@@ -2262,7 +2262,7 @@ question_id	1
 
 parent	None
 
-position	2
+position	3
 
 word_id	36
 
@@ -2378,7 +2378,135 @@ position	1
 
 word_id	40
 
-answer	u'IF() expr as condition [series] {ELSE_TOK [series]}'
+answer	u'IF() expr as condition [series] {ELSE_TOK [series]}?'
+
+fixed_data	0
+
+----------------
+
+id	175
+
+question_id	1
+
+parent	None
+
+position	2
+
+word_id	36
+
+answer	u'new syntax keyword'
+
+fixed_data	0
+
+----------------
+
+id	176
+
+question_id	3
+
+parent	175
+
+position	1
+
+word_id	36
+
+answer	u'True'
+
+fixed_data	0
+
+----------------
+
+id	177
+
+question_id	2
+
+parent	175
+
+position	1
+
+word_id	36
+
+answer	u'token value'
+
+fixed_data	0
+
+----------------
+
+id	178
+
+question_id	3
+
+parent	177
+
+position	1
+
+word_id	36
+
+answer	u'False'
+
+fixed_data	0
+
+----------------
+
+id	179
+
+question_id	175
+
+parent	None
+
+position	1
+
+word_id	40
+
+answer	u'if'
+
+fixed_data	0
+
+----------------
+
+id	180
+
+question_id	177
+
+parent	179
+
+position	1
+
+word_id	40
+
+answer	u'IF'
+
+fixed_data	0
+
+----------------
+
+id	181
+
+question_id	175
+
+parent	None
+
+position	2
+
+word_id	40
+
+answer	u'else'
+
+fixed_data	0
+
+----------------
+
+id	182
+
+question_id	177
+
+parent	181
+
+position	1
+
+word_id	40
+
+answer	u'ELSE_TOK'
 
 fixed_data	0
 

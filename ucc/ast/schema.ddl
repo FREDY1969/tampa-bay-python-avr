@@ -15,7 +15,7 @@ create table node (
     expect varchar(255),                       -- what's expected by the parent
     type_id int references type(id),
 
-    word_id int,
+    word varchar(255),
     int1 int,
     int2 int,
     str varchar(2000),

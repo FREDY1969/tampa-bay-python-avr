@@ -1,11 +1,21 @@
 # metaparser.py
 
-""" See http://www.dabeaz.com/ply/ply.html for syntax of grammer definitions.
+"""This parses the metasyntax (used to define parsers).
+
+See the METASYNTAX file for the grammar that this recognizes.
+
+See http://www.dabeaz.com/ply/ply.html for syntax of grammer definitions used
+here.
 """ 
 
 from __future__ import with_statement
+
+import string
+import sys
+
 from ucc.parser import metascanner, scanner_init
 from ucc.ast import ast
+
 
 tokens = metascanner.tokens
 
@@ -53,17 +63,22 @@ def p_append(p):
 def p_rule1(p):
     ''' rule : NONTERMINAL param_list_opt ':' alternatives
     '''
-    rule_name = p[1]
-    param_list = p[2]
-    for words in p[4]:
+    gen_alternatives(p[1], p[4], normal_wrapup, p[2])
+
+def gen_alternatives(rule_name, alternatives, wrapup_fn, param_list = None):
+    for words in alternatives:
         p_fn_name = ast.gensym('p_' + rule_name)
-        print """
-def %s(p):
-    r''' %s : %s
-    '''""" % (p_fn_name, rule_name, ' '.join(word[0] for word in words))
+        output("""
+            def $fn_name(p):
+                r''' $rule_name : $production
+                '''
+            """,
+            fn_name = p_fn_name, rule_name = rule_name,
+            production = ' '.join(word[0] for word in words))
         prep = []
         args = []
         last_arg = None
+        tuple_offset = None
         has_ellipsis = False
         if param_list is not None:
             fn_word_params = param_list
@@ -74,7 +89,7 @@ def %s(p):
         for i, (rule_text, type, offset, prep_code, params) in enumerate(words):
             if prep_code: prep.append(prep_code % {'offset': offset + i + 1})
             if type == 'fn_word':
-                if fn_word_offset:
+                if fn_word_params is not None:
                     scanner_init.syntaxerror(
                       "duplicate function words in production")
                 fn_word_offset = offset + i + 1
@@ -88,6 +103,11 @@ def %s(p):
                     last_arg = offset + i + 1
                 elif type == 'tuple':
                     args.append('args.append(p[%d])' % (offset + i + 1))
+                    if tuple_offset is not None:
+                        if not has_ellipsis:
+                            tuple_offset = 'dup'
+                    else:
+                        tuple_offset = i
                 elif type == 'ellipsis':
                     args.append('args.extend(p[%d])' % (offset + i + 1))
                     has_ellipsis = True
@@ -95,88 +115,64 @@ def %s(p):
         if prep:
             print '\n'.join('    ' + p for p in prep)
 
-        if fn_word_params is None:
-            if has_ellipsis or len(args) != 1 or last_arg is None:
-                scanner_init.syntaxerror("missing function word in production")
-            print "    p[0] = p[%s]" % last_arg
+        wrapup_fn(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
+                  has_ellipsis)
+        print
+
+def normal_wrapup(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
+                  has_ellipsis):
+    if fn_word_params is None:
+        if has_ellipsis or len(args) != 1 or last_arg is None:
+            scanner_init.syntaxerror("missing function word in production")
+        print "    p[0] = p[%s]" % last_arg
+    else:
+        print "    args = []"
+        for arg in args: print "    " + arg
+        if fn_word_params:
+            print "    p[0] = ast.ast(p[1], p[len(p) - 1], %s, *args)" % (
+                     ', '.join("%s=%s" %
+                                 (key, value % {'offset': fn_word_offset})
+                               for key, value in fn_word_params.iteritems())
+                  )
+        elif fn_word_offset is None:
+            scanner_init.syntaxerror(
+              "empty parameter list on nonterminal declaration")
         else:
+            print "    p[0] = ast.ast(p[1], p[len(p) - 1], " \
+                                     "word=p[%s], *args)" % fn_word_offset
+
+def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
+                 has_ellipsis):
+    if fn_word_params is not None:
+        print "    args = []"
+        for arg in args: print "    " + arg
+        if fn_word_params:
+            print "    p[0] = (ast.ast(p[1], p[len(p) - 1], %s, *args),)" \
+                  % ', '.join("%s=%s" %
+                                 (key, value % {'offset': fn_word_offset})
+                               for key, value in fn_word_params.iteritems())
+        else:
+            print "    p[0] = (ast.ast(p[1], p[len(p) - 1], *args),)"
+    elif has_ellipsis:
+        scanner_init.syntaxerror(
+          "ellipsis in production without function word")
+    elif tuple_offset == 'dup':
+        scanner_init.syntaxerror("duplicate tuples in production")
+    elif tuple_offset is None:
+        # Make a singleton tuple out of a single argument.
+        if len(args) == 1:
             print "    args = []"
-            for arg in args: print "    " + arg
-            if fn_word_params:
-                print "    p[0] = ast.ast(p[1], p[len(p) - 1], %s, *args)" % (
-                         ', '.join("%s=%s" %
-                                     (key, value % {'offset': fn_word_offset})
-                                   for key, value in fn_word_params.iteritems())
-                      )
-            elif fn_word_offset is None:
-                scanner_init.syntaxerror(
-                  "empty parameter list on nonterminal declaration")
-            else:
-                print "    p[0] = ast.ast(p[1], p[len(p) - 1], " \
-                      "word_id=p[%s], *args)" % fn_word_offset
+            print '    ' + args[0]
+            print "    p[0] = tuple(args)"
+        else:
+            scanner_init.SyntaxError("no tuple in production")
+    else:
+        print "    p[0] = p[%d]" % (tuple_offset + 1)
 
 def p_rule2(p):
     ''' rule : TUPLE_NONTERMINAL ':' alternatives
     '''
-    rule_name = p[1]
-    for words in p[3]:
-        p_fn_name = ast.gensym('p_' + rule_name)
-        print """
-def %s(p):
-    r''' %s : %s
-    '''""" % (p_fn_name, rule_name, ' '.join(word[0] for word in words))
-        prep = []
-        args = []
-        fn_word_params = None
-        fn_word_offset = None
-        tuple_offset = None
-        for i, (rule_text, type, offset, prep_code, params) in enumerate(words):
-            if prep_code: prep.append(prep_code % {'offset': offset + i + 1})
-            if type == 'fn_word':
-                fn_word_offset = offset + i + 1
-                fn_word_params = params
-            else:
-                assert not params, "non fn_word has parameters"
-                if type == 'ignore':
-                    pass
-                elif type == 'single_arg':
-                    args.append('args.append(p[%d])' % (offset + i + 1))
-                elif type == 'tuple':
-                    args.append('args.append(p[%d])' % (offset + i + 1))
-                    if tuple_offset is not None:
-                        if tuple_offset is not 'ellipsis':
-                            tuple_offset = 'dup'
-                    else:
-                        tuple_offset = i
-                elif type == 'ellipsis':
-                    tuple_offset = 'ellipsis'
-                    args.append('args.extend(p[%d])' % (offset + i + 1))
-        if prep:
-            print '\n'.join('    ' + p for p in prep)
-        if fn_word_offset is not None:
-            print "    args = []"
-            for arg in args: print "    " + arg
-            if fn_word_params:
-                print "    p[0] = (ast.ast(p[1], p[len(p) - 1], %s, *args),)" \
-                      % ', '.join("%s=%s" %
-                                     (key, value % {'offset': fn_word_offset})
-                                   for key, value in fn_word_params.iteritems())
-            else:
-                print "    p[0] = (ast.ast(p[1], p[len(p) - 1], *args),)"
-        elif tuple_offset is None:
-            if len(args) == 1:
-                print "    args = []"
-                print '    ' + args[0]
-                print "    p[0] = tuple(args,)"
-            else:
-                scanner_init.SyntaxError("no tuple in production")
-        elif tuple_offset == 'dup':
-            scanner_init.syntaxerror("duplicate tuples in production")
-        elif tuple_offset == 'ellipsis':
-            scanner_init.syntaxerror(
-              "ellipsis in production without function word")
-        else:
-            print "    p[0] = p[%d]" % (tuple_offset + 1)
+    gen_alternatives(p[1], p[3], wrapup_tuple)
 
 def p_opt_word(p):
     ''' word : sub_rule '?'
@@ -185,20 +181,25 @@ def p_opt_word(p):
     rule_name = ast.gensym('optional')
     p_fn_name_0, p_fn_name_n = \
       ast.gensym('p_optional'), ast.gensym('p_optional')
-    print """
-def %s(p):
-    r''' %s :
-    '''
-    p[0] = None
+    output("""
+        def $fn_name1(p):
+            r''' $rule_name :
+            '''
+            p[0] = None
 
-def %s(p):
-    r''' %s : %s
-    '''
-    %s
-    p[0] = p[%s]""" % \
-      (p_fn_name_0, rule_name, p_fn_name_n, rule_name, rule_text,
-       prep_code % {'offset': offset + 1} if prep_code else '',
-       offset + 1)
+        def $fn_name2(p):
+            r''' $rule_name : $production
+            '''
+            $prep_code
+            p[0] = p[$offset]
+
+        """,
+        fn_name1 = p_fn_name_0,
+        rule_name = rule_name,
+        fn_name2 = p_fn_name_n,
+        production = rule_text,
+        prep_code = prep_code % {'offset': offset + 1} if prep_code else '',
+        offset = offset + 1)
     p[0] = rule_name, type, 0, None, None
 
 def p_one_or_more_word(p):
@@ -209,20 +210,27 @@ def p_one_or_more_word(p):
     p_fn_name_1, p_fn_name_n = \
       ast.gensym('p_one_or_more'), ast.gensym('p_one_or_more')
     prep = prep_code % {'offset': offset + 2} if prep_code else ''
-    print """
-def %s(p):
-    r''' %s : %s
-    '''
-    %s
-    p[0] = (p[%s],)
+    output("""
+        def $fn_name1(p):
+            r''' $rule_name : $production
+            '''
+            $prep_code
+            p[0] = (p[$offset1],)
 
-def %s(p):
-    r''' %s : %s %s
-    '''
-    %s
-    p[0] = p[1] + (p[%s],)""" % \
-      (p_fn_name_1, rule_name, rule_text, prep, offset + 1,
-       p_fn_name_n, rule_name, rule_name, rule_text, prep, offset + 2)
+        def $fn_name2(p):
+            r''' $rule_name : $rule_name $production
+            '''
+            $prep_code
+            p[0] = p[1] + (p[$offset2],)
+
+        """,
+        fn_name1 = p_fn_name_1,
+        rule_name = rule_name,
+        production = rule_text,
+        prep_code = prep,
+        offset1 = offset + 1,
+        fn_name2 = p_fn_name_n,
+        offset2 = offset + 2)
     p[0] = rule_name, 'tuple', 0, None, None
 
 def p_zero_or_more_word(p):
@@ -232,20 +240,25 @@ def p_zero_or_more_word(p):
     rule_name = ast.gensym('zero_or_more')
     p_fn_name_0, p_fn_name_n = \
       ast.gensym('p_zero_or_more'), ast.gensym('p_zero_or_more')
-    print """
-def %s(p):
-    r''' %s :
-    '''
-    p[0] = ()
+    output("""
+        def $fn_name1(p):
+            r''' $rule_name :
+            '''
+            p[0] = ()
 
-def %s(p):
-    r''' %s : %s %s
-    '''
-    %s
-    p[0] = p[1] + (p[%s],)""" % \
-      (p_fn_name_0, rule_name, p_fn_name_n, rule_name, rule_name, rule_text,
-       prep_code % {'offset': offset + 2} if prep_code else '',
-       offset + 2)
+        def $fn_name2(p):
+            r''' $rule_name : $rule_name $production
+            '''
+            $prep_code
+            p[0] = p[1] + (p[$offset],)
+
+        """,
+        fn_name1 = p_fn_name_0,
+        rule_name = rule_name,
+        fn_name2 = p_fn_name_n,
+        production = rule_text,
+        prep_code = prep_code % {'offset': offset + 2} if prep_code else '',
+        offset = offset + 2)
     p[0] = rule_name, 'tuple', 0, None, None
 
 def p_word_ellipsis(p):
@@ -255,20 +268,25 @@ def p_word_ellipsis(p):
     rule_name = ast.gensym('ellipsis')
     p_fn_name_0, p_fn_name_n = \
       ast.gensym('p_ellipsis'), ast.gensym('p_ellipsis')
-    print """
-def %s(p):
-    r''' %s :
-    '''
-    p[0] = ()
+    output("""
+        def $fn_name1(p):
+            r''' $rule_name :
+            '''
+            p[0] = ()
 
-def %s(p):
-    r''' %s : %s %s
-    '''
-    %s
-    p[0] = p[1] + (p[%s],)""" % \
-      (p_fn_name_0, rule_name, p_fn_name_n, rule_name, rule_name, rule_text,
-       prep_code % {'offset': offset + 2} if prep_code else '',
-       offset + 2)
+        def $fn_name2(p):
+            r''' $rule_name : $rule_name $production
+            '''
+            $prep_code
+            p[0] = p[1] + (p[$offset],)
+
+        """,
+        fn_name1 = p_fn_name_0,
+        rule_name = rule_name,
+        fn_name2 = p_fn_name_n,
+        production = rule_text,
+        prep_code = prep_code % {'offset': offset + 2} if prep_code else '',
+        offset = offset + 2)
     p[0] = rule_name, 'ellipsis', 0, None, None
 
 def p_parameterized_word(p):
@@ -295,7 +313,9 @@ def p_sub_rule(p):
 def p_sub_rule2(p):
     ''' sub_rule : '{' alternatives '}'
     '''
-    assert False, "{ alternatives } not yet implemented"
+    rule_name = ast.gensym('sub_rule')
+    gen_alternatives(rule_name, p[2], normal_wrapup)
+    p[0] = rule_name, 'single_arg', 0, None, None
 
 def p_token_ignore(p):
     ''' simple_word : TOKEN_IGNORE
@@ -357,6 +377,24 @@ def p_error(t):
         raise SyntaxError("invalid syntax", scanner_init.syntaxerror_params())
     else:
         raise SyntaxError("invalid syntax", scanner_init.syntaxerror_params(t))
+
+def output(str, **kws):
+    sys.stdout.write(string.Template(strip_indent(str)).substitute(kws))
+
+def strip_indent(str):
+    r'''Strip initial indent off of all lines in str.
+
+    >>> strip_indent('    hi\n    mom\n        indented\n')
+    'hi\nmom\n    indented\n'
+    >>> strip_indent('\n    hi\n    mom\n        indented\n')
+    'hi\nmom\n    indented\n'
+    '''
+    assert '\t' not in str, "tabs not allowed in output strings"
+    str = str.replace('\r', '')
+    if str[0] == '\n': str = str[1:]
+    stripped = str.lstrip(' ')
+    indent = len(str) - len(stripped)
+    return stripped.replace('\n' + ' ' * indent, '\n')
 
 def init():
     global Tokens_used
