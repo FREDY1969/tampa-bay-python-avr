@@ -2,6 +2,8 @@
 
 # parse.py
 
+from __future__ import with_statement
+
 import sys
 import os.path
 import sqlite3 as db
@@ -15,13 +17,23 @@ sys.path[0] = os.path.abspath(os.path.join('..', '..',
 from ucc.parser import parser, scanner, parser_init, ast
 
 def usage():
-    sys.stderr.write("usage: gen_parser.py file\n")
+    sys.stderr.write("usage: parse.py file\n")
     sys.exit(2)
 
 def run():
     if len(sys.argv) != 2: usage()
 
-    ast = parser_init.parse(parser, scanner, sys.argv[1], extra_arg = word_dict)
+    ast = parser_init.parse(parser, scanner, sys.argv[1], parser.token_dict)
+
+    if not os.path.exists(db_filename):
+        db_conn = db.connect(db_filename)
+        db_cur = db_conn.cursor()
+        with open("../ast/schema.ddl") as f:
+            commands = f.read().split(';')
+        for command in commands:
+            db_cur.execute(command)
+        db_conn.commit()
+        db_conn.close()
 
     db_conn = db.connect(db_filename)
     try:

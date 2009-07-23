@@ -6,7 +6,7 @@ This is the AST representation created by the parser.  At the end of the
 parse, this structure is stored into the database and then discarded.
 '''
 
-from ucc.parser import scanner
+from ucc.parser import scanner_init
 
 class ast(object):
     attr_cols = (
@@ -27,17 +27,13 @@ class ast(object):
     expect = 'value'
     word = int1 = int2 = str = None
 
-    def __init__(self, tok_start = None, tok_end = None, *args, **kws):
+    def __init__(self, p, *args, **kws):
         self.args = args
-        for name, value in kws:
+        for name, value in kws.iteritems():
             setattr(self, name, value)
 
-        if tok_start is None:
-            tok_start = fn
-        if tok_end is None:
-            tok_end = tok_start
-        self.line_start, self.column_start = get_lineno_column(tok_start)
-        self.line_end, self.column_end = get_lineno_column(tok_end)
+        self.line_start, self.column_start = get_lineno_column(p, 1)
+        self.line_end, self.column_end = get_lineno_column(p, len(p) - 1)
 
     def save(self, db_cur,
              parent = None, parent_arg_num = None, arg_position = None):
@@ -61,6 +57,6 @@ def insert(ast, db_conn):
         db_conn.rollback()
         raise
 
-def get_lineno_column(tok):
-    return tok.lineno, scanner.get_col_line(tok.lexer.lexdata, tok.lexpos)[0]
+def get_lineno_column(p, index):
+    return p.lineno(index), scanner_init.get_col_line(p.lexpos(index))[0]
 

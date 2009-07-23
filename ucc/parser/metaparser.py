@@ -49,16 +49,20 @@ def p_empty_tuple(p):
     '''
     p[0] = ()
 
-def p_singleton_tuple(p):
-    ''' alternatives : production
-    '''
-    p[0] = (p[1],)
-
 def p_append(p):
-    ''' alternatives : alternatives '|' production
-        production : production word
+    ''' production : production word
     '''
     p[0] = p[1] + (p[len(p) - 1],)
+
+def p_alternatives_1(p):
+    ''' alternatives : production
+    '''
+    p[0] = ((p[1], p.lineno(1), p.lexpos(1)),)
+
+def p_alternatives_n(p):
+    ''' alternatives : alternatives '|' production
+    '''
+    p[0] = p[1] + ((p[len(p) - 1], p.lineno(3), p.lexpos(3)),)
 
 def p_rule1(p):
     ''' rule : NONTERMINAL param_list_opt ':' alternatives
@@ -66,7 +70,7 @@ def p_rule1(p):
     gen_alternatives(p[1], p[4], normal_wrapup, p[2])
 
 def gen_alternatives(rule_name, alternatives, wrapup_fn, param_list = None):
-    for words in alternatives:
+    for words, lineno, lexpos in alternatives:
         p_fn_name = ast.gensym('p_' + rule_name)
         output("""
             def $fn_name(p):
@@ -91,7 +95,8 @@ def gen_alternatives(rule_name, alternatives, wrapup_fn, param_list = None):
             if type == 'fn_word':
                 if fn_word_params is not None:
                     scanner_init.syntaxerror(
-                      "duplicate function words in production")
+                      "duplicate function words in production",
+                      lineno = lineno, lexpos = lexpos)
                 fn_word_offset = offset + i + 1
                 fn_word_params = params
             else:
@@ -116,48 +121,51 @@ def gen_alternatives(rule_name, alternatives, wrapup_fn, param_list = None):
             print '\n'.join('    ' + p for p in prep)
 
         wrapup_fn(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
-                  has_ellipsis)
+                  has_ellipsis, lineno, lexpos)
         print
 
 def normal_wrapup(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
-                  has_ellipsis):
+                  has_ellipsis, lineno, lexpos):
+    print "    args = []"
+    for arg in args: print "    " + arg
     if fn_word_params is None:
-        if has_ellipsis or len(args) != 1 or last_arg is None:
-            scanner_init.syntaxerror("missing function word in production")
-        print "    p[0] = p[%s]" % last_arg
+        if not has_ellipsis and len(args) == 1:
+            print "    p[0] = args[0]"
+        else:
+            print "    p[0] = tuple(args)"
     else:
-        print "    args = []"
-        for arg in args: print "    " + arg
         if fn_word_params:
-            print "    p[0] = ast.ast(p[1], p[len(p) - 1], %s, *args)" % (
+            print "    p[0] = ast.ast(p, %s, *args)" % (
                      ', '.join("%s=%s" %
                                  (key, value % {'offset': fn_word_offset})
                                for key, value in fn_word_params.iteritems())
                   )
         elif fn_word_offset is None:
             scanner_init.syntaxerror(
-              "empty parameter list on nonterminal declaration")
+              "empty parameter list on nonterminal declaration",
+              lineno = lineno, lexpos = lexpos)
         else:
-            print "    p[0] = ast.ast(p[1], p[len(p) - 1], " \
-                                     "word=p[%s], *args)" % fn_word_offset
+            print "    p[0] = ast.ast(p, word=p[%s], *args)" % fn_word_offset
 
 def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
-                 has_ellipsis):
+                 has_ellipsis, lineno, lexpos):
     if fn_word_params is not None:
         print "    args = []"
         for arg in args: print "    " + arg
         if fn_word_params:
-            print "    p[0] = (ast.ast(p[1], p[len(p) - 1], %s, *args),)" \
+            print "    p[0] = (ast.ast(p, %s, *args),)" \
                   % ', '.join("%s=%s" %
                                  (key, value % {'offset': fn_word_offset})
                                for key, value in fn_word_params.iteritems())
         else:
-            print "    p[0] = (ast.ast(p[1], p[len(p) - 1], *args),)"
+            print "    p[0] = (ast.ast(p, *args),)"
     elif has_ellipsis:
         scanner_init.syntaxerror(
-          "ellipsis in production without function word")
+          "ellipsis in production without function word",
+          lineno = lineno, lexpos = lexpos)
     elif tuple_offset == 'dup':
-        scanner_init.syntaxerror("duplicate tuples in production")
+        scanner_init.syntaxerror("duplicate tuples in production",
+                                 lineno = lineno, lexpos = lexpos)
     elif tuple_offset is None:
         # Make a singleton tuple out of a single argument.
         if len(args) == 1:
@@ -294,7 +302,8 @@ def p_parameterized_word(p):
     '''
     rule_text, type, offset, prep_code, params = p[1]
     if params:
-        scanner_init.syntaxerror("duplicate initialization parameters")
+        scanner_init.syntaxerror("duplicate initialization parameters",
+                                 lineno=p.lineno(2), lexpos=p.lexpos(2))
     param_list = p[2]
     p[0] = rule_text, 'fn_word', offset, prep_code, param_list
 
