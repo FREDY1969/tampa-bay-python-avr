@@ -2,6 +2,7 @@
 
 import sys
 import os.path
+import re
 from ply import lex
 
 Lexer = None
@@ -58,20 +59,26 @@ def init(scanner_module, debug_param, check_tables = False, extra_arg = None):
         scanner_module.init(debug_param, extra_arg)
     if Lexer is None:
         if debug_param:
-            Lexer = lex.lex(module=scanner_module, debug=1)
+            Lexer = lex.lex(module=scanner_module, reflags=re.VERBOSE, debug=1)
         else:
-            module_name = scanner_module.__name__.split('.')[-1]
-            tables_name = "%s_tables" % module_name
+            tables_name = scanner_module.__name__ + "_tables"
+            #module_name = scanner_module.__name__.split('.')[-1]
+            #tables_name = "%s_tables" % module_name
             if check_tables:
                 scanner_mtime = os.path.getmtime(scanner_module.__file__)
                 tables_path = \
                     os.path.join(os.path.dirname(scanner_module.__file__),
-                                 tables_name + '.py')
+                                 tables_name.split('.')[-1] + '.py')
+                #sys.stderr.write("tables_path: %r\n" % tables_path)
                 try:
                     ok = os.path.getmtime(tables_path) >= scanner_mtime
+                    #sys.stderr.write("********tables_path exists: ok is %r\n"
+                    #                   % ok)
                 except OSError:
+                    #sys.stderr.write("********tables_path does not exist\n")
                     ok = False
                 if not ok:
+                    #sys.stderr.write("********removing scanner_tables\n")
                     #print "regenerating scanner_tables"
                     try: os.remove(tables_path)
                     except OSError: pass
@@ -81,12 +88,13 @@ def init(scanner_module, debug_param, check_tables = False, extra_arg = None):
                     except OSError: pass
             Lexer = lex.lex(module=scanner_module, optimize=1,
                             lextab=tables_name,
+                            reflags=re.VERBOSE,
                             outputdir=os.path.dirname(scanner_module.__file__))
 
 def tokenize(scanner_module, s, extra_arg = None):
     r'''A function to help with testing your scanner.
 
-        #>>> import scanner
+        #>>> from ucc.parser import scanner
         #>>> tokenize(scanner, '22\n')
         #LexToken(INTEGER_TOK,22,1,0)
         #LexToken(NEWLINE_TOK,'\n',1,2)
@@ -102,6 +110,6 @@ def tokenize(scanner_module, s, extra_arg = None):
     Lexer.input(s)
     Lexer.begin('INITIAL')
     while True:
-        t = lex.token()
+        t = Lexer.token()
         if not t: break
         print t
