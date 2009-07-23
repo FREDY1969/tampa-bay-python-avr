@@ -36,7 +36,7 @@ def init(parser_module, check_tables = False, debug = 0):
                     except OSError: pass
             Parser = yacc.yacc(module=parser_module, debug=0,
                                optimize=1, write_tables=1,
-                               tabmodule=module_name + '_tables',
+                               tabmodule=parser_module.__name__ + '_tables',
                                outputdir=outputdir)
 
 # Use the debug = 0 for normal use, and debug = 1 for testing changes in the

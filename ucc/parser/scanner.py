@@ -507,8 +507,8 @@ def approx(s, base = 10):
 
 def init(debug_param, token_dict = {}):
     r'''
-        >>> import scanner
-        >>> import scanner_init
+        >>> from ucc.parser import scanner
+        >>> from ucc.parser import scanner_init
         >>> scanner_init.tokenize(scanner, '22\n')
         LexToken(INTEGER,22,1,0)
         LexToken(NEWLINE_TOK,'\n',1,2)
