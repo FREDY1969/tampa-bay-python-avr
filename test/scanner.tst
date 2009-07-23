@@ -101,32 +101,29 @@ LexToken(APPROX_NUMBER,(291, -4),1,70)
 LexToken(NAME,'0x12.3.',1,0)
 LexToken(NAME,'0X123~1-',1,8)
 LexToken(NAME,'*22~1',1,17)
-LexToken(NAME,'>0X123.5',1,23)
-LexToken(NAME,'>"0x123.5~1',1,32)
+LexToken(ARG_LEFT_WORD,'>0X123.5',1,23)
+LexToken(ARG_LEFT_WORD,'>"0x123.5~1',1,32)
 LexToken(NAME,"0X123~1x1'",1,44)
 
 >>> scanner_init.tokenize(scanner, '+ - * -a ~')
-LexToken(NAME,'+',1,0)
-LexToken(NAME,'-',1,2)
-LexToken(NAME,'*',1,4)
-LexToken(NAME,'negate',1,6)
+LexToken(+,'+',1,0)
+LexToken(-,'-',1,2)
+LexToken(*,'*',1,4)
+LexToken(NEGATE,'negate',1,6)
 LexToken(NAME,'a',1,7)
 LexToken(NAME,'~',1,9)
 
->>> class word(object):
-...     def __init__(self, name, token):
-...         self.name = name
-...         self.token = token
-...     def __repr__(self): return "<word %s>" % self.name
->>> word_dict = {'>foo': word('>foo', 'ARG_LEFT_WORD'),
-...              'bar<': word('bar<', 'ARG_RIGHT_WORD'),
-...              '+': word('+', '+'),
+>>> token_dict = {'if': 'IF',
+...               'else': 'ELSE_TOK',
+...               'elif': 'ELIF_TOK',
 ... }
 
->>> scanner_init.tokenize(scanner, 'x >foo bar< + 7', word_dict)
+>>> scanner_init.tokenize(scanner, 'x if bar< elif "hi" else 7', token_dict)
 LexToken(NAME,'x',1,0)
-LexToken(ARG_LEFT_WORD,<word >foo>,1,2)
-LexToken(ARG_RIGHT_WORD,<word bar<>,1,7)
-LexToken(+,<word +>,1,12)
-LexToken(INTEGER,7,1,14)
+LexToken(IF,'if',1,2)
+LexToken(ARG_RIGHT_WORD,'bar<',1,5)
+LexToken(ELIF_TOK,'elif',1,10)
+LexToken(STRING,'hi',1,15)
+LexToken(ELSE_TOK,'else',1,20)
+LexToken(INTEGER,7,1,25)
 

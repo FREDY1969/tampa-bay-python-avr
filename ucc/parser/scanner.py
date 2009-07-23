@@ -377,6 +377,8 @@ def t_NAME_n(t):
         t.type = 'ARG_LEFT_WORD'
     elif t.value[-1] == '<':
         t.type = 'ARG_RIGHT_WORD'
+    else:
+        t.type = 'NAME'
     return t
 
 def t_NAME(t):
@@ -393,6 +395,7 @@ def t_NEGATE(t):
     r'''-
         (?=[^]) \r\n])  # followed by name, number, string, -, ( or [
     '''
+    t.value = 'negate'
     return t
 
 def t_minus(t):
