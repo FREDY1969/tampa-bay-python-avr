@@ -7,7 +7,7 @@ def p_hi_0001(p):
     r''' hi : mom DAD_TOK
     '''
     args = []
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[1], *args)
+    p[0] = ast.ast(p, word=p[1], *args)
 <BLANKLINE>
 set(['DAD_TOK'])
 
@@ -17,7 +17,7 @@ def p_hi_0002(p):
     '''
     args = []
     args.append(p[2])
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[1], *args)
+    p[0] = ast.ast(p, word=p[1], *args)
 <BLANKLINE>
 set()
 
@@ -27,7 +27,7 @@ def p_hi_0003(p):
     '''
     args = []
     args.append(p[3])
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[1], *args)
+    p[0] = ast.ast(p, word=p[1], *args)
 <BLANKLINE>
 set()
 
@@ -38,7 +38,7 @@ def p_hi_0004(p):
     args = []
     args.append(p[1])
     args.append(p[3])
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[2], *args)
+    p[0] = ast.ast(p, word=p[2], *args)
 <BLANKLINE>
 set()
 
@@ -48,7 +48,7 @@ def p_hi_0005(p):
     '''
     args = []
     args.append(p[1])
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[2], *args)
+    p[0] = ast.ast(p, word=p[2], *args)
 <BLANKLINE>
 set()
 
@@ -59,7 +59,7 @@ def p_hi_0006(p):
     p[1].expect = 'cond'
     args = []
     args.append(p[1])
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[2], *args)
+    p[0] = ast.ast(p, word=p[2], *args)
 <BLANKLINE>
 set()
 
@@ -70,7 +70,7 @@ def p_hi_0007(p):
     args = []
     args.append(p[1])
     args.append(p[2])
-    p[0] = ast.ast(p[1], p[len(p) - 1], kind='foobar', *args)
+    p[0] = ast.ast(p, kind='foobar', *args)
 <BLANKLINE>
 set()
 
@@ -80,7 +80,7 @@ def p_hi_0008(p):
     '''
     args = []
     args.append(p[2])
-    p[0] = ast.ast(p[1], p[len(p) - 1], foo=1, bar='baz', *args)
+    p[0] = ast.ast(p, foo=1, bar='baz', *args)
 <BLANKLINE>
 set(['DAD'])
 
@@ -91,7 +91,7 @@ def p_hi_0009(p):
     '''
     args = []
     args.append(p[2])
-    p[0] = ast.ast(p[1], p[len(p) - 1], w_id=p[1], *args)
+    p[0] = ast.ast(p, w_id=p[1], *args)
 <BLANKLINE>
 set()
 
@@ -100,13 +100,13 @@ def p_hi_0010(p):
     r''' hi : mom
     '''
     args = []
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[1], *args)
+    p[0] = ast.ast(p, word=p[1], *args)
 <BLANKLINE>
 def p_hi_0011(p):
     r''' hi : dad
     '''
     args = []
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[1], *args)
+    p[0] = ast.ast(p, word=p[1], *args)
 <BLANKLINE>
 set()
 
@@ -127,7 +127,7 @@ def p_hi_0012(p):
     '''
     args = []
     args.append(p[2])
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[1], *args)
+    p[0] = ast.ast(p, word=p[1], *args)
 <BLANKLINE>
 set()
 
@@ -149,7 +149,7 @@ def p_hi_0013(p):
     '''
     args = []
     args.append(p[2])
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[1], *args)
+    p[0] = ast.ast(p, word=p[1], *args)
 <BLANKLINE>
 set()
 
@@ -170,7 +170,7 @@ def p_hi_0014(p):
     '''
     args = []
     args.append(p[2])
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[1], *args)
+    p[0] = ast.ast(p, word=p[1], *args)
 <BLANKLINE>
 set()
 
@@ -191,7 +191,7 @@ def p_hi_0015(p):
     '''
     args = []
     args.extend(p[2])
-    p[0] = ast.ast(p[1], p[len(p) - 1], word=p[1], *args)
+    p[0] = ast.ast(p, word=p[1], *args)
 <BLANKLINE>
 set()
 

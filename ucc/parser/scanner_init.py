@@ -7,28 +7,29 @@ from ply import lex
 
 Lexer = None
 
-def get_col_line(lexdata, lexpos):
+def get_col_line(lexpos, lexdata = None):
     r'''Returns the line and column number for the given lexdata and lexpos.
 
     The lexdata is the entire input file and lexpos is the offset within
     lexdata.
 
     >>> lexdata = "hi there\ndid you see this?\r\n   I hope so!"
-    >>> get_col_line(lexdata, lexdata.index('h'))
+    >>> get_col_line(lexdata.index('h'), lexdata)
     (1, 'hi there')
-    >>> get_col_line(lexdata, lexdata.index('t'))
+    >>> get_col_line(lexdata.index('t'), lexdata)
     (4, 'hi there')
-    >>> get_col_line(lexdata, lexdata.index('d'))
+    >>> get_col_line(lexdata.index('d'), lexdata)
     (1, 'did you see this?')
-    >>> get_col_line(lexdata, lexdata.index('y'))
+    >>> get_col_line(lexdata.index('y'), lexdata)
     (5, 'did you see this?')
-    >>> get_col_line(lexdata, lexdata.index('?'))
+    >>> get_col_line(lexdata.index('?'), lexdata)
     (17, 'did you see this?')
-    >>> get_col_line(lexdata, lexdata.index('p'))
+    >>> get_col_line(lexdata.index('p'), lexdata)
     (8, '   I hope so!')
-    >>> get_col_line(lexdata, lexdata.index('!'))
+    >>> get_col_line(lexdata.index('!'), lexdata)
     (13, '   I hope so!')
     '''
+    if lexdata is None: lexdata = Lexer.lexdata
     start = lexdata.rfind('\n', 0, lexpos) + 1
     if start < 0: start = 0
     column = lexpos - start + 1
@@ -37,13 +38,16 @@ def get_col_line(lexdata, lexpos):
     if lexdata[end - 1] == '\r': end -= 1
     return column, lexdata[start:end]
 
-def syntaxerror_params(t = None):
-    return (Lexer.filename, Lexer.lineno) + \
-           get_col_line(Lexer.lexdata, (t.lexpos if t else Lexer.lexpos))
+def syntaxerror_params(t = None, lineno = None, lexpos = None):
+    if lexpos is None:
+        if t is None: lexpos = Lexer.lexpos
+        else: lexpos = t.lexpos
+    if lineno is None: lineno = Lexer.lineno
+    return (Lexer.filename, lineno) + get_col_line(lexpos)
 
-def syntaxerror(msg, t = None):
+def syntaxerror(msg, t = None, lineno = None, lexpos = None):
     r'''Prints out syntax error info to stderr, then raises SyntaxError.'''
-    filename, lineno, column, line = syntaxerror_params(t)
+    filename, lineno, column, line = syntaxerror_params(t, lineno, lexpos)
     sys.stderr.write("SyntaxError in file %r at line %d:\n" % 
                        (filename, lineno))
     sys.stderr.write("    %s\n" % line)
