@@ -16,15 +16,29 @@ states = (
 )
 
 tokens = (
+    'AND',
     'APPROX_NUMBER',
+    'ARG_LEFT_WORD',
+    'ARG_RIGHT_WORD',
+    'BIT_AND',
+    'BIT_NOT',
+    'BIT_OR',
+    'BIT_XOR',
     'CHAR',
     'DEINDENT_TOK',
+    'EQ',
+    'GE',
     'INDENT_TOK',
     'INTEGER',
     'LB_TOK',
+    'LE',
     'LP_TOK',
     'NAME',
+    'NE',
+    'NEGATE',
     'NEWLINE_TOK',
+    'NOT',
+    'OR',
     'RATIO',
     'START_SERIES_TOK',
     'STRING',
@@ -179,21 +193,6 @@ def t_LB_TOK(t):
     '''
     return t
 
-def t_INTEGER(t):
-    r'''[0-9]+
-        (?=[]) \r\n])   # followed by ], ), space or newline
-    '''
-    t.value = int(t.value)
-    return t
-
-def t_hex_INTEGER(t):
-    r'''0[xX][0-9]+
-        (?=[]) \r\n])   # followed by ], ), space or newline
-    '''
-    t.value = int(t.value, 16)
-    t.type = 'INTEGER'
-    return t
-
 def t_RATIO(t):
     r'''[0-9]+/[0-9]+   # ratio
         (?=[]) \r\n])   # followed by ], ), space or newline
@@ -329,49 +328,78 @@ def t_hex_approx_2(t):
     t.type = 'APPROX_NUMBER'
     return t
 
-def t_NAME(t):
+def t_INTEGER(t):
+    r'''[0-9]+
+        (?=[]) \r\n])   # followed by ], ), space or newline
+    '''
+    t.value = int(t.value)
+    return t
+
+def t_hex_INTEGER(t):
+    r'''0[xX][0-9]+
+        (?=[]) \r\n])   # followed by ], ), space or newline
+    '''
+    t.value = int(t.value, 16)
+    t.type = 'INTEGER'
+    return t
+
+Names = {
+    '<': '<',
+    '>': '>',
+    '-': '-',
+    '/': '/',
+    '*': '*',
+    '%': '%',
+    '+': '+',
+    'and': 'AND',
+    'bit_and': 'BIT_AND',
+    'bit_not': 'BIT_NOT',
+    'bit_or': 'BIT_OR',
+    'bit_xor': 'BIT_XOR',
+    '==': 'EQ',
+    '>=': 'GE',
+    '<=': 'LE',
+    '!=': 'NE',
+    'not': 'NOT',
+    'or': 'OR',
+}
+
+def t_NAME_n(t):
     r'''[^[( \r\n"'#-]     # first character
         [^[( \r\n]*        # middle characters
         [^])[( \r\n:]      # last character
     '''
-    if t.value in Word_dict:
-        t.value = Word_dict[t.value]
-        t.type = t.value.token
+    if t.value in Names:
+        t.type = Names[t.value]
+    elif t.value in Token_dict:
+        t.type = Token_dict[t.value]
+    elif t.value[0] == '>':
+        t.type = 'ARG_LEFT_WORD'
+    elif t.value[-1] == '<':
+        t.type = 'ARG_RIGHT_WORD'
     return t
 
-def t_NAME_1(t):
+def t_NAME(t):
     r'''[^])[( \r\n:"'#-]
         (?=[][() \r\n])    # followed by [, ], (, ), space or newline
     '''
-    if t.value in Word_dict:
-        t.value = Word_dict[t.value]
-        t.type = t.value.token
-    else:
-        t.type = 'NAME'
+    if t.value in Names:
+        t.type = Names[t.value]
+    elif t.value in Token_dict:
+        t.type = Token_dict[t.value]
     return t
 
-def t_negate(t):
+def t_NEGATE(t):
     r'''-
         (?=[^]) \r\n])  # followed by name, number, string, -, ( or [
     '''
-    if 'negate' in Word_dict:
-        t.value = Word_dict['negate']
-        t.type = t.value.token
-    else:
-        t.value = 'negate'
-        t.type = 'NAME'
     return t
 
 def t_minus(t):
     r'''-
         (?=[]) \r\n])   # followed by space, newline, ] or )
     '''
-    if '-' in Word_dict:
-        t.value = Word_dict['-']
-        t.type = t.value.token
-    else:
-        t.value = '-'
-        t.type = 'NAME'
+    t.type = '-'
     return t
 
 def t_ANY_error(t):
@@ -474,7 +502,7 @@ def approx(s, base = 10):
             binary_pt -= 1
     return largest_ok
 
-def init(debug_param, word_dict = {}):
+def init(debug_param, token_dict = {}):
     r'''
         >>> import scanner
         >>> import scanner_init
@@ -488,8 +516,8 @@ def init(debug_param, word_dict = {}):
         LexToken(NEWLINE_TOK,'\n',5,34)
     '''
     global Last_colonindent, debug
-    global Word_dict
+    global Token_dict
     Last_colonindent = 0
     debug = debug_param
-    Word_dict = word_dict
+    Token_dict = token_dict
 

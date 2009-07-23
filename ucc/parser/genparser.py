@@ -38,7 +38,8 @@ precedence = (
     ('left', 'BIT_AND'),
     ('right', 'NEGATE', 'BIT_NOT'),
     ('left', ')'),
-)"""
+)
+"""
 
     tokens = sorted(parser_init.parse(metaparser, metascanner, sys.argv[1])
                      .union(scanner.tokens))

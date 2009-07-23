@@ -1,8 +1,8 @@
 file(kind='word_body') : statement as statement+
 
-simple_statement : WORD() expr* NEWLINE_TOK
+simple_statement : NAME() expr* NEWLINE_TOK
 statement : simple_statement
-          | WORD() expr* [series]
+          | NAME() expr* [series]
 
 [series] : ':' simple_statement as statement
          | START_SERIES_TOK INDENT_TOK statement as statement+ DEINDENT_TOK
@@ -12,7 +12,7 @@ expr: APPROX_NUMBER(kind='approx',int1=p[%s][0],int2=p[%s][1])
     | INTEGER(kind='int',int1=p[%s])
     | RATIO(kind='ratio',int1=p[%s][0],int2=p[%s][1])
     | STRING(kind='string',str=p[%s])
-    | WORD()
+    | NAME()
     | LP_TOK expr ')'
     | expr() '(' expr... ')'
     | BIT_NOT() expr

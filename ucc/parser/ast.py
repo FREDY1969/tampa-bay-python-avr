@@ -10,7 +10,7 @@ from ucc.parser import scanner
 
 class ast(object):
     attr_cols = (
-        'kind', 'expect', 'word_id', 'int1', 'int2', 'str',
+        'kind', 'expect', 'word', 'int1', 'int2', 'str',
         'line_start', 'column_start', 'line_end', 'column_end',
     )
 
@@ -25,7 +25,7 @@ class ast(object):
     # default attribute values:
     kind = 'fn_call'
     expect = 'value'
-    word_id = int1 = int2 = str = None
+    word = int1 = int2 = str = None
 
     def __init__(self, tok_start = None, tok_end = None, *args, **kws):
         self.args = args

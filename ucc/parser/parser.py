@@ -10,7 +10,8 @@ precedence = (
     ('left', 'ARG_LEFT_WORD'),
     ('right', 'ARG_RIGHT_WORD'),
     ('left', '+', '-'),
-    ('right', '/', '%'),
+    ('right', '/'),
+    ('left', '%'),
     ('left', '*'),
     ('left', 'BIT_OR'),
     ('left', 'BIT_XOR'),
@@ -50,7 +51,7 @@ def p_zero_or_more_0002(p):
     p[0] = p[1] + (p[2],)
 
 def p_simple_statement_0001(p):
-    r''' simple_statement : WORD zero_or_more_0001 NEWLINE_TOK
+    r''' simple_statement : NAME zero_or_more_0001 NEWLINE_TOK
     '''
     args = []
     args.append(p[2])
@@ -73,7 +74,7 @@ def p_statement_0001(p):
     p[0] = p[1]
 
 def p_statement_0002(p):
-    r''' statement : WORD zero_or_more_0002 series
+    r''' statement : NAME zero_or_more_0002 series
     '''
     args = []
     args.append(p[2])
@@ -98,7 +99,7 @@ def p_series_0001(p):
     p[2].expect = 'statement'
     args = []
     args.append(p[2])
-    p[0] = tuple(args,)
+    p[0] = tuple(args)
 
 def p_series_0002(p):
     r''' series : START_SERIES_TOK INDENT_TOK one_or_more_0002 DEINDENT_TOK
@@ -147,7 +148,7 @@ def p_expr_0005(p):
     p[0] = ast.ast(p[1], p[len(p) - 1], kind='string', str=p[1], *args)
 
 def p_expr_0006(p):
-    r''' expr : WORD
+    r''' expr : NAME
     '''
     args = []
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[1], *args)
@@ -332,8 +333,9 @@ def p_expr_0029(p):
     args.append(p[3])
     p[0] = ast.ast(p[1], p[len(p) - 1], word_id=p[2], *args)
 
+
 tokens = ['AND', 'APPROX_NUMBER', 'ARG_LEFT_WORD', 'ARG_RIGHT_WORD', 'BIT_AND',
           'BIT_NOT', 'BIT_OR', 'BIT_XOR', 'CHAR', 'DEINDENT_TOK', 'EQ', 'GE',
           'INDENT_TOK', 'INTEGER', 'LB_TOK', 'LE', 'LP_TOK', 'NAME', 'NE',
           'NEGATE', 'NEWLINE_TOK', 'NOT', 'OR', 'RATIO', 'START_SERIES_TOK',
-          'STRING', 'WORD']
+          'STRING']

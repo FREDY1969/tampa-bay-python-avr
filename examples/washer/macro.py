@@ -4,3 +4,4 @@ import declaration
 
 class macro(declaration.declaration):
     pass
+
