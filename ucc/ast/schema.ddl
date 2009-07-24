@@ -7,7 +7,7 @@ create table ast (
     id integer not null primary key,
 
     -- For macro expansions:
-    id_replaced int references ast(id),
+    id_replaced int unique references ast(id),
     root_id_replaced int references ast(id),
     replacement_depth int,
 
@@ -15,7 +15,7 @@ create table ast (
     expect varchar(255),                       -- what's expected by the parent
     type_id int references type(id),
 
-    word varchar(255),
+    word varchar(255) collate nocase,
     int1 int,
     int2 int,
     str varchar(2000),
@@ -29,8 +29,13 @@ create table ast (
     line_start int,
     column_start int,
     line_end int,
-    column_end int
+    column_end int,
+
+    unique (root_id_replaced, replacement_depth),
+    unique (parent_node, parent_arg_num, arg_position)
 );
+
+create index word_index on ast (word, kind, expect);
 
 create table type (
     -- Describes what is known about a value at compile time.
