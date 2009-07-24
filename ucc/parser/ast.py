@@ -37,8 +37,8 @@ class ast(object):
 
     def save(self, db_cur,
              parent = None, parent_arg_num = None, arg_position = None):
-        db_cur.execute(sql_call,
-                       map(self.__getattr__, self.attr_cols) +
+        db_cur.execute(self.sql_call,
+                       map(lambda attr: getattr(self, attr), self.attr_cols) +
                          [parent, parent_arg_num, arg_position])
         my_id = db_cur.lastrowid
         for arg_num, arg in enumerate(self.args):
@@ -48,14 +48,14 @@ class ast(object):
                 for position, x in enumerate(arg):
                     x.save(db_cur, my_id, arg_num, position)
 
-def insert(ast, db_conn):
-    db_cur = db_conn.cursor()
-    try:
-        ast.save(db_cur)
-        db_conn.commit()
-    except Exception:
-        db_conn.rollback()
-        raise
+    def insert(self, db_conn):
+        db_cur = db_conn.cursor()
+        try:
+            self.save(db_cur)
+            db_conn.commit()
+        except Exception:
+            db_conn.rollback()
+            raise
 
 def get_lineno_column(p, index):
     return p.lineno(index), scanner_init.get_col_line(p.lexpos(index))[0]

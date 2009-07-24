@@ -22,7 +22,7 @@ def run():
 
     print """# parser.py
 
-from ucc.parser import ast
+from ucc.parser import ast, scanner_init
 
 start = 'file'
 
@@ -55,7 +55,13 @@ token_dict = {"""
                                       extra_files = (sys.argv[2],))
                      .union(scanner.tokens))
 
-    print
+    print """def p_error(t):
+    if t is None:
+        raise SyntaxError("invalid syntax", scanner_init.syntaxerror_params())
+    else:
+        raise SyntaxError("invalid syntax", scanner_init.syntaxerror_params(t))
+"""
+
     s = "tokens = %r" % tokens
     i = s.rfind(',', 0, 79)
     while len(s) > 79 and i >= 0:
@@ -64,10 +70,10 @@ token_dict = {"""
         i = s.rfind(',', 0, 79)
     print s
 
-    print
-    print "def init():"
-    print "    pass"
-    print
+    print """
+def init():
+    pass
+"""
 
 if __name__ == "__main__":
     run()
