@@ -138,7 +138,7 @@ def normal_wrapup(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
             print "    p[0] = ast.ast(p, %s, *args)" % (
                      ', '.join("%s=%s" %
                                  (key, value % {'offset': fn_word_offset})
-                               for key, value in fn_word_params.iteritems())
+                               for key, value in fn_word_params)
                   )
         elif fn_word_offset is None:
             scanner_init.syntaxerror(
@@ -156,7 +156,7 @@ def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
             print "    p[0] = (ast.ast(p, %s, *args),)" \
                   % ', '.join("%s=%s" %
                                  (key, value % {'offset': fn_word_offset})
-                               for key, value in fn_word_params.iteritems())
+                               for key, value in fn_word_params)
         else:
             print "    p[0] = (ast.ast(p, *args),)"
     elif has_ellipsis:
@@ -182,119 +182,144 @@ def p_rule2(p):
     '''
     gen_alternatives(p[1], p[3], wrapup_tuple)
 
+Optional_rules = {}
+
 def p_opt_word(p):
     ''' word : sub_rule '?'
     '''
-    rule_text, type, offset, prep_code, params = p[1]
-    rule_name = ast.gensym('optional')
-    p_fn_name_0, p_fn_name_n = \
-      ast.gensym('p_optional'), ast.gensym('p_optional')
-    output("""
-        def $fn_name1(p):
-            r''' $rule_name :
-            '''
-            p[0] = None
+    rule_name = Optional_rules.get(p[1])
+    if rule_name is None:
+        rule_name = ast.gensym('optional')
+        Optional_rules[p[1]] = rule_name
+        rule_text, type, offset, prep_code, params = p[1]
+        p_fn_name_0, p_fn_name_n = \
+          ast.gensym('p_optional'), ast.gensym('p_optional')
+        output("""
+            def $fn_name1(p):
+                r''' $rule_name :
+                '''
+                p[0] = None
 
-        def $fn_name2(p):
-            r''' $rule_name : $production
-            '''
-            $prep_code
-            p[0] = p[$offset]
+            def $fn_name2(p):
+                r''' $rule_name : $production
+                '''
+                $prep_code
+                p[0] = p[$offset]
 
-        """,
-        fn_name1 = p_fn_name_0,
-        rule_name = rule_name,
-        fn_name2 = p_fn_name_n,
-        production = rule_text,
-        prep_code = prep_code % {'offset': offset + 1} if prep_code else '',
-        offset = offset + 1)
+            """,
+            fn_name1 = p_fn_name_0,
+            rule_name = rule_name,
+            fn_name2 = p_fn_name_n,
+            production = rule_text,
+            prep_code = prep_code % {'offset': offset + 1} if prep_code else '',
+            offset = offset + 1)
     p[0] = rule_name, type, 0, None, None
+
+One_or_more_rules = {}
 
 def p_one_or_more_word(p):
     ''' word : sub_rule '+'
     '''
-    rule_text, type, offset, prep_code, params = p[1]
-    rule_name = ast.gensym('one_or_more')
-    p_fn_name_1, p_fn_name_n = \
-      ast.gensym('p_one_or_more'), ast.gensym('p_one_or_more')
-    prep = prep_code % {'offset': offset + 2} if prep_code else ''
-    output("""
-        def $fn_name1(p):
-            r''' $rule_name : $production
-            '''
-            $prep_code
-            p[0] = (p[$offset1],)
+    rule_name = One_or_more_rules.get(p[1])
+    if rule_name is None:
+        rule_name = ast.gensym('one_or_more')
+        One_or_more_rules[p[1]] = rule_name
+        rule_text, type, offset, prep_code, params = p[1]
+        p_fn_name_1, p_fn_name_n = \
+          ast.gensym('p_one_or_more'), ast.gensym('p_one_or_more')
+        prep = prep_code % {'offset': offset + 2} if prep_code else ''
+        output("""
+            def $fn_name(p):
+                r''' $rule_name : $production
+                '''
+                $prep_code
+                p[0] = (p[$offset],)
 
-        def $fn_name2(p):
-            r''' $rule_name : $rule_name $production
-            '''
-            $prep_code
-            p[0] = p[1] + (p[$offset2],)
+            """,
+            fn_name = p_fn_name_1,
+            rule_name = rule_name,
+            production = rule_text,
+            prep_code = prep_code % {'offset': offset + 1} if prep_code else '',
+            offset = offset + 1)
+        output("""
+            def $fn_name(p):
+                r''' $rule_name : $rule_name $production
+                '''
+                $prep_code
+                p[0] = p[1] + (p[$offset],)
 
-        """,
-        fn_name1 = p_fn_name_1,
-        rule_name = rule_name,
-        production = rule_text,
-        prep_code = prep,
-        offset1 = offset + 1,
-        fn_name2 = p_fn_name_n,
-        offset2 = offset + 2)
+            """,
+            fn_name = p_fn_name_n,
+            rule_name = rule_name,
+            production = rule_text,
+            prep_code = prep_code % {'offset': offset + 2} if prep_code else '',
+            offset = offset + 2)
     p[0] = rule_name, 'tuple', 0, None, None
+
+Zero_or_more_rules = {}
 
 def p_zero_or_more_word(p):
     ''' word : sub_rule '*'
     '''
-    rule_text, type, offset, prep_code, params = p[1]
-    rule_name = ast.gensym('zero_or_more')
-    p_fn_name_0, p_fn_name_n = \
-      ast.gensym('p_zero_or_more'), ast.gensym('p_zero_or_more')
-    output("""
-        def $fn_name1(p):
-            r''' $rule_name :
-            '''
-            p[0] = ()
+    rule_name = Zero_or_more_rules.get(p[1])
+    if rule_name is None:
+        rule_name = ast.gensym('zero_or_more')
+        Zero_or_more_rules[p[1]] = rule_name
+        rule_text, type, offset, prep_code, params = p[1]
+        p_fn_name_0, p_fn_name_n = \
+          ast.gensym('p_zero_or_more'), ast.gensym('p_zero_or_more')
+        output("""
+            def $fn_name1(p):
+                r''' $rule_name :
+                '''
+                p[0] = ()
 
-        def $fn_name2(p):
-            r''' $rule_name : $rule_name $production
-            '''
-            $prep_code
-            p[0] = p[1] + (p[$offset],)
+            def $fn_name2(p):
+                r''' $rule_name : $rule_name $production
+                '''
+                $prep_code
+                p[0] = p[1] + (p[$offset],)
 
-        """,
-        fn_name1 = p_fn_name_0,
-        rule_name = rule_name,
-        fn_name2 = p_fn_name_n,
-        production = rule_text,
-        prep_code = prep_code % {'offset': offset + 2} if prep_code else '',
-        offset = offset + 2)
+            """,
+            fn_name1 = p_fn_name_0,
+            rule_name = rule_name,
+            fn_name2 = p_fn_name_n,
+            production = rule_text,
+            prep_code = prep_code % {'offset': offset + 2} if prep_code else '',
+            offset = offset + 2)
     p[0] = rule_name, 'tuple', 0, None, None
+
+Ellipsis_rules = {}
 
 def p_word_ellipsis(p):
     ''' word : sub_rule ELLIPSIS
     '''
-    rule_text, type, offset, prep_code, params = p[1]
-    rule_name = ast.gensym('ellipsis')
-    p_fn_name_0, p_fn_name_n = \
-      ast.gensym('p_ellipsis'), ast.gensym('p_ellipsis')
-    output("""
-        def $fn_name1(p):
-            r''' $rule_name :
-            '''
-            p[0] = ()
+    rule_name = Ellipsis_rules.get(p[1])
+    if rule_name is None:
+        rule_name = ast.gensym('ellipsis')
+        Ellipsis_rules[p[1]] = rule_name
+        rule_text, type, offset, prep_code, params = p[1]
+        p_fn_name_0, p_fn_name_n = \
+          ast.gensym('p_ellipsis'), ast.gensym('p_ellipsis')
+        output("""
+            def $fn_name1(p):
+                r''' $rule_name :
+                '''
+                p[0] = ()
 
-        def $fn_name2(p):
-            r''' $rule_name : $rule_name $production
-            '''
-            $prep_code
-            p[0] = p[1] + (p[$offset],)
+            def $fn_name2(p):
+                r''' $rule_name : $rule_name $production
+                '''
+                $prep_code
+                p[0] = p[1] + (p[$offset],)
 
-        """,
-        fn_name1 = p_fn_name_0,
-        rule_name = rule_name,
-        fn_name2 = p_fn_name_n,
-        production = rule_text,
-        prep_code = prep_code % {'offset': offset + 2} if prep_code else '',
-        offset = offset + 2)
+            """,
+            fn_name1 = p_fn_name_0,
+            rule_name = rule_name,
+            fn_name2 = p_fn_name_n,
+            production = rule_text,
+            prep_code = prep_code % {'offset': offset + 2} if prep_code else '',
+            offset = offset + 2)
     p[0] = rule_name, 'ellipsis', 0, None, None
 
 def p_parameterized_word(p):
@@ -363,18 +388,17 @@ def p_param_list(p):
 def p_no_parameters_opt(p):
     ''' parameters_opt : 
     '''
-    p[0] = {}
+    p[0] = ()
 
 def p_parameters1(p):
     ''' parameters : parameter
     '''
-    p[0] = {p[1][0]: p[1][1]}
+    p[0] = (p[1],)
 
 def p_parametersn(p):
     ''' parameters : parameters ',' parameter
     '''
-    p[1][p[3][0]] = p[3][1]
-    p[0] = p[1]
+    p[0] = p[1] + (p[3],)
 
 def p_parameter(p):
     ''' parameter : NONTERMINAL PYTHON_CODE
@@ -406,5 +430,8 @@ def strip_indent(str):
     return stripped.replace('\n' + ' ' * indent, '\n')
 
 def init():
-    global Tokens_used
+    global Tokens_used, One_or_more_rules, Zero_or_more_rules, Ellipsis_rules
     Tokens_used = set()
+    One_or_more_rules = {}
+    Zero_or_more_rules = {}
+    Ellipsis_rules = {}
