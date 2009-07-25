@@ -868,6 +868,7 @@ def lex(module=None,object=None,debug=0,optimize=0,lextab="lextab",reflags=0,now
     stateinfo  = { 'INITIAL' : 'inclusive'}
     lexobj = Lexer()
     lexobj.lexoptimize = optimize
+    lexobj.lexreflags = reflags
     global token,input
 
     if errorlog is None:
