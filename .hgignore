@@ -6,3 +6,6 @@ syntax: glob
 *.pyo
 *.db
 *~
+
+.DS_Store
+._*
