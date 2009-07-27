@@ -5,7 +5,7 @@ create table ast (
     -- code project wiki.
 
     id integer not null primary key,
-    word_body_id int,                          -- NULL for the word_body itself
+    word_body_id int references ast(id),       -- NULL for the word_body itself
 
     -- For macro expansions:
     id_replaced int unique references ast(id),
