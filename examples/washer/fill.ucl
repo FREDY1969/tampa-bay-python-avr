@@ -1,4 +1,4 @@
-set temp = get< temp-label
+set temp get< temp-label
 with water-on< temp:
     wait-until water-level-is< get< water-level
 

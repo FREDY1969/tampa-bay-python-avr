@@ -356,7 +356,7 @@ Names = {
     'bit_not': 'BIT_NOT',
     'bit_or': 'BIT_OR',
     'bit_xor': 'BIT_XOR',
-    '==': 'EQ',
+    '=': 'EQ',
     '>=': 'GE',
     '<=': 'LE',
     '!=': 'NE',
