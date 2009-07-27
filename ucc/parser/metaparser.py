@@ -135,17 +135,27 @@ def normal_wrapup(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
             print "    p[0] = tuple(args)"
     else:
         if fn_word_params:
-            print "    p[0] = ast.ast(p, %s, *args)" % (
-                     ', '.join("%s=%s" %
-                                 (key, value % {'offset': fn_word_offset})
-                               for key, value in fn_word_params)
-                  )
+            output("""
+              p[0] = ast.ast.from_parser(
+                       scanner_init.get_syntax_position_info(p),
+                       $kw_args, *args)
+              """,
+              target_indent = 4,
+              kw_args = ', '.join("%s=%s" %
+                                     (key, value % {'offset': fn_word_offset})
+                                     for key, value in fn_word_params))
         elif fn_word_offset is None:
             scanner_init.syntaxerror(
               "empty parameter list on nonterminal declaration",
               lineno = lineno, lexpos = lexpos)
         else:
-            print "    p[0] = ast.ast(p, word=p[%s], *args)" % fn_word_offset
+            output("""
+              p[0] = ast.ast.from_parser(
+                       scanner_init.get_syntax_position_info(p),
+                       word=p[$offset], *args)
+              """,
+              target_indent = 4,
+              offset = fn_word_offset)
 
 def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
                  has_ellipsis, lineno, lexpos):
@@ -153,12 +163,22 @@ def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
         print "    args = []"
         for arg in args: print "    " + arg
         if fn_word_params:
-            print "    p[0] = (ast.ast(p, %s, *args),)" \
-                  % ', '.join("%s=%s" %
-                                 (key, value % {'offset': fn_word_offset})
-                               for key, value in fn_word_params)
+            output("""
+              p[0] = (ast.ast.from_parser(
+                        scanner_init.get_syntax_position_info(p),
+                        $kw_args, *args),)
+              """,
+              target_indent = 4,
+              kw_args = ', '.join("%s=%s" %
+                                    (key, value % {'offset': fn_word_offset})
+                                    for key, value in fn_word_params))
         else:
-            print "    p[0] = (ast.ast(p, *args),)"
+            output("""
+              p[0] = (ast.ast.from_parser(
+                        scanner_init.get_syntax_position_info(p),
+                        *args),)
+              """,
+              target_indent = 4)
     elif has_ellipsis:
         scanner_init.syntaxerror(
           "ellipsis in production without function word",
@@ -411,23 +431,39 @@ def p_error(t):
     else:
         raise SyntaxError("invalid syntax", scanner_init.syntaxerror_params(t))
 
-def output(str, **kws):
-    sys.stdout.write(string.Template(strip_indent(str)).substitute(kws))
+def output(str, target_indent = 0, **kws):
+    sys.stdout.write(string.Template(strip_indent(str, target_indent))
+                       .substitute(kws))
 
-def strip_indent(str):
+def strip_indent(str, target_indent = 0):
     r'''Strip initial indent off of all lines in str.
 
     >>> strip_indent('    hi\n    mom\n        indented\n')
     'hi\nmom\n    indented\n'
     >>> strip_indent('\n    hi\n    mom\n        indented\n')
     'hi\nmom\n    indented\n'
+    >>> strip_indent('\n\n    hi\n    mom\n        indented\n')
+    '\nhi\nmom\n    indented\n'
+    >>> strip_indent('\n    hi\n    mom\n        indented\n', 4)
+    '    hi\n    mom\n        indented\n'
+    >>> strip_indent('\nhi\nmom\n    indented\n', 4)
+    '    hi\n    mom\n        indented\n'
+    >>> strip_indent('\n\nhi\nmom\n    indented\n', 4)
+    '\n    hi\n    mom\n        indented\n'
     '''
     assert '\t' not in str, "tabs not allowed in output strings"
     str = str.replace('\r', '')
     if str[0] == '\n': str = str[1:]
-    stripped = str.lstrip(' ')
+    stripped = str.lstrip()
     indent = len(str) - len(stripped)
-    return stripped.replace('\n' + ' ' * indent, '\n')
+    last_nl = str.rfind('\n', 0, indent) + 1
+    if last_nl > 0:
+        indent -= last_nl
+        stripped = str
+    else: # no '\n'
+        stripped = ' ' * target_indent + stripped
+    return stripped.replace('\n' + ' ' * indent, '\n' + ' ' * target_indent) \
+                   .rstrip(' ')
 
 def init():
     global Tokens_used, One_or_more_rules, Zero_or_more_rules, Ellipsis_rules
