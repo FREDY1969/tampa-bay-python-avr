@@ -5,7 +5,17 @@ import os.path
 import re
 from ply import lex
 
+#sys.stderr.write("scanner_init: lex.__file__ is %r\n" % (lex.__file__,))
+#sys.stderr.write("scanner_init: sys.path[0] is %r\n" % (sys.path[0],))
+#sys.stderr.write("scanner_init: sys.path[1] is %r\n" % (sys.path[1],))
+
 Lexer = None
+
+def get_syntax_position_info(p):
+    return get_lineno_column(p, 1) + get_lineno_column(p, len(p) - 1)
+
+def get_lineno_column(p, index):
+    return p.lineno(index), get_col_line(p.lexpos(index))[0]
 
 def get_col_line(lexpos, lexdata = None):
     r'''Returns the line and column number for the given lexdata and lexpos.
