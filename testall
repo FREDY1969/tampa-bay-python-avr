@@ -8,10 +8,20 @@ import traceback
 python_path = os.path.abspath(os.path.dirname(__file__))
 print "python_path", python_path
 
+fix_path = r"""
+import sys
+
+if sys.path[0] == '': del sys.path[0]
+sys.path.insert(0, %r)
+""" % (python_path,)
+
 def call(input):
     child = subprocess.Popen((sys.executable,),
-                             stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                             env={'PYTHONPATH': python_path})
+                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    input = fix_path + input
+    #sys.stderr.write("call: input is %r\n" % (input,))
+
     out = child.communicate('\n'.join(line.strip()
                                       for line in input.split('\n')))[0]
     lines = out.split('\n')
@@ -26,6 +36,15 @@ errors = 0
 tests = 0
 files = 0
 
+cwd = os.getcwd()
+if cwd.startswith(python_path + os.sep):
+    module_prefix = cwd[len(python_path) + 1:].replace(os.sep, '.') + '.'
+    if os.sep != '/': module_prefix = module_prefix.replace('/', '.')
+else:
+    assert cwd == python_path, \
+           "testall: must be executed within the project directory structure"
+    module_prefix = ''
+
 for dirpath, dirnames, filenames in os.walk('.'):
     if '.hg' in dirnames: dirnames.remove('.hg')
     for filename in filenames:
@@ -36,6 +55,7 @@ for dirpath, dirnames, filenames in os.walk('.'):
                 arg = os.path.normpath(path[:-3])
                 arg = arg.replace(os.sep, '.')
                 if os.sep != '/': arg = arg.replace('/', '.')
+                arg = module_prefix + arg
 
                 e, t = call("""
                     import %(modpath)s
