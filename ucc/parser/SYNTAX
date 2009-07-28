@@ -11,7 +11,7 @@ expr: APPROX_NUMBER(kind='approx',int1=p[%s][0],int2=p[%s][1])
     | CHAR(kind='int',int1=p[%s])
     | INTEGER(kind='int',int1=p[%s])
     | RATIO(kind='ratio',int1=p[%s][0],int2=p[%s][1])
-    | STRING(kind='string',str=p[%s])
+    | STRING(kind='string',str1=p[%s])
     | NAME()
     | LP_TOK expr ')'
     | expr() '(' expr... ')'

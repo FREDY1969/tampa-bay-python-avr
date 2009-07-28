@@ -148,7 +148,7 @@ def p_expr_0005(p):
     args = []
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             kind='string', str=p[1], *args)
+             kind='string', str1=p[1], *args)
 
 def p_expr_0006(p):
     r''' expr : NAME

@@ -1,6 +1,6 @@
 # if_.py
 
-import macro
+from examples.washer import macro
 
 class if_(macro.macro):  # Is this really a class?
     def compile_macro(self, ast_id, db_cur):

@@ -1,6 +1,6 @@
 # macro.py
 
-import declaration
+from examples.washer import declaration
 
 class macro(declaration.declaration):
     pass

@@ -1,6 +1,6 @@
 # var.py
 
-import declaration
+from examples.washer import declaration
 
 class var(declaration.declaration):
     def compile(self, db_cur):
@@ -9,11 +9,12 @@ class var(declaration.declaration):
         return (("%s:" % self.name,
                  "    .code-addr do-var",
                  "    .data-addr %s" % data_name,
-                 "    .data",
-                 "%s:" % data_name,
-                 "    .word %s" % initial_value,
-                 "    .code",
                 ),
-                ('do-var',))
+                ("%s:" % data_name,
+                 "    .word %s" % initial_value,
+                ),
+                (),
+                ('do-var',),
+               )
 
 

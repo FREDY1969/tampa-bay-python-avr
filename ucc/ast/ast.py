@@ -125,7 +125,7 @@ class ast(object):
     parse, this structure is stored into the database and then discarded.
     '''
     attr_cols = (
-        'kind', 'expect', 'word', 'int1', 'int2', 'str',
+        'kind', 'expect', 'label', 'word', 'int1', 'int2', 'str1', 'str2',
         'line_start', 'column_start', 'line_end', 'column_end',
     )
 
@@ -140,7 +140,7 @@ class ast(object):
     # default attribute values:
     kind = 'fn_call'
     expect = 'value'
-    word_body_id = word = int1 = int2 = str = None
+    word_body_id = label = word = int1 = int2 = str1 = str2 = None
     line_start = column_start = line_end = column_end = None
 
     def __init__(self, *args, **kws):
