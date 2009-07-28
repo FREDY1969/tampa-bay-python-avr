@@ -54,8 +54,11 @@ def parse(parser_module, scanner_module, filename, check_tables = False,
         scanner_init.Lexer.input(text)
 
     def use_file(filename):
-        with open(filename) as f:
-            use_text(filename, f.read())
+        if isinstance(filename, (str, unicode)):
+            with open(filename) as f:
+                use_text(filename, f.read())
+        else:
+            use_text(*filename)
 
     if text is not None:
         use_text(filename, text)

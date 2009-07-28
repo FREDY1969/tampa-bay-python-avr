@@ -24,8 +24,8 @@ precedence = (
 )
 
 token_dict = {
-    'if': 'IF',
     'else': 'ELSE_TOK',
+    'if': 'IF',
 }
 
 def p_one_or_more_0001(p):

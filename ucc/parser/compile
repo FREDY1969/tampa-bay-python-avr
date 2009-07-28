@@ -1,0 +1,99 @@
+#!/usr/bin/python
+
+# compile
+
+# compile project_dir
+
+from __future__ import with_statement
+
+import sys
+import os, os.path
+import contextlib
+from sqlite3 import db
+
+QA_db_filename = 'python-avr.db'
+
+python_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                           '..', '..'))
+print "python_path", python_path
+
+if sys.path[0] == '': sys.path[0] = python_path
+else: sys.path.insert(0, python_path)
+
+from ucc.parser import genparser
+
+def usage():
+    sys.stderr.write("usage: compile project_dir\n")
+    sys.exit(2)
+
+def run():
+    if len(sys.argv) != 2: usage()
+
+    project_dir = sys.argv[1]
+
+    # gather new rules and tokens:
+    with contextlib.closing(db.connect(os.path.join(project_dir,
+                                                    QA_db_filename))) \
+      as db_conn:
+        with contextlib.closing(db_conn.cursor()) as db_cur:
+            db_cur.execute("select id from word where name = 'macro'")
+            macro_id = db_cur.fetchone()[0]
+            db_cur.execute("""
+                  select answer
+                    from answer
+                   where question_id = (select id from answer
+                                         where word_id = ? and
+                                               answer = 'syntax')
+              """,
+              (macro_id,))
+            rules = '\n'.join('statement : ' + rule[0] for rule in db_cur)
+            db_cur.execute("""
+                  select keyword.answer, token.answer
+                    from answer as keyword inner join answer as token
+                      on token.parent = keyword.id
+                   where keyword.question_id =
+                           (select id from answer
+                             where word_id = ? and
+                                   answer = 'new syntax keyword')
+              """,
+              (macro_id,))
+            token_dict = dict(db_cur)
+
+    # compile new parser for this project:
+    with open(os.path.join(project_dir, 'parser.py'), 'w') as output_file:
+        genparser.genparser(os.path.join(os.path.dirname(__file__), 'SYNTAX'),
+                            rules, token_dict, output_file)
+
+    # import needed modules from the project:
+    env = {}
+    assert project_dir.startswith(python_path)
+    project_pkg = project_dir[len(python_path) + 1:].replace(os.path.sep, '.')
+    if os.path.sep != '/': project_pkg.replace('/', '.')
+    exec("from %s import assembler_word, delcaration, parser" % (project_pkg,),
+         env, env)
+    assembler_word = env['assembler_word']
+    declaration = env['declaration']
+    parser = env['parser']
+
+    # parse files in the project:
+    num_errors = 0
+    for dirpath, dirnames, filenames in os.walk(project_dir):
+        if '.hg' in dirnames: dirnames.remove('.hg')
+        for filename in filenames:
+            path = os.path.join(dirpath, filename)
+            name = os.path.basename(filename)[:-4]
+            try:
+                if filename.endswith('.asm'):
+                    assembler_word.assembler_word(name, 1, 1) \
+                      .parse_file(parser, path)
+                elif filename.endswith('.ucl'):
+                    declaration.high_level_word(name, 1, 1) \
+                      .parse_file(parser, path)
+            except Exception:
+                traceback.print_exc()
+                num_errors += 1
+    if num_errors:
+        sys.exit(1)
+
+if __name__ == "__main__":
+    run()

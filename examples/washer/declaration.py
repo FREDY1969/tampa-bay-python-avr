@@ -1,5 +1,7 @@
 # declaration.py
 
+from ucc.parser import parse
+
 class declaration(object):
     def __init__(self, name, id, kind):
         self.name = name
@@ -48,4 +50,6 @@ class declaration(object):
                 where[question] = [answer, children_dict]
         return ans
 
-
+class high_level_word(declaration):
+    def parse_file(self, parser, filename):
+        parse.parse_file(parser, filename)

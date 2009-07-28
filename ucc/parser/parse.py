@@ -11,14 +11,14 @@ sys.path[0] = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                            '..', '..'))
 #print "sys.path[0]:", sys.path[0]
 
-from ucc.parser import parser, scanner, parser_init
+from ucc.parser import scanner, parser_init
 from ucc.ast import ast
 
 def usage():
     sys.stderr.write("usage: parse.py file...\n")
     sys.exit(2)
 
-def parse_file(filename):
+def parse_file(parser, filename):
     name, ext = os.path.splitext(os.path.basename(filename))
     assert ext == '.ucl', "unknown file extension on: " + filename
 
@@ -36,10 +36,12 @@ def parse_file(filename):
 def run():
     if len(sys.argv) < 2: usage()
 
+    from ucc.parser import parser
+
     with ast.db_connection(os.path.dirname(sys.argv[1])):
         num_errors = 0
         for filename in sys.argv[1:]:
-            if not parse_file(filename): num_errors += 1
+            if not parse_file(parser, filename): num_errors += 1
     if num_errors:
         sys.stderr.write("parse: %d files had errors\n" % num_errors)
         sys.exit(1)
