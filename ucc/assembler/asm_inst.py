@@ -88,6 +88,7 @@ def format(s, operands, notes, **args):
     return ans
 
 class inst1(object):
+    len = 1
     def __init__(self, name, opcode, cycles, **notes):
         self.name = name
         self.opcode = opcode.replace(' ', '')
@@ -97,8 +98,7 @@ class inst1(object):
         self.operands = dict((operand, opcode.count(operand)) for operand in s)
         self.cycles = cycles
         self.notes = notes
-    def len(self): return 1
 
 class inst2(inst1):
-    def len(self): return 2
+    len = 2
 

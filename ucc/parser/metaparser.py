@@ -20,6 +20,7 @@ from ucc.ast import ast
 tokens = metascanner.tokens
 
 Tokens_used = set()
+Output_file = sys.stdout
 
 def p_file(p):
     ''' file : file2
@@ -77,6 +78,7 @@ def gen_alternatives(rule_name, alternatives, wrapup_fn, param_list = None):
                 r''' $rule_name : $production
                 '''
             """,
+            output_file = Output_file,
             fn_name = p_fn_name, rule_name = rule_name,
             production = ' '.join(word[0] for word in words))
         prep = []
@@ -118,21 +120,21 @@ def gen_alternatives(rule_name, alternatives, wrapup_fn, param_list = None):
                     has_ellipsis = True
 
         if prep:
-            print '\n'.join('    ' + p for p in prep)
+            print >> Output_file, '\n'.join('    ' + p for p in prep)
 
         wrapup_fn(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
                   has_ellipsis, lineno, lexpos)
-        print
+        print >> Output_file
 
 def normal_wrapup(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
                   has_ellipsis, lineno, lexpos):
-    print "    args = []"
-    for arg in args: print "    " + arg
+    print >> Output_file, "    args = []"
+    for arg in args: print >> Output_file, "    " + arg
     if fn_word_params is None:
         if not has_ellipsis and len(args) == 1:
-            print "    p[0] = args[0]"
+            print >> Output_file, "    p[0] = args[0]"
         else:
-            print "    p[0] = tuple(args)"
+            print >> Output_file, "    p[0] = tuple(args)"
     else:
         if fn_word_params:
             output("""
@@ -140,6 +142,7 @@ def normal_wrapup(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
                        scanner_init.get_syntax_position_info(p),
                        $kw_args, *args)
               """,
+              output_file = Output_file,
               target_indent = 4,
               kw_args = ', '.join("%s=%s" %
                                      (key, value % {'offset': fn_word_offset})
@@ -154,20 +157,22 @@ def normal_wrapup(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
                        scanner_init.get_syntax_position_info(p),
                        word=p[$offset], *args)
               """,
+              output_file = Output_file,
               target_indent = 4,
               offset = fn_word_offset)
 
 def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
                  has_ellipsis, lineno, lexpos):
     if fn_word_params is not None:
-        print "    args = []"
-        for arg in args: print "    " + arg
+        print >> Output_file, "    args = []"
+        for arg in args: print >> Output_file, "    " + arg
         if fn_word_params:
             output("""
               p[0] = (ast.ast.from_parser(
                         scanner_init.get_syntax_position_info(p),
                         $kw_args, *args),)
               """,
+              output_file = Output_file,
               target_indent = 4,
               kw_args = ', '.join("%s=%s" %
                                     (key, value % {'offset': fn_word_offset})
@@ -178,6 +183,7 @@ def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
                         scanner_init.get_syntax_position_info(p),
                         *args),)
               """,
+              output_file = Output_file,
               target_indent = 4)
     elif has_ellipsis:
         scanner_init.syntaxerror(
@@ -189,13 +195,13 @@ def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
     elif tuple_offset is None:
         # Make a singleton tuple out of a single argument.
         if len(args) == 1:
-            print "    args = []"
-            print '    ' + args[0]
-            print "    p[0] = tuple(args)"
+            print >> Output_file, "    args = []"
+            print >> Output_file, '    ' + args[0]
+            print >> Output_file, "    p[0] = tuple(args)"
         else:
             scanner_init.SyntaxError("no tuple in production")
     else:
-        print "    p[0] = p[%d]" % (tuple_offset + 1)
+        print >> Output_file, "    p[0] = p[%d]" % (tuple_offset + 1)
 
 def p_rule2(p):
     ''' rule : TUPLE_NONTERMINAL ':' alternatives
@@ -227,6 +233,7 @@ def p_opt_word(p):
                 p[0] = p[$offset]
 
             """,
+            output_file = Output_file,
             fn_name1 = p_fn_name_0,
             rule_name = rule_name,
             fn_name2 = p_fn_name_n,
@@ -256,6 +263,7 @@ def p_one_or_more_word(p):
                 p[0] = (p[$offset],)
 
             """,
+            output_file = Output_file,
             fn_name = p_fn_name_1,
             rule_name = rule_name,
             production = rule_text,
@@ -269,6 +277,7 @@ def p_one_or_more_word(p):
                 p[0] = p[1] + (p[$offset],)
 
             """,
+            output_file = Output_file,
             fn_name = p_fn_name_n,
             rule_name = rule_name,
             production = rule_text,
@@ -301,6 +310,7 @@ def p_zero_or_more_word(p):
                 p[0] = p[1] + (p[$offset],)
 
             """,
+            output_file = Output_file,
             fn_name1 = p_fn_name_0,
             rule_name = rule_name,
             fn_name2 = p_fn_name_n,
@@ -334,6 +344,7 @@ def p_word_ellipsis(p):
                 p[0] = p[1] + (p[$offset],)
 
             """,
+            output_file = Output_file,
             fn_name1 = p_fn_name_0,
             rule_name = rule_name,
             fn_name2 = p_fn_name_n,
@@ -431,9 +442,9 @@ def p_error(t):
     else:
         raise SyntaxError("invalid syntax", scanner_init.syntaxerror_params(t))
 
-def output(str, target_indent = 0, **kws):
-    sys.stdout.write(string.Template(strip_indent(str, target_indent))
-                       .substitute(kws))
+def output(str, target_indent = 0, output_file = sys.stdout, **kws):
+    output_file.write(string.Template(strip_indent(str, target_indent))
+                            .substitute(kws))
 
 def strip_indent(str, target_indent = 0):
     r'''Strip initial indent off of all lines in str.
