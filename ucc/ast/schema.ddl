@@ -12,14 +12,38 @@ create table ast (
     root_id_replaced int references ast(id),
     replacement_depth int,
 
-    kind varchar(255),                         -- type of ast
-    expect varchar(255),                       -- what's expected by the parent
-    type_id int references type(id),
+    kind varchar(255),                         -- type of ast node
+       -- possible values are:
+          -- 'word_body': word = name of word, str1: path to source file
+          -- 'approx': int1 = number_as_integer, int2 = binary_pt
+             -- actual number == int1 * 2^int2
+          -- 'int': int1 = integer
+          -- 'ratio': int1 = numerator, int2 = denominator
+          -- 'string': str1 = string
+          -- 'fn_call': word = name of fn word
+          -- all of the following are assembler nodes.  These all use the
+             following optional columns:
+              -- label
+              -- word is the opcode
+              -- str1 and str2 are the operands
+              -- int1 is the length (in bytes)
+              -- int2 is the number of clock cycles (for machine instructions
+                 in flash)
+             and the kinds are:
+              -- 'flash'
+              -- 'data'
+              -- 'bss'
+              -- 'eeprom'
 
+    label varchar(255),                        -- assembler label
     word varchar(255) collate nocase,
     int1 int,
     int2 int,
-    str varchar(2000),
+    str1 varchar(2000),
+    str2 varchar(2000),
+
+    expect varchar(255),                       -- what's expected by the parent
+    type_id int references type(id),
 
     -- ast argument nodes are linked to their parent nodes:
     parent_node int references ast(id),

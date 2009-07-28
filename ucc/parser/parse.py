@@ -26,7 +26,7 @@ def parse_file(filename):
                                  extra_arg = parser.token_dict)
     if root_ast:
         root_ast.word = name
-        root_ast.str = filename
+        root_ast.str1 = filename
         with ast.db_transaction() as db_cur:
             ast.delete_word_by_name(name)
             root_ast.save(db_cur)

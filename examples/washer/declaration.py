@@ -7,7 +7,7 @@ class declaration(object):
         self.kind = kind
     def process_answers(self, db_cur):
         return False
-    def parse_file(self, parser):
+    def parse_file(self, parser, filename):
         pass
     def get_answers(self, db_cur):
         r'''Get_answers for this word.
