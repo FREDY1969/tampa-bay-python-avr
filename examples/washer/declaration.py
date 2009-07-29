@@ -2,6 +2,7 @@
 
 import os.path
 from ucc.parser import parse
+from ucc.word import helpers
 
 class declaration(object):
     def __init__(self, name, id):
@@ -27,6 +28,7 @@ class word(declaration):
     @classmethod
     def init_class2(cls, db_cur):
         cls.answers = get_answers(cls.kind_id, cls.__bases__[0].kind_id, db_cur)
+        #cls.questions = cls.answers.get('question', ())
         cls.filename_suffix = cls.answers['filename suffix'][0]
         cls.init_class3(db_cur)
     @classmethod
@@ -34,8 +36,12 @@ class word(declaration):
         pass
     def get_filename(self, project_dir = ''):
         assert self.filename_suffix
-        return os.path.join(project_dir,
-                            self.name + '.' + self.filename_suffix)
+        if self.filename_suffix == 'py':
+            filename = \
+              helpers.legalize_name(self.name) + '.' + self.filename_suffix
+        else:
+            filename = self.name + '.' + self.filename_suffix
+        return os.path.join(project_dir, filename)
 
 class high_level_word(word):
     def parse_file(self, parser, project_dir):
@@ -47,8 +53,8 @@ def get_answers(word_id, kind_id, db_cur):
     r'''Get_answers for this word.
 
     The answers are returned in a dict where the question is the key.  For
-    non-repeatable answers, the value is [answer, children_dict].  For
-    repeatable answers, the value is a list of [answer, children_dict].
+    non-repeatable answers, the value is [answer, id, children_dict].  For
+    repeatable answers, the value is a list of [answer, id, children_dict].
     '''
     db_cur.execute("""select question.answer,
                              repeat.answer = 'True',
@@ -59,17 +65,19 @@ def get_answers(word_id, kind_id, db_cur):
                              inner join answer as question
                              on answer.question_id = question.id
                              inner join answer as repeat
-                             on question.id = repeat.parent
+                             on (question.id = repeat.parent or
+                                 question.id = ? and repeat.parent = ?)
                                 and repeat.question_id = ?
                        where answer.word_id = ?
-                         and question.word_id = ?
-                       order by answer.parent, question.position,
-                                answer.position
-                   """, (declaration.repeatable_qid, word_id, kind_id))
+                       order by answer.id
+                   """, (declaration.subquestion_qid, declaration.question_qid,
+                         declaration.repeatable_qid, word_id))
 
     ans = {}
     ans_index = {}  # {id: children_dict}
     for question, repeatable, id, parent, answer in db_cur:
+        #print "question", question, "repeatable", repeatable, "id", id, \
+        #      "parent", parent, "answer", answer
         if parent is None:
             where = ans
         else:
@@ -77,7 +85,8 @@ def get_answers(word_id, kind_id, db_cur):
         children_dict = {}
         ans_index[id] = children_dict
         if repeatable:
-            where.setdefault(question, []).append([answer, children_dict])
+            where.setdefault(question, []).append([answer, id, children_dict])
         else:
-            where[question] = [answer, children_dict]
+            where[question] = [answer, id, children_dict]
+    #print "get_answer:", ans.get('question')
     return ans
