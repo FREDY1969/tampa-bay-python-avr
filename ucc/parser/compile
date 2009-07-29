@@ -21,6 +21,7 @@ print "python_path", python_path
 if sys.path[0] == '': sys.path[0] = python_path
 else: sys.path.insert(0, python_path)
 
+from ucc.word import helpers
 from ucc.parser import genparser
 from ucc.ast import ast
 
@@ -47,7 +48,7 @@ def run():
         with contextlib.closing(db_conn.cursor()) as db_cur:
             mod = import_module(project_pkg + '.declaration')
             decl = getattr(mod, 'declaration')
-            decl.init_class(name, 1, db_cur)
+            decl.init_class('declaration', 1, db_cur)
             words_by_name = {'declaration': decl}
             words_by_id = {decl.kind_id: decl}
             rules = ()
@@ -55,19 +56,24 @@ def run():
             db_cur.execute("""select id, name, kind, defining_word
                                 from word
                                where name != 'declaration'
-                               order by desc defining_word""")
-            for id, name, kind, defining_word in db_cur:
+                               order by defining_word desc""")
+            for id, name, kind, defining_word in db_cur.fetchall():
+                #print "id, name, kind, defining_word", id, name, kind, defining_word
                 if defining_word:
-                    mod = import_module(project_pkg + '.' + name)
-                    word = getattr(mod, name)
-                    word.init_class(name, id, db_cur)
+                    mod_name = helpers.legalize_name(name)
+                    mod = import_module(project_pkg + '.' + mod_name)
+                    new_word = getattr(mod, mod_name)
+                    new_word.init_class(name, id, db_cur)
                 else:
-                    word = words_by_id[kind](name, id)
-                    r, td = word.new_syntax(db_cur)
+                    new_word = words_by_id[kind](name, id)
+                    r, td = new_word.new_syntax(db_cur)
                     rules += r
-                    token_dict.extend(td)
-                words_by_name[name] = word
-                words_by_id[id] = word
+                    token_dict.update(td)
+                words_by_name[name] = new_word
+                words_by_id[id] = new_word
+
+    #print "rules", rules
+    #print "token_dict", token_dict
 
     # compile new parser for this project:
     with open(os.path.join(project_dir, 'parser.py'), 'w') as output_file:
@@ -80,9 +86,10 @@ def run():
     # parse files in the project:
     num_errors = 0
     with ast.db_connection(project_dir):
-        for word in words_by_id.itervalues():
+        for word_obj in words_by_id.itervalues():
             try:
-                word.parse_file(parser, project_dir)
+                if not isinstance(word_obj, type): # word_obj not a class
+                    word_obj.parse_file(parser, project_dir)
             except SyntaxError:
                 e_type, e_value, e_tb = sys.exc_info()
                 for line in traceback.format_exception_only(e_type, e_value):

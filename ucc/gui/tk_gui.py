@@ -14,12 +14,13 @@ import os.path
 import contextlib
 import functools
 import subprocess
-import re
 
 from Tkinter import *
 import tkFont
 import Pmw
 import sqlite3 as db
+
+from ucc.word import helpers
 
 debug = 1
 
@@ -199,19 +200,6 @@ class new_word(object):
 
 
 class word(object):
-    # Python's reserved word list (for python 2.6).
-    reserved_words = set((
-        'and', 'del', 'from', 'not', 'while',
-        'as', 'elif', 'global', 'or', 'with',
-        'assert', 'else', 'if', 'pass', 'yield',
-        'break', 'except', 'import', 'print',
-        'class', 'exec', 'in', 'raise',
-        'continue', 'finally', 'is', 'return',
-        'def', 'for', 'lambda', 'try',
-    ))
-
-    illegal_identifier = re.compile(r'[^a-zA-Z0-9_]')
-
     def __init__(self, id, name, kind, defining_word):
         self.id = id
         self.name = name
@@ -232,9 +220,7 @@ class word(object):
         if filename_suffix:
             basename = self.name
             if filename_suffix == 'py':
-                basename = self.illegal_identifier.sub('_', basename)
-                if self.name in self.reserved_words:
-                    basename += '_'
+                basename = helpers.legalize_name(basename)
             self.filename = os.path.join(dir, '.'.join((basename,
                                                         filename_suffix)))
             if not os.path.exists(self.filename):
