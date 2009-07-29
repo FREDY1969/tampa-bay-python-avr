@@ -2,7 +2,7 @@
 
 from examples.washer import declaration
 
-class var(declaration.declaration):
+class var(declaration.word):
     def compile(self, db_cur):
         initial_value = self.get_answers(db_cur)['initial value'][0]
         data_name = self.name + "__data"

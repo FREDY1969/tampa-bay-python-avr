@@ -2,7 +2,7 @@
 
 from examples.washer import declaration
 
-class const(declaration.declaration):
+class const(declaration.word):
     def compile(self, db_cur):
         value = self.get_answers(db_cur)['value'][0]
         return (("%s:" % self.name,

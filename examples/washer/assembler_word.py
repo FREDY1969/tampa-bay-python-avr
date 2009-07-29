@@ -2,24 +2,21 @@
 
 from __future__ import with_statement
 
-import os.path
 from ucc.ast import ast
 from ucc.assembler import asm_opcodes
 from examples.washer import declaration
 
-class assembler_word(declaration.declaration):
-    def parse_file(self, parser, filename):
-        name = os.path.basename(filename)
-        assert name.endswith('.asm')
-        name = name[:-4]
+class assembler_word(declaration.word):
+    def parse_file(self, parser, project_dir):
         with ast.db_transaction() as db_cur:
-            ast.delete_word_by_name(name)
+            ast.delete_word_by_name(self.name)
             instructions = []
+            filename = self.get_filename(project_dir)
             with open(filename) as f:
                 for i, line in enumerate(f):
                     inst = parse_asm(filename, line, i + 1)
                     if inst: instructions.append(inst)
-            root = ast.ast(kind='word_body', word=name, str1=filename,
+            root = ast.ast(kind='word_body', word=self.name, str1=filename,
                            *instructions)
             root.save(db_cur)
 
