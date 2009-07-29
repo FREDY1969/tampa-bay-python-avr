@@ -9,7 +9,8 @@ from __future__ import with_statement
 import sys
 import os, os.path
 import contextlib
-from sqlite3 import db
+import traceback
+import sqlite3 as db
 
 QA_db_filename = 'python-avr.db'
 
@@ -21,6 +22,7 @@ if sys.path[0] == '': sys.path[0] = python_path
 else: sys.path.insert(0, python_path)
 
 from ucc.parser import genparser
+from ucc.ast import ast
 
 def usage():
     sys.stderr.write("usage: compile project_dir\n")
@@ -66,10 +68,12 @@ def run():
 
     # import needed modules from the project:
     env = {}
-    assert project_dir.startswith(python_path)
-    project_pkg = project_dir[len(python_path) + 1:].replace(os.path.sep, '.')
+    abs_project_dir = os.path.abspath(project_dir)
+    assert abs_project_dir.startswith(python_path)
+    project_pkg = abs_project_dir[len(python_path) + 1:] \
+                    .replace(os.path.sep, '.')
     if os.path.sep != '/': project_pkg.replace('/', '.')
-    exec("from %s import assembler_word, delcaration, parser" % (project_pkg,),
+    exec("from %s import assembler_word, declaration, parser" % (project_pkg,),
          env, env)
     assembler_word = env['assembler_word']
     declaration = env['declaration']
@@ -77,21 +81,30 @@ def run():
 
     # parse files in the project:
     num_errors = 0
-    for dirpath, dirnames, filenames in os.walk(project_dir):
-        if '.hg' in dirnames: dirnames.remove('.hg')
-        for filename in filenames:
-            path = os.path.join(dirpath, filename)
-            name = os.path.basename(filename)[:-4]
-            try:
-                if filename.endswith('.asm'):
-                    assembler_word.assembler_word(name, 1, 1) \
-                      .parse_file(parser, path)
-                elif filename.endswith('.ucl'):
-                    declaration.high_level_word(name, 1, 1) \
-                      .parse_file(parser, path)
-            except Exception:
-                traceback.print_exc()
-                num_errors += 1
+    with ast.db_connection(project_dir):
+        for dirpath, dirnames, filenames in os.walk(project_dir):
+            if '.hg' in dirnames: dirnames.remove('.hg')
+            for filename in filenames:
+                path = os.path.join(dirpath, filename)
+                name = os.path.basename(filename)[:-4]
+                try:
+                    if filename.endswith('.asm'):
+                        #print "parsing asm word:", name
+                        assembler_word.assembler_word(name, 1, 1) \
+                          .parse_file(parser, path)
+                    elif filename.endswith('.ucl'):
+                        #print "parsing ucl word:", name
+                        declaration.high_level_word(name, 1, 1) \
+                          .parse_file(parser, path)
+                except SyntaxError:
+                    e_type, e_value, e_tb = sys.exc_info()
+                    for line in traceback.format_exception_only(e_type,
+                                                                e_value):
+                        sys.stderr.write(line)
+                    num_errors += 1
+                except Exception:
+                    traceback.print_exc()
+                    num_errors += 1
     if num_errors:
         sys.exit(1)
 

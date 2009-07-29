@@ -3,6 +3,7 @@
 from __future__ import with_statement
 
 import os.path
+import itertools
 import sqlite3 as db
 
 Db_conn = None
@@ -165,6 +166,8 @@ class ast(object):
             assert word_body_id is None
             word_body_id = my_id
         for arg_num, arg in enumerate(self.args):
+            if arg is None:
+                arg = ast(kind = 'None', expect = None)
             if isinstance(arg, ast):
                 arg.save(db_cur, word_body_id, my_id, arg_num, 0)
             else:
