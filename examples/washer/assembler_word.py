@@ -29,6 +29,7 @@ def parse_asm(filename, line, lineno):
     stripped_line = line.rstrip()
     comment = stripped_line.find('#')
     if comment >= 0: stripped_line = stripped_line[:comment].rstrip()
+    if not stripped_line: return None
     fields = stripped_line.split()
     label = opcode = None
     operands = ()
@@ -71,7 +72,7 @@ def parse_asm(filename, line, lineno):
     column_start = len(stripped_line) - len(stripped_line.lstrip()) + 1
     column_end = len(stripped_line)
     return ast.ast.from_parser((lineno, column_start, lineno, column_end),
-                               label = label, word = opcode,
+                               kind = 'flash', label = label, word = opcode,
                                str1 = str1, str2 = str2,
                                int1 = int1, int2 = int2)
 

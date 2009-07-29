@@ -21,15 +21,16 @@ create table ast (
           -- 'ratio': int1 = numerator, int2 = denominator
           -- 'string': str1 = string
           -- 'fn_call': word = name of fn word
-          -- all of the following are assembler nodes.  These all use the
-             following optional columns:
+          -- 'None': line, column info not set
+          -- All of the following are assembler nodes.  These all use the
+          -- following optional columns:
               -- label
               -- word is the opcode
               -- str1 and str2 are the operands
               -- int1 is the length (in bytes)
               -- int2 is the number of clock cycles (for machine instructions
-                 in flash)
-             and the kinds are:
+              -- in flash)
+          -- and the kinds are:
               -- 'flash'
               -- 'data'
               -- 'bss'

@@ -5,11 +5,12 @@ from ply import yacc
 from ucc.parser import scanner_init
 
 Parser = None
+Parser_module = None
 
 def init(parser_module, check_tables = False, debug = 0):
-    global Parser
+    global Parser, Parser_module
     parser_module.init()
-    if Parser is None:
+    if Parser is None or Parser_module != parser_module:
         outputdir = os.path.dirname(parser_module.__file__)
         module_name = parser_module.__name__.split('.')[-1]
         if debug:
@@ -38,6 +39,7 @@ def init(parser_module, check_tables = False, debug = 0):
                                optimize=1, write_tables=1,
                                tabmodule=parser_module.__name__ + '_tables',
                                outputdir=outputdir)
+        Parser_module = parser_module
 
 # Use the debug = 0 for normal use, and debug = 1 for testing changes in the
 # grammer (debug = 0 does not report grammer errors!).
@@ -70,12 +72,16 @@ def parse(parser_module, scanner_module, filename, check_tables = False,
     def tokenfunc():
         while True:
             tok = scanner_init.Lexer.token()
-            if tok is not None: return tok
+            if tok is not None:
+                #print "tokenfunc: returning " + tok.type
+                return tok
             try:
                 use_file(extra_files_iter.next())
             except StopIteration:
+                #print "tokenfunc: returning None"
                 return None
 
+    #print "parse: calling Parser.parse on", filename
     return Parser.parse(lexer=scanner_init.Lexer, tracking=True,
                         debug=debug, tokenfunc=tokenfunc)
 

@@ -52,4 +52,5 @@ class declaration(object):
 
 class high_level_word(declaration):
     def parse_file(self, parser, filename):
-        parse.parse_file(parser, filename)
+        if not parse.parse_file(parser, filename):
+            raise AssertionError, "parse failed for " + filename

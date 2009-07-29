@@ -10,6 +10,7 @@ from ply import lex
 #sys.stderr.write("scanner_init: sys.path[1] is %r\n" % (sys.path[1],))
 
 Lexer = None
+Scanner_module = None
 
 def get_syntax_position_info(p):
     return get_lineno_column(p, 1) + get_lineno_column(p, len(p) - 1)
@@ -66,12 +67,12 @@ def syntaxerror(msg, t = None, lineno = None, lexpos = None):
     raise SyntaxError
 
 def init(scanner_module, debug_param, check_tables = False, extra_arg = None):
-    global Lexer
+    global Lexer, Scanner_module
     if extra_arg is None:
         scanner_module.init(debug_param)
     else:
         scanner_module.init(debug_param, extra_arg)
-    if Lexer is None:
+    if Lexer is None or Scanner_module != scanner_module:
         if debug_param:
             Lexer = lex.lex(module=scanner_module, reflags=re.VERBOSE, debug=1)
         else:
@@ -104,6 +105,7 @@ def init(scanner_module, debug_param, check_tables = False, extra_arg = None):
                             lextab=tables_name,
                             reflags=re.VERBOSE,
                             outputdir=os.path.dirname(scanner_module.__file__))
+        Scanner_module = scanner_module
 
 def tokenize(scanner_module, s, extra_arg = None):
     r'''A function to help with testing your scanner.
