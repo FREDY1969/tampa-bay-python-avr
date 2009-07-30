@@ -376,7 +376,7 @@ def p_sub_rule(p):
            params
 
 def p_sub_rule2(p):
-    ''' sub_rule : '{' alternatives '}'
+    ''' sub_rule : '(' alternatives ')'
     '''
     rule_name = ast.gensym('sub_rule')
     gen_alternatives(rule_name, p[2], normal_wrapup)
@@ -412,7 +412,7 @@ def p_tuple_simple_word(p):
     p[0] = p[1], 'tuple', 0, None, None
 
 def p_param_list(p):
-    ''' param_list : '(' parameters_opt ')'
+    ''' param_list : START_PARAMS parameters_opt ')'
     '''
     p[0] = p[2]
 

@@ -40,7 +40,7 @@ Syntax:
 
     sub_rule: simple_word
             | simple_word AS_TOK NONTERMINAL
-            | '{' alternatives '}'
+            | '(' alternatives ')'
 
     simple_word: TOKEN_IGNORE
                | CHAR_TOKEN
@@ -51,7 +51,7 @@ Syntax:
     param_list_opt:
                   | param_list
 
-    param_list : '(' parameters_opt ')'
+    param_list : START_PARAMS parameters_opt ')'
 
     parameters_opt:
                   | parameters
