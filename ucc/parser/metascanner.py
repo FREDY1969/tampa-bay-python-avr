@@ -13,17 +13,18 @@ states = (
 
 tokens = (
     'AS_TOK',
+    'CHAR_TOKEN',
+    'ELLIPSIS',
     'NEWLINE_TOK',
     'NONTERMINAL',
-    'TUPLE_NONTERMINAL',
-    'ELLIPSIS',
-    'TOKEN_IGNORE',
-    'CHAR_TOKEN',
-    'TOKEN',
     'PYTHON_CODE',
+    'START_PARAMS',
+    'TOKEN',
+    'TOKEN_IGNORE',
+    'TUPLE_NONTERMINAL',
 )
 
-literals = '(){}:|?+*,'
+literals = '():|?+*,'
 
 t_ignore = ' '
 
@@ -75,6 +76,10 @@ def t_TOKEN_IGNORE(t):
 t_TOKEN = r'[A-Z_][A-Z_0-9]*'
 
 t_CHAR_TOKEN = r"'[^\\\t\r\n ]'"
+
+def t_START_PARAMS(t):
+    r"(?<=[]'a-zA-Z_0-9]) \("
+    return t
 
 def t_start_python_code(t):
     r'='
