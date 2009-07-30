@@ -19,21 +19,25 @@ class declaration(object):
         cls.subquestion_qid = 2
         cls.repeatable_qid = 3
         cls.filename_qid = 4
+    @classmethod
+    def create_instance(cls, project_pkg, name, id, db_cur):
+        return load_class(project_pkg, name, id, db_cur), None
     def parse_file(self, parser, project_dir):
         pass
-    def new_syntax(self, db_cur):
-        return (), {}
 
 class word(declaration):
     @classmethod
     def init_class2(cls, db_cur):
         cls.answers = get_answers(cls.kind_id, cls.__bases__[0].kind_id, db_cur)
         #cls.questions = cls.answers.get('question', ())
-        cls.filename_suffix = cls.answers['filename suffix'][0]
         cls.init_class3(db_cur)
     @classmethod
     def init_class3(cls, db_cur):
-        pass
+        cls.filename_suffix = cls.answers['filename suffix'][0]
+    @classmethod
+    def create_instance(cls, project_pkg, name, id, db_cur):
+        ans = cls(name, id)
+        return ans, None
     def get_filename(self, project_dir = ''):
         assert self.filename_suffix
         if self.filename_suffix == 'py':
@@ -48,6 +52,13 @@ class high_level_word(word):
         filename = self.get_filename(project_dir)
         if not parse.parse_file(parser, filename):
             raise AssertionError, "parse failed for " + filename
+
+def load_class(project_pkg, name, id, db_cur):
+    mod_name = helpers.legalize_name(name)
+    mod = helpers.import_module(project_pkg, mod_name)
+    new_word = getattr(mod, mod_name)
+    new_word.init_class(name, id, db_cur)
+    return new_word
 
 def get_answers(word_id, kind_id, db_cur):
     r'''Get_answers for this word.

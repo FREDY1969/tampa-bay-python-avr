@@ -1,5 +1,5 @@
 if temp = warm or temp = cold: turn-on cold-water
 if temp = hot or temp = warm: turn-on hot-water
 p
-if temp = warm or temp = cold: turn-off cold-water
-if temp = hot or temp = warm: turn-off hot-water
+turn-off hot-water
+turn-off cold-water

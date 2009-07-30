@@ -46,27 +46,24 @@ def run():
                                                     QA_db_filename))) \
       as db_conn:
         with contextlib.closing(db_conn.cursor()) as db_cur:
-            mod = import_module(project_pkg + '.declaration')
+            mod = helpers.import_module(project_pkg, 'declaration')
             decl = getattr(mod, 'declaration')
             decl.init_class('declaration', 1, db_cur)
             words_by_name = {'declaration': decl}
             words_by_id = {decl.kind_id: decl}
             rules = ()
             token_dict = {}
-            db_cur.execute("""select id, name, kind, defining_word
+            db_cur.execute("""select id, name, kind
                                 from word
                                where name != 'declaration'
                                order by defining_word desc""")
-            for id, name, kind, defining_word in db_cur.fetchall():
-                #print "id, name, kind, defining_word", id, name, kind, defining_word
-                if defining_word:
-                    mod_name = helpers.legalize_name(name)
-                    mod = import_module(project_pkg + '.' + mod_name)
-                    new_word = getattr(mod, mod_name)
-                    new_word.init_class(name, id, db_cur)
-                else:
-                    new_word = words_by_id[kind](name, id)
-                    r, td = new_word.new_syntax(db_cur)
+            for id, name, kind in db_cur.fetchall():
+                #print "id, name, kind", id, name, kind
+                new_word, new_syntax = \
+                  words_by_id[kind].create_instance(project_pkg, name, id,
+                                                    db_cur)
+                if new_syntax:
+                    r, td = new_syntax
                     rules += r
                     token_dict.update(td)
                 words_by_name[name] = new_word
@@ -81,7 +78,7 @@ def run():
                             '\n'.join(rules), token_dict, output_file)
 
     # import needed modules from the project:
-    parser = import_module(project_pkg + '.parser')
+    parser = helpers.import_module(project_pkg, 'parser')
 
     # parse files in the project:
     num_errors = 0
@@ -100,14 +97,6 @@ def run():
                 num_errors += 1
     if num_errors:
         sys.exit(1)
-
-def import_module(modulename):
-    ''' modulename is full package path (with dots) and does not include .py.
-    '''
-    mod = __import__(modulename)
-    for comp in modulename.split('.')[1:]:
-        mod = getattr(mod, comp)
-    return mod
 
 if __name__ == "__main__":
     run()

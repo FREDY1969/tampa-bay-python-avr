@@ -19,3 +19,12 @@ def legalize_name(name):
     name = Illegal_identifier.sub('_', name)
     if name in Reserved_words: name += '_'
     return name
+
+def import_module(project_pkg, modulename):
+    ''' project_pkg is full package path (with dots).
+    '''
+    mod = __import__(project_pkg + '.' + modulename)
+    for comp in project_pkg.split('.')[1:]:
+        mod = getattr(mod, comp)
+    return getattr(mod, modulename)
+

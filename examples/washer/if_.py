@@ -2,7 +2,7 @@
 
 from examples.washer import macro
 
-class if_(macro.macro):  # Is this really a class?
+class if_(macro.macro_word):
     def compile_macro(self, ast_id, db_cur):
         condition, true_branch, false_branch = get_ast_args(ast_id, db_cur)
         else_label = gensym('else')
@@ -21,11 +21,4 @@ class if_(macro.macro):  # Is this really a class?
                 ('label', endif_label),
               )
         replace_ast(ast_id, new_ast, db_cur)
-
-
-
-
-
-
-
 
