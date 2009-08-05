@@ -9,18 +9,23 @@ from xml.etree import ElementTree
 
 from ucc.word import validators
 
-def from_xml(questions_element):
+def from_xml(questions_element, allow_unknown_tags = False):
     r'''Returns a list of question objects.
+
+    This will accept None for the questions_element.
     '''
+    if questions_element is None: return []
     ans = []
     for e in questions_element.getchildren():
         if e.tag == 'questions':
-            ans.append(series.from_element(e))
+            ans.append(q_series.from_element(e))
         elif e.tag == 'question':
             type = e.find('type').text
-            cls = getattr(globals(), type, None)
+            cls = globals().get('q_' + type, None)
             if cls is None: raise SyntaxError("unknown question type: " + type)
             ans.append(cls.from_element(e))
+        elif not allow_unknown_tags:
+            raise SyntaxError("unknown xml tag in <questions>: " + e.tag)
     return ans
 
 def add_xml_subelement(root_element, questions):
@@ -43,6 +48,9 @@ class question(object):
         self.min = min  # min of None means not optional or repeatable
         self.max = max  # max of None means infinite if min is not None
         self.orderable = orderable
+        assert self.is_repeatable() or not self.orderable, \
+               "%s: orderable specified on non-repeatable question" % (name,)
+               
     @classmethod
     def from_element(cls, element):
         name = element.find('name').text
@@ -51,11 +59,11 @@ class question(object):
         min = int(min_tag.text) if min_tag is not None else None
         max_tag = element.find('max')
         max = None
-        if max_tag and max_tag.text.lower() != 'infinite':
+        if max_tag is not None and max_tag.text.lower() != 'infinite':
             max = int(max_tag.text)
         orderable_tag = element.find('orderable')
         orderable = None
-        if orderable_tag:
+        if orderable_tag is not None:
             if orderable_tag.text.lower() == 'false': orderable = False
             elif orderable_tag.text.lower() == 'true': orderable = True
             else:
@@ -85,7 +93,7 @@ class question(object):
     def is_orderable(self):
         r'''Returns True or False.
         '''
-        return self.orderable and self.is_repeatable()
+        return self.orderable == True
     def add_xml_subelement(self, root_element):
         question = ElementTree.SubElement(root_element, self.tag)
         ElementTree.SubElement(question, 'name').text = self.name
@@ -101,11 +109,12 @@ class question(object):
         self.add_type(question)
         self.add_subelements(question)
     def add_type(self, question):
-        ElementTree.SubElement(question, 'type').text = self.__class__.__name__
+        ElementTree.SubElement(question, 'type').text = \
+          self.__class__.__name__[2:]
     def add_subelements(self, question):
         pass
 
-class atomic(question):
+class q_atomic(question):
     r'''The base class of all atomic questions.
 
     I.e., questions that have just a single answer.  Though these may be
@@ -113,38 +122,37 @@ class atomic(question):
     '''
     def __init__(self, name, label, validation = None,
                        min = None, max = None, orderable = None):
-        super(atomic, self).__init__(name, label, min, max, orderable)
+        super(q_atomic, self).__init__(name, label, min, max, orderable)
         self.validation = validation
     @classmethod
     def additional_args_from_element(cls, element):
         validation_tag = element.find('validation')
         if validation_tag is None: return {}
-        return {'validation': [validators.from_xml(v)
-                               for v in validation_tag.findall('validator')]}
+        return {'validation': validators.from_xml(validation_tag)}
     def add_subelements(self, question):
         if self.validation:
             validation = ElementTree.SubElement(question, 'validation')
             for v in self.validation: v.add_xml_subelement(validation)
 
-class bool(atomic):
+class q_bool(q_atomic):
     pass
 
-class number(atomic):
+class q_number(q_atomic):
     pass
 
-class int(atomic):
+class q_int(q_atomic):
     pass
 
-class rational(atomic):
+class q_rational(q_atomic):
     pass
 
-class real(atomic):
+class q_real(q_atomic):
     pass
 
-class string(atomic):
+class q_string(q_atomic):
     pass
 
-class series(question):
+class q_series(question):
     r'''A named series of questions.
 
     The order of the subquestions is the order that the user will see them.
@@ -152,26 +160,26 @@ class series(question):
     tag = 'questions'
     def __init__(self, name, label, subquestions = None,
                        min = None, max = None, orderable = None):
-        super(atomic, self).__init__(name, label, min, max, orderable)
+        super(q_series, self).__init__(name, label, min, max, orderable)
         self.subquestions = [] if subquestions is None else list(subquestions)
     @classmethod
     def additional_args_from_element(cls, element):
-        return {'subquestions': from_xml(element)}
+        return {'subquestions': from_xml(element, allow_unknown_tags = True)}
     def add_type(self, question):
         pass
     def add_subelements(self, question):
         for subq in self.subquestions: subq.add_xml_subelement(question)
 
-class choice(question):
+class q_choice(question):
     r'''A question where the user selects one of a set of choices.
 
     This class covers the single selection choice.  Compare to multichoice.
     '''
     def __init__(self, name, label, options = None, default = None,
                        min = None, max = None, orderable = None):
-        super(choice, self).__init__(name, label, min, max, orderable)
+        super(q_choice, self).__init__(name, label, min, max, orderable)
 
-        # self.options is list of (name, value, question)
+        # self.options is list of (name, value, list_of_questions)
         self.options = [] if options is None else list(options)
         self.default = default
     @classmethod
@@ -179,20 +187,20 @@ class choice(question):
         default_tag = element.find('default')
         default = None if default_tag is None else int(default_tag.text)
         options = []
-        for option in element.find('options/option'):
+        for option in element.findall('options/option'):
             options.append((option.get('name'), int(option.get('value')),
-                            from_xml(option)))
+                            from_xml(option.find('questions'))))
         return {'options': options, 'default': default}
     def add_subelements(self, question):
         if self.default is not None:
             ElementTree.SubElement(question, 'default').text = str(self.default)
         options = ElementTree.SubElement(question, 'options')
-        for name, value, question in self.options:
+        for name, value, questions in self.options:
             option = ElementTree.SubElement(options, 'option',
                                             name = name, value = str(value))
-            question.add_xml_subelement(option)
+            add_xml_subelement(option, questions)
 
-class multichoice(choice):
+class q_multichoice(q_choice):
     r'''A question where the user selects from a set of choices.
 
     This class covers the multiple selection choice.  Compare to choice.

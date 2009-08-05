@@ -17,7 +17,10 @@ def from_xml(answers_element):
         - None -- for an optional answer that wasn't answered
         - a (possibly empty) list of answer objects -- for a repeating answer
         - an answer object -- for a single answer
+
+    This will accept None for answers_element
     '''
+    if answers_element is None: return {}
     ans = {}
     for answer in answers_element.getchildren():
         if answer.tag == 'answer':
@@ -28,7 +31,7 @@ def from_xml(answers_element):
                 if repeated: ans[name] = []
                 else: ans[name] = None
             else:
-                value = getattr(globals(), 'ans_' + type)(name, answer)
+                value = globals()['ans_' + type](name, answer)
                 if repeated: ans.setdefault(name, []).append(value)
                 else: ans[name] = value
         elif answer.tag == 'answers':
@@ -37,6 +40,8 @@ def from_xml(answers_element):
             value = ans_series(name, answer)
             if repeated: ans.setdefault(name, []).append(value)
             else: ans[name] = value
+        else:
+            raise SyntaxError("unknown xml tag in <answers>: " + answer.tag)
     return ans
 
 def add_xml_subelement(root_element, answers):
@@ -99,10 +104,10 @@ class ans_series(answer):
 
     For example: some_ans_series.subquestion_name => subquestion answer.
     '''
-    def __init__(self, name, answer):
+    def __init__(self, name, answers):
         self.name = name
-        self.attributes = from_xml(answer)
-        for name, value in self.attributes:
+        self.attributes = from_xml(answers)
+        for name, value in self.attributes.iteritems():
             setattr(self, name, value)
     def __repr__(self):
         return "<%s for %s>" % (self.__class__.__name__, self.name)
@@ -116,7 +121,7 @@ class ans_choice(answer):
     r'''This represents the answer to a question with a list of choices.
 
     The tag of the choice chosen is some_ans_choice.tag, and the subordinate
-    answers (if any) are some_ans_choice.value.
+    answers (if any) are some_ans_choice.subanswers (as a dict, or None).
 
     This class is used for questions that only have one choice (single
     selection).  Compare to ans_multichoice.
@@ -126,19 +131,21 @@ class ans_choice(answer):
         d = self.parse_options(answer)
         assert len(d) == 1, \
                "%s: expected 1 option to choice, got %d" % (name, len(d))
-        self.tag, self.value = d.items()[0]
+        self.tag, self.subanswers = d.items()[0]
     def __repr__(self):
         return "<%s %s=%s->%r>" % (self.__class__.__name__, self.name,
-                                   self.tag, self.value)
+                                   self.tag, self.subanswers)
     def parse_options(self, answer):
+        r'''Returns dict mapping tag to dict of subanswers (or None).
+        '''
         ans = {}
-        for option in answer.find('options/option'):
+        for option in answer.findall('options/option'):
             value = option.get('value')
             try:
                 value = int(value)
             except ValueError:
                 pass
-            subanswers = from_xml(option)
+            subanswers = from_xml(option.find('answers'))
             ans[value] = subanswers or None
         return ans
     def add_subelement(self, answers_element, repeated = False):
@@ -150,10 +157,10 @@ class ans_choice(answer):
         options_element = ElementTree.SubElement(answer_element, 'options')
         self.add_options(options_element)
     def add_options(self, options_element):
-        self.add_option(options_element, self.tag, self.value)
+        self.add_option(options_element, self.tag, self.subanswers)
     def add_option(self, options_element, value, subanswers):
         option_element = ElementTree.SubElement(options_element, 'option',
-                                                value = value)
+                                                value = str(value))
         add_xml_subelement(option_element, subanswers)
 
 class ans_multichoice(ans_choice):
@@ -164,7 +171,7 @@ class ans_multichoice(ans_choice):
 
     The options chosen are in a dictionary accessed through
     some_ans_multichoice.answers.  The keys are the tags, and the values are
-    the subordinate answers (if any, None otherwise).
+    the subordinate answer dictionaries (if any, None otherwise).
     '''
     def __init__(self, name, answer):
         self.name = name
