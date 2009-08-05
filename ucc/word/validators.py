@@ -1,5 +1,10 @@
 # validators.py
 
+r'''These are the various kinds of input validators.
+
+All validators are subclasses of the 'validator' class.
+'''
+
 import re
 from xml.etree import ElementTree
 
@@ -17,6 +22,8 @@ def from_xml(root_element):
     return ans
 
 class validator(object):
+    r'''Base class of all validators.
+    '''
     def add_xml_subelement(self, root_element):
         return ElementTree.SubElement(root_element, Validator_tag,
                                       dict((xml_attr, getattr(self, self_attr)) 
@@ -34,6 +41,8 @@ class regex(validator):
     @classmethod
     def from_element(cls, element):
         return cls(element.get('value'), int(element.get('flags')))
+    def __repr__(self):
+        return "<%s %r>" % (self.__class__.__name__, self.expr)
     def validate(self, string):
         match = self.re.match(string)
         return match is not None
@@ -48,5 +57,7 @@ class range(validator):
     @classmethod
     def from_element(cls, element):
         return cls(int(element.get('minvalue')), int(element.get('maxvalue')))
+    def __repr__(self):
+        return "<%s %s-%s>" % (self.__class__.__name__, self.min, self.max)
     def validate(self, string):
         return self.min_n <= to_number(string) <= self.max_n
