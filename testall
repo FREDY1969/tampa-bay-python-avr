@@ -32,6 +32,19 @@ def call(input):
         return tuple(int(x) for x in lines[-1].split())
     return 1, 0
 
+def usage():
+    sys.stderr.write("usage: testall [py | tst]\n")
+    sys.exit(2)
+
+if len(sys.argv) > 2: usage()
+
+do_py = do_tst = True
+
+if len(sys.argv) == 2:
+    if sys.argv[1] == 'py': do_tst = False
+    elif sys.argv[1] == 'tst': do_py = False
+    else: usage()
+
 errors = 0
 tests = 0
 files = 0
@@ -50,7 +63,7 @@ for dirpath, dirnames, filenames in os.walk('.'):
     for filename in filenames:
         path = os.path.join(dirpath, filename)
         try:
-            if filename.endswith('.py'):
+            if do_py and filename.endswith('.py'):
                 print "Testing", path
                 arg = os.path.normpath(path[:-3])
                 arg = arg.replace(os.sep, '.')
@@ -65,7 +78,7 @@ for dirpath, dirnames, filenames in os.walk('.'):
                     ans = doctest.testmod(%(modpath)s)
                     print ans[0], ans[1]
                 """ % {'modpath': arg})
-            elif filename.endswith('.tst'):
+            elif do_tst and filename.endswith('.tst'):
                 print "Testing", path
                 e, t = call("""
                     import doctest

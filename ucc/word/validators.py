@@ -10,13 +10,15 @@ from xml.etree import ElementTree
 
 Validator_tag = 'validator'
 
+def g(): return globals()
+
 def from_xml(root_element):
     r'''Returns a list of validator objects.
     '''
     ans = []
     for e in root_element.findall(Validator_tag):
         type = e.get('type')
-        cls = getattr(globals(), type, None)
+        cls = globals().get(type, None)
         if cls is None: raise SyntaxError("unknown validator type: " + type)
         ans.append(cls.from_element(e))
     return ans
@@ -25,11 +27,12 @@ class validator(object):
     r'''Base class of all validators.
     '''
     def add_xml_subelement(self, root_element):
-        return ElementTree.SubElement(root_element, Validator_tag,
-                                      dict((xml_attr, getattr(self, self_attr)) 
-                                           for self_attr, xml_attr
-                                            in self.xml_mapping),
-                                      type = self.__class__.__name__)
+        ElementTree.SubElement(root_element, Validator_tag,
+                               dict((xml_attr, getattr(self, self_attr)) 
+                                    for self_attr, xml_attr in self.xml_mapping
+                                    if getattr(self, self_attr, None)
+                                         is not None),
+                               type = self.__class__.__name__)
 
 class regex(validator):
     xml_mapping = (('expr',  'value'), ('flags', 'flags'))
@@ -40,7 +43,8 @@ class regex(validator):
                                    else re.compile(expr, flags)
     @classmethod
     def from_element(cls, element):
-        return cls(element.get('value'), int(element.get('flags')))
+        flags = element.get('flags')
+        return cls(element.get('value'), flags and int(flags))
     def __repr__(self):
         return "<%s %r>" % (self.__class__.__name__, self.expr)
     def validate(self, string):
@@ -56,8 +60,15 @@ class range(validator):
         self.max_n = to_number(max)
     @classmethod
     def from_element(cls, element):
-        return cls(int(element.get('minvalue')), int(element.get('maxvalue')))
+        return cls(element.get('minvalue'), element.get('maxvalue'))
     def __repr__(self):
         return "<%s %s-%s>" % (self.__class__.__name__, self.min, self.max)
     def validate(self, string):
-        return self.min_n <= to_number(string) <= self.max_n
+        n = to_number(string)
+        if self.min_n is not None and self.min_n > n: return False
+        if self.max_n is not None and self.max_n < n: return False
+        return True
+
+# FIX: What's the right way to convert numbers for ranges?
+def to_number(s):
+    return s and int(s)
