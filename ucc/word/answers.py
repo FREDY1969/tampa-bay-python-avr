@@ -76,6 +76,8 @@ class answer(object):
     def __init__(self, name, answer):
         self.name = name
         self.value = get_value_string(name, answer)
+    def __repr__(self):
+        return "<%s %s=%r>" % (self.__class__.__name__, self.name, self.value)
     def add_subelement(self, answers_element, repeated = False):
         ElementTree.SubElement(answers_element, 'answer', name = self.name,
                                type = self.__class__.__name__[4:],
@@ -102,6 +104,8 @@ class ans_series(answer):
         self.attributes = from_xml(answer)
         for name, value in self.attributes:
             setattr(self, name, value)
+    def __repr__(self):
+        return "<%s for %s>" % (self.__class__.__name__, self.name)
     def add_subelement(self, answers_element, repeated = False):
         my_answers_element = ElementTree.SubElement(answers_element, 'answers',
                                                     name = self.name,
@@ -123,6 +127,9 @@ class ans_choice(answer):
         assert len(d) == 1, \
                "%s: expected 1 option to choice, got %d" % (name, len(d))
         self.tag, self.value = d.items()[0]
+    def __repr__(self):
+        return "<%s %s=%s->%r>" % (self.__class__.__name__, self.name,
+                                   self.tag, self.value)
     def parse_options(self, answer):
         ans = {}
         for option in answer.find('options/option'):
@@ -162,6 +169,8 @@ class ans_multichoice(ans_choice):
     def __init__(self, name, answer):
         self.name = name
         self.answers = self.parse_options(answer)
+    def __repr__(self):
+        return "<%s for %s>" % (self.__class__.__name__, self.name)
     def add_options(self, options_element):
         for tag in sorted(self.answers.keys()):
             self.add_option(options_element, tag, self.answers[tag])

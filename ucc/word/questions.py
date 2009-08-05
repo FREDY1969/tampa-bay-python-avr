@@ -1,6 +1,13 @@
 # questions.py
 
+r'''The various kinds of questions.
+
+These are all subclasses of the 'question' class.
+'''
+
 from xml.etree import ElementTree
+
+from ucc.word import validators
 
 def from_xml(questions_element):
     r'''Returns a list of question objects.
@@ -16,7 +23,19 @@ def from_xml(questions_element):
             ans.append(cls.from_element(e))
     return ans
 
+def add_xml_subelement(root_element, questions):
+    r'''Adds the <questions> tag to root_element if there are any questions.
+
+    Expects a list of questions, as returned from from_xml.
+    '''
+    if questions:
+        questions_element = ElementTree.SubElement(root_element, 'questions')
+        for q in questions:
+            q.add_xml_subelement(questions_element)
+
 class question(object):
+    r'''The base class of all questions.
+    '''
     tag = 'question'
     def __init__(self, name, label, min = None, max = None, orderable = None):
         self.name = name
@@ -48,6 +67,8 @@ class question(object):
     @classmethod
     def additional_args_from_element(cls, element):
         return {}
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self.name)
     def is_optional(self):
         r'''Returns True or False.
         '''
@@ -85,6 +106,11 @@ class question(object):
         pass
 
 class atomic(question):
+    r'''The base class of all atomic questions.
+
+    I.e., questions that have just a single answer.  Though these may be
+    optional or repeatable.
+    '''
     def __init__(self, name, label, validation = None,
                        min = None, max = None, orderable = None):
         super(atomic, self).__init__(name, label, min, max, orderable)
@@ -119,6 +145,10 @@ class string(atomic):
     pass
 
 class series(question):
+    r'''A named series of questions.
+
+    The order of the subquestions is the order that the user will see them.
+    '''
     tag = 'questions'
     def __init__(self, name, label, subquestions = None,
                        min = None, max = None, orderable = None):
@@ -133,6 +163,10 @@ class series(question):
         for subq in self.subquestions: subq.add_xml_subelement(question)
 
 class choice(question):
+    r'''A question where the user selects one of a set of choices.
+
+    This class covers the single selection choice.  Compare to multichoice.
+    '''
     def __init__(self, name, label, options = None, default = None,
                        min = None, max = None, orderable = None):
         super(choice, self).__init__(name, label, min, max, orderable)
@@ -159,4 +193,8 @@ class choice(question):
             question.add_xml_subelement(option)
 
 class multichoice(choice):
+    r'''A question where the user selects from a set of choices.
+
+    This class covers the multiple selection choice.  Compare to choice.
+    '''
     pass
