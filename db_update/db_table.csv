@@ -1,0 +1,5 @@
+id	version	table_name	table_order	python_update
+1	1	word	1	
+2	1	answer	2	
+1	2	word	1	
+2	2	answer	2	

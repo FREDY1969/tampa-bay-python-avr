@@ -1,0 +1,11 @@
+syntax: glob
+
+.pyhist
+.*.swp
+*.pyc
+*.pyo
+*.db
+*~
+
+.DS_Store
+._*

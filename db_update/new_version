@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# new_version
+
+set -e
+
+ver_column() {
+    # ver_column csv_file
+    head -1 "$1" |
+      sed -e 's/	version	.*/	/' \
+          -e 's/^version	.*//' \
+          -e 's/[^	]//g' |
+      wc -c
+}
+
+copy_version() {
+    # copy_column csv_file old_version
+    col=$((`ver_column "$1"` - 1))
+    new_version=$(($2 + 1))
+    echo col $col old_version $2 new_version $new_version
+    echo "s/^\(\([^	]*	\)\{$col\}\)$2	/\1$new_version	/p"
+
+    sed -n -e "s/^\(\([^	]*	\)\{$col\}\)$2	/\1$new_version	/p" \
+        "$1" >> "$1"
+}
+
+ver_col=`ver_column db_table.csv`
+
+echo ver_col is $ver_col
+
+last_ver=`cut -f$ver_col db_table.csv | tail -n +2 | sort -nr | head -1`
+
+echo last_ver is $last_ver
+
+copy_version db_table.csv $last_ver
+copy_version db_column.csv $last_ver
