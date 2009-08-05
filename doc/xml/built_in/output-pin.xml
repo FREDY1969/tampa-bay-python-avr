@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>output-pin</name>
+    <label>Output Pin</label>
+    <kind>declaration</kind>
+    <defining>True|False</defining>
+    <questions>
+        <min>int</min>
+        <max>int|infinite</max>
+        
+        <question>
+            <name>pin-number</name>
+            <label>Pin Number</label>
+            <type>bool|number|int|rational|real|string|choice|multichoice</type>
+            <min>int</min>
+            <max>int|infinite</max>
+            <orderable>True</orderable>
+            <validation>
+                <validator type="regex" value="expression" />
+                <validatar type="range" minvalue="0" maxvalue="1024">
+            </validation>
+        </question>
+        
+        <question>
+            <name>on-is</name>
+            <label>On is represented as</label>
+            <type>multichoice</type>
+            <default>1</default>
+            <min>int</min>
+            <max>int|infinite</max>
+            <options>
+                <option name="HIGH" value="1">
+                    <questions>
+                        <min>int</min>
+                        <max>int|infinite</max>
+                        <question>
+                            <name>pin-number</name>
+                            <label>Pin Number</label>
+                            <type>int</type>
+                            <min>int</min>
+                            <max>int|infinite</max>
+                        </question>
+                        <question>
+                            <name>pin-number</name>
+                            <label>Pin Number</label>
+                            <type>int</type>
+                            <min>int</min>
+                            <max>int|infinite</max>
+                        </question>
+                        <question>
+                            <name>pin-number</name>
+                            <label>Pin Number</label>
+                            <type>int</type>
+                            <min>int</min>
+                            <max>int|infinite</max>
+                        </question>
+                    </questions>
+                </option>
+                <option name="LOW" value="0" />
+            </options>
+        </question>
+        
+        <questions>
+            <name>series-name</name>
+            <label>My Series</label>
+            <min>int</min>
+            <max>int|infinite</max>
+            <!-- Additional Questions as a Set -->
+        </questions>
+    </questions>
+    
+    <answers>
+        <answer name="pin-number" type="bool|int|rational|real|string" value="2" repeated="True" />
+        <answer name="pin-number" type="bool|int|rational|real|string" value="3" repeated="True" />
+        <answer name="not-specified" />
+        <answer name="not-specified-list" repeated="True" />
+        <answer name="on-is" type="multichoice"  repeated="True|False">
+            <options>
+                <option value="1">
+                    <answers>
+                        <!-- Additional Answers -->
+                    </answers>
+                </option>
+                <option value="2" />
+            <options>
+        </answer>
+        <answers name="series-name" repeated="True|False">
+            <!-- Additional Answers as Set -->
+        </answers>
+    </answers>
+</word>
