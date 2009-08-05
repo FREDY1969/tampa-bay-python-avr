@@ -17,7 +17,7 @@
             <orderable>True</orderable>
             <validation>
                 <validator type="regex" value="expression" />
-                <validatar type="range" minvalue="0" maxvalue="1024">
+                <validatar type="range" minvalue="0" maxvalue="1024" />
             </validation>
         </question>
         
@@ -70,8 +70,8 @@
     </questions>
     
     <answers>
-        <answer name="pin-number" type="bool|int|rational|real|string" value="2" repeated="True" />
-        <answer name="pin-number" type="bool|int|rational|real|string" value="3" repeated="True" />
+        <answer name="pin-number" type="bool|number|int|rational|real|string" value="2" repeated="True" />
+        <answer name="pin-number" type="bool|number|int|rational|real|string" value="3" repeated="True" />
         <answer name="not-specified" />
         <answer name="not-specified-list" repeated="True" />
         <answer name="on-is" type="multichoice"  repeated="True|False">
