@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>declaration</name>
+    <label>Declaration</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <questions>
+        <question>
+            <name>filename-suffix</name>
+            <label>Filename Suffix</label>
+            <type>string</type>
+            <properties>
+                <property name="optional" value="True" />
+                <property name="repeatable" value="False" />
+            </properties>
+        </question>
+    </questions>
+</word>
