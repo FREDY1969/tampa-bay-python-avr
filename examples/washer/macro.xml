@@ -11,6 +11,9 @@
         <question>
             <name>syntax</name>
             <label>syntax</label>
+            <min>0</min>
+            <max>infinite</max>
+            <orderable>True</orderable>
             <type>string</type>
         </question>
         <questions>

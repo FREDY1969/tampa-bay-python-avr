@@ -25,7 +25,11 @@
             <answer name="pin_number" repeated="False" type="int" value="9" />
             <answer name="value" repeated="False" type="string" value="5" />
         </answers>
-        <answer name="selected_pin_is" repeated="False" type="string" value="LOW" />
+        <answer name="selected_pin_is" repeated="False" type="choice">
+            <options>
+                <option value="LOW" />
+            </options>
+        </answer>
         <answer name="use_pullups_" repeated="False" type="bool" value="True" />
     </answers>
 </word>
