@@ -48,8 +48,13 @@ class word(object):
         self.label = label
         self.defining = defining
         self.kind = kind
-        self.answers = answers
-        self.questions = questions
+        self.answers = answers      # {question_name: answers}
+                                    #   answers can be:
+                                    #      - None (unanswered optional)
+                                    #      - a single answer object
+                                    #   or - a list of answer objects
+                                    #        (repetition)
+        self.questions = questions  # list of question objects.
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)

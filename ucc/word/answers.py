@@ -31,13 +31,13 @@ def from_xml(answers_element):
                 if repeated: ans[name] = []
                 else: ans[name] = None
             else:
-                value = globals()['ans_' + type](name, answer)
+                value = globals()['ans_' + type].from_element(name, answer)
                 if repeated: ans.setdefault(name, []).append(value)
                 else: ans[name] = value
         elif answer.tag == 'answers':
             name = answer.get('name')
             repeated = answer.get('repeated', 'false').lower() == 'true'
-            value = ans_series(name, answer)
+            value = ans_series.from_element(name, answer)
             if repeated: ans.setdefault(name, []).append(value)
             else: ans[name] = value
         else:
@@ -78,11 +78,20 @@ class answer(object):
 
     The names of all answer subclasses start with 'ans_', for example: ans_bool.
     '''
-    def __init__(self, name, answer):
+
+    def __init__(self, name, value):
         self.name = name
-        self.value = get_value_string(name, answer)
+        self.value = value
+        assert isinstance(self.value, (str, unicode)), \
+               "%s: null value for %s" % (self.__class__.__name__, self.name)
+
+    @classmethod
+    def from_element(cls, name, answer):
+        return cls(name, get_value_string(name, answer))
+
     def __repr__(self):
         return "<%s %s=%r>" % (self.__class__.__name__, self.name, self.value)
+
     def add_subelement(self, answers_element, repeated = False):
         ElementTree.SubElement(answers_element, 'answer', name = self.name,
                                type = self.__class__.__name__[4:],
@@ -104,13 +113,20 @@ class ans_series(answer):
 
     For example: some_ans_series.subquestion_name => subquestion answer.
     '''
-    def __init__(self, name, answers):
+
+    def __init__(self, name, subanswers = None):
         self.name = name
-        self.attributes = from_xml(answers)
+        self.attributes = subanswers if subanswers is not None else {}
         for name, value in self.attributes.iteritems():
             setattr(self, name, value)
+
+    @classmethod
+    def from_element(cls, name, answers):
+        return cls(name, from_xml(answers))
+
     def __repr__(self):
         return "<%s for %s>" % (self.__class__.__name__, self.name)
+
     def add_subelement(self, answers_element, repeated = False):
         my_answers_element = ElementTree.SubElement(answers_element, 'answers',
                                                     name = self.name,
@@ -126,28 +142,23 @@ class ans_choice(answer):
     This class is used for questions that only have one choice (single
     selection).  Compare to ans_multichoice.
     '''
-    def __init__(self, name, answer):
+
+    def __init__(self, name, tag, subanswers = None):
         self.name = name
-        d = self.parse_options(answer)
+        self.tag = tag
+        self.subanswers = subanswers
+
+    @classmethod
+    def from_element(cls, name, answer):
+        d = parse_options(answer)
         assert len(d) == 1, \
                "%s: expected 1 option to choice, got %d" % (name, len(d))
-        self.tag, self.subanswers = d.items()[0]
+        return cls(name, *d.items()[0])
+
     def __repr__(self):
         return "<%s %s=%s->%r>" % (self.__class__.__name__, self.name,
                                    self.tag, self.subanswers)
-    def parse_options(self, answer):
-        r'''Returns dict mapping tag to dict of subanswers (or None).
-        '''
-        ans = {}
-        for option in answer.findall('options/option'):
-            value = option.get('value')
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-            subanswers = from_xml(option.find('answers'))
-            ans[value] = subanswers or None
-        return ans
+
     def add_subelement(self, answers_element, repeated = False):
         answer_element = ElementTree.SubElement(answers_element, 'answer',
                                                 name = self.name,
@@ -156,12 +167,28 @@ class ans_choice(answer):
                                                 repeated = str(repeated))
         options_element = ElementTree.SubElement(answer_element, 'options')
         self.add_options(options_element)
+
     def add_options(self, options_element):
         self.add_option(options_element, self.tag, self.subanswers)
+
     def add_option(self, options_element, value, subanswers):
         option_element = ElementTree.SubElement(options_element, 'option',
                                                 value = str(value))
         add_xml_subelement(option_element, subanswers)
+
+def parse_options(answer):
+    r'''Returns dict mapping tag to dict of subanswers (or None).
+    '''
+    ans = {}
+    for option in answer.findall('options/option'):
+        value = option.get('value')
+        try:
+            value = int(value)
+        except ValueError:
+            pass
+        subanswers = from_xml(option.find('answers'))
+        ans[value] = subanswers or None
+    return ans
 
 class ans_multichoice(ans_choice):
     r'''This represents the answer to a question with a list of choices.
@@ -173,11 +200,18 @@ class ans_multichoice(ans_choice):
     some_ans_multichoice.answers.  The keys are the tags, and the values are
     the subordinate answer dictionaries (if any, None otherwise).
     '''
-    def __init__(self, name, answer):
+
+    def __init__(self, name, answers):
         self.name = name
-        self.answers = self.parse_options(answer)
+        self.answers = answers
+
+    @classmethod
+    def from_element(cls, name, answer):
+        return cls(name, parse_options(answer))
+
     def __repr__(self):
         return "<%s for %s>" % (self.__class__.__name__, self.name)
+
     def add_options(self, options_element):
         for tag in sorted(self.answers.keys()):
             self.add_option(options_element, tag, self.answers[tag])

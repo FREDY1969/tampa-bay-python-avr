@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>input_pin</name>
+    <label>input-pin</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" />
+    </answers>
+    <questions>
+        <question>
+            <name>pin_number</name>
+            <label>pin-number</label>
+            <type>int</type>
+        </question>
+        <question>
+            <name>use_pullup_</name>
+            <label>use-pullup?</label>
+            <type>bool</type>
+        </question>
+        <question>
+            <name>on_is</name>
+            <label>on-is</label>
+            <type>string</type>
+        </question>
+    </questions>
+</word>
