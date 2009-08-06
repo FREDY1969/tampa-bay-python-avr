@@ -24,8 +24,8 @@ precedence = (
 )
 
 token_dict = {
-    u'else': u'ELSE_TOK',
-    u'if': u'IF',
+    'else': 'ELSE_TOK',
+    'if': 'IF',
 }
 
 def p_one_or_more_0001(p):
@@ -423,8 +423,8 @@ def p_error(t):
                           scanner_init.syntaxerror_params(t))
 
 tokens = ['AND', 'APPROX_NUMBER', 'ARG_LEFT_WORD', 'ARG_RIGHT_WORD', 'BIT_AND',
-          'BIT_NOT', 'BIT_OR', 'BIT_XOR', 'CHAR', 'DEINDENT_TOK', u'ELSE_TOK',
-          'EQ', 'GE', u'IF', 'INDENT_TOK', 'INTEGER', 'LB_TOK', 'LE', 'LP_TOK',
+          'BIT_NOT', 'BIT_OR', 'BIT_XOR', 'CHAR', 'DEINDENT_TOK', 'ELSE_TOK',
+          'EQ', 'GE', 'IF', 'INDENT_TOK', 'INTEGER', 'LB_TOK', 'LE', 'LP_TOK',
           'NAME', 'NE', 'NEGATE', 'NEWLINE_TOK', 'NOT', 'OR', 'RATIO',
           'START_SERIES_TOK', 'STRING']
 

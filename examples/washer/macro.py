@@ -4,22 +4,25 @@ from examples.washer import declaration
 
 class macro(declaration.word):
     @classmethod
-    def create_instance(cls, project_pkg, name, id, db_cur):
-        ans = declaration.load_class(project_pkg, name, id, db_cur)
-        return ans, new_syntax(id, cls.kind_id, db_cur)
+    def create_instance(cls, project_pkg, name, project_dir):
+        ans = declaration.load_class(project_pkg, name, project_dir)
+        return ans, new_syntax(name, project_dir)
+
+    def __repr__(self):
+        return "<macro macro>"
 
 class macro_word(macro):
     @classmethod
-    def init_class3(cls, db_cur):
+    def init_class3(cls, project_dir):
         pass
 
-def new_syntax(word_id, macro_id, db_cur):
-    ans = declaration.get_answers(word_id, macro_id, db_cur)
-    syntax = ans['syntax']
-    if isinstance(syntax[0], (str, unicode)):
-        syntax = ('statement : ' + syntax[0],)
-    else:
-        syntax = tuple('statement : ' + x[0] for x in syntax)
-    keywords = ans['new syntax keyword']
-    return syntax, dict((x[0], x[2]['token value'][0]) for x in keywords)
+    def __repr__(self):
+        return "<%s %s>" % (self.__name__, self.kind)
+
+def new_syntax(name, project_dir):
+    ans = declaration.get_answers(name, project_dir)
+    syntax = tuple('statement : ' + x.value for x in ans['syntax'])
+    keywords = ans['new_syntax_keyword']
+    return syntax, dict((x.keyword_name.value, x.token_value.value)
+                        for x in keywords)
 
