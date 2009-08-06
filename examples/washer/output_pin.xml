@@ -16,7 +16,12 @@
         <question>
             <name>on_is</name>
             <label>on-is</label>
-            <type>string</type>
+            <type>choice</type>
+            <default>1</default>
+            <options>
+                <option name="HIGH" value="1" />
+                <option name="LOW" value="0" />
+            </options>
         </question>
     </questions>
 </word>

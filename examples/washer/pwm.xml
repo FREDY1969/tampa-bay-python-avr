@@ -11,7 +11,12 @@
         <question>
             <name>type</name>
             <label>type</label>
-            <type>string</type>
+            <type>choice</type>
+            <default>0</default>
+            <options>
+                <option name="Fast PWM" value="0" />
+                <option name="Phase Correct PWM" value="1" />
+            </options>
         </question>
         <question>
             <name>pin_number</name>
@@ -21,7 +26,12 @@
         <question>
             <name>on_is</name>
             <label>on-is</label>
-            <type>string</type>
+            <type>choice</type>
+            <default>1</default>
+            <options>
+                <option name="HIGH" value="1" />
+                <option name="LOW" value="0" />
+            </options>
         </question>
         <question>
             <name>freq</name>

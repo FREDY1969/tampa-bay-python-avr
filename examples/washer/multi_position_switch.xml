@@ -16,7 +16,12 @@
         <question>
             <name>selected_pin_is</name>
             <label>selected-pin-is</label>
-            <type>string</type>
+            <type>choice</type>
+            <default>0</default>
+            <options>
+                <option name="LOW" value="0" />
+                <option name="HIGH" value="1" />
+            </options>
         </question>
         <questions>
             <name>pin_mapping</name>
