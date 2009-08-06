@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package>
+    <name>washer</name>
+    <words>
+        <word name="ATmega328_port" />
+        <word name="Arduino-pin-Port" />
+        <word name="Arduino-pin-bit#" />
+        <word name="HIGH" />
+        <word name="IO_register" />
+        <word name="LOW" />
+        <word name="Port-B" />
+        <word name="Port-C" />
+        <word name="Port-D" />
+        <word name="agitate" />
+        <word name="assembler_word" />
+        <word name="buzz" />
+        <word name="cold-water" />
+        <word name="const" />
+        <word name="declaration" />
+        <word name="do-const" />
+        <word name="do-var" />
+        <word name="drain" />
+        <word name="fill" />
+        <word name="function" />
+        <word name="hot-water" />
+        <word name="if_" />
+        <word name="input_pin" />
+        <word name="jmp" />
+        <word name="jmp-false" />
+        <word name="jmp-true" />
+        <word name="macro" />
+        <word name="multi_position_switch" />
+        <word name="next" />
+        <word name="open" />
+        <word name="output_pin" />
+        <word name="pwm" />
+        <word name="run" />
+        <word name="spin" />
+        <word name="start_stop" />
+        <word name="task" />
+        <word name="temp-switch" />
+        <word name="translate" />
+        <word name="var" />
+        <word name="water-on" />
+    </words>
+</package>

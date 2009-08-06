@@ -70,6 +70,7 @@ for dirpath, dirnames, filenames in os.walk('.'):
                 if os.sep != '/': arg = arg.replace('/', '.')
                 arg = module_prefix + arg
 
+                files += 1
                 e, t = call("""
                     import %(modpath)s
                     %(modpath)s.doing_doctest = True
@@ -80,6 +81,7 @@ for dirpath, dirnames, filenames in os.walk('.'):
                 """ % {'modpath': arg})
             elif do_tst and filename.endswith('.tst'):
                 print "Testing", path
+                files += 1
                 e, t = call("""
                     import doctest
 
@@ -93,7 +95,6 @@ for dirpath, dirnames, filenames in os.walk('.'):
             traceback.print_exc()
         errors += e
         tests += t
-        files += 1
 
 print "Files: %d, Tests: %d, Errors: %d" % (files, tests, errors)
 sys.exit(errors)
