@@ -8,6 +8,7 @@ import sqlite3 as db
 
 Db_conn = None
 Db_filename = 'ast.db'
+Translation_dict = {}
 _Gensyms = {}
 
 class db_transaction(object):
@@ -147,7 +148,9 @@ class ast(object):
     def __init__(self, *args, **kws):
         self.args = args
         for name, value in kws.iteritems():
-            setattr(self, name, value)
+            setattr(self, name, (Translation_dict.get(value, value)
+                                 if name == 'word'
+                                 else value))
 
     @classmethod
     def from_parser(cls, syntax_position_info, *args, **kws):
