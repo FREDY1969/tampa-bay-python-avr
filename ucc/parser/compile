@@ -50,11 +50,14 @@ def run():
 
     word_names = xml_access.read_word_list(project_dir)[1]
 
-    # Load word objects and defining words:
+    # Load word objects and defining words, create translation_dict:
     word_words = []  # list of word.word objects
+    translation_dict = {}
     for name in word_names:
         word_obj = word.read_word(name, project_dir)
         word_words.append(word_obj)
+        if word_obj.name != word_obj.label:
+            translation_dict[word_obj.label] = word_obj.name
         if word_obj.defining:
             #print "defining:", name, word_obj.kind
             new_word, new_syntax = \
@@ -65,6 +68,8 @@ def run():
                 rules += r
                 token_dict.update(td)
             words_by_name[name] = new_word
+
+    ast.Translation_dict = translation_dict
 
     # Load non-defining words:
     for w in word_words:
