@@ -4,8 +4,8 @@
      cpc r19,r1
      brne .true
      movw r30,r2    # Z = PC
-     lpm r18,Z+     # PC = (Z)
-     lpm r19,Z
+     lpm r2,Z+      # PC = (Z)
+     lpm r3,Z
      jmp next
 .true:
      ldi r0,2       # PC += 2
