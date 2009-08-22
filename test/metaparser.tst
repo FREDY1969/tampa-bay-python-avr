@@ -11,7 +11,7 @@ def p_hi_0001(p):
              scanner_init.get_syntax_position_info(p),
              word=p[1], *args)
 <BLANKLINE>
-set(['DAD_TOK'])
+['DAD_TOK']
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() dad")
 def p_hi_0002(p):
@@ -23,7 +23,7 @@ def p_hi_0002(p):
              scanner_init.get_syntax_position_info(p),
              word=p[1], *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() '+' dad")
 def p_hi_0003(p):
@@ -35,7 +35,7 @@ def p_hi_0003(p):
              scanner_init.get_syntax_position_info(p),
              word=p[1], *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom '+'() dad")
 def p_hi_0004(p):
@@ -48,7 +48,7 @@ def p_hi_0004(p):
              scanner_init.get_syntax_position_info(p),
              word=p[2], *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom dad()")
 def p_hi_0005(p):
@@ -60,7 +60,7 @@ def p_hi_0005(p):
              scanner_init.get_syntax_position_info(p),
              word=p[2], *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom as cond dad()")
 def p_hi_0006(p):
@@ -73,7 +73,7 @@ def p_hi_0006(p):
              scanner_init.get_syntax_position_info(p),
              word=p[2], *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi(kind='foobar'): mom dad")
 def p_hi_0007(p):
@@ -86,7 +86,7 @@ def p_hi_0007(p):
              scanner_init.get_syntax_position_info(p),
              kind='foobar', *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom(foo=1,bar='baz') DAD")
 def p_hi_0008(p):
@@ -98,7 +98,7 @@ def p_hi_0008(p):
              scanner_init.get_syntax_position_info(p),
              foo=1, bar='baz', *args)
 <BLANKLINE>
-set(['DAD'])
+['DAD']
 
 >>> parser_init.test(metaparser, metascanner,
 ...                  "hi: mom(word=p[%s]) [dad]")
@@ -111,7 +111,7 @@ def p_hi_0009(p):
              scanner_init.get_syntax_position_info(p),
              word=p[1], *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() | dad()")
 def p_hi_0010(p):
@@ -130,7 +130,7 @@ def p_hi_0011(p):
              scanner_init.get_syntax_position_info(p),
              word=p[1], *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() dad?")
 def p_optional_0001(p):
@@ -153,7 +153,7 @@ def p_hi_0012(p):
              scanner_init.get_syntax_position_info(p),
              word=p[1], *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() dad+")
 def p_one_or_more_0001(p):
@@ -177,7 +177,7 @@ def p_hi_0013(p):
              scanner_init.get_syntax_position_info(p),
              word=p[1], *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() dad*")
 def p_zero_or_more_0001(p):
@@ -200,7 +200,7 @@ def p_hi_0014(p):
              scanner_init.get_syntax_position_info(p),
              word=p[1], *args)
 <BLANKLINE>
-set()
+[]
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() dad...")
 def p_ellipsis_0001(p):
@@ -223,5 +223,5 @@ def p_hi_0015(p):
              scanner_init.get_syntax_position_info(p),
              word=p[1], *args)
 <BLANKLINE>
-set()
+[]
 
