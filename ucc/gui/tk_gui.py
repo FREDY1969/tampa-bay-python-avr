@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-# tk_gui.py
+# tk_gui.py directory
 
 from __future__ import with_statement
 
@@ -593,7 +593,7 @@ def run():
     global filename_suffix_qid, app
 
     if len(sys.argv) != 2:
-        sys.stderr.write("usage: tk_gui directory\n")
+        sys.stderr.write("usage: tk_gui.py directory\n")
         sys.exit(2)
 
     dir = sys.argv[1]

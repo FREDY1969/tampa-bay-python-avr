@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-# genparser.py
+# genparser.py file rules tokens [parser.py]
 
 from __future__ import with_statement
 
@@ -14,7 +14,7 @@ sys.path[0] = os.path.abspath(os.path.join(os.path.dirname(__file__),
 from ucc.parser import parser_init, metaparser, metascanner, scanner
 
 def usage():
-    sys.stderr.write("usage: gen_parser.py file rules tokens [parser.py]\n")
+    sys.stderr.write("usage: genparser.py file rules tokens [parser.py]\n")
     sys.exit(2)
 
 def run():
