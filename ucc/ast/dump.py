@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-# dump.py
+# dump.py (project_dir | file.ucl)\n")
 
 r'''Dumps the ast database in a simple ascii format.
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     import sys
 
     def usage():
-        sys.stderr.write("usage: dump.py [project_dir | file.ucl]\n")
+        sys.stderr.write("usage: dump.py (project_dir | file.ucl)\n")
         sys.exit(2)
 
     len(sys.argv) == 2 or usage()

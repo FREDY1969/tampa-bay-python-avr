@@ -1,8 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-# compile
-
-# compile project_dir
+# compile.py project_dir
 
 from __future__ import with_statement
 
@@ -24,7 +22,7 @@ from ucc.parser import genparser
 from ucc.ast import ast
 
 def usage():
-    sys.stderr.write("usage: compile project_dir\n")
+    sys.stderr.write("usage: compile.py project_dir\n")
     sys.exit(2)
 
 def run():

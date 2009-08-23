@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-# parse.py
+# parse.py file...
 
 from __future__ import with_statement
 
@@ -43,7 +43,7 @@ def run():
         for filename in sys.argv[1:]:
             if not parse_file(parser, filename): num_errors += 1
     if num_errors:
-        sys.stderr.write("parse: %d files had errors\n" % num_errors)
+        sys.stderr.write("parse.py: %d files had errors\n" % num_errors)
         sys.exit(1)
 
 if __name__ == "__main__":
