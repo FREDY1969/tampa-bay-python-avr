@@ -1,1 +1,1 @@
-statement : IF() expr as condition [series] {ELSE_TOK [series]}?
+statement : IF() expr as cond [series] {ELSE_TOK [series]}?
