@@ -405,7 +405,7 @@ def p_optional_0002(p):
 def p_statement_0003(p):
     r''' statement : IF expr series optional_0001
     '''
-    p[2].expect = 'condition'
+    p[2].expect = 'cond'
     args = []
     args.append(p[2])
     args.append(p[3])
