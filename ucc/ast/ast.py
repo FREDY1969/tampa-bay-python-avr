@@ -56,7 +56,7 @@ def init(directory):
         if not os.path.exists(db_path):
             Db_conn = db.connect(db_path)
             Db_cur = Db_conn.cursor()
-            ddl_path = os.path.join(os.path.dirname(__file__), 'schema.ddl')
+            ddl_path = os.path.join(os.path.dirname(__file__), 'ast.ddl')
             try:
                 ddl = __loader__.get_data(ddl_path)
             except NameError:
