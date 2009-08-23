@@ -6,6 +6,10 @@ syntax: glob
 *.pyo
 *.db
 *~
+parser_tables.py
+scanner_tables.py
+metaparser_tables.py
+metascanner_tables.py
 
 .DS_Store
 ._*

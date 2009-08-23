@@ -1,4 +1,6 @@
--- schema.ddl
+-- ast.ddl
+
+-- The schema for the ast database.
 
 create table ast (
     -- The Abstract Syntax Tree (AST).  See AbstractSyntaxTree page in google
