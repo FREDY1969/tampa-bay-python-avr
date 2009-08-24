@@ -41,7 +41,7 @@ def run():
 
     mod = helpers.import_module(project_pkg, 'declaration')
     decl = getattr(mod, 'declaration')
-    decl.init_class('declaration', project_dir)
+    decl.init_class('declaration', 'declaration', project_dir)
     words_by_name = {'declaration': decl}
     rules = ()
     token_dict = {}
@@ -60,6 +60,7 @@ def run():
             #print "defining:", name, word_obj.kind
             new_word, new_syntax = \
               words_by_name[word_obj.kind].create_instance(project_pkg, name,
+                                                           word_obj.label,
                                                            project_dir)
             if new_syntax:
                 r, td = new_syntax
@@ -75,7 +76,7 @@ def run():
             #print "non-defining", w.name, w.kind
             new_word, new_syntax = \
               words_by_name[w.kind].create_instance(project_pkg, w.name,
-                                                    project_dir)
+                                                    w.label, project_dir)
             if new_syntax:
                 r, td = new_syntax
                 rules += r
@@ -109,8 +110,31 @@ def run():
             except Exception:
                 traceback.print_exc()
                 num_errors += 1
-    if num_errors:
-        sys.exit(1)
+        if num_errors:
+            sys.stderr.write("%s files had syntax errors\n" % num_errors)
+            sys.exit(1)
+
+        flash = []      # list of (label, opcode, operand1, operand2)
+        data = []       # list of (label, datatype, operand)
+        bss = []        # list of (label, num_bytes)
+        eeprom = []     # list of (label, datatype, operand)
+        words_done = set()
+        words_needed = set(['run'])
+        while words_needed:
+            next_word = words_needed.pop()
+            with ast.db_transaction() as db_cur:
+                f, d, b, e, n = \
+                  words_by_name[next_word].compile(db_cur, words_by_name)
+            flash.extend(f)
+            data.extend(d)
+            bss.extend(b)
+            eeprom.extend(e)
+            words_done.add(next_word)
+            words_needed.update(frozenset(n) - words_done)
+        print "flash", flash
+        print "data", data
+        print "bss", bss
+        print "eeprom", eeprom
 
 if __name__ == "__main__":
     run()

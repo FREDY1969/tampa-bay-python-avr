@@ -4,8 +4,8 @@ from examples.washer import declaration
 
 class macro(declaration.word):
     @classmethod
-    def create_instance(cls, project_pkg, name, project_dir):
-        ans = declaration.load_class(project_pkg, name, project_dir)
+    def create_instance(cls, project_pkg, name, label, project_dir):
+        ans = declaration.load_class(project_pkg, name, label, project_dir)
         return ans, new_syntax(name, project_dir)
 
     def __repr__(self):

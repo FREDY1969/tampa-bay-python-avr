@@ -176,4 +176,5 @@ class ast(object):
             else:
                 for position, x in enumerate(arg):
                     x.save(db_cur, word_body_id, my_id, arg_num, position)
+        return my_id
 
