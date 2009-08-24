@@ -29,9 +29,9 @@ def parse_file(parser, filename):
         root_ast.str1 = filename
         with ast.db_transaction() as db_cur:
             ast.delete_word_by_name(name)
-            root_ast.save(db_cur)
-        return True
-    return False
+            id = root_ast.save(db_cur)
+        return True, id
+    return False, None
 
 def run():
     if len(sys.argv) < 2: usage()
@@ -41,7 +41,7 @@ def run():
     with ast.db_connection(os.path.dirname(sys.argv[1])):
         num_errors = 0
         for filename in sys.argv[1:]:
-            if not parse_file(parser, filename): num_errors += 1
+            if not parse_file(parser, filename)[0]: num_errors += 1
     if num_errors:
         sys.stderr.write("parse.py: %d files had errors\n" % num_errors)
         sys.exit(1)

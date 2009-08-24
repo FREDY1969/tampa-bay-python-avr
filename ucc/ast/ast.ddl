@@ -46,6 +46,14 @@ create table ast (
     str2 varchar(2000),
 
     expect varchar(255),                       -- what's expected by the parent
+       -- possible values are:
+          -- 'statement'
+          -- 'cond'
+          -- 'value'
+          -- 'lvalue'
+          -- 'producer'
+          -- 'start_stop'
+
     type_id int references type(id),
 
     -- ast argument nodes are linked to their parent nodes:

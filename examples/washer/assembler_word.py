@@ -18,7 +18,15 @@ class assembler_word(declaration.word):
                     if inst: instructions.append(inst)
             root = ast.ast(kind='word_body', word=self.name, str1=filename,
                            *instructions)
-            root.save(db_cur)
+            self.word_body_id = root.save(db_cur)
+    def compile(self, db_cur, words_by_name):
+        db_cur.execute("""select label, word, str1, str2
+                            from ast
+                           where kind = 'flash'
+                             and word_body_id = ?
+                       """, (self.word_body_id,))
+        return ((self.name, None, None, None),) + \
+               tuple(tuple(row) for row in db_cur), (), (), (), ()
 
 def parse_asm(filename, line, lineno):
     r'''Parses one line of assembler code.  Returns ast node or None.

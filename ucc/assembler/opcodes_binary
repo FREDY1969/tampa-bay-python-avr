@@ -84,10 +84,10 @@ inst1('SBIC',	'1001 1001 AAAA Abbb', (1,2,3))
 inst1('SBI',	'1001 1010 AAAA Abbb', 2)
 inst1('SBIS',	'1001 1011 AAAA Abbb', (1,2,3))
 inst1('MUL',	'1001 11rd dddd rrrr', 2)
-inst1('IN',	'1011 0AAd dddd AAAA', 1)
-inst1('OUT',	'1011 1AAr rrrr AAAA', 1)
 inst1('LDD',	'10q0 qq0d dddd yqqq', 2) # y=1 for Y, 0 for Z
 inst1('STD',	'10q0 qq1r rrrr yqqq', 2) # y=1 for Y, 0 for Z
+inst1('IN',	'1011 0AAd dddd AAAA', 1)
+inst1('OUT',	'1011 1AAr rrrr AAAA', 1)
 inst1('RJMP',	'1100 kkkk kkkk kkkk', 2, k=(-2048,2047))
 inst1('RCALL',	'1101 kkkk kkkk kkkk', 3, k=(-2048,2047))
 inst1('LDI',	'1110 KKKK dddd KKKK', 1, d=(16,31))
