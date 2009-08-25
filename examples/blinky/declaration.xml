@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>declaration</name>
+    <label>declaration</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="py" />
+    </answers>
+    <questions>
+        <question>
+            <name>filename_suffix</name>
+            <label>filename suffix</label>
+            <min>0</min>
+            <max>1</max>
+            <type>string</type>
+        </question>
+    </questions>
+</word>
