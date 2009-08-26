@@ -52,7 +52,7 @@ def parse(parser_module, scanner_module, filename, check_tables = False,
     def use_text(filename, text):
         scanner_init.Lexer.lineno = 1
         scanner_init.Lexer.filename = filename
-        if text[-1] not in ' \n': text += ' '
+        if not text or text[-1] not in ' \n': text += ' '
         scanner_init.Lexer.input(text)
 
     def use_file(filename):

@@ -119,7 +119,7 @@ def run():
         bss = []        # list of (label, num_bytes)
         eeprom = []     # list of (label, datatype, operand)
         words_done = set()
-        words_needed = set(['run'])
+        words_needed = set(['startup'])
         while words_needed:
             next_word = words_needed.pop()
             with ast.db_transaction() as db_cur:
