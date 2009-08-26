@@ -2,6 +2,8 @@
 
 from __future__ import with_statement
 
+import itertools
+
 from ucc.ast import ast
 from ucc.assembler import asm_opcodes
 from examples.washer import declaration
@@ -25,8 +27,67 @@ class assembler_word(declaration.word):
                            where kind = 'flash'
                              and word_body_id = ?
                        """, (self.word_body_id,))
-        return ((self.name, None, None, None),) + \
-               tuple(tuple(row) for row in db_cur), (), (), (), ()
+        insts = tuple(itertools.imap(tuple, db_cur.fetchall()))
+        my_labels = \
+          frozenset(itertools.ifilter(None, itertools.imap(lambda x: x[0],
+                                                           insts)))
+        labels_used = \
+          frozenset(
+            itertools.imap(extract_label,
+              itertools.ifilter(is_legal_label,
+                itertools.chain(itertools.imap(lambda x: x[2], insts),
+                                itertools.imap(lambda x: x[2], insts)))))
+        return ((self.name, None, None, None),) + insts, (), (), (), \
+               tuple(labels_used - my_labels)
+
+def extract_label(operand):
+    r'''Extract the label out of the operand.
+
+    This is only fed operands that pass is_legal_label.
+
+    >>> extract_label('mom')
+    'mom'
+    >>> extract_label('hi8(mom)')
+    'mom'
+    '''
+    if '(' not in operand:
+        return operand
+    return operand[operand.index('(') + 1:operand.index(')')]
+
+def is_legal_label(operand):
+    r'''Determines whether operand is a legal label or not.
+
+    >>> is_legal_label('mom')
+    True
+    >>> is_legal_label('r14')
+    False
+    >>> is_legal_label('Y+64')
+    False
+    >>> is_legal_label('X')
+    False
+    >>> is_legal_label('123')
+    False
+    >>> is_legal_label('0x23')
+    False
+    >>> is_legal_label("'x'")
+    False
+    >>> is_legal_label('"hi mom"')
+    False
+    >>> is_legal_label('io:spl')
+    False
+    '''
+    if not operand: return False
+    operand = operand.lower()
+    if len(operand) >= 2 and operand[0] == 'r' and \
+       operand[1:].isdigit() and 0 <= int(operand[1:]) <= 31:
+        return False
+    if len(operand) == 1 and operand in 'xyz' \
+       or '+' in operand or '-' in operand:
+        return False
+    if operand[0].isdigit(): return False
+    if operand[0] in "'\"": return False
+    if operand.startswith('io:'): return False
+    return True
 
 def parse_asm(filename, line, lineno):
     r'''Parses one line of assembler code.  Returns ast node or None.

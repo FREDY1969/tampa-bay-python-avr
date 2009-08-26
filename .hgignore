@@ -6,6 +6,7 @@ syntax: glob
 *.pyo
 *.db
 *~
+parser.py
 parser_tables.py
 scanner_tables.py
 metaparser_tables.py
