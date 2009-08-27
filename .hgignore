@@ -11,6 +11,8 @@ parser_tables.py
 scanner_tables.py
 metaparser_tables.py
 metascanner_tables.py
+flash.hex
+eeprom.hex
 
 .DS_Store
 ._*

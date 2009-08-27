@@ -1,6 +1,6 @@
 # asm_opcodes.py
 
-from asm_inst import *
+from asm_inst import inst1, inst2
 
 # Arithmetic and logic instructions
 ADD = inst1('ADD', '0000 11rd dddd rrrr', 1)
@@ -19,7 +19,7 @@ EOR = inst1('EOR', '0010 01rd dddd rrrr', 1)
 COM = inst1('COM', '1001 010d dddd 0000', 1)
 NEG = inst1('NEG', '1001 010d dddd 0001', 1)
 SBR = inst1('SBR', '0110 KKKK dddd KKKK', 1, d=(16,31))
-CBR = inst1('CBR', '0111 KKKK dddd KKKK', 1, d=(16,31), K='~')
+CBR = inst1('CBR', '0111 KKKK dddd KKKK', 1, d=(16,31))
 INC = inst1('INC', '1001 010d dddd 0011', 1)
 DEC = inst1('DEC', '1001 010d dddd 1010', 1)
 TST = inst1('TST', '0010 00Dd dddd DDDD', 1, D='d')

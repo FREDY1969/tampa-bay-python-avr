@@ -7,6 +7,7 @@ from __future__ import with_statement
 import sys
 import os, os.path
 import contextlib
+import itertools
 import traceback
 import sqlite3 as db
 
@@ -20,6 +21,7 @@ else: sys.path.insert(0, python_path)
 from ucc.word import helpers, xml_access, word
 from ucc.parser import genparser
 from ucc.ast import ast
+from ucc.assembler import assemble
 
 def usage():
     sys.stderr.write("usage: compile.py project_dir\n")
@@ -131,10 +133,45 @@ def run():
             eeprom.extend(e)
             words_done.add(next_word)
             words_needed.update(frozenset(n) - words_done)
-        print "flash", flash
-        print "data", data
-        print "bss", bss
-        print "eeprom", eeprom
+        #print "flash", flash
+        #print "data", data
+        #print "bss", bss
+        #print "eeprom", eeprom
+        with open(os.path.join(project_dir, 'flash.hex'), 'w') as flash_file:
+            insts = assemble.assemble(flash)
+            for i in itertools.count():
+                data_hex = ''.join(itertools.imap(
+                                     lambda n: "%04x" % byte_reverse(n),
+                                     itertools.islice(insts, 8)))
+                if not data_hex: break
+                line = "%02x%04x00%s" % (len(data_hex)/2, i * 16, data_hex)
+                flash_file.write(":%s%02x\r\n" % (line, check_sum(line)))
+                if len(data_hex) < 32: break
+            assert not data
+            assert not bss
+            flash_file.write(":00000001FF\r\n")
+        assert not eeprom
+
+def byte_reverse(n):
+    r'''Reverses the two bytes in a 16 bit number.
+
+    >>> hex(byte_reverse(0x1234))
+    '0x3412'
+    '''
+    return ((n << 8) & 0xff00) | (n >> 8)
+
+def check_sum(data):
+    r'''Calculates the .hex checksum.
+
+    >>> hex(check_sum('100000000C9445010C9467110C9494110C946D01'))
+    '0x9f'
+    >>> hex(check_sum('10008000202D2068656C70202874686973206F75'))
+    '0x56'
+    '''
+    sum = 0
+    for i in range(0, len(data), 2):
+        sum += int(data[i:i+2], 16)
+    return (256 - (sum & 0xff)) & 0xFF
 
 if __name__ == "__main__":
     run()

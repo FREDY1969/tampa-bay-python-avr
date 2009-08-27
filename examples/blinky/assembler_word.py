@@ -73,7 +73,7 @@ def is_legal_label(operand):
     False
     >>> is_legal_label('"hi mom"')
     False
-    >>> is_legal_label('io:spl')
+    >>> is_legal_label('io.spl')
     False
     '''
     if not operand: return False
@@ -86,7 +86,7 @@ def is_legal_label(operand):
         return False
     if operand[0].isdigit(): return False
     if operand[0] in "'\"": return False
-    if operand.startswith('io:'): return False
+    if operand.startswith('io.'): return False
     return True
 
 def parse_asm(filename, line, lineno):
@@ -109,6 +109,7 @@ def parse_asm(filename, line, lineno):
             if len(fields) > 1:
                 opcode = fields[1]
                 operands = ''.join(fields[2:]).split(',')
+    if len(operands) == 1 and not operands[0]: operands = ()
     if label is None and opcode is None and not operands: return None
     if len(operands) > 2:
         second_comma = line.find(',', line.find(',') + 1) + 1
