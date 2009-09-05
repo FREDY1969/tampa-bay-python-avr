@@ -1,4 +1,4 @@
-# answers.tst
+# answers.tst testing
 
 >>> from xml.etree import ElementTree
 >>> from ucc.word import answers, xml_access
