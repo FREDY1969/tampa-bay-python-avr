@@ -37,6 +37,7 @@
         <word name="run" />
         <word name="spin" />
         <word name="start_stop" />
+        <word name="startup" />
         <word name="task" />
         <word name="temp-switch" />
         <word name="translate" />
