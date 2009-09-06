@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>repeat</name>
+    <label>repeat</label>
+    <kind>macro</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="argument" repeated="True" type="string" value="arg1" />
+        <answer name="argument" repeated="True" type="string" value="arg2" />
+        <answers name="new_syntax_keyword" repeated="True" />
+        <answer name="syntax" repeated="True" />
+    </answers>
+</word>
