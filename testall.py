@@ -6,16 +6,16 @@ import os, os.path
 import sys
 import subprocess
 import traceback
+import setpath
 
-python_path = os.path.abspath(os.path.dirname(__file__))
-print "python_path", python_path
+python_path = setpath.setpath(__file__)
+#print python_path, "added to sys.path"
 
 fix_path = r"""
-import sys
+import setpath
 
-if sys.path[0] == '': del sys.path[0]
-sys.path.insert(0, %r)
-""" % (python_path,)
+setpath.setpath(%r)
+""" % (__file__,)
 
 def call(input):
     child = subprocess.Popen((sys.executable,),
@@ -64,7 +64,10 @@ def run():
 
     for dirpath, dirnames, filenames in os.walk('.'):
         if '.hg' in dirnames: dirnames.remove('.hg')
+        if 'build' in dirnames: dirnames.remove('build')
         for filename in filenames:
+            if filename == 'setup_setpath.py' or filename == 'setup.py':
+                continue
             path = os.path.join(dirpath, filename)
             try:
                 if do_py and filename.endswith('.py'):

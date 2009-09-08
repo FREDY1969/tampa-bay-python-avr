@@ -7,7 +7,7 @@
         <word name="led-pin" />
         <word name="macro" />
         <word name="output_pin" />
-        <word name="pass" />
+        <word name="pass_" />
         <word name="repeat" />
         <word name="run" />
         <word name="set" />
