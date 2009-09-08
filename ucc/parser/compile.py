@@ -10,13 +10,11 @@ import contextlib
 import itertools
 import traceback
 import sqlite3 as db
+import setpath
 
-python_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                           '..', '..'))
+#print "__file__", __file__
+python_path = setpath.setpath(__file__)
 print "python_path", python_path
-
-if sys.path[0] == '': sys.path[0] = python_path
-else: sys.path.insert(0, python_path)
 
 from ucc.word import helpers, xml_access, word
 from ucc.parser import genparser
