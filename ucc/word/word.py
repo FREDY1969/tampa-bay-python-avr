@@ -6,8 +6,11 @@ r'''The generic word class, along with xml read/write routines for it.
 from __future__ import with_statement
 
 import os.path
-
 from xml.etree import ElementTree
+
+import setpath
+setpath.setpath(__file__)
+
 from ucc.word import answers, questions, xml_access
 
 def read_word(word_name, project_dir):

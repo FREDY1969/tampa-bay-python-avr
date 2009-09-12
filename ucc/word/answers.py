@@ -7,7 +7,6 @@ question.  Thus, they are special answer objects, rather than simple python
 types.
 '''
 
-import fractions
 from xml.etree import ElementTree
 
 def from_xml(answers_element):
