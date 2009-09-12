@@ -21,7 +21,7 @@
     sei
 
     ldi r18,0xFF    # turn on LED (and leave other pull-ups on)
-    ldi r19,0x20    # bit to toggle in r2
+    ldi r19,0x20    # bit to toggle in r18
 
 outer_loop
     out  io.portb,r18
