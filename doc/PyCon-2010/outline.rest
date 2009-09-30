@@ -1,0 +1,200 @@
+Taking Programming to the Next Level with the Arduino Microcontroller
+=====================================================================
+
+============
+Introduction
+============
+
+- we are exploring both new programming language concepts, as well as new
+  ways of packaging traditional compiler technologies (re-skinning the Dragon)
+
+  - using the "Dragon Book" (1977) as our compiler reference
+
+- compiler written in Python, but compiling our own weird language (not Python)
+- compiles to AVR machine code (introduce Arduino and AtMega328P
+  microcontroller)
+- being done as a hands-on development exercise by the Tampa Bay Python meetup
+  group
+
+===============================
+Exploring New Language Concepts
+===============================
+
+---------------------------------------------
+Meta-programming ("programming in the large")
+---------------------------------------------
+
+- user code that runs at compile-time (rather than run-time)
+- better run-time performance
+- new kinds of extensibility and abstraction
+
+  - programming languages are made up of
+
+    - lexical rules
+
+      - only reserved words are extensible
+
+    - expression syntax
+
+      - not extensible
+
+    - statement syntax
+
+      - extensible through new syntax
+
+        - thus, the parser is created on the fly (using PLY)
+
+      - done primary for extensible control statements
+
+    - declaration syntax
+
+      - this is where the focus is
+      - "folder == module", rather than "file == module".
+      - declarations have Q&A plus (optional) text file
+
+        - most declarations can be handled entirely with Q&A
+
+          - so adding new types of declarations doesn't add
+            syntactic clutter which reduces the "surface area"
+            of the language
+
+          - declarations of how hardware will be used
+
+            - which generates the hardware configuration
+
+          - declarations of how libraries will be used
+
+        - the text file for each declaration is parsed separately
+
+          - lets different functions/declarations use different
+            parsers with different syntax
+
+              - high-level functions
+              - assembler functions
+
+----------------------------------
+Both stack and stackless functions
+----------------------------------
+
+- stack for better memory usage
+- stackless for
+
+  - coroutines
+  - Twisted-like green threads (for free)
+
+    - interrupt based logic
+
+  - for the microcontroller, stackless means static (not heap)
+
+======================
+Re-Skinning the Dragon
+======================
+
+-------------------------------------------------------------------------------
+Compiler uses extensible object-oriented interfaces internally in the front-end
+-------------------------------------------------------------------------------
+
+- for meta-programming hooks
+
+----------------------------
+IDE integrated with compiler
+----------------------------
+
+- handles the Q&A capability
+- makes internal compiler information available to the programmer
+
+  - cross reference information
+  - program size and worst case execution times
+
+- built on wxpython
+
+----------------------------------------------------
+Stores internal compiler data in relational database
+----------------------------------------------------
+
+- symbol table
+- abstract syntax tree
+- use/definition analysis
+- makes this information available to the IDE
+- nice for debugging the compiler
+
+
+--------------------------------------------------------------------------------
+Optimizes the whole program (including called library routines) as a single unit
+--------------------------------------------------------------------------------
+
+- this means no separate link edit (loader) phase
+
+  - also libraries are no longer compiled once, for all to use
+
+- so different "compilation unit" sizes for front-end and back-end
+
+  - smaller for the front-end (individual declaration rather than module)
+  - and larger for the back-end (the whole program rather than module)
+
+- lets the optimizer see the big picture
+- better register allocation across function calls
+- better mapping of functions to addresses to support the shorter Relative
+  Call instruction (1 word, 3 cycles vs 2 words, 4 cycles)
+- possible use for later Python compiler looking for order of magnitude
+  performance boost for Python
+
+  - can place module/class/instance variables at fixed offsets if they
+    are initialized at the creation of the containing object and are
+    never deleted.
+
+    - class/instance variables if no subclasses use multiple inheritance
+
+  - can optimize lookups to built in functions if their names are never
+    defined at the containing module level
+  - can optimize function calls (parameter passing) to functions that
+    are never changed
+  - can allocate function activation records on the stack for functions
+    that don't need coroutines or deferred execution
+  - allocate objects in the longest living function activation record
+    that will use them
+
+    - to reduce how often the garbage collector has to run
+
+  - provide a benchmark for comparison to newer JIT technologies being
+    developed in the PyPy project
+
+==========
+Conclusion
+==========
+
+- We are exploring several new language and compiler ideas that might be
+  useful to others.
+- We are also exploring using a complicated hands-on project for a local Python
+  group that can really show the benefits of developing in Python.
+- What we've learned so far.
+
+  - to be determined...
+
+
+===================
+Notes for Reviewers
+===================
+
+I expect that most of the audience will not be interested, or knowledgeable,
+in microcontrollers.  I only plan to give a very brief overview of the
+microcontroller's capabilities, from a programming perspective (ignoring
+the hardware goodies).  And I am not planning on presenting the syntax for
+this language, as I don't see it as scalable to larger programming arenas.
+
+Rather, I'm focusing on broader concepts that may be useful in other domains.
+As 30 minutes does not allow enough time to go into detail, this talk will
+assume some knowledge of compiler technology by the audience.  Thus, I have
+labeled this as an advanced talk.
+
+The project development is about half-way through, so we haven't quite gotten
+to the point of seeing how well these ideas work in practice.
+
+I expect to have a running prototype by the conference date, and that we will
+be just starting to get a feel for how well these ideas work by then.  This
+will affect this presentation somewhat (especially the Conclusion section).
+
+Finally, I will be paying my own way to the conference and asking for
+financial aid.  At this time, I don't know if any other members of the Tampa
+Bay Python meetup group will be attending the conference.  Alas, their paying
+jobs are not using Python...
