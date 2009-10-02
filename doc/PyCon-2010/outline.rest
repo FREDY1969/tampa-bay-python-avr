@@ -5,14 +5,19 @@ Taking Programming to the Next Level with the Arduino Microcontroller
 Introduction
 ============
 
-- we are exploring both new programming language concepts, as well as new
-  ways of packaging traditional compiler technologies (re-skinning the Dragon)
+- We are exploring both new programming language concepts, as well as new
+  ways of packaging traditional compiler technologies (re-skinning the Dragon).
 
   - using the "Dragon Book" (1977) as our compiler reference
 
 - compiler written in Python, but compiling our own weird language (not Python)
-- compiles to AVR machine code (introduce Arduino and AtMega328P
-  microcontroller)
+- compiles to AVR machine code
+
+  - very briefly introduce the Arduino and AtMega328P microcontroller
+  - Neither the Arduino nor this programming language syntax are the focus of
+    this talk. We're just using the Arduino as the first test case for these
+    broader programming language ideas.
+
 - being done as a hands-on development exercise by the Tampa Bay Python meetup
   group
 
@@ -69,8 +74,8 @@ Meta-programming ("programming in the large")
           - lets different functions/declarations use different
             parsers with different syntax
 
-              - high-level functions
-              - assembler functions
+            - high-level functions
+            - assembler functions
 
 ----------------------------------
 Both stack and stackless functions
