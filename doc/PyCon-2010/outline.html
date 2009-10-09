@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
-<title>Taking Programming to the Next Level with the Arduino Microcontroller</title>
+<title>Taking a New Look at Language and Compiler Technologies via the Arduino</title>
 <style type="text/css">
 
 /*
@@ -284,49 +284,161 @@ ul.auto-toc {
 </style>
 </head>
 <body>
-<div class="document" id="taking-programming-to-the-next-level-with-the-arduino-microcontroller">
-<h1 class="title">Taking Programming to the Next Level with the Arduino Microcontroller</h1>
+<div class="document" id="taking-a-new-look-at-language-and-compiler-technologies-via-the-arduino">
+<h1 class="title">Taking a New Look at Language and Compiler Technologies via the Arduino</h1>
 
+<div class="section" id="overview">
+<h1>Overview</h1>
 <div class="section" id="introduction">
-<h1>Introduction</h1>
+<h2>Introduction</h2>
 <ul class="simple">
-<li>we are exploring both new programming language concepts, as well as new
-ways of packaging traditional compiler technologies (re-skinning the Dragon)<ul>
-<li>using the &quot;Dragon Book&quot; (1977) as our compiler reference</li>
+<li>Modernize tradional compiler technologies<ul>
+<li>found in the &quot;Dragon Book&quot;</li>
 </ul>
 </li>
-<li>compiler written in Python, but compiling our own weird language (not Python)</li>
-<li>compiles to AVR machine code (introduce Arduino and AtMega328P
-microcontroller)</li>
-<li>being done as a hands-on development exercise by the Tampa Bay Python meetup
-group</li>
+<li>Modernize programming language technologies<ul>
+<li>using these new compiler technologies</li>
+</ul>
+</li>
+<li>Initially target the Arduino microcontroller (AVR instruction set)<ul>
+<li>8 bit processor</li>
+<li>32K bytes of flash memory (program storage)</li>
+<li>2K bytes of RAM (data storage)</li>
+<li>16MHz clock</li>
+<li>32 (8-bit) registers</li>
+<li>lots of hardware goodies!<ul>
+<li>that this talk doesn't get into...</li>
+</ul>
+</li>
+<li>later maybe ARM for the Lego Mindstorms NXT robots</li>
+</ul>
+</li>
+<li>Write the compiler in Python as a &quot;hands-on&quot; programming exercise by the
+Tampa Bay Python meetup group</li>
+<li>What do you get?</li>
+<li>How might this apply to other projects like, say, a Python compiler?</li>
 </ul>
 </div>
-<div class="section" id="exploring-new-language-concepts">
-<h1>Exploring New Language Concepts</h1>
+<div class="section" id="modernizing-compiler-technologies">
+<h2>Modernizing Compiler Technologies</h2>
+<ul class="simple">
+<li>We're starting with: the &quot;Dragon Book&quot;<ul>
+<li>Principles of Compiler Design, by Alfred V. Aho and Jeffrey D. Ullman<ul>
+<li>I have the first edition, copyrighted 1977</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Add these new technologies (that appeared after the book was written):<ul>
+<li>A GUI forms-based question and answer mechanism<ul>
+<li>as an alternative to formal syntax for declarations within the language</li>
+</ul>
+</li>
+<li>Extensible, object-oriented interfaces<ul>
+<li>to open up the internal workings of the compiler to library developers</li>
+</ul>
+</li>
+<li>A relational database<ul>
+<li>to make the results of compiler optimization analysis available to the
+programmer</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>&quot;Stackless&quot; functions</li>
+<li>Include the Dragon Book's global optimization algorithms<ul>
+<li>that are typically not used in modern C compilers</li>
+<li>split the concept of a &quot;compilation unit&quot;<ul>
+<li>smaller units for the front-end<ul>
+<li>individual declarations</li>
+</ul>
+</li>
+<li>the whole program for the back-end</li>
+<li>this means jettisoning separate compilation and the link editor
+(or unix &quot;loader&quot;)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="modernize-programming-language-technologies">
+<h2>Modernize Programming Language Technologies</h2>
+<ul class="simple">
+<li>Develop a new microcontroller language</li>
+<li>Allow the developers of large libraries to empower their users by writing
+the libraries more as language extensions<ul>
+<li>Boils down to allowing the library writer to write code that runs at
+compile-time.<ul>
+<li>for a microcontroller, the distinction between compile-time and run-time
+is very clear!<ul>
+<li>compile-time happens on the PC</li>
+<li>run-time happens on the microcontroller</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Explore coroutine and green threading capabilities using &quot;stackless&quot;
+functions<ul>
+<li>for easier interrupt processing</li>
+<li>static function activation records, rather than allocated in heap</li>
+</ul>
+</li>
+<li>Repackage traditional compiler technologies to open them up to the
+programmer<ul>
+<li>as well as take advantage of the global flow analysis routines in the
+&quot;Dragon Book&quot; that typical C compilers don't do</li>
+</ul>
+</li>
+<li>Writing the compiler in Python allows a very small group to tackle a large
+significant problem<ul>
+<li>now anybody can bring their &quot;Evil Plan to Rule the World&quot; to fruition!<ul>
+<li>and present at national conferences ;-)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="exploring-new-extenisible-language-capabilities">
+<h1>Exploring New Extenisible Language Capabilities</h1>
+<p>(knowing that all previous attempts at extenisible languages were failures)!</p>
+<ul class="simple">
+<li>large libraries could benefit by the inclusion of compiler-like capabilities<ul>
+<li>many decisions made at run-time in large libraries are based on factors
+that don't change very often<ul>
+<li>SQLAlchemy<ul>
+<li>what data operations does the program need</li>
+<li>what's your schema look like</li>
+</ul>
+</li>
+<li>HTML templating</li>
+</ul>
+</li>
+<li>what this ends up being is user code that runs at compile-time (rather
+than run-time)</li>
+</ul>
+</li>
+</ul>
 <div class="section" id="meta-programming-programming-in-the-large">
 <h2>Meta-programming (&quot;programming in the large&quot;)</h2>
-<ul>
-<li><p class="first">user code that runs at compile-time (rather than run-time)</p>
-</li>
-<li><p class="first">better run-time performance</p>
-</li>
-<li><p class="first">new kinds of extensibility and abstraction</p>
-<ul>
-<li><p class="first">programming languages are made up of</p>
-<ul>
-<li><p class="first">lexical rules</p>
 <ul class="simple">
+<li>user code that runs at compile-time (rather than run-time)</li>
+<li>better run-time performance</li>
+<li>new kinds of extensibility and abstraction<ul>
+<li>programming languages are made up of<ul>
+<li>lexical rules<ul>
 <li>only reserved words are extensible</li>
 </ul>
 </li>
-<li><p class="first">expression syntax</p>
-<ul class="simple">
+<li>expression syntax<ul>
 <li>not extensible</li>
 </ul>
 </li>
-<li><p class="first">statement syntax</p>
-<ul class="simple">
+<li>statement syntax<ul>
 <li>extensible through new syntax<ul>
 <li>thus, the parser is created on the fly (using PLY)</li>
 </ul>
@@ -334,16 +446,11 @@ group</li>
 <li>done primary for extensible control statements</li>
 </ul>
 </li>
-<li><p class="first">declaration syntax</p>
-<ul>
-<li><p class="first">this is where the focus is</p>
-</li>
-<li><p class="first">&quot;folder == module&quot;, rather than &quot;file == module&quot;.</p>
-</li>
-<li><p class="first">declarations have Q&amp;A plus (optional) text file</p>
-<ul>
-<li><p class="first">most declarations can be handled entirely with Q&amp;A</p>
-<ul class="simple">
+<li>declaration syntax<ul>
+<li>this is where the focus is</li>
+<li>&quot;folder == module&quot;, rather than &quot;file == module&quot;.</li>
+<li>declarations have Q&amp;A plus (optional) text file<ul>
+<li>most declarations can be handled entirely with Q&amp;A<ul>
 <li>so adding new types of declarations doesn't add
 syntactic clutter which reduces the &quot;surface area&quot;
 of the language</li>
@@ -354,16 +461,12 @@ of the language</li>
 <li>declarations of how libraries will be used</li>
 </ul>
 </li>
-<li><p class="first">the text file for each declaration is parsed separately</p>
-<ul>
-<li><p class="first">lets different functions/declarations use different
-parsers with different syntax</p>
-<blockquote>
-<ul class="simple">
+<li>the text file for each declaration is parsed separately<ul>
+<li>lets different functions/declarations use different
+parsers with different syntax<ul>
 <li>high-level functions</li>
 <li>assembler functions</li>
 </ul>
-</blockquote>
 </li>
 </ul>
 </li>
@@ -373,21 +476,6 @@ parsers with different syntax</p>
 </li>
 </ul>
 </li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="both-stack-and-stackless-functions">
-<h2>Both stack and stackless functions</h2>
-<ul class="simple">
-<li>stack for better memory usage</li>
-<li>stackless for<ul>
-<li>coroutines</li>
-<li>Twisted-like green threads (for free)<ul>
-<li>interrupt based logic</li>
-</ul>
-</li>
-<li>for the microcontroller, stackless means static (not heap)</li>
 </ul>
 </li>
 </ul>
@@ -465,11 +553,76 @@ developed in the PyPy project</li>
 </ul>
 </div>
 </div>
-<div class="section" id="conclusion">
-<h1>Conclusion</h1>
+<div class="section" id="the-future">
+<h1>The Future</h1>
 <ul class="simple">
-<li>We are exploring several new language and compiler ideas that might be
-useful to others.</li>
+<li>We are exploring technical ideas on several levels that might be useful to
+others<ul>
+<li>new programming language ideas<ul>
+<li>extensible declarations using Q&amp;A rather than syntax<ul>
+<li>in the Python world, I'm thinking of large libraries like SQLAlchemy or
+Django.<ul>
+<li>Doing Zope right??</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>extensible control statements<ul>
+<li>don't really know whether or how this would fit in with Python</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>new compiler ideas<ul>
+<li>stackless<ul>
+<li>coroutines/generators<ul>
+<li>suspendable consumers as well as producers</li>
+<li>objects representing the consumer that can be passed around (like
+iterators objects represent the producer)</li>
+<li>make more explicit the difference between generating values to a
+consumer vs finally returning from the generator when there are no
+more values</li>
+</ul>
+</li>
+<li>green threads<ul>
+<li>to avoid &quot;event programming&quot; in traditional GUI applications</li>
+<li>to multi-thread server applications<ul>
+<li>in the Python world, this would be &quot;Twisted for free&quot;</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>use of relational database<ul>
+<li>IDE: letting the programmer know what the compiler knows</li>
+</ul>
+</li>
+<li>global flow analysis<ul>
+<li>improve Python performance by an order of magnitude or more (10x-50x)<ul>
+<li>by recognizing special cases that dominate our use of language<ul>
+<li>variables never deleted can be assigned to fixed offsets</li>
+<li>instance variables assigned to fixed offsets when no multiple
+inheritance is used in derived classes</li>
+<li>direct calls to builtin functions when their names are never
+defined in the module</li>
+<li>direct calls to functions that are never redefined</li>
+<li>placing function activation records on a stack when the function
+doesn't need stackless capability</li>
+<li>figuring out actual to formal parameter mappings at compile time
+when the function is never redefined</li>
+<li>multiple entry points for different numbers of parameters, or
+different saving different sets of registers</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li>We are also exploring using a complicated hands-on project for a local Python
 group that can really show the benefits of developing in Python.</li>
 <li>What we've learned so far.<ul>

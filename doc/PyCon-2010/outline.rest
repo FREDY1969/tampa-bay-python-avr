@@ -1,29 +1,142 @@
-Taking Programming to the Next Level with the Arduino Microcontroller
-=====================================================================
+Taking a New Look at Language and Compiler Technologies via the Arduino
+=======================================================================
 
-============
+========
+Overview
+========
+
+------------
 Introduction
-============
+------------
 
-- We are exploring both new programming language concepts, as well as new
-  ways of packaging traditional compiler technologies (re-skinning the Dragon).
+- Modernize tradional compiler technologies
 
-  - using the "Dragon Book" (1977) as our compiler reference
+  - found in the "Dragon Book"
 
-- compiler written in Python, but compiling our own weird language (not Python)
-- compiles to AVR machine code
+- Modernize programming language technologies
 
-  - very briefly introduce the Arduino and AtMega328P microcontroller
-  - Neither the Arduino nor this programming language syntax are the focus of
-    this talk. We're just using the Arduino as the first test case for these
-    broader programming language ideas.
+  - using these new compiler technologies
 
-- being done as a hands-on development exercise by the Tampa Bay Python meetup
-  group
+- Initially target the Arduino microcontroller (AVR instruction set)
 
-===============================
-Exploring New Language Concepts
-===============================
+  - 8 bit processor
+  - 32K bytes of flash memory (program storage)
+  - 2K bytes of RAM (data storage)
+  - 16MHz clock
+  - 32 (8-bit) registers
+  - lots of hardware goodies!
+
+    - that this talk doesn't get into...
+
+  - later maybe ARM for the Lego Mindstorms NXT robots
+
+- Write the compiler in Python as a "hands-on" programming exercise by the
+  Tampa Bay Python meetup group
+
+- What do you get?
+
+- How might this apply to other projects like, say, a Python compiler?
+
+---------------------------------
+Modernizing Compiler Technologies
+---------------------------------
+
+- We're starting with: the "Dragon Book"
+
+  - Principles of Compiler Design, by Alfred V. Aho and Jeffrey D. Ullman
+
+    - I have the first edition, copyrighted 1977
+
+- Add these new technologies (that appeared after the book was written):
+
+  - A GUI forms-based question and answer mechanism
+  
+    - as an alternative to formal syntax for declarations within the language
+
+  - Extensible, object-oriented interfaces
+  
+    - to open up the internal workings of the compiler to library developers
+
+  - A relational database
+  
+    - to make the results of compiler optimization analysis available to the
+      programmer
+
+- "Stackless" functions
+
+- Include the Dragon Book's global optimization algorithms
+
+  - that are typically not used in modern C compilers
+
+  - split the concept of a "compilation unit"
+
+    - smaller units for the front-end
+
+      - individual declarations
+
+    - the whole program for the back-end
+
+    - this means jettisoning separate compilation and the link editor
+      (or unix "loader")
+
+-------------------------------------------
+Modernize Programming Language Technologies
+-------------------------------------------
+
+- Develop a new microcontroller language
+
+- Allow the developers of large libraries to empower their users by writing
+  the libraries more as language extensions
+
+  - Boils down to allowing the library writer to write code that runs at
+    compile-time.
+
+    - for a microcontroller, the distinction between compile-time and run-time
+      is very clear!
+
+      - compile-time happens on the PC
+      - run-time happens on the microcontroller
+
+- Explore coroutine and green threading capabilities using "stackless"
+  functions
+
+  - for easier interrupt processing
+  - static function activation records, rather than allocated in heap
+
+- Repackage traditional compiler technologies to open them up to the
+  programmer
+
+  - as well as take advantage of the global flow analysis routines in the
+    "Dragon Book" that typical C compilers don't do
+
+- Writing the compiler in Python allows a very small group to tackle a large
+  significant problem
+
+  - now anybody can bring their "Evil Plan to Rule the World" to fruition!
+
+    - and present at national conferences ;-)
+
+
+===============================================
+Exploring New Extenisible Language Capabilities
+===============================================
+
+(knowing that all previous attempts at extenisible languages were failures)!
+
+- large libraries could benefit by the inclusion of compiler-like capabilities
+
+  - many decisions made at run-time in large libraries are based on factors
+    that don't change very often
+
+    - SQLAlchemy
+
+      - what data operations does the program need
+      - what's your schema look like
+
+    - HTML templating
+
+  - what this ends up being is user code that runs at compile-time (rather
+    than run-time)
 
 ---------------------------------------------
 Meta-programming ("programming in the large")
@@ -76,20 +189,6 @@ Meta-programming ("programming in the large")
 
             - high-level functions
             - assembler functions
-
-----------------------------------
-Both stack and stackless functions
-----------------------------------
-
-- stack for better memory usage
-- stackless for
-
-  - coroutines
-  - Twisted-like green threads (for free)
-
-    - interrupt based logic
-
-  - for the microcontroller, stackless means static (not heap)
 
 ======================
 Re-Skinning the Dragon
@@ -165,13 +264,71 @@ Optimizes the whole program (including called library routines) as a single unit
     developed in the PyPy project
 
 ==========
-Conclusion
+The Future
 ==========
 
-- We are exploring several new language and compiler ideas that might be
-  useful to others.
+- We are exploring technical ideas on several levels that might be useful to
+  others
+
+  - new programming language ideas
+
+    - extensible declarations using Q&A rather than syntax
+
+      - in the Python world, I'm thinking of large libraries like SQLAlchemy or
+        Django.
+
+        - Doing Zope right??
+
+    - extensible control statements
+
+      - don't really know whether or how this would fit in with Python
+
+  - new compiler ideas
+
+    - stackless
+
+      - coroutines/generators
+
+        - suspendable consumers as well as producers
+        - objects representing the consumer that can be passed around (like
+          iterators objects represent the producer)
+        - make more explicit the difference between generating values to a
+          consumer vs finally returning from the generator when there are no
+          more values
+
+      - green threads
+
+        - to avoid "event programming" in traditional GUI applications
+        - to multi-thread server applications
+
+          - in the Python world, this would be "Twisted for free"
+
+    - use of relational database
+
+      - IDE: letting the programmer know what the compiler knows
+
+    - global flow analysis
+
+      - improve Python performance by an order of magnitude or more (10x-50x)
+
+        - by recognizing special cases that dominate our use of language
+
+          - variables never deleted can be assigned to fixed offsets
+          - instance variables assigned to fixed offsets when no multiple
+            inheritance is used in derived classes
+          - direct calls to builtin functions when their names are never
+            defined in the module
+          - direct calls to functions that are never redefined
+          - placing function activation records on a stack when the function
+            doesn't need stackless capability
+          - figuring out actual to formal parameter mappings at compile time
+            when the function is never redefined
+          - multiple entry points for different numbers of parameters, or
+            different saving different sets of registers
+
 - We are also exploring using a complicated hands-on project for a local Python
   group that can really show the benefits of developing in Python.
+
 - What we've learned so far.
 
   - to be determined...
