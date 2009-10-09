@@ -1,28 +1,21 @@
-Taking a New Look at Language and Compiler Technologies via the Arduino
-=======================================================================
+A New Look at Programming Language and Compiler Technologies (via the Arduino)
+==============================================================================
 
-========
-Overview
-========
-
-------------
+============
 Introduction
-------------
+============
 
-- Modernize tradional compiler technologies
+- Modernize traditional compiler technologies (found in the "Dragon Book")
 
-  - found in the "Dragon Book"
-
-- Modernize programming language technologies
-
-  - using these new compiler technologies
+- Modernize programming language technologies by using these new compiler
+  technologies
 
 - Initially target the Arduino microcontroller (AVR instruction set)
 
   - 8 bit processor
+  - 16MHz clock
   - 32K bytes of flash memory (program storage)
   - 2K bytes of RAM (data storage)
-  - 16MHz clock
   - 32 (8-bit) registers
   - lots of hardware goodies!
 
@@ -30,20 +23,25 @@ Introduction
 
   - later maybe ARM for the Lego Mindstorms NXT robots
 
-- Write the compiler in Python as a "hands-on" programming exercise by the
+- Write the compiler in Python as a hands-on programming exercise by the
   Tampa Bay Python meetup group
 
-- What do you get?
+  - Writing the compiler in Python allows a very small group to tackle a large
+    significant problem
 
-- How might this apply to other projects like, say, a Python compiler?
+    - now anybody can bring their "Evil Plan to Rule the World" to fruition!
 
----------------------------------
+      - and present at a national conference ;-)
+
+- How might these ideas apply to other projects like, say, a Python compiler?
+
+=================================
 Modernizing Compiler Technologies
----------------------------------
+=================================
 
-- We're starting with: the "Dragon Book"
+- We're starting with the "Dragon Book"
 
-  - Principles of Compiler Design, by Alfred V. Aho and Jeffrey D. Ullman
+  - *Principles of Compiler Design*, by Alfred V. Aho and Jeffrey D. Ullman
 
     - I have the first edition, copyrighted 1977
 
@@ -55,47 +53,182 @@ Modernizing Compiler Technologies
 
   - Extensible, object-oriented interfaces
   
-    - to open up the internal workings of the compiler to library developers
+    - to make the internal workings of the compiler available and extensible
+      as an additional resource for library developers
 
   - A relational database
   
     - to make the results of compiler optimization analysis available to the
       programmer
 
-- "Stackless" functions
+- And for good measure:
 
-- Include the Dragon Book's global optimization algorithms
+  - Stackless functions
 
-  - that are typically not used in modern C compilers
+  - Include the Dragon Book's global optimization algorithms
 
-  - split the concept of a "compilation unit"
+    - that are typically not used in modern C compilers
 
-    - smaller units for the front-end
+    - this means jettisoning the ideas of separate compilation and the link
+      editor (or unix "loader")
 
-      - individual declarations
-
-    - the whole program for the back-end
-
-    - this means jettisoning separate compilation and the link editor
-      (or unix "loader")
-
--------------------------------------------
+===========================================
 Modernize Programming Language Technologies
--------------------------------------------
+===========================================
+
+(this might be a demo)
+
+- let GUI do graphically what modules & packages do grammatically
+
+  - so a "compilation unit" becomes a single declaration
+
+- add Q&A to declarations
+
+  - so a declaration has both Q&A and an optional text file
+  - many declarations only need Q&A (variables, constants, types, imports)
+
+- extensible control statements
+
+  - with extensible syntax
+  - programmer access to compiler
+
+- extensible declarations
+
+  - Q&A means not having to add new syntax, which reduces the "surface area"
+    of the language
+  - can use different grammars in the text files
+
+    - Python for compile-time code
+    - Our own language for high-level functions
+    - assembler functions
+
+- adaptable libraries
+
+  - Q&A on "import"
+   
+    - done once, but can be at any level within nested packages
+    - can influence how declarations and the library are compiled
+
+- add installation level Q&A to customize programs to specific chips, pinouts
+  and clock speeds
+
+===============================
+Object-oriented Compiler Design
+===============================
+
+- a program is a set of declarations which we call *words*
+
+  - some words declare new kinds of declarations
+
+    - these can be used to define other words
+
+      - so we call these *defining* words
+      - the word **function** is a defining word
+
+  - other declarations are *normal* words
+
+    - the word **foo** (a function) is a normal word
+
+- The design revolves around one base class: **declaration**
+
+  - different subclass for each defining word (**function**)
+  - different instance for each normal word (**foo** function)
+  - references (calls) to foo are just rows in the database
+
+- The steps to compiling a program
+
+  #. create the internal objects for each word (declaration)
+
+     - defining words are subclasses
+
+       - the text part of these words is the Python code defining a subclass of
+         **declaration**
+       - these are imported and then initialized with an *init_class*
+         classmethod
+
+     - normal words are instances of defining words
+
+       - these are created with a *create_instance* classmethod
+
+     - this process also identifies all of the new syntax being added to the
+       language
+
+  #. add the new syntax (if any) to the built in syntax to create a custom
+     parser
+
+  #. parse the text file for each normal declaration
+
+     - call *parse_file* on the declaration instance created in step 1
+
+       - updates the Symbol Table in the database
+       - generates an Abstract Syntax Tree (AST) in the database
+
+  #. macro-expand AST and set "expects" information
+
+     - call *expand* on the declaration instance for each call to it
+     - "expects" is a tag on arguments to specify how they need to be compiled:
+
+       - rvalue
+       - lvalue
+       - condition
+       - iterator
+
+  #. calculate CHANGE and USES info for each function
+
+     - algorithms taken from the Dragon Book
+     - not extensible
+     - stores results in the database
+
+  #. generate intermediate code
+
+     - call *compile_<expects>* on the declaration instance for each call to it
+     - stores basic blocks and DAGs in the database
+
+  #. optimize intermediate code
+
+     - algorithms taken from the Dragon Book
+     - not extensible
+
+  #. code generation
+
+     - convert intermediate code to AVR assembler
+     - not extensible
+
+  #. assemble
+
+     - generates .hex file
+
+       - this is loaded into the microcontroller with a standard program
+
+     - not extensible
+
+- Steps 1 through 6 make up the front-end of the compiler.
+
+  - the size of the compilation unit is the individual declaration
+  - these are user extensible
+
+- Steps 7 through 9 make up the back-end of the compiler.
+
+  - the size of the compilation unit is the entire program
+  - algorithms taken from the Dragon Book
+  - these are not user extensible
+
+
+==========
+Conclusion
+==========
+
+-----
+Goals
+-----
 
 - Develop a new microcontroller language
 
 - Allow the developers of large libraries to empower their users by writing
   the libraries more as language extensions
 
-  - Boils down to allowing the library writer to write code that runs at
-    compile-time.
-
-    - for a microcontroller, the distinction between compile-time and run-time
-      is very clear!
-
-      - compile-time happens on the PC
-      - run-time happens on the microcontroller
+  - Boils down to allowing the library writer to write code that integrates
+    with the compiler and runs at compile-time.
 
 - Explore coroutine and green threading capabilities using "stackless"
   functions
@@ -103,235 +236,74 @@ Modernize Programming Language Technologies
   - for easier interrupt processing
   - static function activation records, rather than allocated in heap
 
-- Repackage traditional compiler technologies to open them up to the
-  programmer
+- Make the compiler internals accessible to the programmer as an additional
+  resource (like using a library)
 
-  - as well as take advantage of the global flow analysis routines in the
-    "Dragon Book" that typical C compilers don't do
+- Explore the global flow analysis routines in the "Dragon Book" that typical
+  C compilers don't use
 
-- Writing the compiler in Python allows a very small group to tackle a large
-  significant problem
+- Explore tackling a very challenging project as a hands-on development
+  exercise
 
-  - now anybody can bring their "Evil Plan to Rule the World" to fruition!
-
-    - and present at national conferences ;-)
-
-
-===============================================
-Exploring New Extenisible Language Capabilities
-===============================================
-
-(knowing that all previous attempts at extenisible languages were failures)!
-
-- large libraries could benefit by the inclusion of compiler-like capabilities
-
-  - many decisions made at run-time in large libraries are based on factors
-    that don't change very often
-
-    - SQLAlchemy
-
-      - what data operations does the program need
-      - what's your schema look like
-
-    - HTML templating
-
-  - what this ends up being is user code that runs at compile-time (rather
-    than run-time)
-
----------------------------------------------
-Meta-programming ("programming in the large")
----------------------------------------------
-
-- user code that runs at compile-time (rather than run-time)
-- better run-time performance
-- new kinds of extensibility and abstraction
-
-  - programming languages are made up of
-
-    - lexical rules
-
-      - only reserved words are extensible
-
-    - expression syntax
-
-      - not extensible
-
-    - statement syntax
-
-      - extensible through new syntax
-
-        - thus, the parser is created on the fly (using PLY)
-
-      - done primary for extensible control statements
-
-    - declaration syntax
-
-      - this is where the focus is
-      - "folder == module", rather than "file == module".
-      - declarations have Q&A plus (optional) text file
-
-        - most declarations can be handled entirely with Q&A
-
-          - so adding new types of declarations doesn't add
-            syntactic clutter which reduces the "surface area"
-            of the language
-
-          - declarations of how hardware will be used
-
-            - which generates the hardware configuration
-
-          - declarations of how libraries will be used
-
-        - the text file for each declaration is parsed separately
-
-          - lets different functions/declarations use different
-            parsers with different syntax
-
-            - high-level functions
-            - assembler functions
-
-======================
-Re-Skinning the Dragon
-======================
-
--------------------------------------------------------------------------------
-Compiler uses extensible object-oriented interfaces internally in the front-end
--------------------------------------------------------------------------------
-
-- for meta-programming hooks
-
-----------------------------
-IDE integrated with compiler
-----------------------------
-
-- handles the Q&A capability
-- makes internal compiler information available to the programmer
-
-  - cross reference information
-  - program size and worst case execution times
-
-- built on wxpython
-
-----------------------------------------------------
-Stores internal compiler data in relational database
-----------------------------------------------------
-
-- symbol table
-- abstract syntax tree
-- use/definition analysis
-- makes this information available to the IDE
-- nice for debugging the compiler
-
-
---------------------------------------------------------------------------------
-Optimizes the whole program (including called library routines) as a single unit
---------------------------------------------------------------------------------
-
-- this means no separate link edit (loader) phase
-
-  - also libraries are no longer compiled once, for all to use
-
-- so different "compilation unit" sizes for front-end and back-end
-
-  - smaller for the front-end (individual declaration rather than module)
-  - and larger for the back-end (the whole program rather than module)
-
-- lets the optimizer see the big picture
-- better register allocation across function calls
-- better mapping of functions to addresses to support the shorter Relative
-  Call instruction (1 word, 3 cycles vs 2 words, 4 cycles)
-- possible use for later Python compiler looking for order of magnitude
-  performance boost for Python
-
-  - can place module/class/instance variables at fixed offsets if they
-    are initialized at the creation of the containing object and are
-    never deleted.
-
-    - class/instance variables if no subclasses use multiple inheritance
-
-  - can optimize lookups to built in functions if their names are never
-    defined at the containing module level
-  - can optimize function calls (parameter passing) to functions that
-    are never changed
-  - can allocate function activation records on the stack for functions
-    that don't need coroutines or deferred execution
-  - allocate objects in the longest living function activation record
-    that will use them
-
-    - to reduce how often the garbage collector has to run
-
-  - provide a benchmark for comparison to newer JIT technologies being
-    developed in the PyPy project
-
-==========
+----------
 The Future
-==========
+----------
 
-- We are exploring technical ideas on several levels that might be useful to
-  others
+- We are exploring technical ideas on several levels that you might be
+  interested in
 
-  - new programming language ideas
+- Examples of how these might be applied to a Python compiler:
 
-    - extensible declarations using Q&A rather than syntax
+  - extensible declarations using Q&A and allowing different syntaxes
 
-      - in the Python world, I'm thinking of large libraries like SQLAlchemy or
-        Django.
+    - PLY (Python Lex Yacc)
+    - SQLAlchemy
+    - HTML templates
+    - The image of a variety of text syntaxes reminds me of Zope
 
-        - Doing Zope right??
+      - A fully compiled alternative to Zope??
 
-    - extensible control statements
+  - stackless
 
-      - don't really know whether or how this would fit in with Python
+    - coroutines/generators
 
-  - new compiler ideas
+      - suspendable consumers as well as producers
+      - objects representing the consumer that can be passed around (like
+        iterators objects represent the producer)
+      - make more explicit the difference between generating values to a
+        consumer vs finally returning from the generator when there are no
+        more values
 
-    - stackless
+    - Twisted built in
 
-      - coroutines/generators
+      - get the benefits for free
 
-        - suspendable consumers as well as producers
-        - objects representing the consumer that can be passed around (like
-          iterators objects represent the producer)
-        - make more explicit the difference between generating values to a
-          consumer vs finally returning from the generator when there are no
-          more values
+  - use of relational database for a better IDE
 
-      - green threads
+  - global flow analysis to improve Python performance by an order of
+    magnitude or more (10x-50x)
 
-        - to avoid "event programming" in traditional GUI applications
-        - to multi-thread server applications
+    - by recognizing special cases that dominate our use of language
 
-          - in the Python world, this would be "Twisted for free"
+      - variables never deleted can be assigned to fixed offsets
+      - instance variables assigned to fixed offsets when no multiple
+        inheritance is used in derived classes
+      - direct calls to built in functions when their names are never
+        defined in the module
+      - direct calls to functions that are never redefined
+      - placing function activation records on a stack when the function
+        doesn't need stackless capability
+      - figuring out actual to formal parameter mappings at compile time
+        when the function is never redefined
+      - multiple entry points for different numbers of parameters, or
+        saving different sets of registers
+      - allocate objects in the longest living function activation record
+        that will use them
 
-    - use of relational database
+        - to reduce how often the garbage collector has to run
 
-      - IDE: letting the programmer know what the compiler knows
-
-    - global flow analysis
-
-      - improve Python performance by an order of magnitude or more (10x-50x)
-
-        - by recognizing special cases that dominate our use of language
-
-          - variables never deleted can be assigned to fixed offsets
-          - instance variables assigned to fixed offsets when no multiple
-            inheritance is used in derived classes
-          - direct calls to builtin functions when their names are never
-            defined in the module
-          - direct calls to functions that are never redefined
-          - placing function activation records on a stack when the function
-            doesn't need stackless capability
-          - figuring out actual to formal parameter mappings at compile time
-            when the function is never redefined
-          - multiple entry points for different numbers of parameters, or
-            different saving different sets of registers
-
-- We are also exploring using a complicated hands-on project for a local Python
-  group that can really show the benefits of developing in Python.
-
-- What we've learned so far.
-
-  - to be determined...
+    - provide a benchmark for comparison to newer JIT technologies being
+      developed by the PyPy project
 
 
 ===================
@@ -354,7 +326,7 @@ to the point of seeing how well these ideas work in practice.
 
 I expect to have a running prototype by the conference date, and that we will
 be just starting to get a feel for how well these ideas work by then.  This
-will affect this presentation somewhat (especially the Conclusion section).
+will affect the presentation somewhat (especially the Conclusion section).
 
 Finally, I will be paying my own way to the conference and asking for
 financial aid.  At this time, I don't know if any other members of the Tampa

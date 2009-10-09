@@ -1,0 +1,13 @@
+This talk presents new programming language ideas and new ways to package
+traditional compiler technologies to support these ideas. The goal is to take
+programming to the next level where we can all write programs about programs
+and about programming.
+ 
+These ideas are initially being tested through a compiler targeting the
+Arduino microcontroller. This platform provides an ideal microcosm to
+"crawl before we walk".
+ 
+Finally, this project is being done as a "hands-on" development exercise by
+the Tampa Bay Python meetup group.
+ 
+We will share our ideas and experiences in all of the these areas in this talk.

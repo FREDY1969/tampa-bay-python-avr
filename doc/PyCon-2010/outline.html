@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
-<title>Taking a New Look at Language and Compiler Technologies via the Arduino</title>
+<title>A New Look at Programming Language and Compiler Technologies (via the Arduino)</title>
 <style type="text/css">
 
 /*
@@ -284,27 +284,20 @@ ul.auto-toc {
 </style>
 </head>
 <body>
-<div class="document" id="taking-a-new-look-at-language-and-compiler-technologies-via-the-arduino">
-<h1 class="title">Taking a New Look at Language and Compiler Technologies via the Arduino</h1>
+<div class="document" id="a-new-look-at-programming-language-and-compiler-technologies-via-the-arduino">
+<h1 class="title">A New Look at Programming Language and Compiler Technologies (via the Arduino)</h1>
 
-<div class="section" id="overview">
-<h1>Overview</h1>
 <div class="section" id="introduction">
-<h2>Introduction</h2>
+<h1>Introduction</h1>
 <ul class="simple">
-<li>Modernize tradional compiler technologies<ul>
-<li>found in the &quot;Dragon Book&quot;</li>
-</ul>
-</li>
-<li>Modernize programming language technologies<ul>
-<li>using these new compiler technologies</li>
-</ul>
-</li>
+<li>Modernize traditional compiler technologies (found in the &quot;Dragon Book&quot;)</li>
+<li>Modernize programming language technologies by using these new compiler
+technologies</li>
 <li>Initially target the Arduino microcontroller (AVR instruction set)<ul>
 <li>8 bit processor</li>
+<li>16MHz clock</li>
 <li>32K bytes of flash memory (program storage)</li>
 <li>2K bytes of RAM (data storage)</li>
-<li>16MHz clock</li>
 <li>32 (8-bit) registers</li>
 <li>lots of hardware goodies!<ul>
 <li>that this talk doesn't get into...</li>
@@ -313,17 +306,26 @@ ul.auto-toc {
 <li>later maybe ARM for the Lego Mindstorms NXT robots</li>
 </ul>
 </li>
-<li>Write the compiler in Python as a &quot;hands-on&quot; programming exercise by the
-Tampa Bay Python meetup group</li>
-<li>What do you get?</li>
-<li>How might this apply to other projects like, say, a Python compiler?</li>
+<li>Write the compiler in Python as a hands-on programming exercise by the
+Tampa Bay Python meetup group<ul>
+<li>Writing the compiler in Python allows a very small group to tackle a large
+significant problem<ul>
+<li>now anybody can bring their &quot;Evil Plan to Rule the World&quot; to fruition!<ul>
+<li>and present at a national conference ;-)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>How might these ideas apply to other projects like, say, a Python compiler?</li>
 </ul>
 </div>
 <div class="section" id="modernizing-compiler-technologies">
-<h2>Modernizing Compiler Technologies</h2>
+<h1>Modernizing Compiler Technologies</h1>
 <ul class="simple">
-<li>We're starting with: the &quot;Dragon Book&quot;<ul>
-<li>Principles of Compiler Design, by Alfred V. Aho and Jeffrey D. Ullman<ul>
+<li>We're starting with the &quot;Dragon Book&quot;<ul>
+<li><em>Principles of Compiler Design</em>, by Alfred V. Aho and Jeffrey D. Ullman<ul>
 <li>I have the first edition, copyrighted 1977</li>
 </ul>
 </li>
@@ -335,7 +337,8 @@ Tampa Bay Python meetup group</li>
 </ul>
 </li>
 <li>Extensible, object-oriented interfaces<ul>
-<li>to open up the internal workings of the compiler to library developers</li>
+<li>to make the internal workings of the compiler available and extensible
+as an additional resource for library developers</li>
 </ul>
 </li>
 <li>A relational database<ul>
@@ -345,17 +348,12 @@ programmer</li>
 </li>
 </ul>
 </li>
-<li>&quot;Stackless&quot; functions</li>
+<li>And for good measure:<ul>
+<li>Stackless functions</li>
 <li>Include the Dragon Book's global optimization algorithms<ul>
 <li>that are typically not used in modern C compilers</li>
-<li>split the concept of a &quot;compilation unit&quot;<ul>
-<li>smaller units for the front-end<ul>
-<li>individual declarations</li>
-</ul>
-</li>
-<li>the whole program for the back-end</li>
-<li>this means jettisoning separate compilation and the link editor
-(or unix &quot;loader&quot;)</li>
+<li>this means jettisoning the ideas of separate compilation and the link
+editor (or unix &quot;loader&quot;)</li>
 </ul>
 </li>
 </ul>
@@ -363,21 +361,162 @@ programmer</li>
 </ul>
 </div>
 <div class="section" id="modernize-programming-language-technologies">
-<h2>Modernize Programming Language Technologies</h2>
+<h1>Modernize Programming Language Technologies</h1>
+<p>(this might be a demo)</p>
+<ul class="simple">
+<li>let GUI do graphically what modules &amp; packages do grammatically<ul>
+<li>so a &quot;compilation unit&quot; becomes a single declaration</li>
+</ul>
+</li>
+<li>add Q&amp;A to declarations<ul>
+<li>so a declaration has both Q&amp;A and an optional text file</li>
+<li>many declarations only need Q&amp;A (variables, constants, types, imports)</li>
+</ul>
+</li>
+<li>extensible control statements<ul>
+<li>with extensible syntax</li>
+<li>programmer access to compiler</li>
+</ul>
+</li>
+<li>extensible declarations<ul>
+<li>Q&amp;A means not having to add new syntax, which reduces the &quot;surface area&quot;
+of the language</li>
+<li>can use different grammars in the text files<ul>
+<li>Python for compile-time code</li>
+<li>Our own language for high-level functions</li>
+<li>assembler functions</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>adaptable libraries<ul>
+<li>Q&amp;A on &quot;import&quot;<ul>
+<li>done once, but can be at any level within nested packages</li>
+<li>can influence how declarations and the library are compiled</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>add installation level Q&amp;A to customize programs to specific chips, pinouts
+and clock speeds</li>
+</ul>
+</div>
+<div class="section" id="object-oriented-compiler-design">
+<h1>Object-oriented Compiler Design</h1>
+<ul class="simple">
+<li>a program is a set of declarations which we call <em>words</em><ul>
+<li>some words declare new kinds of declarations<ul>
+<li>these can be used to define other words<ul>
+<li>so we call these <em>defining</em> words</li>
+<li>the word <strong>function</strong> is a defining word</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>other declarations are <em>normal</em> words<ul>
+<li>the word <strong>foo</strong> (a function) is a normal word</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>The design revolves around one base class: <strong>declaration</strong><ul>
+<li>different subclass for each defining word (<strong>function</strong>)</li>
+<li>different instance for each normal word (<strong>foo</strong> function)</li>
+<li>references (calls) to foo are just rows in the database</li>
+</ul>
+</li>
+<li>The steps to compiling a program<ol class="arabic">
+<li>create the internal objects for each word (declaration)<ul>
+<li>defining words are subclasses<ul>
+<li>the text part of these words is the Python code defining a subclass of
+<strong>declaration</strong></li>
+<li>these are imported and then initialized with an <em>init_class</em>
+classmethod</li>
+</ul>
+</li>
+<li>normal words are instances of defining words<ul>
+<li>these are created with a <em>create_instance</em> classmethod</li>
+</ul>
+</li>
+<li>this process also identifies all of the new syntax being added to the
+language</li>
+</ul>
+</li>
+<li>add the new syntax (if any) to the built in syntax to create a custom
+parser</li>
+<li>parse the text file for each normal declaration<ul>
+<li>call <em>parse_file</em> on the declaration instance created in step 1<ul>
+<li>updates the Symbol Table in the database</li>
+<li>generates an Abstract Syntax Tree (AST) in the database</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>macro-expand AST and set &quot;expects&quot; information<ul>
+<li>call <em>expand</em> on the declaration instance for each call to it</li>
+<li>&quot;expects&quot; is a tag on arguments to specify how they need to be compiled:<ul>
+<li>rvalue</li>
+<li>lvalue</li>
+<li>condition</li>
+<li>iterator</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>calculate CHANGE and USES info for each function<ul>
+<li>algorithms taken from the Dragon Book</li>
+<li>not extensible</li>
+<li>stores results in the database</li>
+</ul>
+</li>
+<li>generate intermediate code<ul>
+<li>call <em>compile_&lt;expects&gt;</em> on the declaration instance for each call to it</li>
+<li>stores basic blocks and DAGs in the database</li>
+</ul>
+</li>
+<li>optimize intermediate code<ul>
+<li>algorithms taken from the Dragon Book</li>
+<li>not extensible</li>
+</ul>
+</li>
+<li>code generation<ul>
+<li>convert intermediate code to AVR assembler</li>
+<li>not extensible</li>
+</ul>
+</li>
+<li>assemble<ul>
+<li>generates .hex file<ul>
+<li>this is loaded into the microcontroller with a standard program</li>
+</ul>
+</li>
+<li>not extensible</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>Steps 1 through 6 make up the front-end of the compiler.<ul>
+<li>the size of the compilation unit is the individual declaration</li>
+<li>these are user extensible</li>
+</ul>
+</li>
+<li>Steps 7 through 9 make up the back-end of the compiler.<ul>
+<li>the size of the compilation unit is the entire program</li>
+<li>algorithms taken from the Dragon Book</li>
+<li>these are not user extensible</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="conclusion">
+<h1>Conclusion</h1>
+<div class="section" id="goals">
+<h2>Goals</h2>
 <ul class="simple">
 <li>Develop a new microcontroller language</li>
 <li>Allow the developers of large libraries to empower their users by writing
 the libraries more as language extensions<ul>
-<li>Boils down to allowing the library writer to write code that runs at
-compile-time.<ul>
-<li>for a microcontroller, the distinction between compile-time and run-time
-is very clear!<ul>
-<li>compile-time happens on the PC</li>
-<li>run-time happens on the microcontroller</li>
-</ul>
-</li>
-</ul>
-</li>
+<li>Boils down to allowing the library writer to write code that integrates
+with the compiler and runs at compile-time.</li>
 </ul>
 </li>
 <li>Explore coroutine and green threading capabilities using &quot;stackless&quot;
@@ -386,194 +525,30 @@ functions<ul>
 <li>static function activation records, rather than allocated in heap</li>
 </ul>
 </li>
-<li>Repackage traditional compiler technologies to open them up to the
-programmer<ul>
-<li>as well as take advantage of the global flow analysis routines in the
-&quot;Dragon Book&quot; that typical C compilers don't do</li>
+<li>Make the compiler internals accessible to the programmer as an additional
+resource (like using a library)</li>
+<li>Explore the global flow analysis routines in the &quot;Dragon Book&quot; that typical
+C compilers don't use</li>
+<li>Explore tackling a very challenging project as a hands-on development
+exercise</li>
 </ul>
-</li>
-<li>Writing the compiler in Python allows a very small group to tackle a large
-significant problem<ul>
-<li>now anybody can bring their &quot;Evil Plan to Rule the World&quot; to fruition!<ul>
-<li>and present at national conferences ;-)</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-<div class="section" id="exploring-new-extenisible-language-capabilities">
-<h1>Exploring New Extenisible Language Capabilities</h1>
-<p>(knowing that all previous attempts at extenisible languages were failures)!</p>
-<ul class="simple">
-<li>large libraries could benefit by the inclusion of compiler-like capabilities<ul>
-<li>many decisions made at run-time in large libraries are based on factors
-that don't change very often<ul>
-<li>SQLAlchemy<ul>
-<li>what data operations does the program need</li>
-<li>what's your schema look like</li>
-</ul>
-</li>
-<li>HTML templating</li>
-</ul>
-</li>
-<li>what this ends up being is user code that runs at compile-time (rather
-than run-time)</li>
-</ul>
-</li>
-</ul>
-<div class="section" id="meta-programming-programming-in-the-large">
-<h2>Meta-programming (&quot;programming in the large&quot;)</h2>
-<ul class="simple">
-<li>user code that runs at compile-time (rather than run-time)</li>
-<li>better run-time performance</li>
-<li>new kinds of extensibility and abstraction<ul>
-<li>programming languages are made up of<ul>
-<li>lexical rules<ul>
-<li>only reserved words are extensible</li>
-</ul>
-</li>
-<li>expression syntax<ul>
-<li>not extensible</li>
-</ul>
-</li>
-<li>statement syntax<ul>
-<li>extensible through new syntax<ul>
-<li>thus, the parser is created on the fly (using PLY)</li>
-</ul>
-</li>
-<li>done primary for extensible control statements</li>
-</ul>
-</li>
-<li>declaration syntax<ul>
-<li>this is where the focus is</li>
-<li>&quot;folder == module&quot;, rather than &quot;file == module&quot;.</li>
-<li>declarations have Q&amp;A plus (optional) text file<ul>
-<li>most declarations can be handled entirely with Q&amp;A<ul>
-<li>so adding new types of declarations doesn't add
-syntactic clutter which reduces the &quot;surface area&quot;
-of the language</li>
-<li>declarations of how hardware will be used<ul>
-<li>which generates the hardware configuration</li>
-</ul>
-</li>
-<li>declarations of how libraries will be used</li>
-</ul>
-</li>
-<li>the text file for each declaration is parsed separately<ul>
-<li>lets different functions/declarations use different
-parsers with different syntax<ul>
-<li>high-level functions</li>
-<li>assembler functions</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-<div class="section" id="re-skinning-the-dragon">
-<h1>Re-Skinning the Dragon</h1>
-<div class="section" id="compiler-uses-extensible-object-oriented-interfaces-internally-in-the-front-end">
-<h2>Compiler uses extensible object-oriented interfaces internally in the front-end</h2>
-<ul class="simple">
-<li>for meta-programming hooks</li>
-</ul>
-</div>
-<div class="section" id="ide-integrated-with-compiler">
-<h2>IDE integrated with compiler</h2>
-<ul class="simple">
-<li>handles the Q&amp;A capability</li>
-<li>makes internal compiler information available to the programmer<ul>
-<li>cross reference information</li>
-<li>program size and worst case execution times</li>
-</ul>
-</li>
-<li>built on wxpython</li>
-</ul>
-</div>
-<div class="section" id="stores-internal-compiler-data-in-relational-database">
-<h2>Stores internal compiler data in relational database</h2>
-<ul class="simple">
-<li>symbol table</li>
-<li>abstract syntax tree</li>
-<li>use/definition analysis</li>
-<li>makes this information available to the IDE</li>
-<li>nice for debugging the compiler</li>
-</ul>
-</div>
-<div class="section" id="optimizes-the-whole-program-including-called-library-routines-as-a-single-unit">
-<h2>Optimizes the whole program (including called library routines) as a single unit</h2>
-<ul class="simple">
-<li>this means no separate link edit (loader) phase<ul>
-<li>also libraries are no longer compiled once, for all to use</li>
-</ul>
-</li>
-<li>so different &quot;compilation unit&quot; sizes for front-end and back-end<ul>
-<li>smaller for the front-end (individual declaration rather than module)</li>
-<li>and larger for the back-end (the whole program rather than module)</li>
-</ul>
-</li>
-<li>lets the optimizer see the big picture</li>
-<li>better register allocation across function calls</li>
-<li>better mapping of functions to addresses to support the shorter Relative
-Call instruction (1 word, 3 cycles vs 2 words, 4 cycles)</li>
-<li>possible use for later Python compiler looking for order of magnitude
-performance boost for Python<ul>
-<li>can place module/class/instance variables at fixed offsets if they
-are initialized at the creation of the containing object and are
-never deleted.<ul>
-<li>class/instance variables if no subclasses use multiple inheritance</li>
-</ul>
-</li>
-<li>can optimize lookups to built in functions if their names are never
-defined at the containing module level</li>
-<li>can optimize function calls (parameter passing) to functions that
-are never changed</li>
-<li>can allocate function activation records on the stack for functions
-that don't need coroutines or deferred execution</li>
-<li>allocate objects in the longest living function activation record
-that will use them<ul>
-<li>to reduce how often the garbage collector has to run</li>
-</ul>
-</li>
-<li>provide a benchmark for comparison to newer JIT technologies being
-developed in the PyPy project</li>
-</ul>
-</li>
-</ul>
-</div>
 </div>
 <div class="section" id="the-future">
-<h1>The Future</h1>
+<h2>The Future</h2>
 <ul class="simple">
-<li>We are exploring technical ideas on several levels that might be useful to
-others<ul>
-<li>new programming language ideas<ul>
-<li>extensible declarations using Q&amp;A rather than syntax<ul>
-<li>in the Python world, I'm thinking of large libraries like SQLAlchemy or
-Django.<ul>
-<li>Doing Zope right??</li>
+<li>We are exploring technical ideas on several levels that you might be
+interested in</li>
+<li>Examples of how these might be applied to a Python compiler:<ul>
+<li>extensible declarations using Q&amp;A and allowing different syntaxes<ul>
+<li>PLY (Python Lex Yacc)</li>
+<li>SQLAlchemy</li>
+<li>HTML templates</li>
+<li>The image of a variety of text syntaxes reminds me of Zope<ul>
+<li>A fully compiled alternative to Zope??</li>
 </ul>
 </li>
 </ul>
 </li>
-<li>extensible control statements<ul>
-<li>don't really know whether or how this would fit in with Python</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>new compiler ideas<ul>
 <li>stackless<ul>
 <li>coroutines/generators<ul>
 <li>suspendable consumers as well as producers</li>
@@ -584,27 +559,20 @@ consumer vs finally returning from the generator when there are no
 more values</li>
 </ul>
 </li>
-<li>green threads<ul>
-<li>to avoid &quot;event programming&quot; in traditional GUI applications</li>
-<li>to multi-thread server applications<ul>
-<li>in the Python world, this would be &quot;Twisted for free&quot;</li>
+<li>Twisted built in<ul>
+<li>get the benefits for free</li>
 </ul>
 </li>
 </ul>
 </li>
-</ul>
-</li>
-<li>use of relational database<ul>
-<li>IDE: letting the programmer know what the compiler knows</li>
-</ul>
-</li>
-<li>global flow analysis<ul>
-<li>improve Python performance by an order of magnitude or more (10x-50x)<ul>
+<li>use of relational database for a better IDE</li>
+<li>global flow analysis to improve Python performance by an order of
+magnitude or more (10x-50x)<ul>
 <li>by recognizing special cases that dominate our use of language<ul>
 <li>variables never deleted can be assigned to fixed offsets</li>
 <li>instance variables assigned to fixed offsets when no multiple
 inheritance is used in derived classes</li>
-<li>direct calls to builtin functions when their names are never
+<li>direct calls to built in functions when their names are never
 defined in the module</li>
 <li>direct calls to functions that are never redefined</li>
 <li>placing function activation records on a stack when the function
@@ -612,24 +580,22 @@ doesn't need stackless capability</li>
 <li>figuring out actual to formal parameter mappings at compile time
 when the function is never redefined</li>
 <li>multiple entry points for different numbers of parameters, or
-different saving different sets of registers</li>
+saving different sets of registers</li>
+<li>allocate objects in the longest living function activation record
+that will use them<ul>
+<li>to reduce how often the garbage collector has to run</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>provide a benchmark for comparison to newer JIT technologies being
+developed by the PyPy project</li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>We are also exploring using a complicated hands-on project for a local Python
-group that can really show the benefits of developing in Python.</li>
-<li>What we've learned so far.<ul>
-<li>to be determined...</li>
-</ul>
-</li>
-</ul>
+</div>
 </div>
 <div class="section" id="notes-for-reviewers">
 <h1>Notes for Reviewers</h1>
@@ -646,7 +612,7 @@ labeled this as an advanced talk.</p>
 to the point of seeing how well these ideas work in practice.</p>
 <p>I expect to have a running prototype by the conference date, and that we will
 be just starting to get a feel for how well these ideas work by then.  This
-will affect this presentation somewhat (especially the Conclusion section).</p>
+will affect the presentation somewhat (especially the Conclusion section).</p>
 <p>Finally, I will be paying my own way to the conference and asking for
 financial aid.  At this time, I don't know if any other members of the Tampa
 Bay Python meetup group will be attending the conference.  Alas, their paying
