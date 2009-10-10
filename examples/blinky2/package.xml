@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package>
+    <name>blinky</name>
+    <words>
+        <word name="assembler_word" />
+        <word name="declaration" />
+        <word name="led-pin" />
+        <word name="macro" />
+        <word name="output_pin" />
+        <word name="pass_" />
+        <word name="repeat" />
+        <word name="run" />
+        <word name="set" />
+        <word name="startup" />
+        <word name="task" />
+    </words>
+</package>

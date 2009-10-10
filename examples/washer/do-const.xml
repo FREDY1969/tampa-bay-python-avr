@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>do-const</name>
+    <label>do-const</label>
+    <kind>assembler_word</kind>
+    <defining>False</defining>
+</word>

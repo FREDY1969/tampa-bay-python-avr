@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>temp-switch</name>
+    <label>temp-switch</label>
+    <kind>multi_position_switch</kind>
+    <defining>False</defining>
+    <answers>
+        <answers name="pin_mapping" repeated="True">
+            <answer name="pin_number" repeated="False" type="int" value="5" />
+            <answer name="value" repeated="False" type="string" value="1" />
+        </answers>
+        <answers name="pin_mapping" repeated="True">
+            <answer name="pin_number" repeated="False" type="int" value="6" />
+            <answer name="value" repeated="False" type="string" value="2" />
+        </answers>
+        <answers name="pin_mapping" repeated="True">
+            <answer name="pin_number" repeated="False" type="int" value="7" />
+            <answer name="value" repeated="False" type="string" value="3" />
+        </answers>
+        <answers name="pin_mapping" repeated="True">
+            <answer name="pin_number" repeated="False" type="int" value="8" />
+            <answer name="value" repeated="False" type="string" value="4" />
+        </answers>
+        <answers name="pin_mapping" repeated="True">
+            <answer name="pin_number" repeated="False" type="int" value="9" />
+            <answer name="value" repeated="False" type="string" value="5" />
+        </answers>
+        <answer name="selected_pin_is" repeated="False" type="choice">
+            <options>
+                <option value="LOW" />
+            </options>
+        </answer>
+        <answer name="use_pullups_" repeated="False" type="bool" value="True" />
+    </answers>
+</word>
