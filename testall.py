@@ -18,7 +18,7 @@ setpath.setpath(%r)
 """ % (__file__,)
 
 def call(input):
-    child = subprocess.Popen((sys.executable,),
+    child = subprocess.Popen((sys.executable, "-Wd"),
                              stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     input = fix_path + input
