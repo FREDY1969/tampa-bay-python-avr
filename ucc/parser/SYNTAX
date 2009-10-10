@@ -1,0 +1,39 @@
+file(kind='word_body') : statement as statement+
+
+simple_statement : NAME() expr* NEWLINE_TOK
+statement : simple_statement
+          | NAME() expr* [series]
+
+[series] : ':' simple_statement as statement
+         | START_SERIES_TOK INDENT_TOK statement as statement+ DEINDENT_TOK
+
+expr: APPROX_NUMBER(kind='approx',int1=p[%s][0],int2=p[%s][1])
+    | CHAR(kind='int',int1=p[%s])
+    | INTEGER(kind='int',int1=p[%s])
+    | RATIO(kind='ratio',int1=p[%s][0],int2=p[%s][1])
+    | STRING(kind='string',str1=p[%s])
+    | NAME()
+    | LP_TOK expr ')'
+    | expr() '(' expr... ')'
+    | BIT_NOT() expr
+    | NEGATE() expr
+    | expr BIT_AND() expr
+    | expr BIT_XOR() expr
+    | expr BIT_OR() expr
+    | expr '*'() expr
+    | expr '/'() expr
+    | expr '%'() expr
+    | expr '+'() expr
+    | expr '-'() expr
+    | ARG_RIGHT_WORD() expr
+    | expr ARG_LEFT_WORD()
+    | expr '<'() expr
+    | expr LE() expr
+    | expr EQ() expr
+    | expr NE() expr
+    | expr '>'() expr
+    | expr GE() expr
+    | NOT() expr as cond
+    | expr as cond AND() expr as cond
+    | expr as cond OR() expr as cond
+

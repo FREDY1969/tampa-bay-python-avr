@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>Arduino-pin-Port</name>
+    <label>Arduino-pin-Port</label>
+    <kind>translate</kind>
+    <defining>False</defining>
+    <answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="0" />
+            <answer name="output" repeated="False" type="string" value="Port-D" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="1" />
+            <answer name="output" repeated="False" type="string" value="Port-D" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="2" />
+            <answer name="output" repeated="False" type="string" value="Port-D" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="3" />
+            <answer name="output" repeated="False" type="string" value="Port-D" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="4" />
+            <answer name="output" repeated="False" type="string" value="Port-D" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="5" />
+            <answer name="output" repeated="False" type="string" value="Port-D" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="6" />
+            <answer name="output" repeated="False" type="string" value="Port-D" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="7" />
+            <answer name="output" repeated="False" type="string" value="Port-D" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="8" />
+            <answer name="output" repeated="False" type="string" value="Port-B" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="9" />
+            <answer name="output" repeated="False" type="string" value="Port-B" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="10" />
+            <answer name="output" repeated="False" type="string" value="Port-B" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="11" />
+            <answer name="output" repeated="False" type="string" value="Port-B" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="12" />
+            <answer name="output" repeated="False" type="string" value="Port-B" />
+        </answers>
+        <answers name="translation" repeated="True">
+            <answer name="input" repeated="False" type="string" value="13" />
+            <answer name="output" repeated="False" type="string" value="Port-B" />
+        </answers>
+    </answers>
+</word>

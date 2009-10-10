@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>IO_register</name>
+    <label>IO-register</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" />
+    </answers>
+    <questions>
+        <question>
+            <name>address</name>
+            <label>address</label>
+            <type>int</type>
+        </question>
+    </questions>
+</word>

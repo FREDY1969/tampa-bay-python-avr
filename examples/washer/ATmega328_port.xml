@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>ATmega328_port</name>
+    <label>ATmega328-port</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" />
+    </answers>
+    <questions>
+        <question>
+            <name>data_register_address</name>
+            <label>data-register-address</label>
+            <type>int</type>
+        </question>
+        <question>
+            <name>data_direction_register_address</name>
+            <label>data-direction-register-address</label>
+            <type>int</type>
+        </question>
+        <question>
+            <name>input_pins_register_address</name>
+            <label>input-pins-register-address</label>
+            <type>int</type>
+        </question>
+    </questions>
+</word>
