@@ -1,10 +1,14 @@
 '''
 '''
 
+from __future__ import with_statement
+
+import os.path
+
 import setpath
 setpath.setpath(__file__)
 
-import wx
+import wx, wx.py
 from ucc.gui.Registry import Registry
 
 class RightMainPanel(wx.Panel):
@@ -16,13 +20,15 @@ class RightMainPanel(wx.Panel):
         topPanel = self.topPanel = wx.Panel(self, wx.ID_ANY)
         topSizer = self.topSizer = wx.BoxSizer(wx.VERTICAL)
         topPanel.SetSizer(topSizer)
-        bottomText = wx.TextCtrl(self, wx.ID_ANY, "", style=wx.TE_MULTILINE)
+        self.bottomText = wx.py.editwindow.EditWindow(self, wx.ID_ANY,
+                                                      style=wx.TE_MULTILINE)
+        self.bottomText.setDisplayLineNumbers(True)
         
         # setup sizer
         
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(topPanel, 1, wx.EXPAND)
-        sizer.Add(bottomText, 1, wx.EXPAND)
+        sizer.Add(self.bottomText, 1, wx.EXPAND)
         
         self.SetSizer(sizer)
         sizer.Fit(self)
@@ -40,6 +46,7 @@ class RightMainPanel(wx.Panel):
         # setup controls
         
         if self.test == None:
+            self.topSizer.Clear(True)
             self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY, "TopPanel"))
             self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value A', style=wx.RB_GROUP))
             self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value B'))
@@ -59,3 +66,18 @@ class RightMainPanel(wx.Panel):
             self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value C'))
             self.topSizer.Add(wx.CheckBox(self.topPanel, wx.ID_ANY, 'CheckBox'))
             self.topSizer.Layout()
+        self.bottomText.ClearAll()
+        if Registry.currentWord:
+            kind_word = Registry.wordDict[Registry.currentWord.kind]
+            suffix = kind_word.get_answer('filename_suffix')
+            if suffix is not None:
+                if suffix:
+                    filename = Registry.currentWord.name + '.' + suffix.value
+                else:
+                    filename = Registry.currentWord.name
+                path = os.path.join(Registry.currentPackage, filename)
+                if not os.path.exists(path):
+                    print "creating", path
+                    with open(path, 'w'): pass
+                self.bottomText.LoadFile(path)
+        #self.bottomText.SaveFile(filename)
