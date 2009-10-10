@@ -7,6 +7,8 @@ setpath.setpath(__file__)
 import wx
 from ucc.gui.Registry import Registry
 
+from ucc.gui.controls.BoolCtrl import BoolCtrl
+
 class RightMainPanel(wx.Panel):
     def __init__(self, parent, id, style):
         wx.Panel.__init__(self, parent, id, style=style)
@@ -39,23 +41,33 @@ class RightMainPanel(wx.Panel):
         
         # setup controls
         
+        
         if self.test == None:
-            self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY, "TopPanel"))
-            self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value A', style=wx.RB_GROUP))
-            self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value B'))
-            self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value C'))
-            self.topSizer.Add(wx.CheckBox(self.topPanel, wx.ID_ANY, 'CheckBox'))
-            self.topSizer.Add(wx.Slider(self.topPanel, wx.ID_ANY, style=wx.SL_HORIZONTAL))
-            self.topSizer.Add(wx.TextCtrl(self.topPanel, wx.ID_ANY))
-            self.topSizer.Add(wx.BitmapButton(self.topPanel, wx.ID_ANY, wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_BUTTON)))
-            self.topSizer.Add(wx.BitmapButton(self.topPanel, wx.ID_ANY, wx.ArtProvider.GetBitmap(wx.ART_GO_DOWN, wx.ART_BUTTON)))
-            self.topSizer.Add(wx.ComboBox(self.topPanel, wx.ID_ANY, choices=['Option 1','Option 2']))
             self.test = True
         else:
-            self.topSizer.Clear(True)
-            self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY, "TopPanel"))
-            self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value A', style=wx.RB_GROUP))
-            self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value B'))
-            self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value C'))
-            self.topSizer.Add(wx.CheckBox(self.topPanel, wx.ID_ANY, 'CheckBox'))
-            self.topSizer.Layout()
+            import pprint
+            pprint.pprint(Registry.currentWord.questions[0])
+        
+        #self.topSizer.Add(BoolCtrl(self.topPanel, Registry.currentWord.questions[0], 'Test Custom Checkbox'))
+        #self.topSizer.Add(BoolCtrl(self.topPanel, Registry.currentWord.questions[0]))
+        
+        #if self.test == None:
+        #    self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY, "TopPanel"))
+        #    self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value A', style=wx.RB_GROUP))
+        #    self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value B'))
+        #    self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value C'))
+        #    self.topSizer.Add(wx.CheckBox(self.topPanel, wx.ID_ANY, 'CheckBox'))
+        #    self.topSizer.Add(wx.Slider(self.topPanel, wx.ID_ANY, style=wx.SL_HORIZONTAL))
+        #    self.topSizer.Add(wx.TextCtrl(self.topPanel, wx.ID_ANY))
+        #    self.topSizer.Add(wx.BitmapButton(self.topPanel, wx.ID_ANY, wx.ArtProvider.GetBitmap(wx.ART_GO_UP, wx.ART_BUTTON)))
+        #    self.topSizer.Add(wx.BitmapButton(self.topPanel, wx.ID_ANY, wx.ArtProvider.GetBitmap(wx.ART_GO_DOWN, wx.ART_BUTTON)))
+        #    self.topSizer.Add(wx.ComboBox(self.topPanel, wx.ID_ANY, choices=['Option 1','Option 2']))
+        #    self.test = True
+        #else:
+        #    self.topSizer.Clear(True)
+        #    self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY, "TopPanel"))
+        #    self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value A', style=wx.RB_GROUP))
+        #    self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value B'))
+        #    self.topSizer.Add(wx.RadioButton(self.topPanel, -1, 'Value C'))
+        #    self.topSizer.Add(wx.CheckBox(self.topPanel, wx.ID_ANY, 'CheckBox'))
+        #    self.topSizer.Layout()
