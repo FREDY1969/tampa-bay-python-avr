@@ -156,8 +156,9 @@ class App(wx.App):
         
     def saveWord(self):
         print "saving word"
-        # Registry.currentWord.write_xml()
-        # Registry.rightMainPanel.bottomText.SaveFile()
+        if Registry.currentWord:
+            Registry.currentWord.write_xml(Registry.currentPackage)
+            Registry.rightMainPanel.bottomText.SaveFile(Registry.currentWordPath)
         
     def onAbout(self, event):
         dialog = wx.MessageDialog(

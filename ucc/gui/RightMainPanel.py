@@ -79,4 +79,3 @@ class RightMainPanel(wx.Panel):
         self.bottomText.ClearAll()
         if Registry.currentWordPath:
             self.bottomText.LoadFile(Registry.currentWordPath)
-        #self.bottomText.SaveFile(Registry.currentWordPath)
