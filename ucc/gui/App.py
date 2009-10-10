@@ -11,7 +11,7 @@ setpath.setpath(__file__)
 
 from ucc.gui.Registry import Registry
 from ucc.gui.MainFrame import MainFrame
-from ucc.word import xml_access
+from ucc.word import word, xml_access
 
 class App(wx.App):
     def __init__(self):
@@ -54,6 +54,7 @@ class App(wx.App):
         Registry.currentPackage = None # full absolute path to package directory
         Registry.words = None # multidimensional list of words
         Registry.wordList = None # list of words
+        Registry.wordDict = None # {name: word}
         Registry.currentWord = None # current word loaded in rightMainPanel
         
         # init parent
@@ -137,7 +138,10 @@ class App(wx.App):
         # setup wordlist
         
         Registry.wordList = xml_access.read_word_list(Registry.currentPackage)[1]
-        
+        Registry.wordDict = dict((name,
+                                  word.read_word(name, Registry.currentPackage))
+                                 for name in Registry.wordList)
+
     def onOpen(self, event):
         try:
             self.processPath(self.pickMode())
