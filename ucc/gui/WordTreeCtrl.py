@@ -58,7 +58,5 @@ class WordTreeCtrl(wx.TreeCtrl):
             self.Expand(node)
     
     def onActivate(self, e):
-        print self.GetItemPyData(e.GetItem()).kind
-        print self.GetItemPyData(e.GetItem()).answers
-        print self.GetItemPyData(e.GetItem()).questions
-        # Registry.app.loadWord(self.GetItemText(e.GetItem()))
+        Registry.currentWord = self.GetItemPyData(e.GetItem())
+        Registry.rightMainPanel.paint()
