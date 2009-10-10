@@ -56,6 +56,7 @@ class App(wx.App):
         Registry.wordList = None # list of words
         Registry.wordDict = None # {name: word}
         Registry.currentWord = None # current word loaded in rightMainPanel
+        Registry.currentWordPath = None # path to current word text file
         
         # init parent
         
@@ -152,6 +153,7 @@ class App(wx.App):
         
     def onSaveWord(self, event):
         print "saving word"
+
     def onAbout(self, event):
         dialog = wx.MessageDialog(
             Registry.mainFrame,

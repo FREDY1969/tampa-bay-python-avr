@@ -1,6 +1,10 @@
 '''
 '''
 
+from __future__ import with_statement
+
+import os.path
+
 import setpath
 setpath.setpath(__file__)
 
@@ -56,4 +60,21 @@ class WordTreeCtrl(wx.TreeCtrl):
     
     def onActivate(self, e):
         Registry.currentWord = self.GetItemPyData(e.GetItem())
+
+        # figure out path to word text file
+        kind_word = Registry.wordDict[Registry.currentWord.kind]
+        suffix = kind_word.get_answer('filename_suffix')
+        if suffix is None:
+            path = None
+        else:
+            if suffix:
+                filename = Registry.currentWord.name + '.' + suffix.value
+            else:
+                filename = Registry.currentWord.name
+            path = os.path.join(Registry.currentPackage, filename)
+            if not os.path.exists(path):
+                print "creating", path
+                with open(path, 'w'): pass
+        Registry.currentWordPath = path
+
         Registry.rightMainPanel.paint()
