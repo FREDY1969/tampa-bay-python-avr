@@ -44,7 +44,7 @@ class WordTreeCtrl(wx.TreeCtrl):
         
     def buildWordTree(self, words, parent):
         for word in words:
-            wordNode = self.AppendItem(parent, word['word'].name)
+            wordNode = self.AppendItem(parent, word['word'].label)
             self.SetPyData(wordNode, word['word'])
             if (parent == self.root):
                 self.expandThese.append(wordNode)
