@@ -151,7 +151,13 @@ class App(wx.App):
             pass
         
     def onSaveWord(self, event):
+        self.saveWord()
+        
+    def saveWord(self):
         print "saving word"
+        # Registry.currentWord.write_xml()
+        # Registry.rightMainPanel.bottomText.SaveFile()
+        
     def onAbout(self, event):
         dialog = wx.MessageDialog(
             Registry.mainFrame,
@@ -164,3 +170,4 @@ class App(wx.App):
         
     def onExit(self, event):
         Registry.mainFrame.Close(True)
+        

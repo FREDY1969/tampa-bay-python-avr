@@ -3,7 +3,7 @@ r'''Control for boolean word values'''
 import wx
 
 class BoolCtrl(wx.Window):
-    def __init__(self, parent, question, label):
+    def __init__(self, parent, answer, label):
         wx.Window.__init__(self, parent)
         
         self.parent = parent

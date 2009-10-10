@@ -78,4 +78,3 @@ class word(object):
 
     def get_answer(self, question_name):
         return self.answers[question_name]
-

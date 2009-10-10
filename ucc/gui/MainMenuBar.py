@@ -31,4 +31,5 @@ class MainMenuBar(wx.MenuBar):
     def setupEventHandlers(self):
         wx.EVT_MENU(self.parent, Registry.ID_OPEN, Registry.app.onOpen)
         wx.EVT_MENU(self.parent, Registry.ID_EXIT, Registry.app.onExit)
+        wx.EVT_MENU(self.parent, Registry.ID_SAVE_WORD, Registry.app.onSaveWord)
         wx.EVT_MENU(self.parent, Registry.ID_ABOUT, Registry.app.onAbout)
