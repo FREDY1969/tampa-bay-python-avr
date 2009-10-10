@@ -8,6 +8,7 @@ import wx, wx.py
 import wx.lib.scrolledpanel as scrolled
 
 from ucc.gui.Registry import Registry
+from ucc.gui import controls
 
 class RightMainPanel(wx.Panel):
     def __init__(self, parent, id, style):
@@ -57,8 +58,23 @@ class RightMainPanel(wx.Panel):
         
         self.topSizer.Clear(True)
         
-        for question in Registry.currentWord.questions:
-            question.paint()
+        if Registry.currentWord:
+            for question in Registry.parentWord.questions:
+                if not hasattr(question, 'control'):
+                    msg = "<%s %s> has not 'control'" % \
+                            (question.__class__.__name__, question.name)
+                    print msg
+                    self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY,
+                                                    msg))
+                else:
+                    cls = getattr(getattr(controls, question.control),
+                                  question.control)
+                    print question.control, cls
+                    self.topSizer.Add(cls(self.topPanel,
+                                          question,
+                                          Registry.currentWord.get_answer(
+                                            question.name),
+                                          question.label))
         
         self.topSizer.Layout()
         

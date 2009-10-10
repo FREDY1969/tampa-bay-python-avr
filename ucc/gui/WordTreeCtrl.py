@@ -71,8 +71,8 @@ class WordTreeCtrl(wx.TreeCtrl):
         pprint.pprint(Registry.currentWord)
         
         # figure out path to word text file
-        kind_word = Registry.wordDict[Registry.currentWord.kind]
-        suffix = kind_word.get_answer('filename_suffix')
+        Registry.parentWord = Registry.wordDict[Registry.currentWord.kind]
+        suffix = Registry.parentWord.get_answer('filename_suffix')
         if suffix is None:
             path = None
         else:

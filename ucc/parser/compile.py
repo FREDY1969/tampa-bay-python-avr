@@ -14,7 +14,7 @@ import setpath
 
 #print "__file__", __file__
 python_path = setpath.setpath(__file__)
-print "python_path", python_path
+#print "python_path", python_path
 
 from ucc.word import helpers, xml_access, word
 from ucc.parser import genparser
