@@ -7,7 +7,6 @@ setpath.setpath(__file__)
 import wx
 
 from ucc.gui.Registry import Registry
-from ucc.word import word
 
 class WordTreeCtrl(wx.TreeCtrl):
     def __init__(self, parent, id, pos, size, style):
@@ -27,16 +26,14 @@ class WordTreeCtrl(wx.TreeCtrl):
         def getChildren(parent=None):
             children = []
             if parent == None:
-                for wordName in Registry.wordList:
-                    temporaryWord = word.read_word(wordName, Registry.currentPackage)
+                for temporaryWord in Registry.wordDict.itervalues():
                     if temporaryWord.name == temporaryWord.kind:
                         children.append({
                             'word': temporaryWord,
                             'children': getChildren(temporaryWord)
                         })
             else:
-                for wordName in Registry.wordList:
-                    temporaryWord = word.read_word(wordName, Registry.currentPackage)
+                for temporaryWord in Registry.wordDict.itervalues():
                     if parent.name == temporaryWord.kind and temporaryWord.name != temporaryWord.kind:
                         children.append({
                             'word': temporaryWord,
@@ -47,7 +44,7 @@ class WordTreeCtrl(wx.TreeCtrl):
         
     def buildWordTree(self, words, parent):
         for word in words:
-            wordNode = self.AppendItem(parent, word['word'].name)
+            wordNode = self.AppendItem(parent, word['word'].label)
             self.SetPyData(wordNode, word['word'])
             if (parent == self.root):
                 self.expandThese.append(wordNode)
