@@ -67,7 +67,9 @@ class WordTreeCtrl(wx.TreeCtrl):
         # open/paint new word
         
         Registry.currentWord = self.GetItemPyData(e.GetItem())
-
+        import pprint
+        pprint.pprint(Registry.currentWord)
+        
         # figure out path to word text file
         kind_word = Registry.wordDict[Registry.currentWord.kind]
         suffix = kind_word.get_answer('filename_suffix')
@@ -83,5 +85,5 @@ class WordTreeCtrl(wx.TreeCtrl):
                 print "creating", path
                 with open(path, 'w'): pass
         Registry.currentWordPath = path
-
+        
         Registry.rightMainPanel.paint()
