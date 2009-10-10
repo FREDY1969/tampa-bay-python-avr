@@ -1,0 +1,6 @@
+set output 1
+repeat:
+    led-pin output
+    repeat 800:
+        repeat 1000: pass
+    set output 1 - output
