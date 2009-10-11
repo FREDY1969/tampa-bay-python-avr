@@ -15,7 +15,7 @@ from ucc.word import answers, questions, xml_access
 
 def read_word(word_name, project_dir):
     r'''Returns a single word object read in from the word's xml file.
-
+    
     Use word.write_xml to write the xml file back out.
     '''
     root = ElementTree.parse(os.path.join(project_dir, word_name + '.xml')) \
@@ -78,4 +78,3 @@ class word(object):
 
     def get_answer(self, question_name):
         return self.answers[question_name]
-

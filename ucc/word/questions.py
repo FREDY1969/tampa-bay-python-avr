@@ -152,12 +152,14 @@ class q_atomic(question):
 
 class q_bool(q_atomic):
     answer_cls = answers.ans_bool
+    control = 'BoolCtrl'
 
 class q_number(q_atomic):
     answer_cls = answers.ans_number
 
 class q_int(q_atomic):
     answer_cls = answers.ans_int
+    control = 'IntegerCtrl'
 
 class q_rational(q_atomic):
     answer_cls = answers.ans_rational
@@ -167,6 +169,7 @@ class q_real(q_atomic):
 
 class q_string(q_atomic):
     answer_cls = answers.ans_string
+    control = 'StringCtrl'
 
 class q_series(question):
     r'''A named series of questions.
