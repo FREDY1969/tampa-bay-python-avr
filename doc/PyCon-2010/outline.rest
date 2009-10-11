@@ -1,5 +1,5 @@
-A New Look at Programming Language and Compiler Technologies (via the Arduino)
-==============================================================================
+A New Look at Programming Language and Compiler Technologies
+============================================================
 
 ============
 Introduction
