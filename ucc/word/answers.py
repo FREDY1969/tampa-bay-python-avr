@@ -96,14 +96,38 @@ class answer(object):
                                type = self.__class__.__name__[4:],
                                value = self.value, repeated = str(repeated))
 
+    def get_value(self):
+        ans = self.convert(self.value)
+        print "answers.get_value", self.value, ans
+        return ans
+
 # These might later convert the answer from a string to the appropriate python
 # type.
-class ans_bool(answer): pass
-class ans_number(answer): pass
-class ans_int(answer): pass
-class ans_rational(answer): pass
-class ans_real(answer): pass
-class ans_string(answer): pass
+class ans_bool(answer):
+    def convert(self, str):
+        if str.lower() == 'true': return True
+        if str.lower() == 'false': return False
+        raise ValueError("ans_bool %s has invalid value: %s" % (self.name, str))
+
+class ans_number(answer):
+    def convert(self, str):
+        try:
+            return int(str)
+        except ValueError:
+            return float(str)
+
+class ans_int(answer):
+    convert = int
+
+class ans_rational(answer):
+    def convert(self, str):
+        raise AssertionError("ans_rational.convert not implemented")
+
+class ans_real(answer):
+    convert = float
+
+class ans_string(answer):
+    convert = lambda x: x
 
 class ans_series(answer):
     r'''This handles a nested <answers> tag represented a series of answers.
