@@ -7,7 +7,7 @@ import itertools
 import sqlite3 as db
 
 Db_conn = None
-Db_filename = 'ast.db'
+Db_filename = 'ucl.db'
 Translation_dict = {}
 _Gensyms = {}
 

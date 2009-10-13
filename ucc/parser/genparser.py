@@ -57,7 +57,8 @@ def genparser(filename, rules, token_dict, output_file = sys.stdout):
             ('left', 'BIT_XOR'),
             ('left', 'BIT_AND'),
             ('right', 'NEGATE', 'BIT_NOT'),
-            ('left', ')'),
+            ('nonassoc', ')', ']'),
+            ('left', '.'),
         )
 
         token_dict = {

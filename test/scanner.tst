@@ -97,13 +97,13 @@ LexToken(APPROX_NUMBER,(291, -4),1,59)
 LexToken(APPROX_NUMBER,(291, -4),1,70)
 
 >>> scanner_init.tokenize(scanner,
-...     '0x12.3. 0X123~1- *22~1 >0X123.5 >"0x123.5~1 0X123~1x1\' ')
-LexToken(NAME,'0x12.3.',1,0)
+...     '0x12-3+ 0X123~1- *22~1 >0X123 >"0x123~1 0X123~1x1\' ')
+LexToken(NAME,'0x12-3+',1,0)
 LexToken(NAME,'0X123~1-',1,8)
 LexToken(NAME,'*22~1',1,17)
-LexToken(ARG_LEFT_WORD,'>0X123.5',1,23)
-LexToken(ARG_LEFT_WORD,'>"0x123.5~1',1,32)
-LexToken(NAME,"0X123~1x1'",1,44)
+LexToken(ARG_LEFT_WORD,'>0X123',1,23)
+LexToken(ARG_LEFT_WORD,'>"0x123~1',1,30)
+LexToken(NAME,"0X123~1x1'",1,40)
 
 >>> scanner_init.tokenize(scanner, '+ - * -a ~')
 LexToken(+,'+',1,0)

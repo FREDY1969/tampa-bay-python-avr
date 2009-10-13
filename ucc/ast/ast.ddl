@@ -10,9 +10,9 @@ create table ast (
     word_body_id int references ast(id),       -- NULL for the word_body itself
 
     -- For macro expansions:
-    id_replaced int unique references ast(id),
-    root_id_replaced int references ast(id),
-    replacement_depth int,
+    --id_replaced int unique references ast(id),
+    --root_id_replaced int references ast(id),
+    --replacement_depth int,
 
     kind varchar(255),                         -- type of ast node
        -- possible values are:
@@ -49,7 +49,7 @@ create table ast (
        -- possible values are:
           -- 'statement'
           -- 'cond'
-          -- 'value'
+          -- 'value' (rvalue)
           -- 'lvalue'
           -- 'producer'
           -- 'start_stop'
@@ -67,7 +67,7 @@ create table ast (
     line_end int,
     column_end int,
 
-    unique (root_id_replaced, replacement_depth),
+    --unique (root_id_replaced, replacement_depth),
     unique (parent_node, parent_arg_num, arg_order)
 );
 

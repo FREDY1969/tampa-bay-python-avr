@@ -18,7 +18,7 @@ import itertools
 import os.path
 import sqlite3 as db
 
-Db_filename = "ast.db"
+Db_filename = "ucl.db"
 
 class db_cursor(object):
     def __init__(self, project_dir):
@@ -42,26 +42,13 @@ def dump(db_cur):
 
 def dump_word(id, db_cur, indent = ''):
     db_cur.execute("""
-        select id, label, word, kind, int1, int2, str1, str2, expect, type_id,
-               id_replaced
-        from ast
-        where root_id_replaced = ?
-          and replacement_depth = (select max(replacement_depth) from ast
-                                    where root_id_replaced = ?)
-        """,
-        (id, id))
-    row = db_cur.fetchone()
-    if not row:
-        db_cur.execute("""
-            select id, label, word, kind, int1, int2, str1, str2, expect,
-                   type_id, NULL
-            from ast
-            where id = ?
+        select label, word, kind, int1, int2, str1, str2, expect, type_id
+          from ast
+         where id = ?
         """,
         (id,))
-        row = db_cur.fetchone()
-    id, label, word, kind, int1, int2, str1, str2, \
-      expect, type_id, id_replaced = row
+    row = db_cur.fetchone()
+    label, word, kind, int1, int2, str1, str2, expect, type_id = row
     print indent + str(id) + ":", \
           ' '.join(itertools.imap(str, filter(lambda x: x is not None,
                                               (label, word, kind,
@@ -98,9 +85,6 @@ def dump_word(id, db_cur, indent = ''):
     if hold_id is not None:
         dump_child(hold_id)
 
-    # Do node replaced:
-    if id_replaced is not None:
-        dump_word(id_replaced, db_cur, indent + '< ')
 
 if __name__ == "__main__":
     import sys

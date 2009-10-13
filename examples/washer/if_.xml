@@ -16,6 +16,6 @@
             <answer name="keyword_name" repeated="False" type="string" value="else" />
             <answer name="token_value" repeated="False" type="string" value="ELSE_TOK" />
         </answers>
-        <answer name="syntax" repeated="True" type="string" value="IF() expr as cond [series] ( ELSE_TOK [series] )?" />
+        <answer name="syntax" repeated="True" type="string" value="IF() condition [series] ( ELSE_TOK [series] )?" />
     </answers>
 </word>
