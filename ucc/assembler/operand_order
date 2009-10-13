@@ -1,0 +1,15 @@
+A,b
+A,Rr
+k,Rr
+Rd,A
+Rd,b
+Rd,k
+Rd,K
+Rd,Rr
+Rd,XYZ
+Rr,b
+s,k
+XYZ,Rr
+
+10 20 30 40 50 60 70 80
+Rd A XYZ  s k  K  Rr b

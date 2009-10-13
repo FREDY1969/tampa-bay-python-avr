@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>water-on</name>
+    <label>water-on</label>
+    <kind>start_stop</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="argument" repeated="True" type="string" value="temp" />
+    </answers>
+</word>

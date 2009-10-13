@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>set</name>
+    <label>set</label>
+    <kind>function</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="argument" repeated="True" type="string" value="var" />
+        <answer name="argument" repeated="True" type="string" value="value" />
+    </answers>
+</word>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>Port-B</name>
+    <label>Port-B</label>
+    <kind>ATmega328_port</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="data_direction_register_address" repeated="False" type="int" value="0x24" />
+        <answer name="data_register_address" repeated="False" type="int" value="0x25" />
+        <answer name="input_pins_register_address" repeated="False" type="int" value="0x23" />
+    </answers>
+</word>
