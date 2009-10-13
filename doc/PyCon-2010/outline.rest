@@ -1,14 +1,14 @@
 A New Look at Programming Language and Compiler Technologies
 ============================================================
 
-============
-Introduction
-============
+=====================
+Introduction (3 mins)
+=====================
 
-- Modernize traditional compiler technologies (found in the "Dragon Book")
+- Modernize traditional compiler technologies (as found in the "Dragon Book")
 
-- Modernize programming language technologies by using these new compiler
-  technologies
+- Modernize programming language technologies by taking advantage of these
+  new compiler technologies
 
 - Initially target the Arduino microcontroller (AVR instruction set)
 
@@ -26,8 +26,8 @@ Introduction
 - Write the compiler in Python as a hands-on programming exercise by the
   Tampa Bay Python meetup group
 
-  - Writing the compiler in Python allows a very small group to tackle a large
-    significant problem
+  - Writing the compiler in Python allows a small ad-hoc group to tackle a
+    large significant problem
 
     - now anybody can bring their "Evil Plan to Rule the World" to fruition!
 
@@ -35,9 +35,9 @@ Introduction
 
 - How might these ideas apply to other projects like, say, a Python compiler?
 
-=================================
-Modernizing Compiler Technologies
-=================================
+===========================================
+Modernizing Compiler Technologies (10 mins)
+===========================================
 
 - We're starting with the "Dragon Book"
 
@@ -51,10 +51,13 @@ Modernizing Compiler Technologies
   
     - as an alternative to formal syntax for declarations within the language
 
-  - Extensible, object-oriented interfaces
+  - Extensible, object-oriented interfaces into intermediate code generation
   
     - to make the internal workings of the compiler available and extensible
       as an additional resource for library developers
+    - reduces the "surface area" of the library
+    - moves decision making code to compile-time for better run-time
+      performance
 
   - A relational database
   
@@ -72,9 +75,9 @@ Modernizing Compiler Technologies
     - this means jettisoning the ideas of separate compilation and the link
       editor (or unix "loader")
 
-===========================================
-Modernize Programming Language Technologies
-===========================================
+=====================================================
+Modernize Programming Language Technologies (10 mins)
+=====================================================
 
 (this might be a demo)
 
@@ -102,7 +105,7 @@ Modernize Programming Language Technologies
     - Our own language for high-level functions
     - assembler functions
 
-- adaptable libraries
+- adaptable, or configurable, libraries
 
   - Q&A on "import"
    
@@ -112,9 +115,9 @@ Modernize Programming Language Technologies
 - add installation level Q&A to customize programs to specific chips, pinouts
   and clock speeds
 
-===============================
-Object-oriented Compiler Design
-===============================
+=========================================
+Object-oriented Compiler Design (10 mins)
+=========================================
 
 - a program is a set of declarations which we call *words*
 
@@ -135,7 +138,8 @@ Object-oriented Compiler Design
   - different instance for each normal word (**foo** function)
   - references (calls) to foo are just rows in the database
 
-- The steps to compiling a program
+- The steps to compiling a program  (what follows is supposed to be a numbered
+  list!?)
 
   #. create the internal objects for each word (declaration)
 
@@ -176,8 +180,8 @@ Object-oriented Compiler Design
   #. calculate CHANGE and USES info for each function
 
      - algorithms taken from the Dragon Book
-     - not extensible
      - stores results in the database
+     - not extensible
 
   #. generate intermediate code
 
@@ -214,13 +218,13 @@ Object-oriented Compiler Design
   - these are not user extensible
 
 
-==========
-Conclusion
-==========
+===================
+Conclusion (8 mins)
+===================
 
------
-Goals
------
+--------------
+Goals (3 mins)
+--------------
 
 - Develop a new microcontroller language
 
@@ -245,9 +249,9 @@ Goals
 - Explore tackling a very challenging project as a hands-on development
   exercise
 
-----------
-The Future
-----------
+-------------------
+The Future (5 mins)
+-------------------
 
 - We are exploring technical ideas on several levels that you might be
   interested in
@@ -269,21 +273,26 @@ The Future
 
       - suspendable consumers as well as producers
       - objects representing the consumer that can be passed around (like
-        iterators objects represent the producer)
-      - make more explicit the difference between generating values to a
-        consumer vs finally returning from the generator when there are no
+        iterator objects represent the producer)
+      - make more explicit the difference between yielding values to a
+        consumer vs the final return from the generator when there are no
         more values
 
-    - Twisted built in
+    - Twisted threading built in
 
       - get the benefits for free
 
   - use of relational database for a better IDE
 
+    - world-wide database for libraries, so library authors can see how it's
+      used???
+
   - global flow analysis to improve Python performance by an order of
     magnitude or more (10x-50x)
 
-    - by recognizing special cases that dominate our use of language
+    - by recognizing the special cases that dominate our use of language (I'm
+      not going to go over each of these, will just let viewer read through
+      them)
 
       - variables never deleted can be assigned to fixed offsets
       - instance variables assigned to fixed offsets when no multiple

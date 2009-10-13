@@ -287,12 +287,12 @@ ul.auto-toc {
 <div class="document" id="a-new-look-at-programming-language-and-compiler-technologies">
 <h1 class="title">A New Look at Programming Language and Compiler Technologies</h1>
 
-<div class="section" id="introduction">
-<h1>Introduction</h1>
+<div class="section" id="introduction-3-mins">
+<h1>Introduction (3 mins)</h1>
 <ul class="simple">
-<li>Modernize traditional compiler technologies (found in the &quot;Dragon Book&quot;)</li>
-<li>Modernize programming language technologies by using these new compiler
-technologies</li>
+<li>Modernize traditional compiler technologies (as found in the &quot;Dragon Book&quot;)</li>
+<li>Modernize programming language technologies by taking advantage of these
+new compiler technologies</li>
 <li>Initially target the Arduino microcontroller (AVR instruction set)<ul>
 <li>8 bit processor</li>
 <li>16MHz clock</li>
@@ -308,8 +308,8 @@ technologies</li>
 </li>
 <li>Write the compiler in Python as a hands-on programming exercise by the
 Tampa Bay Python meetup group<ul>
-<li>Writing the compiler in Python allows a very small group to tackle a large
-significant problem<ul>
+<li>Writing the compiler in Python allows a small ad-hoc group to tackle a
+large significant problem<ul>
 <li>now anybody can bring their &quot;Evil Plan to Rule the World&quot; to fruition!<ul>
 <li>and present at a national conference ;-)</li>
 </ul>
@@ -321,8 +321,8 @@ significant problem<ul>
 <li>How might these ideas apply to other projects like, say, a Python compiler?</li>
 </ul>
 </div>
-<div class="section" id="modernizing-compiler-technologies">
-<h1>Modernizing Compiler Technologies</h1>
+<div class="section" id="modernizing-compiler-technologies-10-mins">
+<h1>Modernizing Compiler Technologies (10 mins)</h1>
 <ul class="simple">
 <li>We're starting with the &quot;Dragon Book&quot;<ul>
 <li><em>Principles of Compiler Design</em>, by Alfred V. Aho and Jeffrey D. Ullman<ul>
@@ -336,9 +336,12 @@ significant problem<ul>
 <li>as an alternative to formal syntax for declarations within the language</li>
 </ul>
 </li>
-<li>Extensible, object-oriented interfaces<ul>
+<li>Extensible, object-oriented interfaces into intermediate code generation<ul>
 <li>to make the internal workings of the compiler available and extensible
 as an additional resource for library developers</li>
+<li>reduces the &quot;surface area&quot; of the library</li>
+<li>moves decision making code to compile-time for better run-time
+performance</li>
 </ul>
 </li>
 <li>A relational database<ul>
@@ -360,8 +363,8 @@ editor (or unix &quot;loader&quot;)</li>
 </li>
 </ul>
 </div>
-<div class="section" id="modernize-programming-language-technologies">
-<h1>Modernize Programming Language Technologies</h1>
+<div class="section" id="modernize-programming-language-technologies-10-mins">
+<h1>Modernize Programming Language Technologies (10 mins)</h1>
 <p>(this might be a demo)</p>
 <ul class="simple">
 <li>let GUI do graphically what modules &amp; packages do grammatically<ul>
@@ -389,7 +392,7 @@ of the language</li>
 </li>
 </ul>
 </li>
-<li>adaptable libraries<ul>
+<li>adaptable, or configurable, libraries<ul>
 <li>Q&amp;A on &quot;import&quot;<ul>
 <li>done once, but can be at any level within nested packages</li>
 <li>can influence how declarations and the library are compiled</li>
@@ -401,8 +404,8 @@ of the language</li>
 and clock speeds</li>
 </ul>
 </div>
-<div class="section" id="object-oriented-compiler-design">
-<h1>Object-oriented Compiler Design</h1>
+<div class="section" id="object-oriented-compiler-design-10-mins">
+<h1>Object-oriented Compiler Design (10 mins)</h1>
 <ul class="simple">
 <li>a program is a set of declarations which we call <em>words</em><ul>
 <li>some words declare new kinds of declarations<ul>
@@ -425,7 +428,8 @@ and clock speeds</li>
 <li>references (calls) to foo are just rows in the database</li>
 </ul>
 </li>
-<li>The steps to compiling a program<ol class="arabic">
+<li>The steps to compiling a program  (what follows is supposed to be a numbered
+list!?)<ol class="arabic">
 <li>create the internal objects for each word (declaration)<ul>
 <li>defining words are subclasses<ul>
 <li>the text part of these words is the Python code defining a subclass of
@@ -465,8 +469,8 @@ parser</li>
 </li>
 <li>calculate CHANGE and USES info for each function<ul>
 <li>algorithms taken from the Dragon Book</li>
-<li>not extensible</li>
 <li>stores results in the database</li>
+<li>not extensible</li>
 </ul>
 </li>
 <li>generate intermediate code<ul>
@@ -507,10 +511,10 @@ parser</li>
 </li>
 </ul>
 </div>
-<div class="section" id="conclusion">
-<h1>Conclusion</h1>
-<div class="section" id="goals">
-<h2>Goals</h2>
+<div class="section" id="conclusion-8-mins">
+<h1>Conclusion (8 mins)</h1>
+<div class="section" id="goals-3-mins">
+<h2>Goals (3 mins)</h2>
 <ul class="simple">
 <li>Develop a new microcontroller language</li>
 <li>Allow the developers of large libraries to empower their users by writing
@@ -533,8 +537,8 @@ C compilers don't use</li>
 exercise</li>
 </ul>
 </div>
-<div class="section" id="the-future">
-<h2>The Future</h2>
+<div class="section" id="the-future-5-mins">
+<h2>The Future (5 mins)</h2>
 <ul class="simple">
 <li>We are exploring technical ideas on several levels that you might be
 interested in</li>
@@ -553,22 +557,28 @@ interested in</li>
 <li>coroutines/generators<ul>
 <li>suspendable consumers as well as producers</li>
 <li>objects representing the consumer that can be passed around (like
-iterators objects represent the producer)</li>
-<li>make more explicit the difference between generating values to a
-consumer vs finally returning from the generator when there are no
+iterator objects represent the producer)</li>
+<li>make more explicit the difference between yielding values to a
+consumer vs the final return from the generator when there are no
 more values</li>
 </ul>
 </li>
-<li>Twisted built in<ul>
+<li>Twisted threading built in<ul>
 <li>get the benefits for free</li>
 </ul>
 </li>
 </ul>
 </li>
-<li>use of relational database for a better IDE</li>
+<li>use of relational database for a better IDE<ul>
+<li>world-wide database for libraries, so library authors can see how it's
+used???</li>
+</ul>
+</li>
 <li>global flow analysis to improve Python performance by an order of
 magnitude or more (10x-50x)<ul>
-<li>by recognizing special cases that dominate our use of language<ul>
+<li>by recognizing the special cases that dominate our use of language (I'm
+not going to go over each of these, will just let viewer read through
+them)<ul>
 <li>variables never deleted can be assigned to fixed offsets</li>
 <li>instance variables assigned to fixed offsets when no multiple
 inheritance is used in derived classes</li>
