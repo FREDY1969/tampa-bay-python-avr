@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
-<title>A New Look at Programming Language and Compiler Technologies</title>
+<title>Domain Specific Languages as First Class Citizens</title>
 <style type="text/css">
 
 /*
@@ -284,349 +284,148 @@ ul.auto-toc {
 </style>
 </head>
 <body>
-<div class="document" id="a-new-look-at-programming-language-and-compiler-technologies">
-<h1 class="title">A New Look at Programming Language and Compiler Technologies</h1>
+<div class="document" id="domain-specific-languages-as-first-class-citizens">
+<h1 class="title">Domain Specific Languages as First Class Citizens</h1>
 
-<div class="section" id="introduction-3-mins">
-<h1>Introduction (3 mins)</h1>
+<div class="section" id="writing-your-library-as-a-domain-specific-language-dsl-2-mins">
+<h1>Writing your library as a Domain Specific Language (DSL) (2 mins)</h1>
 <ul class="simple">
-<li>Modernize traditional compiler technologies (as found in the &quot;Dragon Book&quot;)</li>
-<li>Modernize programming language technologies by taking advantage of these
-new compiler technologies</li>
-<li>Initially target the Arduino microcontroller (AVR instruction set)<ul>
-<li>8 bit processor</li>
-<li>16MHz clock</li>
-<li>32K bytes of flash memory (program storage)</li>
-<li>2K bytes of RAM (data storage)</li>
-<li>32 (8-bit) registers</li>
-<li>lots of hardware goodies!<ul>
-<li>that this talk doesn't get into...</li>
-</ul>
-</li>
-<li>later maybe ARM for the Lego Mindstorms NXT robots</li>
-</ul>
-</li>
-<li>Write the compiler in Python as a hands-on programming exercise by the
-Tampa Bay Python meetup group<ul>
-<li>Writing the compiler in Python allows a small ad-hoc group to tackle a
-large significant problem<ul>
-<li>now anybody can bring their &quot;Evil Plan to Rule the World&quot; to fruition!<ul>
-<li>and present at a national conference ;-)</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>How might these ideas apply to other projects like, say, a Python compiler?</li>
+<li>DSLs provide language abstraction tools for unique computational models
+(<em>how</em> to do computation, vs abstractions for <em>what</em> a computation does)</li>
+<li>allows you to empower the user of your library by writing the library
+as a DSL</li>
 </ul>
 </div>
-<div class="section" id="modernizing-compiler-technologies-10-mins">
-<h1>Modernizing Compiler Technologies (10 mins)</h1>
+<div class="section" id="dsls-as-first-class-citizens-it-s-all-about-declarations-4-mins">
+<h1>DSLs as First Class Citizens: It's all about Declarations! (4 mins)</h1>
 <ul class="simple">
-<li>We're starting with the &quot;Dragon Book&quot;<ul>
-<li><em>Principles of Compiler Design</em>, by Alfred V. Aho and Jeffrey D. Ullman<ul>
-<li>I have the first edition, copyrighted 1977</li>
+<li>manage the program's collection of declarations graphically in a GUI,
+rather than grammatically in source modules<ul>
+<li>so the focus changes from source module, to the individual declaration</li>
+<li>so each source file only has one function body</li>
+<li>now different declarations can use different grammars for their
+bodies!</li>
 </ul>
 </li>
+<li>adding new kinds of declarations (something like types)<ul>
+<li>you develop new kinds of declarations, possibly with new grammars</li>
 </ul>
 </li>
-<li>Add these new technologies (that appeared after the book was written):<ul>
-<li>A GUI forms-based question and answer mechanism<ul>
-<li>as an alternative to formal syntax for declarations within the language</li>
+<li>declare objects<ul>
+<li>your user uses your declaration to declare objects in his program,
+and writes code in your syntax (if you've defined one)</li>
 </ul>
 </li>
-<li>Extensible, object-oriented interfaces into intermediate code generation<ul>
-<li>to make the internal workings of the compiler available and extensible
-as an additional resource for library developers</li>
-<li>reduces the &quot;surface area&quot; of the library</li>
-<li>moves decision making code to compile-time for better run-time
-performance</li>
-</ul>
-</li>
-<li>A relational database<ul>
-<li>to make the results of compiler optimization analysis available to the
-programmer</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>And for good measure:<ul>
-<li>Stackless functions</li>
-<li>Include the Dragon Book's global optimization algorithms<ul>
-<li>that are typically not used in modern C compilers</li>
-<li>this means jettisoning the ideas of separate compilation and the link
-editor (or unix &quot;loader&quot;)</li>
+<li>refer to these objects in normal functions<ul>
+<li>your user refers to these objects<ul>
+<li>here we're only thinking new syntax for new control statements</li>
+<li>otherwise, it's about allowing you to have funny ways to compile calls
+to these objects</li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
 </div>
-<div class="section" id="modernize-programming-language-technologies-10-mins">
-<h1>Modernize Programming Language Technologies (10 mins)</h1>
-<p>(this might be a demo)</p>
+<div class="section" id="questions-answers-vs-syntax-5-mins">
+<h1>Questions &amp; Answers vs. Syntax (5 mins)</h1>
 <ul class="simple">
-<li>let GUI do graphically what modules &amp; packages do grammatically<ul>
-<li>so a &quot;compilation unit&quot; becomes a single declaration</li>
+<li>Q&amp;A can accomplish much of what syntax is used for.<ul>
+<li>the user doesn't have to learn new syntax (reduces the &quot;surface area&quot;)<ul>
+<li>doesn't start out staring at a blank screen</li>
 </ul>
 </li>
-<li>add Q&amp;A to declarations<ul>
-<li>so a declaration has both Q&amp;A and an optional text file</li>
-<li>many declarations only need Q&amp;A (variables, constants, types, imports)</li>
+<li>still need text with syntax for executable code</li>
 </ul>
 </li>
-<li>extensible control statements<ul>
-<li>with extensible syntax</li>
-<li>programmer access to compiler</li>
+<li>at the declaration level<ul>
+<li>Q&amp;A for declaration details<ul>
+<li>with Q&amp;A, most declarations don't need any text and syntax at all</li>
 </ul>
 </li>
-<li>extensible declarations<ul>
-<li>Q&amp;A means not having to add new syntax, which reduces the &quot;surface area&quot;
-of the language</li>
-<li>can use different grammars in the text files<ul>
-<li>Python for compile-time code</li>
-<li>Our own language for high-level functions</li>
-<li>assembler functions</li>
+<li>text and syntax for executable code</li>
 </ul>
 </li>
+<li>at the library level (import)<ul>
+<li>can customize our use of libraries</li>
 </ul>
 </li>
-<li>adaptable, or configurable, libraries<ul>
-<li>Q&amp;A on &quot;import&quot;<ul>
-<li>done once, but can be at any level within nested packages</li>
-<li>can influence how declarations and the library are compiled</li>
+<li>at the program level (build and install)<ul>
+<li>can customize programs to our specific hardware and site</li>
+<li>vs ini files or xml files, which are text and syntax (starting with the
+blank screen)</li>
 </ul>
 </li>
-</ul>
-</li>
-<li>add installation level Q&amp;A to customize programs to specific chips, pinouts
-and clock speeds</li>
+<li>makes the easy stuff easy, for both you and your users</li>
 </ul>
 </div>
-<div class="section" id="object-oriented-compiler-design-10-mins">
-<h1>Object-oriented Compiler Design (10 mins)</h1>
+<div class="section" id="roll-your-own-syntax-4-mins">
+<h1>Roll your own syntax (4 mins)</h1>
 <ul class="simple">
-<li>a program is a set of declarations which we call <em>words</em><ul>
-<li>some words declare new kinds of declarations<ul>
-<li>these can be used to define other words<ul>
-<li>so we call these <em>defining</em> words</li>
-<li>the word <strong>function</strong> is a defining word</li>
+<li>use standard tools (e.g., lex/yacc, xml parsers) to develop your parser<ul>
+<li>SQLAlchemy</li>
+<li>HTML Templates</li>
+<li>Grammars for parser generators</li>
+<li>regular expressions</li>
+</ul>
+</li>
+<li>sort of like Zope's &quot;Through The Web&quot; style of development</li>
+</ul>
+</div>
+<div class="section" id="integrating-your-dsl-with-the-compiler-2-mins">
+<h1>Integrating your DSL with the compiler (2 mins)</h1>
+<ul class="simple">
+<li>three levels of hooks<ul>
+<li>when your user instantiates your declaration<ul>
+<li>hooks for your own parser</li>
+</ul>
+</li>
+<li>when your user refers to this instance somewhere else<ul>
+<li>hooks for write macros</li>
+<li>hooks for generating your own intermediate code</li>
 </ul>
 </li>
 </ul>
 </li>
-<li>other declarations are <em>normal</em> words<ul>
-<li>the word <strong>foo</strong> (a function) is a normal word</li>
 </ul>
-</li>
-</ul>
-</li>
-<li>The design revolves around one base class: <strong>declaration</strong><ul>
-<li>different subclass for each defining word (<strong>function</strong>)</li>
-<li>different instance for each normal word (<strong>foo</strong> function)</li>
-<li>references (calls) to foo are just rows in the database</li>
-</ul>
-</li>
-<li>The steps to compiling a program  (what follows is supposed to be a numbered
-list!?)<ol class="arabic">
-<li>create the internal objects for each word (declaration)<ul>
-<li>defining words are subclasses<ul>
-<li>the text part of these words is the Python code defining a subclass of
-<strong>declaration</strong></li>
-<li>these are imported and then initialized with an <em>init_class</em>
-classmethod</li>
-</ul>
-</li>
-<li>normal words are instances of defining words<ul>
-<li>these are created with a <em>create_instance</em> classmethod</li>
-</ul>
-</li>
-<li>this process also identifies all of the new syntax being added to the
+</div>
+<div class="section" id="performance-4-mins">
+<h1>Performance (4 mins)</h1>
+<ul class="simple">
+<li>better developer productivity<ul>
+<li>Q&amp;A guides user through the gory details</li>
+<li>DSL more productive for its specific task than general purpose programming
 language</li>
 </ul>
 </li>
-<li>add the new syntax (if any) to the built in syntax to create a custom
-parser</li>
-<li>parse the text file for each normal declaration<ul>
-<li>call <em>parse_file</em> on the declaration instance created in step 1<ul>
-<li>updates the Symbol Table in the database</li>
-<li>generates an Abstract Syntax Tree (AST) in the database</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>macro-expand AST and set &quot;expects&quot; information<ul>
-<li>call <em>expand</em> on the declaration instance for each call to it</li>
-<li>&quot;expects&quot; is a tag on arguments to specify how they need to be compiled:<ul>
-<li>rvalue</li>
-<li>lvalue</li>
-<li>condition</li>
-<li>iterator</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>calculate CHANGE and USES info for each function<ul>
-<li>algorithms taken from the Dragon Book</li>
-<li>stores results in the database</li>
-<li>not extensible</li>
-</ul>
-</li>
-<li>generate intermediate code<ul>
-<li>call <em>compile_&lt;expects&gt;</em> on the declaration instance for each call to it</li>
-<li>stores basic blocks and DAGs in the database</li>
-</ul>
-</li>
-<li>optimize intermediate code<ul>
-<li>algorithms taken from the Dragon Book</li>
-<li>not extensible</li>
-</ul>
-</li>
-<li>code generation<ul>
-<li>convert intermediate code to AVR assembler</li>
-<li>not extensible</li>
-</ul>
-</li>
-<li>assemble<ul>
-<li>generates .hex file<ul>
-<li>this is loaded into the microcontroller with a standard program</li>
-</ul>
-</li>
-<li>not extensible</li>
-</ul>
-</li>
-</ol>
-</li>
-<li>Steps 1 through 6 make up the front-end of the compiler.<ul>
-<li>the size of the compilation unit is the individual declaration</li>
-<li>these are user extensible</li>
-</ul>
-</li>
-<li>Steps 7 through 9 make up the back-end of the compiler.<ul>
-<li>the size of the compilation unit is the entire program</li>
-<li>algorithms taken from the Dragon Book</li>
-<li>these are not user extensible</li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="conclusion-8-mins">
-<h1>Conclusion (8 mins)</h1>
-<div class="section" id="goals-3-mins">
-<h2>Goals (3 mins)</h2>
-<ul class="simple">
-<li>Develop a new microcontroller language</li>
-<li>Allow the developers of large libraries to empower their users by writing
-the libraries more as language extensions<ul>
-<li>Boils down to allowing the library writer to write code that integrates
-with the compiler and runs at compile-time.</li>
-</ul>
-</li>
-<li>Explore coroutine and green threading capabilities using &quot;stackless&quot;
-functions<ul>
-<li>for easier interrupt processing</li>
-<li>static function activation records, rather than allocated in heap</li>
-</ul>
-</li>
-<li>Make the compiler internals accessible to the programmer as an additional
-resource (like using a library)</li>
-<li>Explore the global flow analysis routines in the &quot;Dragon Book&quot; that typical
-C compilers don't use</li>
-<li>Explore tackling a very challenging project as a hands-on development
-exercise</li>
-</ul>
-</div>
-<div class="section" id="the-future-5-mins">
-<h2>The Future (5 mins)</h2>
-<ul class="simple">
-<li>We are exploring technical ideas on several levels that you might be
-interested in</li>
-<li>Examples of how these might be applied to a Python compiler:<ul>
-<li>extensible declarations using Q&amp;A and allowing different syntaxes<ul>
-<li>PLY (Python Lex Yacc)</li>
-<li>SQLAlchemy</li>
-<li>HTML templates</li>
-<li>The image of a variety of text syntaxes reminds me of Zope<ul>
-<li>A fully compiled alternative to Zope??</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>stackless<ul>
-<li>coroutines/generators<ul>
-<li>suspendable consumers as well as producers</li>
-<li>objects representing the consumer that can be passed around (like
-iterator objects represent the producer)</li>
-<li>make more explicit the difference between yielding values to a
-consumer vs the final return from the generator when there are no
-more values</li>
-</ul>
-</li>
-<li>Twisted threading built in<ul>
-<li>get the benefits for free</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>use of relational database for a better IDE<ul>
-<li>world-wide database for libraries, so library authors can see how it's
-used???</li>
-</ul>
-</li>
-<li>global flow analysis to improve Python performance by an order of
-magnitude or more (10x-50x)<ul>
-<li>by recognizing the special cases that dominate our use of language (I'm
-not going to go over each of these, will just let viewer read through
-them)<ul>
-<li>variables never deleted can be assigned to fixed offsets</li>
-<li>instance variables assigned to fixed offsets when no multiple
-inheritance is used in derived classes</li>
-<li>direct calls to built in functions when their names are never
-defined in the module</li>
-<li>direct calls to functions that are never redefined</li>
-<li>placing function activation records on a stack when the function
-doesn't need stackless capability</li>
-<li>figuring out actual to formal parameter mappings at compile time
-when the function is never redefined</li>
-<li>multiple entry points for different numbers of parameters, or
-saving different sets of registers</li>
-<li>allocate objects in the longest living function activation record
-that will use them<ul>
-<li>to reduce how often the garbage collector has to run</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>provide a benchmark for comparison to newer JIT technologies being
-developed by the PyPy project</li>
+<li>better run-time performance<ul>
+<li>decision making code in your library moved to compile-time</li>
+<li>global optimizations<ul>
+<li>better register allocation on Arduino</li>
+<li>possible order of magnitude performance boost for Python</li>
 </ul>
 </li>
 </ul>
 </li>
 </ul>
-</div>
 </div>
 <div class="section" id="notes-for-reviewers">
 <h1>Notes for Reviewers</h1>
-<p>I expect that most of the audience will not be interested, or knowledgeable,
-in microcontrollers.  I only plan to give a very brief overview of the
-microcontroller's capabilities, from a programming perspective (ignoring
-the hardware goodies).  And I am not planning on presenting the syntax for
-this language, as I don't see it as scalable to larger programming arenas.</p>
-<p>Rather, I'm focusing on broader concepts that may be useful in other domains.
-As 30 minutes does not allow enough time to go into detail, this talk will
-assume some knowledge of compiler technology by the audience.  Thus, I have
-labeled this as an advanced talk.</p>
+<p>These ideas are being implemented in an open source project.  The talk is
+presented from the perspective of the developer of a library that wants to
+build a domain specific language to put more power into his user's hands.
+It does not discuss the internal compiler details necessary to provide these
+capabilities to the library writer.  Thus, I have labeled this as an
+intermediate talk.</p>
 <p>The project development is about half-way through, so we haven't quite gotten
 to the point of seeing how well these ideas work in practice.</p>
 <p>I expect to have a running prototype by the conference date, and that we will
 be just starting to get a feel for how well these ideas work by then.  This
-will affect the presentation somewhat (especially the Conclusion section).</p>
+will affect the presentation somewhat.</p>
+<p>I've left some padding in the presentation's time to allow for adding some
+examples and demos (which were not included in the times above).</p>
 <p>Finally, I will be paying my own way to the conference and asking for
-financial aid.  At this time, I don't know if any other members of the Tampa
-Bay Python meetup group will be attending the conference.  Alas, their paying
-jobs are not using Python...</p>
+financial aid.</p>
 </div>
 </div>
 </body>
