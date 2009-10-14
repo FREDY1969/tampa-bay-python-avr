@@ -1,13 +1,12 @@
-This talk presents new programming language ideas and new ways to package
-traditional compiler technologies to support these ideas. The goal is to take
-programming to the next level where we can all write programs about programs
-and about programming.
- 
-These ideas are initially being tested through a compiler targeting the
-Arduino microcontroller. This platform provides an ideal microcosm to
-"crawl before we walk".
- 
-Finally, this project is being done as a "hands-on" development exercise by
-the Tampa Bay Python meetup group.
- 
-We will share our ideas and experiences in all of the these areas in this talk.
+A programming language offers a higher level of abstraction than assembler.
+It's an abstraction for _how_ computation is done, which is different than
+an abstraction for _what_ a computation does (e.g., the 'sqrt' function).
+
+The first abstracts a computational model, the second a specific computation.
+
+Domain Specific Languages are a way for the library writer to offer his users
+abstractions of computational models unique to his domain.
+
+This talk shows how DSLs can be integrated into a programming language to make
+it easy to implement the DSL, integrate it into the compiler, and easy to use
+by others.
