@@ -6,11 +6,13 @@ from __future__ import with_statement
 
 import sys
 import os.path
-import setpath
 
-setpath.setpath(__file__)
+if __name__ == "__main__":
+    from doctest_tools import setpath
 
-#print "sys.path[0]:", sys.path[0]
+    setpath.setpath(__file__, remove_first = True)
+
+    #print "sys.path[0]:", sys.path[0]
 
 from ucc.parser import scanner, parser_init
 from ucc.ast import ast

@@ -10,11 +10,13 @@ import contextlib
 import itertools
 import traceback
 import sqlite3 as db
-import setpath
 
-#print "__file__", __file__
-python_path = setpath.setpath(__file__)
-#print "python_path", python_path
+if __name__ == "__main__":
+    from doctest_tools import setpath
+
+    #print "__file__", __file__
+    python_path = setpath.setpath(__file__, remove_first = True)
+    #print "python_path", python_path
 
 from ucc.word import helpers, xml_access, word
 from ucc.parser import genparser
@@ -25,7 +27,7 @@ def usage():
     sys.stderr.write("usage: compile.py project_dir\n")
     sys.exit(2)
 
-def run():
+def run(python_path):
     if len(sys.argv) != 2: usage()
 
     project_dir = sys.argv[1]
@@ -172,4 +174,4 @@ def check_sum(data):
     return (256 - (sum & 0xff)) & 0xFF
 
 if __name__ == "__main__":
-    run()
+    run(python_path)

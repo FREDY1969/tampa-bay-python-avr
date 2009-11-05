@@ -1,8 +1,7 @@
-'''
-'''
+# MainMenuBar.py
 
-import setpath
-setpath.setpath(__file__)
+r'''
+'''
 
 import wx
 from ucc.gui.Registry import Registry

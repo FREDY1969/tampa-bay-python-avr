@@ -1,8 +1,7 @@
-'''
-'''
+# RightMainPanel.py
 
-import setpath
-setpath.setpath(__file__)
+r'''
+'''
 
 import wx, wx.py
 import wx.lib.scrolledpanel as scrolled

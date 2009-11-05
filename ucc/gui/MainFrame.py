@@ -1,11 +1,10 @@
-'''
+# MainFrame.py
+
+r'''
 '''
 
 import sys
 import wx
-
-import setpath
-setpath.setpath(__file__)
 
 from ucc.gui.Registry import Registry
 from ucc.gui.MainMenuBar import MainMenuBar

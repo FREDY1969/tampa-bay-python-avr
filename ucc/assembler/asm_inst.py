@@ -70,7 +70,7 @@ def convert_reg(arg, num_bits, note, labels, address):
     if (high - low + 2) == 2*max:
         assert low <= n <= high, "%s: illegal register" % arg
         assert n % 2 == 0, "%s: illegal register" % arg
-        return (n - low) / 2
+        return (n - low) // 2
     raise AssertionError("internal error: convert_reg: bad args: %r, %r, %r" %
                          (arg, num_bits, note))
 

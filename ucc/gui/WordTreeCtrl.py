@@ -1,12 +1,11 @@
-'''
+# WordTreeCtrl.py
+
+r'''
 '''
 
 from __future__ import with_statement
 
 import os.path
-
-import setpath
-setpath.setpath(__file__)
 
 import wx
 
