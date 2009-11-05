@@ -1,8 +1,7 @@
-'''
-'''
+# LeftTreePanel.py
 
-import setpath
-setpath.setpath(__file__)
+r'''
+'''
 
 import os.path
 import wx

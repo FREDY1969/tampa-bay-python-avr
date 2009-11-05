@@ -8,8 +8,8 @@ from __future__ import with_statement
 import os.path
 from xml.etree import ElementTree
 
-import setpath
-setpath.setpath(__file__)
+#import setpath
+#setpath.setpath(__file__)
 
 from ucc.word import answers, questions, xml_access
 

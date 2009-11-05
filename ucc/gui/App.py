@@ -6,9 +6,6 @@ import os.path
 import ConfigParser
 import wx
 
-import setpath
-setpath.setpath(__file__)
-
 from ucc.gui.Registry import Registry
 from ucc.gui.MainFrame import MainFrame
 from ucc.word import word, xml_access
