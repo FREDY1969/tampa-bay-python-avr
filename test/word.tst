@@ -25,9 +25,11 @@
 ...     </answers>
 ... </word>
 ... ''')
->>> w = word.from_xml(root)
+>>> w = word.from_xml(root, 'some/package/dir')
 >>> w
 <word output_pin>
+>>> w.package_dir
+'some/package/dir'
 >>> w.name
 'output_pin'
 >>> w.label

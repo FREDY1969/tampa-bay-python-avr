@@ -3,7 +3,7 @@
 from __future__ import with_statement
 
 import os, os.path
-from ply import yacc
+from ucc.parser.ply import yacc
 from ucc.parser import scanner_init
 
 Parser = None
