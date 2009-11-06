@@ -3,7 +3,7 @@
 import sys
 import os.path
 import re
-from ply import lex
+from ucc.parser.ply import lex
 
 #sys.stderr.write("scanner_init: lex.__file__ is %r\n" % (lex.__file__,))
 #sys.stderr.write("scanner_init: sys.path[0] is %r\n" % (sys.path[0],))
