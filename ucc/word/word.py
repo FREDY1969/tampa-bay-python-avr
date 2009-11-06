@@ -13,16 +13,16 @@ from xml.etree import ElementTree
 
 from ucc.word import answers, questions, xml_access
 
-def read_word(word_name, project_dir):
+def read_word(word_name, package_dir):
     r'''Returns a single word object read in from the word's xml file.
     
     Use word.write_xml to write the xml file back out.
     '''
-    root = ElementTree.parse(os.path.join(project_dir, word_name + '.xml')) \
+    root = ElementTree.parse(os.path.join(package_dir, word_name + '.xml')) \
                       .getroot()
-    return from_xml(root)
+    return from_xml(root, package_dir)
 
-def from_xml(root):
+def from_xml(root, package_dir):
     name = root.find('name').text
     label = root.find('label').text
     kind = root.find('kind').text
@@ -37,7 +37,8 @@ def from_xml(root):
         my_questions = None
     else:
         my_questions = questions.from_xml(questions_element)
-    return word(name, label, defining, kind, my_answers, my_questions)
+    return word(package_dir, name, label, defining, kind, my_answers,
+                my_questions)
 
 class word(object):
     r'''This represents a single generic word.
@@ -45,8 +46,9 @@ class word(object):
     At this point, this is a one-size-fits-all-kinds-of-words class.
     '''
 
-    def __init__(self, name, label, defining, kind,
+    def __init__(self, package_dir, name, label, defining, kind,
                  answers = None, questions = None):
+        self.package_dir = package_dir
         self.name = name
         self.label = label
         self.defining = defining
@@ -62,9 +64,9 @@ class word(object):
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
 
-    def write_xml(self, project_dir):
+    def write_xml(self, package_dir):
         xml_access.write_element(self.to_xml(),
-                                 os.path.join(project_dir, self.name + '.xml'))
+                                 os.path.join(package_dir, self.name + '.xml'))
 
     def to_xml(self):
         root = ElementTree.Element('word')
