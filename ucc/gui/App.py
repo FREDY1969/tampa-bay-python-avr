@@ -1,4 +1,6 @@
-'''
+# App.py
+
+r'''
 '''
 
 import sys
@@ -12,12 +14,36 @@ from ucc.word import word, xml_access
 
 class App(wx.App):
     def __init__(self):
-        
+
+        # init parent (which calls self.OnInit()...)
+
+        wx.App.__init__(self, False)
+
+    def OnInit(self):
+
+        self.SetAppName('ucc')         # used by wx.StandardPaths
+
+        # load StandardPaths
+
+        Registry.paths = wx.StandardPaths.Get()
+
         # load configuration
-            
-        configFile = os.path.join(sys.path[0], 'ucc', 'ucc-default.ini')
+
+        if sys.platform.startswith('win') or \
+           sys.platform in ('os2', 'os2emx', 'riscos', 'atheos'):
+            configFile = 'ucc.ini'
+        else:
+            configFile = '.ucc.ini'
+        configPath = os.path.join(Registry.paths.GetUserConfigDir(), configFile)
+        print "configPath", configPath
+        if not os.path.exists(configPath):
+            # This may need to be changed eventually to support zipped
+            # installations of this compiler.
+            defaultFile = os.path.join(sys.path[0], 'ucc', 'ucc-default.ini')
+            from distutils import file_util
+            file_util.copy_file(defaultFile, configPath)
         Registry.config = ConfigParser.RawConfigParser()
-        Registry.config.read(configFile)
+        Registry.config.read(configPath)
         #Registry.config.get('gui', 'editor')
         
         # setup registry
@@ -47,20 +73,14 @@ class App(wx.App):
         
         # package information
         
-        Registry.mode = None # current mode of operation
+        Registry.mode = None           # current mode of operation
         Registry.currentPackage = None # full absolute path to package directory
-        Registry.words = None # multidimensional list of words
-        Registry.wordList = None # list of words
-        Registry.wordDict = None # {name: word}
-        Registry.currentWord = None # current word loaded in rightMainPanel
+        Registry.words = None          # multidimensional list of words
+        Registry.wordList = None       # list of words
+        Registry.wordDict = None       # {name: word}
+        Registry.currentWord = None    # current word loaded in rightMainPanel
         Registry.currentWordPath = None # path to current word text file
-        Registry.parentWord = None # parent word of current word
-        
-        # init parent
-        
-        wx.App.__init__(self, False)
-        
-    def OnInit(self):
+        Registry.parentWord = None     # parent word of current word
         
         # process input arguments for package/mode, if not ask for package/mode
         
