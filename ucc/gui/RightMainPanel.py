@@ -15,17 +15,20 @@ class RightMainPanel(wx.Panel):
         
         # setup splitter
         
-        splitter = self.splitter = wx.SplitterWindow(self, wx.ID_ANY, style=wx.SP_3D)
+        splitter = self.splitter = \
+          wx.SplitterWindow(self, wx.ID_ANY, style=wx.SP_LIVE_UPDATE)
 
         # setup panels
         
-        topPanel = self.topPanel = scrolled.ScrolledPanel(splitter, wx.ID_ANY)
+        topPanel = self.topPanel = \
+          scrolled.ScrolledPanel(splitter, wx.ID_ANY, style=wx.BORDER_SUNKEN)
         topSizer = self.topSizer = wx.BoxSizer(wx.VERTICAL)
         topPanel.SetSizer(topSizer)
-        topPanel.SetAutoLayout(1)
+        #topPanel.SetAutoLayout(1)
         topPanel.SetupScrolling()
-        bottomText = self.bottomText = wx.py.editwindow.EditWindow(splitter, wx.ID_ANY,
-                                                      style=wx.TE_MULTILINE)
+        bottomText = self.bottomText = \
+          wx.py.editwindow.EditWindow(splitter, wx.ID_ANY,
+                                      style=wx.TE_MULTILINE | wx.BORDER_SUNKEN)
         self.bottomText.setDisplayLineNumbers(True)
         
         # setup sizer
@@ -35,14 +38,19 @@ class RightMainPanel(wx.Panel):
         # add top and bottom stuff
 
         splitter.SetMinimumPaneSize(200)
-        splitter.SetSashGravity(1)
-        splitter.SplitHorizontally(topPanel, bottomText, 300)
+        splitter.SetSashGravity(0.0)
+        splitter.SplitHorizontally(topPanel, bottomText,
+          Registry.config.getint('gui', 'question-panel-height'))
+        print "height", Registry.config.getint('gui', 'question-panel-height')
+
+        print "RightMainPanel height", self.GetClientSize().GetHeight()
 
         sizer.Add(splitter, 1, wx.EXPAND)
         
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.Fit()
+        print "RightMainPanel height", self.GetClientSize().GetHeight()
         
         self.test = None
         

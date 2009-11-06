@@ -14,7 +14,8 @@ from ucc.gui.RightMainPanel import RightMainPanel
 class MainFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title,
-            size = (970, 720),
+            size = map(int,
+                       Registry.config.get('gui', 'window-size').split('x')),
             style = wx.DEFAULT_FRAME_STYLE # | wx.NO_FULL_REPAINT_ON_RESIZE
         )
         self.SetMinSize((970,720))
@@ -67,7 +68,9 @@ class MainFrame(wx.Frame):
         # setup splitter/sizers
         
         splitter.SetMinimumPaneSize(200)
-        splitter.SplitVertically(Registry.leftTreePanel, Registry.rightMainPanel, 250)
+        splitter.SplitVertically(Registry.leftTreePanel,
+                                 Registry.rightMainPanel,
+                                 Registry.config.getint('gui', 'left-panel-width'))
         
         # setup sizer
         
