@@ -101,6 +101,7 @@ class App(wx.App):
     def pickMode(self):
 
         # TODO implement other modes besides editing package file
+        # Shouldn't these just be options on the File menu?  -Bruce
 
         choiceDialog = wx.SingleChoiceDialog(None, 'Choose what mode you wish to be in. Not much of a choice for now but more to come soon. :)', 'Mode Selection', [
             # 'Create New Library',
@@ -156,10 +157,15 @@ class App(wx.App):
 
         # setup wordlist
 
-        Registry.wordList = xml_access.read_word_list(Registry.currentPackage)[1]
-        Registry.wordDict = dict((name,
-                                  word.read_word(name, Registry.currentPackage))
-                                 for name in Registry.wordList)
+        Registry.wordList = []
+        Registry.wordDict = {}
+
+        def add_words(package_dir):
+            words = xml_access.read_word_list(package_dir)[1]
+            Registry.wordList.extend(words)
+            Registry.wordDict.update((name, word.read_word(name, package_dir))
+                                     for name in words)
+        add_words(Registry.currentPackage)
 
     def onOpen(self, event):
         try:
