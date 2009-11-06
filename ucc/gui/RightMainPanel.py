@@ -12,14 +12,14 @@ from ucc.gui import controls
 class RightMainPanel(wx.Panel):
     def __init__(self, parent, id, style):
         wx.Panel.__init__(self, parent, id, style=style)
-        
+
         # setup splitter
-        
+
         splitter = self.splitter = \
           wx.SplitterWindow(self, wx.ID_ANY, style=wx.SP_LIVE_UPDATE)
 
         # setup panels
-        
+
         topPanel = self.topPanel = \
           scrolled.ScrolledPanel(splitter, wx.ID_ANY, style=wx.BORDER_SUNKEN)
         topSizer = self.topSizer = wx.BoxSizer(wx.VERTICAL)
@@ -30,9 +30,9 @@ class RightMainPanel(wx.Panel):
           wx.py.editwindow.EditWindow(splitter, wx.ID_ANY,
                                       style=wx.TE_MULTILINE | wx.BORDER_SUNKEN)
         self.bottomText.setDisplayLineNumbers(True)
-        
+
         # setup sizer
-        
+
         sizer = wx.BoxSizer(wx.VERTICAL)
 
         # add top and bottom stuff
@@ -46,27 +46,27 @@ class RightMainPanel(wx.Panel):
         print "RightMainPanel height", self.GetClientSize().GetHeight()
 
         sizer.Add(splitter, 1, wx.EXPAND)
-        
+
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.Fit()
         print "RightMainPanel height", self.GetClientSize().GetHeight()
-        
+
         self.test = None
-        
-        
+
+
     def paint(self):
         print "painting rightMainPanel"
         self.buildWord()
-        
+
     def buildWord(self):
-        
+
         # setup controls
-        
+
         self.topSizer.Clear(True)
-        
+
         if Registry.currentWord:
-            for question in Registry.parentWord.questions:
+            for question in Registry.parentWord.questions or ():
                 if not hasattr(question, 'control'):
                     msg = "<%s %s> has not 'control'" % \
                             (question.__class__.__name__, question.name)
@@ -82,11 +82,12 @@ class RightMainPanel(wx.Panel):
                                           Registry.currentWord.get_answer(
                                             question.name),
                                           question.label))
-        
+
         self.topSizer.Layout()
-        
+
         # bottom text
-        
+
         self.bottomText.ClearAll()
         if Registry.currentWordPath:
             self.bottomText.LoadFile(Registry.currentWordPath)
+
