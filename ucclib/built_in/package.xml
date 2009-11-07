@@ -1,5 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <package>
-	<name>built-in</name>
-	<words></words>
+    <name>built-in</name>
+    <words>
+        <word name="Arduino-pin-bit#" />
+        <word name="Arduino-pin-Port" />
+        <word name="assembler_word" />
+        <word name="ATmega328_port" />
+        <word name="const" />
+        <word name="declaration" />
+        <word name="function" />
+        <word name="HIGH" />
+        <word name="if_" />
+        <word name="input_pin" />
+        <word name="IO_register" />
+        <word name="LOW" />
+        <word name="macro" />
+        <word name="multi_position_switch" />
+        <word name="output_pin" />
+        <word name="package" />
+        <word name="pass_" />
+        <word name="Port-B" />
+        <word name="Port-C" />
+        <word name="Port-D" />
+        <word name="pwm" />
+        <word name="repeat" />
+        <word name="set" />
+        <word name="start_stop" />
+        <word name="startup" />
+        <word name="task" />
+        <word name="translate" />
+        <word name="var" />
+    </words>
 </package>
