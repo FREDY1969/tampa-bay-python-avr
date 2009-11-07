@@ -27,6 +27,7 @@ def run(
     if sys.platform == 'darwin':
         if avrdude_port is None:
             avrdude_port = '/dev/tty.usbserial*'
+        avrdude_port = glob.glob(avrdude_port)[-1]
         if install_dir is None:
             install_dir = '/Applications/Arduino.app/Contents/Resources/Java/'
         
@@ -45,7 +46,7 @@ def run(
             '-p',
             mcu,
             '-P',
-            glob.glob(avrdude_port)[-1],
+            avrdude_port,
             '-c',
             avrdude_programmer,
             '-b',
@@ -59,6 +60,7 @@ def run(
     else:
         if avrdude_port is None:
             avrdude_port = '/dev/ttyUSB*'
+        avrdude_port = glob.glob(avrdude_port)[-1]
         if install_dir is None:
             install_dir = os.environ['HOME'] + '/arduino-*'
     
@@ -74,7 +76,7 @@ def run(
             '-p',
             mcu,
             '-P',
-            glob.glob(avrdude_port)[-1],
+            avrdude_port,
             '-c',
             avrdude_programmer,
             '-b',
