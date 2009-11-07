@@ -36,26 +36,6 @@ def run(
             avrdude_port = 'COM3'
         if install_dir is None:
             install_dir = r'C:\Program Files\arduino-*'
-            
-        print ' '.join((
-            os.path.join(glob.glob(install_dir)[-1], avr_dude_path, 'avrdude'),
-            '-V',
-            '-F',
-            '-C',
-            os.path.join(glob.glob(install_dir)[-1], avr_config_path, 'avrdude.conf'),
-            '-p',
-            mcu,
-            '-P',
-            avrdude_port,
-            '-c',
-            avrdude_programmer,
-            '-b',
-            upload_rate,
-            '-U',
-            memory_type + ':w:' + memory_type + '.hex',
-        ))
-        
-        sys.exit(2)
         
     else:
         if avrdude_port is None:
