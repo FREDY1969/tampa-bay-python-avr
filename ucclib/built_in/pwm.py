@@ -1,6 +1,6 @@
 # pwm.py
 
-from examples.washer import declaration
+from ucclib.built_in import declaration
 
 class pwm(declaration.word):
     pass

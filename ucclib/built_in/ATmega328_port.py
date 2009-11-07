@@ -1,6 +1,6 @@
 # ATmega328_port.py
 
-from examples.washer import declaration
+from ucclib.built_in import declaration
 
 class ATmega328_port(declaration.word):
     pass

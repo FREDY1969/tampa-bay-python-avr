@@ -1,6 +1,6 @@
 # macro.py
 
-from examples.washer import declaration
+from ucclib.built_in import declaration
 
 class macro(declaration.word):
     @classmethod
