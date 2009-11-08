@@ -1,6 +1,6 @@
 # input_pin.py
 
-from examples.washer import declaration
+from ucclib.built_in import declaration
 
 class input_pin(declaration.word):
     pass

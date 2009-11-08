@@ -2,9 +2,6 @@
 <package>
     <name>blinky</name>
     <words>
-        <word name="assembler_word" />
-        <word name="declaration" />
         <word name="run" />
-        <word name="startup" />
     </words>
 </package>
