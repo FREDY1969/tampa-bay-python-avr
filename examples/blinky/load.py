@@ -16,26 +16,34 @@ def run(
         install_dir = None,
         avrdude_port = None,
         mcu = 'atmega328p',
-        avr_dude_path = os.path.join('hardware', 'tools', 'avr', 'bin'),
-        avr_config_path = os.path.join('hardware', 'tools', 'avr', 'etc'),
+        avr_dude_path = None,
+        avr_config_path = None,
         avrdude_programmer = 'stk500v1',
         upload_rate='57600',
     ):
     
     # system dependent defaults
     
-    if sys.platform == 'darwin':
+    if sys.platform == 'darwin': # Mac
         if avrdude_port is None:
             avrdude_port = '/dev/tty.usbserial*'
         avrdude_port = glob.glob(avrdude_port)[-1]
         if install_dir is None:
             install_dir = '/Applications/Arduino.app/Contents/Resources/Java/'
+        if avr_dude_path is None:
+            avr_dude_path = os.path.join('hardware', 'tools', 'avr', 'bin')
+        if avr_config_path is None:
+            avr_config_path = os.path.join('hardware', 'tools', 'avr', 'etc')
         
     elif sys.platform == 'win32':
         if avrdude_port is None:
             avrdude_port = 'COM3'
         if install_dir is None:
             install_dir = r'C:\Program Files\arduino-*'
+        if avr_dude_path is None:
+            avr_dude_path = os.path.join('hardware', 'tools', 'avr', 'bin')
+        if avr_config_path is None:
+            avr_config_path = os.path.join('hardware', 'tools', 'avr', 'etc')
         
     else: # some flavor of *nix...
         if avrdude_port is None:
@@ -43,8 +51,10 @@ def run(
         avrdude_port = glob.glob(avrdude_port)[-1]
         if install_dir is None:
             install_dir = os.environ['HOME'] + '/arduino-*'
-        avr_dude_path = os.path.join('hardware', 'tools')
-        avr_config_path = os.path.join('hardware', 'tools')
+        if avr_dude_path is None:
+            avr_dude_path = os.path.join('hardware', 'tools')
+        if avr_config_path is None:
+            avr_config_path = os.path.join('hardware', 'tools')
     
     # call it
     
