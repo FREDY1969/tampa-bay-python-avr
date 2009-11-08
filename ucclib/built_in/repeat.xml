@@ -7,7 +7,7 @@
     <answers>
         <answer name="argument" repeated="True" type="string" value="arg1" />
         <answer name="argument" repeated="True" type="string" value="arg2" />
-        <answers name="new_syntax_keyword" repeated="True" />
+        <answer name="new_syntax_keyword" repeated="True" />
         <answer name="syntax" repeated="True" />
     </answers>
 </word>

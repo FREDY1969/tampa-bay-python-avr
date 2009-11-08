@@ -20,11 +20,11 @@ def legalize_name(name):
     if name in Reserved_words: name += '_'
     return name
 
-def import_module(package_path, modulename):
-    ''' package_path is full package path (with dots).
+def import_module(modulename):
+    ''' modulename is full package path (with dots).
     '''
-    mod = __import__(package_path + '.' + modulename)
-    for comp in package_path.split('.')[1:]:
+    mod = __import__(modulename)
+    for comp in modulename.split('.')[1:]:
         mod = getattr(mod, comp)
-    return getattr(mod, modulename)
+    return mod
 

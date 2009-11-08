@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# compile.py package_dir
+# compile.py package_name
 
 from __future__ import with_statement
 
@@ -14,76 +14,78 @@ import sqlite3 as db
 if __name__ == "__main__":
     from doctest_tools import setpath
 
-    #print "__file__", __file__
-    python_path = setpath.setpath(__file__, remove_first = True)
-    #print "python_path", python_path
+    setpath.setpath(__file__, remove_first = True)
 
 from ucc.word import helpers, xml_access, word
 from ucc.parser import genparser
 from ucc.ast import ast
 from ucc.assembler import assemble
 
-def usage():
-    sys.stderr.write("usage: compile.py package_dir\n")
-    sys.exit(2)
+Built_in = 'ucclib.built_in'
 
-def run(python_path):
-    if len(sys.argv) != 2: usage()
+def run(package_name):
 
-    package_dir = sys.argv[1]
+    # Figure out package directories.
+    package_dir = os.path.split(helpers.import_module(package_name).__file__)[0]
+    built_in_dir = os.path.split(helpers.import_module(Built_in).__file__)[0]
 
-    # Figure out python package name.
-    abs_package_dir = os.path.abspath(package_dir)
-    assert abs_package_dir.startswith(python_path)
-    package_path = abs_package_dir[len(python_path) + 1:] \
-                    .replace(os.path.sep, '.')
-    if os.path.sep != '/': package_path.replace('/', '.')
+    # Get the list of word_names.
+    #   This is actually a list of (package_name, package_dir, word_name).
+    def get_names(package_name, dir):
+        return map(lambda name: (package_name, dir, name),
+                   xml_access.read_word_list(dir)[1])
+    word_names = get_names(Built_in, built_in_dir) + \
+                 get_names(package_name, package_dir)
 
-    # Gather words_by_name, rules and token_dict:
+    # The following gets a little confusing because we have two kinds of word
+    # objects:
+    #
+    #   1.  word_word objects (instances of the ucc.word.word.word class)
+    #   2.  word_obj objects (either subclasses or instances of the
+    #                         ucclib.built_in.declaration.declaration class)
+    #
 
-    mod = helpers.import_module(package_path, 'declaration')
-    decl = getattr(mod, 'declaration')
-    decl.init_class('declaration', 'declaration', package_dir)
-    words_by_name = {'declaration': decl}
-    rules = ()
-    token_dict = {}
-
-    word_names = xml_access.read_word_list(package_dir)[1]
-
-    # Load word objects and defining words, create translation_dict:
-    word_words = []  # list of word.word objects
-    translation_dict = {}
-    for name in word_names:
-        word_obj = word.read_word(name, package_dir)
-        word_words.append(word_obj)
+    # Load word.word objects and create translation_dict:
+    word_words = {}             # {word.name: word.word object}
+    translation_dict = {}       # {word.label: word.name}
+    for pkg_name, dir, name in word_names:
+        word_obj = word.read_word(name, dir)
+        word_obj.package_name = pkg_name
+        assert word_obj.name not in word_words, \
+               "%s: duplicate word name: %s" % (word_obj.label, word_obj.name)
+        word_words[word_obj.name] = word_obj
         if word_obj.name != word_obj.label:
+            assert word_obj.label not in translation_dict, \
+                   "%s: duplicate word" % word_obj.label
             translation_dict[word_obj.label] = word_obj.name
-        if word_obj.defining:
-            #print "defining:", name, word_obj.kind
-            new_word, new_syntax = \
-              words_by_name[word_obj.kind].create_instance(package_path, name,
-                                                           word_obj.label,
-                                                           word_obj.package_dir)
-            if new_syntax:
-                r, td = new_syntax
-                rules += r
-                token_dict.update(td)
-            words_by_name[name] = new_word
 
     ast.Translation_dict = translation_dict
 
-    # Load non-defining words:
-    for w in word_words:
-        if not w.defining:
-            #print "non-defining", w.name, w.kind
+    # Gather word_objs_by_name, rules and token_dict:
+    mod = helpers.import_module(Built_in + '.declaration')
+    decl = getattr(mod, 'declaration')
+    decl.init_class('declaration', 'declaration', built_in_dir)
+    word_objs_by_name = {'declaration': decl}   # {word.name: word_obj}
+    rules = []
+    token_dict = {}
+    # Load words:
+    def load_word(word_word):
+        if word_word.name not in word_objs_by_name:
+            if word_word.kind not in word_objs_by_name:
+                load_word(word_words[word_word.kind])
+
             new_word, new_syntax = \
-              words_by_name[w.kind].create_instance(package_path, w.name,
-                                                    w.label, w.package_dir)
+              word_objs_by_name[word_word.kind] \
+                .create_instance(word_word.package_name, word_word.name,
+                                 word_word.label, word_word.package_dir)
             if new_syntax:
                 r, td = new_syntax
-                rules += r
+                rules.extend(r)
                 token_dict.update(td)
-            words_by_name[w.name] = new_word
+            word_objs_by_name[word_word.name] = new_word
+
+    for word_word in word_words.itervalues():
+        load_word(word_word)
 
     #print "rules", rules
     #print "token_dict", token_dict
@@ -94,17 +96,16 @@ def run(python_path):
                             '\n'.join(rules), token_dict, output_file)
 
     # import needed modules from the package:
-    parser = helpers.import_module(package_path, 'parser')
+    parser = helpers.import_module(package_name + '.parser')
 
     # parse files in the package:
     num_errors = 0
     with ast.db_connection(package_dir):
-        for word_obj in words_by_name.itervalues():
-            #print "final loop", word_obj
+        for name, word_obj in word_objs_by_name.iteritems():
+            #print "final loop", name, word_obj
             try:
                 if not isinstance(word_obj, type): # word_obj not a class
-                    # FIX: This package_dir should change!
-                    word_obj.parse_file(parser, package_dir)
+                    word_obj.parse_file(parser, word_words[name].package_dir)
             except SyntaxError:
                 e_type, e_value, e_tb = sys.exc_info()
                 for line in traceback.format_exception_only(e_type, e_value):
@@ -127,7 +128,8 @@ def run(python_path):
             next_word = words_needed.pop()
             with ast.db_transaction() as db_cur:
                 f, d, b, e, n = \
-                  words_by_name[next_word].compile(db_cur, words_by_name)
+                  word_objs_by_name[next_word].compile(db_cur,
+                                                       word_objs_by_name)
             flash.extend(f)
             data.extend(d)
             bss.extend(b)
@@ -174,5 +176,11 @@ def check_sum(data):
         sum += int(data[i:i+2], 16)
     return (256 - (sum & 0xff)) & 0xFF
 
+def usage():
+    sys.stderr.write("usage: compile.py package_name\n")
+    sys.exit(2)
+
 if __name__ == "__main__":
-    run(python_path)
+    if len(sys.argv) != 2: usage()
+
+    run(sys.argv[1])
