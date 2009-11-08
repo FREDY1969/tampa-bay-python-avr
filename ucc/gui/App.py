@@ -210,7 +210,7 @@ class App(wx.App):
                       )
         load_path = Registry.currentPackage
         for memory_type in 'flash', 'eeprom':
-            if os.exists(os.path.join(load_path, memory_type + '.hex')):
+            if os.path.exists(os.path.join(load_path, memory_type + '.hex')):
                 print "loading", memory_type + '.hex'
                 load.run(load_path=load_path, memory_type=memory_type,
                          **kw_args)
