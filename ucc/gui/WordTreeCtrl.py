@@ -49,8 +49,7 @@ class WordTreeCtrl(wx.TreeCtrl):
     def buildWordTree(self, words, parent):
         for word in words:
             wordNode = self.AppendItem(parent, word['word'].label)
-            #FIX: if word['word'].package_dir != Registry.currentPackage:
-            if word['word'].label == 'declaration':
+            if not word['word'].local:
                 self.SetItemTextColour(wordNode, self.gray)
             self.SetPyData(wordNode, word['word'])
             if (parent == self.root):
@@ -74,8 +73,12 @@ class WordTreeCtrl(wx.TreeCtrl):
         pprint.pprint(Registry.currentWord)
         
         # figure out path to word text file
-        Registry.parentWord = Registry.wordDict[Registry.currentWord.kind]
-        suffix = Registry.parentWord.get_answer('filename_suffix')
+        if Registry.currentWord:
+            Registry.parentWord = Registry.wordDict[Registry.currentWord.kind]
+            suffix = Registry.parentWord.get_answer('filename_suffix')
+        else:
+            Registry.parentWord = None
+            suffix = None
         if suffix is None:
             path = None
         else:

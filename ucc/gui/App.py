@@ -11,6 +11,7 @@ import wx
 from ucc.gui.Registry import Registry
 from ucc.gui.MainFrame import MainFrame
 from ucc.word import word, xml_access
+from ucclib import built_in
 
 class App(wx.App):
     def __init__(self):
@@ -168,7 +169,8 @@ class App(wx.App):
             words = xml_access.read_word_list(package_dir)[1]
             Registry.wordList.extend(words)
             Registry.wordDict.update((name, read_word(name)) for name in words)
-        # FIX: add ucclib/built_in
+
+        add_words(os.path.split(built_in.__file__)[0], False)
         add_words(Registry.currentPackage, True)
 
     def onOpen(self, event):
