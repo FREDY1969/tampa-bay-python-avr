@@ -1,6 +1,6 @@
 # translate.py
 
-from examples.washer import declaration
+from ucclib.built_in import declaration
 
 class translate(declaration.word):
     pass

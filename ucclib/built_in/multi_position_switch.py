@@ -1,6 +1,6 @@
 # multi_position_switch.py
 
-from examples.washer import declaration
+from ucclib.built_in import declaration
 
 class multi_position_switch(declaration.word):
     pass

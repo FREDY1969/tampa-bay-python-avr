@@ -1,6 +1,6 @@
 # const.py
 
-from examples.washer import declaration
+from ucclib.built_in import declaration
 
 class const(declaration.word):
     def compile(self, db_cur, words_by_name):

@@ -1,6 +1,6 @@
 # repeat.py
 
-from examples.washer import macro
+from ucclib.built_in import macro
 
 class repeat(macro.macro_word):
     def compile_macro(self, ast_id, db_cur):

@@ -1,6 +1,6 @@
 # pass_.py
 
-from examples.washer import macro
+from ucclib.built_in import macro
 
 class pass_(macro.macro_word):
     def compile_macro(self, ast_id, db_cur):

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<word>
-    <name>jmp-false</name>
-    <label>jmp-false</label>
-    <kind>assembler_word</kind>
-    <defining>False</defining>
-</word>

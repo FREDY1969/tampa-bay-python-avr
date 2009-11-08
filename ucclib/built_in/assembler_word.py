@@ -6,7 +6,7 @@ import itertools
 
 from ucc.ast import ast
 from ucc.assembler import asm_opcodes
-from examples.washer import declaration
+from ucclib.built_in import declaration
 
 class assembler_word(declaration.word):
     def parse_file(self, parser, project_dir):
