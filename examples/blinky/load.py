@@ -37,12 +37,14 @@ def run(
         if install_dir is None:
             install_dir = r'C:\Program Files\arduino-*'
         
-    else:
+    else: # some flavor of *nix...
         if avrdude_port is None:
             avrdude_port = '/dev/ttyUSB*'
         avrdude_port = glob.glob(avrdude_port)[-1]
         if install_dir is None:
             install_dir = os.environ['HOME'] + '/arduino-*'
+        avr_dude_path = os.path.join('hardware', 'tools')
+        avr_config_path = os.path.join('hardware', 'tools')
     
     # call it
     
@@ -68,3 +70,4 @@ def run(
     
 if __name__ == '__main__':
     run(*sys.argv[1:])
+
