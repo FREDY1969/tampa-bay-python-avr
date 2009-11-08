@@ -12,6 +12,7 @@ import wx
 from ucc.gui.Registry import Registry
 
 class WordTreeCtrl(wx.TreeCtrl):
+    gray = (170, 170, 170, 255)
     def __init__(self, parent, id, pos, size, style):
         wx.TreeCtrl.__init__(self, parent, id, pos, size, style | wx.WANTS_CHARS)
         
@@ -48,6 +49,9 @@ class WordTreeCtrl(wx.TreeCtrl):
     def buildWordTree(self, words, parent):
         for word in words:
             wordNode = self.AppendItem(parent, word['word'].label)
+            #FIX: if word['word'].package_dir != Registry.currentPackage:
+            if word['word'].label == 'declaration':
+                self.SetItemTextColour(wordNode, self.gray)
             self.SetPyData(wordNode, word['word'])
             if (parent == self.root):
                 self.expandThese.append(wordNode)
@@ -79,7 +83,7 @@ class WordTreeCtrl(wx.TreeCtrl):
                 filename = Registry.currentWord.name + '.' + suffix.value
             else:
                 filename = Registry.currentWord.name
-            path = os.path.join(Registry.currentPackage, filename)
+            path = os.path.join(Registry.currentWord.package_dir, filename)
             if not os.path.exists(path):
                 print "creating", path
                 with open(path, 'w'): pass

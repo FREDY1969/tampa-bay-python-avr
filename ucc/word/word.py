@@ -64,9 +64,10 @@ class word(object):
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
 
-    def write_xml(self, package_dir):
+    def write_xml(self, package_dir = None):
         xml_access.write_element(self.to_xml(),
-                                 os.path.join(package_dir, self.name + '.xml'))
+                                 os.path.join(package_dir or self.package_dir,
+                                              self.name + '.xml'))
 
     def to_xml(self):
         root = ElementTree.Element('word')

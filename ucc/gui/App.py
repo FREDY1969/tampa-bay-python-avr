@@ -160,12 +160,16 @@ class App(wx.App):
         Registry.wordList = []
         Registry.wordDict = {}
 
-        def add_words(package_dir):
+        def add_words(package_dir, local):
+            def read_word(name):
+                ans = word.read_word(name, package_dir)
+                ans.local = local
+                return ans
             words = xml_access.read_word_list(package_dir)[1]
             Registry.wordList.extend(words)
-            Registry.wordDict.update((name, word.read_word(name, package_dir))
-                                     for name in words)
-        add_words(Registry.currentPackage)
+            Registry.wordDict.update((name, read_word(name)) for name in words)
+        # FIX: add ucclib/built_in
+        add_words(Registry.currentPackage, True)
 
     def onOpen(self, event):
         try:
@@ -180,8 +184,8 @@ class App(wx.App):
 
     def saveWord(self):
         print "saving word"
-        if Registry.currentWord:
-            Registry.currentWord.write_xml(Registry.currentPackage)
+        if Registry.currentWord and Registry.currentWord.local:
+            Registry.currentWord.write_xml()
             if Registry.currentWordPath:
                 Registry.rightMainPanel.bottomText.SaveFile(
                   Registry.currentWordPath)

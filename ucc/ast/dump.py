@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# dump.py (project_dir | file.ucl)\n")
+# dump.py (package_dir | file.ucl)\n")
 
 r'''Dumps the ast database in a simple ascii format.
 
@@ -21,10 +21,10 @@ import sqlite3 as db
 Db_filename = "ucl.db"
 
 class db_cursor(object):
-    def __init__(self, project_dir):
-        self.project_dir = project_dir
+    def __init__(self, package_dir):
+        self.package_dir = package_dir
     def __enter__(self):
-        self.db_conn = db.connect(os.path.join(self.project_dir, Db_filename))
+        self.db_conn = db.connect(os.path.join(self.package_dir, Db_filename))
         self.db_cur = self.db_conn.cursor()
         return self.db_cur
     def __exit__(self, exc_type, exc_value, exc_tb):
@@ -90,14 +90,14 @@ if __name__ == "__main__":
     import sys
 
     def usage():
-        sys.stderr.write("usage: dump.py (project_dir | file.ucl)\n")
+        sys.stderr.write("usage: dump.py (package_dir | file.ucl)\n")
         sys.exit(2)
 
     len(sys.argv) == 2 or usage()
 
     if sys.argv[1].lower().endswith('.ucl'):
-        project_dir, file = os.path.split(sys.argv[1])
-        with db_cursor(project_dir) as db_cur:
+        package_dir, file = os.path.split(sys.argv[1])
+        with db_cursor(package_dir) as db_cur:
             db_cur.execute("""select id
                                 from ast
                                where kind = 'word_body' and word = ?
