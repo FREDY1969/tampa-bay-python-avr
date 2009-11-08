@@ -11,7 +11,7 @@ import wx
 
 from ucc.gui.Registry import Registry
 from ucc.gui.MainFrame import MainFrame
-from ucc.word import package, xml_access
+from ucc.word import top_package, xml_access
 
 class App(wx.App):
     def __init__(self):
@@ -56,6 +56,8 @@ class App(wx.App):
         Registry.ID_OPEN  = wx.NewId()
         Registry.ID_SAVE_ALL = wx.NewId()
         Registry.ID_SAVE_WORD = wx.NewId()
+        Registry.ID_COMPILE = wx.NewId()
+        Registry.ID_LOAD = wx.NewId()
         Registry.ID_VERIFY = wx.NewId()
         Registry.ID_COMPILE = wx.NewId()
         Registry.ID_PUSH = wx.NewId()
@@ -76,9 +78,7 @@ class App(wx.App):
 
         Registry.mode = None           # current mode of operation
         Registry.currentPackage = None # full absolute path to package directory
-        Registry.words = None          # multidimensional list of words
-        Registry.wordDict = None       # {word_name: ucc.word.word}
-        Registry.packageDict = None    # {package_name: ucc.word.package}
+        Registry.top_package = None    # ucc.word.top_package.top instance
         Registry.currentWord = None    # current word loaded in rightMainPanel
         Registry.currentWordPath = None # path to current word text file
         Registry.parentWord = None     # parent word of current word
@@ -155,26 +155,11 @@ class App(wx.App):
             raise Exception('Invalid package path.')
 
     def initPackage(self):
-        r'''Read built_in and Registry.currentPackage.
+        r'''Read in ucclib.built_in and Registry.currentPackage.
 
-        Setups up packageDict and wordDict.
+        Setup top_package.
         '''
-        built_in = package.built_in()
-        Registry.packageDict = {built_in.package_name: built_in}
-        Registry.wordDict = built_in.word_dict.copy()
-        self.addPackage(Registry.currentPackage)
-
-    def addPackage(self, package_dir):
-        r'''Read package into Registry.packageDict and Registry.wordDict.
-        '''
-        p = package.package(package_dir)
-        assert p.package_name not in Registry.packageDict, \
-               '%s: duplicate package name' % (p.package_name,)
-        dups = frozenset(Registry.wordDict).intersection(p.word_dict)
-        assert not dups, \
-               '%s: duplicate names %r' % (p.package_name, tuple(dups))
-        Registry.packageDict[p.package_name] = p
-        Registry.wordDict.update(p.word_dict)
+        Registry.top_package = top_package.top(Registry.currentPackage)
 
     def onOpen(self, event):
         try:
@@ -189,7 +174,7 @@ class App(wx.App):
 
     def saveWord(self):
         print "saving word"
-        if Registry.currentWord and Registry.currentWord.local:
+        if Registry.currentWord and Registry.currentWord.top:
             Registry.currentWord.write_xml()
             if Registry.currentWordPath:
                 Registry.rightMainPanel.bottomText.SaveFile(
@@ -204,6 +189,31 @@ class App(wx.App):
         )
         dialog.ShowModal()
         dialog.Destroy()
+
+    def onCompile(self, event):
+        from ucc.parser import compile
+        compile.run(Registry.top_package)
+
+    def onLoad(self, event):
+        from ucc.parser import load
+        kw_args = dict((param, Registry.config.get('arduino', param))
+                       for param in (
+                               'install_dir',
+                               'avrdude_port',
+                               'mcu',
+                               'avr_dude_path',
+                               'avr_config_path',
+                               'avrdude_programmer',
+                               'upload_rate'
+                           )
+                       if Registry.config.has_option('arduino', param)
+                      )
+        load_path = Registry.currentPackage
+        for memory_type in 'flash', 'eeprom':
+            if os.exists(os.path.join(load_path, memory_type + '.hex')):
+                print "loading", memory_type + '.hex'
+                load.run(load_path=load_path, memory_type=memory_type,
+                         **kw_args)
 
     def onExit(self, event):
         Registry.mainFrame.Close(True)

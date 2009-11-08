@@ -49,10 +49,10 @@ class word(object):
     def __init__(self, package_dir, name, label, defining, kind,
                  answers = None, questions = None):
         self.package_dir = package_dir
-        self.name = name
-        self.label = label
-        self.defining = defining
-        self.kind = kind
+        self.name = name            # internal name
+        self.label = label          # name that user sees
+        self.defining = defining    # subclass if True, instance if False
+        self.kind = kind            # name of parent word
         self.answers = answers      # {question_name: answers} or None
                                     #   answers can be:
                                     #      - None (unanswered optional)
@@ -63,6 +63,9 @@ class word(object):
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
+
+    def is_root(self):
+        return self.kind == self.name
 
     def write_xml(self, package_dir = None):
         xml_access.write_element(self.to_xml(),
