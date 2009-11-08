@@ -14,67 +14,50 @@ from ucc.gui.Registry import Registry
 class WordTreeCtrl(wx.TreeCtrl):
     gray = (170, 170, 170, 255)
     def __init__(self, parent, id, pos, size, style):
-        wx.TreeCtrl.__init__(self, parent, id, pos, size, style | wx.WANTS_CHARS)
-        
+        wx.TreeCtrl.__init__(self, parent, id, pos, size,
+                             style | wx.TR_HIDE_ROOT)
+
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.onActivate, self)
-        
+
     def updateWordTree(self):
-        root = self.root = self.GetRootItem()
-        Registry.words = self.readWordTree()
-        
+        self.DeleteAllItems()
+        root = self.root = self.AddRoot('hidden')
+        self.SetPyData(root, None)
+
         self.expandThese = [root]
-        self.buildWordTree(Registry.words, root)
+        self.buildWordTree(Registry.top_package.roots, root)
         self.expandThem()
-        
-    def readWordTree(self):
-        def getChildren(parent=None):
-            children = []
-            if parent == None:
-                for temporaryWord in Registry.wordDict.itervalues():
-                    if temporaryWord.name == temporaryWord.kind:
-                        children.append({
-                            'word': temporaryWord,
-                            'children': getChildren(temporaryWord)
-                        })
-            else:
-                for temporaryWord in Registry.wordDict.itervalues():
-                    if parent.name == temporaryWord.kind and temporaryWord.name != temporaryWord.kind:
-                        children.append({
-                            'word': temporaryWord,
-                            'children': getChildren(temporaryWord)
-                        })
-            return children
-        return getChildren()
-        
+
     def buildWordTree(self, words, parent):
         for word in words:
-            wordNode = self.AppendItem(parent, word['word'].label)
-            if not word['word'].local:
+            wordNode = self.AppendItem(parent, word.label)
+            if not word.top:
                 self.SetItemTextColour(wordNode, self.gray)
-            self.SetPyData(wordNode, word['word'])
+            self.SetPyData(wordNode, word)
             if (parent == self.root):
                 self.expandThese.append(wordNode)
-            self.buildWordTree(word['children'], wordNode)
-            
+            self.buildWordTree(word.subclasses, wordNode)
+            self.buildWordTree(word.instances, wordNode)
+
     def expandThem(self):
         for node in self.expandThese:
             self.Expand(node)
-    
+
     def onActivate(self, e):
-        
+
         # check state of word to see if it needs to be saved
-        
+
         Registry.app.saveWord()
-        
+
         # open/paint new word
-        
+
         Registry.currentWord = self.GetItemPyData(e.GetItem())
         import pprint
         pprint.pprint(Registry.currentWord)
-        
+
         # figure out path to word text file
         if Registry.currentWord:
-            Registry.parentWord = Registry.wordDict[Registry.currentWord.kind]
+            Registry.parentWord = Registry.currentWord.kind_obj
             suffix = Registry.parentWord.get_answer('filename_suffix')
         else:
             Registry.parentWord = None
@@ -91,5 +74,5 @@ class WordTreeCtrl(wx.TreeCtrl):
                 print "creating", path
                 with open(path, 'w'): pass
         Registry.currentWordPath = path
-        
+
         Registry.rightMainPanel.paint()

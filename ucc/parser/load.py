@@ -12,6 +12,7 @@ def usage():
     sys.exit(2)
 
 def run(
+        load_path = '.',
         memory_type = 'flash',
         install_dir = None,
         avrdude_port = None,
@@ -63,21 +64,17 @@ def run(
             os.path.join(glob.glob(install_dir)[-1], avr_dude_path, 'avrdude'),
             '-V',
             '-F',
-            '-C',
-            os.path.join(glob.glob(install_dir)[-1], avr_config_path, 'avrdude.conf'),
-            '-p',
-            mcu,
-            '-P',
-            avrdude_port,
-            '-c',
-            avrdude_programmer,
-            '-b',
-            upload_rate,
-            '-U',
-            memory_type + ':w:' + memory_type + '.hex',
+            '-C', os.path.join(glob.glob(install_dir)[-1], avr_config_path,
+                               'avrdude.conf'),
+            '-p', mcu,
+            '-P', avrdude_port,
+            '-c', avrdude_programmer,
+            '-b', upload_rate,
+            '-U', memory_type + ':w:' + os.path.join(load_path,
+                                                     memory_type + '.hex'),
         )
     )
-    
+
 if __name__ == '__main__':
     run(*sys.argv[1:])
 
