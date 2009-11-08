@@ -32,19 +32,19 @@ def write_package_list(package_list, packages_dir):
         ElementTree.SubElement(root, 'package', name = name)
     write_element(root, os.path.join(packages_dir, Packages_filename))
 
-def read_word_list(project_dir):
-    r'''Returns the project_name and list of word names for the project.
+def read_word_list(package_dir):
+    r'''Returns the package_name and a list of the word names in the package.
 
     Read from the 'package.xml' file.
 
     Use write_word_list to write the xml file back out.
     '''
-    tree = ElementTree.parse(os.path.join(project_dir, Package_filename))
+    tree = ElementTree.parse(os.path.join(package_dir, Package_filename))
     return (tree.find('name').text,
             [e.get('name') for e in tree.getiterator('word')])
 
-def write_word_list(package_name, word_list, project_dir):
-    r'''Writes the project_name and list of word names to the package.xml file.
+def write_word_list(package_name, word_list, package_dir):
+    r'''Writes the package_name and list of word names to the package.xml file.
 
     Sorts the names to reduce merge conflicts.
     '''
@@ -53,7 +53,7 @@ def write_word_list(package_name, word_list, project_dir):
     words = ElementTree.SubElement(root, 'words')
     for name in sorted(word_list):
         ElementTree.SubElement(words, 'word', name = name)
-    write_element(root, os.path.join(project_dir, Package_filename))
+    write_element(root, os.path.join(package_dir, Package_filename))
 
 def write_element(root, filename):
     r'''Writes root element to filename with pretty indenting.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# compile.py project_dir
+# compile.py package_dir
 
 from __future__ import with_statement
 
@@ -24,46 +24,46 @@ from ucc.ast import ast
 from ucc.assembler import assemble
 
 def usage():
-    sys.stderr.write("usage: compile.py project_dir\n")
+    sys.stderr.write("usage: compile.py package_dir\n")
     sys.exit(2)
 
 def run(python_path):
     if len(sys.argv) != 2: usage()
 
-    project_dir = sys.argv[1]
+    package_dir = sys.argv[1]
 
-    # Figure out python package name for project.
-    abs_project_dir = os.path.abspath(project_dir)
-    assert abs_project_dir.startswith(python_path)
-    project_pkg = abs_project_dir[len(python_path) + 1:] \
+    # Figure out python package name.
+    abs_package_dir = os.path.abspath(package_dir)
+    assert abs_package_dir.startswith(python_path)
+    package_path = abs_package_dir[len(python_path) + 1:] \
                     .replace(os.path.sep, '.')
-    if os.path.sep != '/': project_pkg.replace('/', '.')
+    if os.path.sep != '/': package_path.replace('/', '.')
 
     # Gather words_by_name, rules and token_dict:
 
-    mod = helpers.import_module(project_pkg, 'declaration')
+    mod = helpers.import_module(package_path, 'declaration')
     decl = getattr(mod, 'declaration')
-    decl.init_class('declaration', 'declaration', project_dir)
+    decl.init_class('declaration', 'declaration', package_dir)
     words_by_name = {'declaration': decl}
     rules = ()
     token_dict = {}
 
-    word_names = xml_access.read_word_list(project_dir)[1]
+    word_names = xml_access.read_word_list(package_dir)[1]
 
     # Load word objects and defining words, create translation_dict:
     word_words = []  # list of word.word objects
     translation_dict = {}
     for name in word_names:
-        word_obj = word.read_word(name, project_dir)
+        word_obj = word.read_word(name, package_dir)
         word_words.append(word_obj)
         if word_obj.name != word_obj.label:
             translation_dict[word_obj.label] = word_obj.name
         if word_obj.defining:
             #print "defining:", name, word_obj.kind
             new_word, new_syntax = \
-              words_by_name[word_obj.kind].create_instance(project_pkg, name,
+              words_by_name[word_obj.kind].create_instance(package_path, name,
                                                            word_obj.label,
-                                                           project_dir)
+                                                           word_obj.package_dir)
             if new_syntax:
                 r, td = new_syntax
                 rules += r
@@ -77,8 +77,8 @@ def run(python_path):
         if not w.defining:
             #print "non-defining", w.name, w.kind
             new_word, new_syntax = \
-              words_by_name[w.kind].create_instance(project_pkg, w.name,
-                                                    w.label, project_dir)
+              words_by_name[w.kind].create_instance(package_path, w.name,
+                                                    w.label, w.package_dir)
             if new_syntax:
                 r, td = new_syntax
                 rules += r
@@ -88,22 +88,23 @@ def run(python_path):
     #print "rules", rules
     #print "token_dict", token_dict
 
-    # compile new parser for this project:
-    with open(os.path.join(project_dir, 'parser.py'), 'w') as output_file:
+    # compile new parser for this package:
+    with open(os.path.join(package_dir, 'parser.py'), 'w') as output_file:
         genparser.genparser(os.path.join(os.path.dirname(__file__), 'SYNTAX'),
                             '\n'.join(rules), token_dict, output_file)
 
-    # import needed modules from the project:
-    parser = helpers.import_module(project_pkg, 'parser')
+    # import needed modules from the package:
+    parser = helpers.import_module(package_path, 'parser')
 
-    # parse files in the project:
+    # parse files in the package:
     num_errors = 0
-    with ast.db_connection(project_dir):
+    with ast.db_connection(package_dir):
         for word_obj in words_by_name.itervalues():
             #print "final loop", word_obj
             try:
                 if not isinstance(word_obj, type): # word_obj not a class
-                    word_obj.parse_file(parser, project_dir)
+                    # FIX: This package_dir should change!
+                    word_obj.parse_file(parser, package_dir)
             except SyntaxError:
                 e_type, e_value, e_tb = sys.exc_info()
                 for line in traceback.format_exception_only(e_type, e_value):
@@ -137,7 +138,7 @@ def run(python_path):
         #print "data", data
         #print "bss", bss
         #print "eeprom", eeprom
-        with open(os.path.join(project_dir, 'flash.hex'), 'w') as flash_file:
+        with open(os.path.join(package_dir, 'flash.hex'), 'w') as flash_file:
             insts = assemble.assemble(flash)
             for i in itertools.count():
                 data_hex = ''.join(itertools.imap(
