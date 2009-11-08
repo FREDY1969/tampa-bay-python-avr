@@ -14,7 +14,7 @@ class macro(declaration.word):
 class macro_word(macro):
     @classmethod
     def init_class3(cls, project_dir):
-        pass
+        return None
 
     def __repr__(self):
         return "<%s %s>" % (self.__name__, self.kind)

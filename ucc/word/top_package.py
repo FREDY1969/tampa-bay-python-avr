@@ -12,19 +12,19 @@ class top(object):
     def __init__(self, package_dir = None):
         r'''Omit package_dir to treat built_in as top-level package.
         '''
-        self.package_dict = {}
         self.word_dict = {}
         self.translation_dict = {}
-        if package_dir is None:
-            self.add_package(package.built_in(), True)
-        else:
-            self.add_package(package.built_in(), False)
-            self.add_package(package.package(package_dir), True)
+        self.packages = []              # top package last!
+        self.packages.append(package.built_in())
+        if package_dir is not None:
+            self.packages.append(package.package(package_dir))
+        for p in self.packages[:-1]:
+            self.add_package(p, False)
+        self.add_package(self.packages[-1], True)
         self.connect_the_dots()
 
     def add_package(self, package, top):
-        for name in package.read_words():
-            w = package.read_word(name)
+        for w in package.get_words():
             w.top = top
             if w.label in self.word_dict or w.label in self.translation_dict:
                 raise NameError("%s: duplicate label in package %s" %
@@ -54,10 +54,10 @@ class top(object):
             else:
                 if w.defining: w.kind_obj.subclasses.append(w)
                 else: w.kind_obj.instances.append(w)
-        self.roots.sort(key=lambda w: w.label)
+        self.roots.sort(key=lambda w: w.label.lower())
         for w in self.word_dict.itervalues():
-            w.subclasses.sort(key=lambda w: w.label)
-            w.instances.sort(key=lambda w: w.label)
+            w.subclasses.sort(key=lambda w: w.label.lower())
+            w.instances.sort(key=lambda w: w.label.lower())
 
     def get_word_by_name(self, name):
         r'''Lookup word by name from all packages.

@@ -22,28 +22,7 @@ from ucc.assembler import assemble
 
 Built_in = 'ucclib.built_in'
 
-def run(package_dir):
-
-    # Figure out package directories.
-    root_dir = setpath.setpath(package_dir, False)
-    abs_package_dir = os.path.abspath(package_dir)
-    assert abs_package_dir.startswith(root_dir), \
-           "compile.py: setpath did not return a root of package_dir,\n" \
-           "  got %s\n" \
-           "  for %s" % (root_dir, abs_package_dir)
-    package_name = abs_package_dir[len(root_dir) + 1:] \
-                     .replace(os.sep, '.') \
-                     .replace('/', '.')
-
-    built_in_dir = os.path.split(helpers.import_module(Built_in).__file__)[0]
-
-    # Get the list of word_names.
-    #   This is actually a list of (package_name, package_dir, word_name).
-    def get_names(package_name, dir):
-        return map(lambda name: (package_name, dir, name),
-                   xml_access.read_word_list(dir)[1])
-    word_names = get_names(Built_in, built_in_dir) + \
-                 get_names(package_name, package_dir)
+def run(top):
 
     # The following gets a little confusing because we have two kinds of word
     # objects:
@@ -53,67 +32,64 @@ def run(package_dir):
     #                         ucclib.built_in.declaration.declaration class)
     #
 
-    # Load word.word objects and create translation_dict:
-    word_words = {}             # {word.name: word.word object}
-    translation_dict = {}       # {word.label: word.name}
-    for pkg_name, dir, name in word_names:
-        word_obj = word.read_word(name, dir)
-        word_obj.package_name = pkg_name
-        assert word_obj.name not in word_words, \
-               "%s: duplicate word name: %s" % (word_obj.label, word_obj.name)
-        word_words[word_obj.name] = word_obj
-        if word_obj.name != word_obj.label:
-            assert word_obj.label not in translation_dict, \
-                   "%s: duplicate word" % word_obj.label
-            translation_dict[word_obj.label] = word_obj.name
+    ast.Translation_dict = top.translation_dict
 
-    ast.Translation_dict = translation_dict
-
-    # Gather word_objs_by_name, rules and token_dict:
-    mod = helpers.import_module(Built_in + '.declaration')
-    decl = getattr(mod, 'declaration')
-    decl.init_class('declaration', 'declaration', built_in_dir)
-    word_objs_by_name = {'declaration': decl}   # {word.name: word_obj}
+    # Gather word_objs_by_name, and build the parsers for each package:
+    word_objs_by_name = {}   # {word.name: word_obj}
     rules = []
     token_dict = {}
     # Load words:
     def load_word(word_word):
         if word_word.name not in word_objs_by_name:
-            if word_word.kind not in word_objs_by_name:
-                load_word(word_words[word_word.kind])
+            if not word_word.is_root() and \
+               word_word.kind not in word_objs_by_name:
+                load_word(top.get_word_by_name(word_word.kind))
 
-            new_word, new_syntax = \
-              word_objs_by_name[word_word.kind] \
-                .create_instance(word_word.package_name, word_word.name,
-                                 word_word.label, word_word.package_dir)
+            if word_word.is_root():
+                mod = helpers.import_module(word_word.package_name + 
+                                              '.' + word_word.name)
+                new_word = getattr(mod, word_word.name)
+                new_syntax = new_word.init_class(word_word.name, word_word.name,
+                                                 word_word.package_dir)
+            else:
+                new_word, new_syntax = \
+                  word_objs_by_name[word_word.kind] \
+                    .create_instance(word_word.package_name, word_word.name,
+                                     word_word.label, word_word.package_dir)
             if new_syntax:
                 r, td = new_syntax
                 rules.extend(r)
                 token_dict.update(td)
             word_objs_by_name[word_word.name] = new_word
 
-    for word_word in word_words.itervalues():
-        load_word(word_word)
+    package_parsers = {}        # {package_name: parser module}
+    syntax_file = os.path.join(os.path.dirname(__file__), 'SYNTAX')
+    for p in top.packages:
+        for word_word in p.get_words():
+            load_word(word_word)
 
-    #print "rules", rules
-    #print "token_dict", token_dict
+        #print "rules", rules
+        #print "token_dict", token_dict
 
-    # compile new parser for this package:
-    with open(os.path.join(package_dir, 'parser.py'), 'w') as output_file:
-        genparser.genparser(os.path.join(os.path.dirname(__file__), 'SYNTAX'),
-                            '\n'.join(rules), token_dict, output_file)
+        # compile new parser for this package:
+        with open(os.path.join(p.package_dir, 'parser.py'), 'w') as output_file:
+            genparser.genparser(syntax_file, '\n'.join(rules), token_dict,
+                                output_file)
 
-    # import needed modules from the package:
-    parser = helpers.import_module(package_name + '.parser')
+        # import needed modules from the package:
+        package_parsers[p.package_name] = \
+          helpers.import_module(p.package_name + '.parser')
 
     # parse files in the package:
     num_errors = 0
-    with ast.db_connection(package_dir):
+    with ast.db_connection(top.packages[-1].package_dir):
         for name, word_obj in word_objs_by_name.iteritems():
             #print "final loop", name, word_obj
             try:
                 if not isinstance(word_obj, type): # word_obj not a class
-                    word_obj.parse_file(parser, word_words[name].package_dir)
+                    word_word = top.get_word_by_name(name)
+                    word_obj.parse_file(package_parsers[word_word.package_name],
+                                        word_word.package_dir)
             except SyntaxError:
                 e_type, e_value, e_tb = sys.exc_info()
                 for line in traceback.format_exception_only(e_type, e_value):
@@ -148,7 +124,9 @@ def run(package_dir):
         #print "data", data
         #print "bss", bss
         #print "eeprom", eeprom
-        with open(os.path.join(package_dir, 'flash.hex'), 'w') as flash_file:
+        with open(os.path.join(top.packages[-1].package_dir, 'flash.hex'),
+                  'w') \
+          as flash_file:
             insts = assemble.assemble(flash)
             for i in itertools.count():
                 data_hex = ''.join(itertools.imap(
@@ -190,5 +168,6 @@ def usage():
 
 if __name__ == "__main__":
     if len(sys.argv) != 2: usage()
+    from ucc.word import top_package
 
-    run(sys.argv[1])
+    run(top_package.top(sys.argv[1]))
