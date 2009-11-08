@@ -11,13 +11,17 @@ class declaration(object):
 
     @classmethod
     def init_class(cls, name, label, project_dir):
+        r'''Returns new_syntax (or None).
+        '''
         cls.kind = name
         cls.kind_label = label
-        cls.init_class2(project_dir)
+        return cls.init_class2(project_dir)
 
     @classmethod
     def init_class2(cls, project_dir):
-        pass
+        r'''Returns new_syntax (or None).
+        '''
+        return None
 
     @classmethod
     def create_instance(cls, project_pkg, name, label, project_dir):
@@ -32,13 +36,18 @@ class declaration(object):
 class word(declaration):
     @classmethod
     def init_class2(cls, project_dir):
+        r'''Returns new_syntax (or None).
+        '''
         cls.answers = get_answers(cls.kind, project_dir)
-        cls.init_class3(project_dir)
+        return cls.init_class3(project_dir)
 
     @classmethod
     def init_class3(cls, project_dir):
+        r'''Returns new_syntax (or None).
+        '''
         suffix = cls.answers['filename_suffix']
         cls.filename_suffix = None if suffix is None else suffix.value
+        return None
 
     @classmethod
     def create_instance(cls, project_pkg, name, label, project_dir):

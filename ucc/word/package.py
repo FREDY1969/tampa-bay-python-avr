@@ -32,9 +32,16 @@ class package(object):
         self.package_name = self.package_dir[len(root_dir) + 1:] \
                                 .replace(os.sep, '.') \
                                 .replace('/', '.')
+        self.load_words()
 
-    def read_words(self):
-        return xml_access.read_word_list(self.package_dir)[1]
+    def load_words(self):
+        self.word_dict = dict((name, self.read_word(name))
+                              for name
+                               in xml_access.read_word_list(self.package_dir)[1]
+                             )
+
+    def get_words(self):
+        return self.word_dict.values()
 
     def read_word(self, name):
         ans = word.read_word(name, self.package_dir)
@@ -46,4 +53,5 @@ class built_in(package):
         self.package_name = Built_in
         self.package_dir = \
           os.path.split(helpers.import_module(self.package_name).__file__)[0]
+        self.load_words()
 
