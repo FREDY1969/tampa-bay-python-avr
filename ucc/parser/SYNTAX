@@ -1,0 +1,57 @@
+file(kind='word_body') : statement+
+
+statement        : raw_statement as statement
+simple_statement : raw_simple_statement as statement
+raw_simple_statement: NAME() value* NEWLINE_TOK
+raw_statement : raw_simple_statement
+              | NAME() value* [series]
+
+[series] : ':' simple_statement
+         | START_SERIES_TOK INDENT_TOK statement+ DEINDENT_TOK
+
+lvalue: lexpr as lvalue
+
+lexpr: NAME()
+     | value '['() value... ']'
+     | value '.'() name
+
+name: NAME
+
+vexpr: APPROX_NUMBER(kind='approx',int1=p[%s][0],int2=p[%s][1])
+     | CHAR(kind='int',int1=p[%s])
+     | INTEGER(kind='int',int1=p[%s])
+     | RATIO(kind='ratio',int1=p[%s][0],int2=p[%s][1])
+     | STRING(kind='string',str1=p[%s])
+     | lexpr
+     | value() '(' value... ')'
+     | BIT_NOT() value
+     | NEGATE() value
+     | value BIT_AND() value
+     | value BIT_XOR() value
+     | value BIT_OR() value
+     | value '*'() value
+     | value '/'() value
+     | value '%'() value
+     | value '+'() value
+     | value '-'() value
+     | ARG_RIGHT_WORD() value
+     | value ARG_LEFT_WORD()
+     | value '<'() value
+     | value LE() value
+     | value EQ() value
+     | value NE() value
+     | value '>'() value
+     | value GE() value
+
+value: vexpr as value
+     | LP_TOK value ')'
+     | NOT() value
+     | condition AND() value
+     | condition OR() value
+
+condition: vexpr as condition
+         | LP_TOK condition ')'
+         | NOT() condition
+         | condition AND() condition
+         | condition OR() condition
+
