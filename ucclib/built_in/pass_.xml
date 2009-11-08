@@ -6,7 +6,7 @@
     <defining>False</defining>
     <answers>
         <answer name="argument" repeated="True" />
-        <answers name="new_syntax_keyword" repeated="True" />
+        <answer name="new_syntax_keyword" repeated="True" />
         <answer name="syntax" repeated="True" />
     </answers>
 </word>

@@ -21,6 +21,7 @@ class macro_word(macro):
 
 def new_syntax(name, project_dir):
     ans = declaration.get_answers(name, project_dir)
+    #print "new_syntax:", name, ans
     syntax = tuple('raw_statement : ' + x.value for x in ans['syntax'])
     keywords = ans['new_syntax_keyword']
     return syntax, dict((x.keyword_name.value, x.token_value.value)

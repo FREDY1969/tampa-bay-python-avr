@@ -193,7 +193,7 @@ def get_ast_nodes(db_cur, parent_id):
     return db_cur.fetchall()
 
 def load_class(project_pkg, name, label, project_dir):
-    mod = helpers.import_module(project_pkg, name)
+    mod = helpers.import_module("%s.%s" % (project_pkg, name))
     new_word = getattr(mod, name)
     new_word.init_class(name, label, project_dir)
     return new_word
