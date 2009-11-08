@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# compile.py package_name
+# compile.py package_dir
 
 from __future__ import with_statement
 
@@ -10,10 +10,9 @@ import contextlib
 import itertools
 import traceback
 import sqlite3 as db
+from doctest_tools import setpath
 
 if __name__ == "__main__":
-    from doctest_tools import setpath
-
     setpath.setpath(__file__, remove_first = True)
 
 from ucc.word import helpers, xml_access, word
@@ -23,10 +22,19 @@ from ucc.assembler import assemble
 
 Built_in = 'ucclib.built_in'
 
-def run(package_name):
+def run(package_dir):
 
     # Figure out package directories.
-    package_dir = os.path.split(helpers.import_module(package_name).__file__)[0]
+    root_dir = setpath.setpath(package_dir, False)
+    abs_package_dir = os.path.abspath(package_dir)
+    assert abs_package_dir.startswith(root_dir), \
+           "compile.py: setpath did not return a root of package_dir,\n" \
+           "  got %s\n" \
+           "  for %s" % (root_dir, abs_package_dir)
+    package_name = abs_package_dir[len(root_dir) + 1:] \
+                     .replace(os.sep, '.') \
+                     .replace('/', '.')
+
     built_in_dir = os.path.split(helpers.import_module(Built_in).__file__)[0]
 
     # Get the list of word_names.
@@ -177,7 +185,7 @@ def check_sum(data):
     return (256 - (sum & 0xff)) & 0xFF
 
 def usage():
-    sys.stderr.write("usage: compile.py package_name\n")
+    sys.stderr.write("usage: compile.py package_dir\n")
     sys.exit(2)
 
 if __name__ == "__main__":

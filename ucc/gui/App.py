@@ -5,13 +5,13 @@ r'''
 
 import sys
 import os.path
+import itertools
 import ConfigParser
 import wx
 
 from ucc.gui.Registry import Registry
 from ucc.gui.MainFrame import MainFrame
-from ucc.word import word, xml_access
-from ucclib import built_in
+from ucc.word import package, xml_access
 
 class App(wx.App):
     def __init__(self):
@@ -77,8 +77,8 @@ class App(wx.App):
         Registry.mode = None           # current mode of operation
         Registry.currentPackage = None # full absolute path to package directory
         Registry.words = None          # multidimensional list of words
-        Registry.wordList = None       # list of words
-        Registry.wordDict = None       # {name: word}
+        Registry.wordDict = None       # {word_name: ucc.word.word}
+        Registry.packageDict = None    # {package_name: ucc.word.package}
         Registry.currentWord = None    # current word loaded in rightMainPanel
         Registry.currentWordPath = None # path to current word text file
         Registry.parentWord = None     # parent word of current word
@@ -155,23 +155,26 @@ class App(wx.App):
             raise Exception('Invalid package path.')
 
     def initPackage(self):
+        r'''Read built_in and Registry.currentPackage.
 
-        # setup wordlist
+        Setups up packageDict and wordDict.
+        '''
+        built_in = package.built_in()
+        Registry.packageDict = {built_in.package_name: built_in}
+        Registry.wordDict = built_in.word_dict.copy()
+        self.addPackage(Registry.currentPackage)
 
-        Registry.wordList = []
-        Registry.wordDict = {}
-
-        def add_words(package_dir, local):
-            def read_word(name):
-                ans = word.read_word(name, package_dir)
-                ans.local = local
-                return ans
-            words = xml_access.read_word_list(package_dir)[1]
-            Registry.wordList.extend(words)
-            Registry.wordDict.update((name, read_word(name)) for name in words)
-
-        add_words(os.path.split(built_in.__file__)[0], False)
-        add_words(Registry.currentPackage, True)
+    def addPackage(self, package_dir):
+        r'''Read package into Registry.packageDict and Registry.wordDict.
+        '''
+        p = package.package(package_dir)
+        assert p.package_name not in Registry.packageDict, \
+               '%s: duplicate package name' % (p.package_name,)
+        dups = frozenset(Registry.wordDict).intersection(p.word_dict)
+        assert not dups, \
+               '%s: duplicate names %r' % (p.package_name, tuple(dups))
+        Registry.packageDict[p.package_name] = p
+        Registry.wordDict.update(p.word_dict)
 
     def onOpen(self, event):
         try:
