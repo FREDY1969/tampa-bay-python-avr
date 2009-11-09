@@ -1,19 +1,11 @@
-#!/usr/bin/env python
-
-# compile.py package_dir
+# compile.py
 
 from __future__ import with_statement
 
 import sys
-import os, os.path
-import contextlib
+import os.path
 import itertools
 import traceback
-import sqlite3 as db
-from doctest_tools import setpath
-
-if __name__ == "__main__":
-    setpath.setpath(__file__, remove_first = True)
 
 from ucc.word import helpers, xml_access, word
 from ucc.parser import genparser
@@ -162,12 +154,3 @@ def check_sum(data):
         sum += int(data[i:i+2], 16)
     return (256 - (sum & 0xff)) & 0xFF
 
-def usage():
-    sys.stderr.write("usage: compile.py package_dir\n")
-    sys.exit(2)
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2: usage()
-    from ucc.word import top_package
-
-    run(top_package.top(sys.argv[1]))
