@@ -1,38 +1,14 @@
-#!/usr/bin/env python
-
-# genparser.py file rules tokens [parser.py]
+# genparser.py
 
 from __future__ import with_statement
 
 import sys
-import os.path
 
 if __name__ == "__main__":
     from doctest_tools import setpath
-
     setpath.setpath(__file__, remove_first = True)
 
-    #print "sys.path[0]:", sys.path[0]
-
 from ucc.parser import parser_init, metaparser, metascanner, scanner
-
-def usage():
-    sys.stderr.write("usage: genparser.py file rules tokens [parser.py]\n")
-    sys.exit(2)
-
-def run():
-    if len(sys.argv) != 4 and len(sys.argv) != 5: usage()
-
-    filename = sys.argv[1]
-    with open(sys.argv[2]) as f:
-        rules = f.read()
-    with open(sys.argv[3]) as f:
-        token_dict = dict(tuple(line.split()) for line in f)
-    if len(sys.argv) == 4:
-        genparser(filename, rules, token_dict)
-    else:
-        with open(sys.argv[4], 'w') as output_file:
-            genparser(filename, rules, token_dict, output_file)
 
 def genparser(filename, rules, token_dict, output_file = sys.stdout):
     metaparser.Output_file = output_file
@@ -102,6 +78,24 @@ def genparser(filename, rules, token_dict, output_file = sys.stdout):
 
         """,
         output_file = output_file)
+
+def usage():
+    sys.stderr.write("usage: genparser.py file rules tokens [parser.py]\n")
+    sys.exit(2)
+
+def run():
+    if len(sys.argv) != 4 and len(sys.argv) != 5: usage()
+
+    filename = sys.argv[1]
+    with open(sys.argv[2]) as f:
+        rules = f.read()
+    with open(sys.argv[3]) as f:
+        token_dict = dict(tuple(line.split()) for line in f)
+    if len(sys.argv) == 4:
+        genparser(filename, rules, token_dict)
+    else:
+        with open(sys.argv[4], 'w') as output_file:
+            genparser(filename, rules, token_dict, output_file)
 
 if __name__ == "__main__":
     run()

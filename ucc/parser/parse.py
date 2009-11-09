@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-# parse.py file...
+# parse.py
 
 from __future__ import with_statement
 
@@ -9,17 +7,10 @@ import os.path
 
 if __name__ == "__main__":
     from doctest_tools import setpath
-
     setpath.setpath(__file__, remove_first = True)
-
-    #print "sys.path[0]:", sys.path[0]
 
 from ucc.parser import scanner, parser_init
 from ucc.ast import ast
-
-def usage():
-    sys.stderr.write("usage: parse.py file...\n")
-    sys.exit(2)
 
 def parse_file(parser, filename):
     name, ext = os.path.splitext(os.path.basename(filename))
@@ -35,6 +26,10 @@ def parse_file(parser, filename):
             id = root_ast.save(db_cur)
         return True, id
     return False, None
+
+def usage():
+    sys.stderr.write("usage: python parse.py file...\n")
+    sys.exit(2)
 
 def run():
     if len(sys.argv) < 2: usage()
