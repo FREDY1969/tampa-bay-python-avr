@@ -1,15 +1,14 @@
-#!/usr/bin/env python
+# load.py
 
-# This script will call avrdude to load your flash.hex
+r'''This will call avrdude to load your flash.hex and eeprom.hex files.
+
+Use scripts/load.py to call this from the command line.
+'''
 
 import sys
 import os
 import glob
 import subprocess
-
-def usage():
-    print >>sys.stderr, 'usage: load'
-    sys.exit(2)
 
 def run(
         load_path = '.',
@@ -19,8 +18,8 @@ def run(
         mcu = 'atmega328p',
         avr_dude_path = None,
         avr_config_path = None,
+        upload_rate = '57600',
         avrdude_programmer = 'stk500v1',
-        upload_rate='57600',
     ):
     
     # system dependent defaults
@@ -74,7 +73,4 @@ def run(
                                                      memory_type + '.hex'),
         )
     )
-
-if __name__ == '__main__':
-    run(*sys.argv[1:])
 
