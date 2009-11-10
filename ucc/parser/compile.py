@@ -15,8 +15,85 @@ from ucclib.built_in import declaration
 
 Built_in = 'ucclib.built_in'
 
-def load_defining_word_objs():
-    pass
+def load_word(ww):
+    r'''Loads and returns the word_obj for ww.
+    
+    And updates Word_objs_by_name, Rules and Token_dict.
+    '''
+    global Word_objs_by_name, Rules, Token_dict
+    if ww.name not in Word_objs_by_name:
+        if not ww.is_root():
+            load_word(ww.kind_obj)
+
+        # load new_word
+        if ww.is_root():
+            assert ww.defining, \
+                   "%s: root word that is not a defining word" % ww.label
+            new_word = declaration.load_class(ww)
+        elif ww.defining:
+            new_word = Word_objs_by_name[ww.kind].create_subclass(ww)
+        else:
+            new_word = Word_objs_by_name[ww.kind](ww)
+
+        # get new_syntax
+        if ww.defining:
+            new_syntax = new_word.new_syntax()
+            if new_syntax:
+                r, td = new_syntax
+                Rules.extend(r)
+                Token_dict.update(td)
+
+        # Add new word to Word_objs_by_name
+        Word_objs_by_name[ww.name] = new_word
+        return new_word
+    return Word_objs_by_name[ww.name]
+
+def create_parsers(top):
+    r'''Creates a parser in each package.
+
+    Returns {package_name: parser module}
+
+    Also does load_word on all of the defining words.
+    '''
+    package_parsers = {}
+    syntax_file = os.path.join(os.path.dirname(__file__), 'SYNTAX')
+    for p in top.packages:
+        for ww in p.get_words():
+            if ww.defining:
+                load_word(ww)
+
+        #print "Rules", Rules
+        #print "Token_dict", Token_dict
+
+        # compile new parser for this package:
+        with open(os.path.join(p.package_dir, 'parser.py'), 'w') as output_file:
+            genparser.genparser(syntax_file, '\n'.join(Rules), Token_dict,
+                                output_file)
+
+        # import needed modules from the package:
+        package_parsers[p.package_name] = \
+          helpers.import_module(p.package_name + '.parser')
+    return package_parsers
+
+def parse_word(ww, word_obj, parser):
+    r'''Parses the word with the parser.
+
+    Return True on success, False on failure.
+
+    Catches exceptions and prints its own error messages.
+    '''
+    try:
+        if not isinstance(word_obj, type): # word_obj not a class
+            word_obj.parse_file(parser)
+    except SyntaxError:
+        e_type, e_value, e_tb = sys.exc_info()
+        for line in traceback.format_exception_only(e_type, e_value):
+            sys.stderr.write(line)
+        return False
+    except Exception:
+        traceback.print_exc()
+        return False
+    return True
 
 def parse_needed_words():
     pass
@@ -34,6 +111,7 @@ def gen_assembler():
     pass
 
 def run(top):
+    global Word_objs_by_name, Rules, Token_dict
 
     # The following gets a little confusing because we have two kinds of word
     # objects:
@@ -46,96 +124,48 @@ def run(top):
 
     ast.Translation_dict = top.translation_dict
 
-    # Gather word_objs_by_name, and build the parsers for each package:
-    word_objs_by_name = {}   # {word.name: word_obj}
-    rules = []
-    token_dict = {}
-    # Load words:
-    def load_word(ww):
-        if ww.name not in word_objs_by_name:
-            if not ww.is_root() and \
-               ww.kind not in word_objs_by_name:
-                load_word(ww.kind_obj)
+    # Gather Word_objs_by_name, and build the parsers for each package:
+    Word_objs_by_name = {}   # {word.name: word_obj}
+    Rules = []
+    Token_dict = {}
 
-            if ww.is_root():
-                assert ww.defining, \
-                       "%s: root word that is not a defining word" % ww.label
-                new_word = declaration.load_class(ww)
-                new_syntax = new_word.new_syntax()
-            elif ww.defining:
-                new_word = word_objs_by_name[ww.kind].create_subclass(ww)
-                new_syntax = new_word.new_syntax()
-            else:
-                new_word = word_objs_by_name[ww.kind](ww)
-                new_syntax = None
-            if new_syntax:
-                r, td = new_syntax
-                rules.extend(r)
-                token_dict.update(td)
-            word_objs_by_name[ww.name] = new_word
-
-    package_parsers = {}        # {package_name: parser module}
-    syntax_file = os.path.join(os.path.dirname(__file__), 'SYNTAX')
-    for p in top.packages:
-        for ww in p.get_words():
-            #FIX: if ww.defining:
-                load_word(ww)
-
-        #print "rules", rules
-        #print "token_dict", token_dict
-
-        # compile new parser for this package:
-        with open(os.path.join(p.package_dir, 'parser.py'), 'w') as output_file:
-            genparser.genparser(syntax_file, '\n'.join(rules), token_dict,
-                                output_file)
-
-        # import needed modules from the package:
-        package_parsers[p.package_name] = \
-          helpers.import_module(p.package_name + '.parser')
+    # {package_name: parser module}
+    package_parsers = create_parsers(top)
 
     # parse files in the package:
-    num_errors = 0
     with ast.db_connection(top.packages[-1].package_dir):
-        for name, word_obj in word_objs_by_name.iteritems():
-            #print "final loop", name, word_obj
-            try:
-                if not isinstance(word_obj, type): # word_obj not a class
-                    ww = top.get_word_by_name(name)
-                    word_obj.parse_file(package_parsers[ww.package_name])
-            except SyntaxError:
-                e_type, e_value, e_tb = sys.exc_info()
-                for line in traceback.format_exception_only(e_type, e_value):
-                    sys.stderr.write(line)
-                num_errors += 1
-            except Exception:
-                traceback.print_exc()
-                num_errors += 1
-        if num_errors:
-            sys.stderr.write("%s files had syntax errors\n" % num_errors)
-            sys.exit(1)
-
         flash = []      # list of (label, opcode, operand1, operand2)
         data = []       # list of (label, datatype, operand)
         bss = []        # list of (label, num_bytes)
         eeprom = []     # list of (label, datatype, operand)
         words_done = set()
         words_needed = set(['startup'])
+        num_errors = 0
         while words_needed:
             next_word = words_needed.pop()
-            with ast.db_transaction() as db_cur:
-                f, d, b, e, n = \
-                  word_objs_by_name[next_word].compile(db_cur,
-                                                       word_objs_by_name)
-            flash.extend(f)
-            data.extend(d)
-            bss.extend(b)
-            eeprom.extend(e)
-            words_done.add(next_word)
-            words_needed.update(frozenset(n) - words_done)
+            ww = top.get_word_by_name(next_word)
+            word_obj = load_word(ww)
+            if parse_word(ww, word_obj, package_parsers[ww.package_name]):
+                with ast.db_transaction() as db_cur:
+                    f, d, b, e, n = word_obj.compile(db_cur, Word_objs_by_name)
+                flash.extend(f)
+                data.extend(d)
+                bss.extend(b)
+                eeprom.extend(e)
+                words_done.add(next_word)
+                words_needed.update(frozenset(n) - words_done)
+            else:
+                num_errors += 1
+
+        if num_errors:
+            sys.stderr.write("%s files had syntax errors\n" % num_errors)
+            sys.exit(1)
+
         #print "flash", flash
         #print "data", data
         #print "bss", bss
         #print "eeprom", eeprom
+
         with open(os.path.join(top.packages[-1].package_dir, 'flash.hex'),
                   'w') \
           as flash_file:
