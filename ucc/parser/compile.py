@@ -11,15 +11,35 @@ from ucc.word import helpers, xml_access, word
 from ucc.parser import genparser
 from ucc.ast import ast
 from ucc.assembler import assemble
+from ucclib.built_in import declaration
 
 Built_in = 'ucclib.built_in'
+
+def load_defining_word_objs():
+    pass
+
+def parse_needed_words():
+    pass
+
+def macro_expand():
+    pass
+
+def gen_intermediate_code():
+    pass
+
+def optimize():
+    pass
+
+def gen_assembler():
+    pass
 
 def run(top):
 
     # The following gets a little confusing because we have two kinds of word
     # objects:
     #
-    #   1.  word_word objects (instances of the ucc.word.word.word class)
+    #   1.  ww objects       ("word_word", i.e., instances of the
+    #                         ucc.word.word.word class)
     #   2.  word_obj objects (either subclasses or instances of the
     #                         ucclib.built_in.declaration.declaration class)
     #
@@ -31,34 +51,35 @@ def run(top):
     rules = []
     token_dict = {}
     # Load words:
-    def load_word(word_word):
-        if word_word.name not in word_objs_by_name:
-            if not word_word.is_root() and \
-               word_word.kind not in word_objs_by_name:
-                load_word(top.get_word_by_name(word_word.kind))
+    def load_word(ww):
+        if ww.name not in word_objs_by_name:
+            if not ww.is_root() and \
+               ww.kind not in word_objs_by_name:
+                load_word(ww.kind_obj)
 
-            if word_word.is_root():
-                mod = helpers.import_module(word_word.package_name + 
-                                              '.' + word_word.name)
-                new_word = getattr(mod, word_word.name)
-                new_syntax = new_word.init_class(word_word.name, word_word.name,
-                                                 word_word.package_dir)
+            if ww.is_root():
+                assert ww.defining, \
+                       "%s: root word that is not a defining word" % ww.label
+                new_word = declaration.load_class(ww)
+                new_syntax = new_word.new_syntax()
+            elif ww.defining:
+                new_word = word_objs_by_name[ww.kind].create_subclass(ww)
+                new_syntax = new_word.new_syntax()
             else:
-                new_word, new_syntax = \
-                  word_objs_by_name[word_word.kind] \
-                    .create_instance(word_word.package_name, word_word.name,
-                                     word_word.label, word_word.package_dir)
+                new_word = word_objs_by_name[ww.kind](ww)
+                new_syntax = None
             if new_syntax:
                 r, td = new_syntax
                 rules.extend(r)
                 token_dict.update(td)
-            word_objs_by_name[word_word.name] = new_word
+            word_objs_by_name[ww.name] = new_word
 
     package_parsers = {}        # {package_name: parser module}
     syntax_file = os.path.join(os.path.dirname(__file__), 'SYNTAX')
     for p in top.packages:
-        for word_word in p.get_words():
-            load_word(word_word)
+        for ww in p.get_words():
+            #FIX: if ww.defining:
+                load_word(ww)
 
         #print "rules", rules
         #print "token_dict", token_dict
@@ -79,9 +100,8 @@ def run(top):
             #print "final loop", name, word_obj
             try:
                 if not isinstance(word_obj, type): # word_obj not a class
-                    word_word = top.get_word_by_name(name)
-                    word_obj.parse_file(package_parsers[word_word.package_name],
-                                        word_word.package_dir)
+                    ww = top.get_word_by_name(name)
+                    word_obj.parse_file(package_parsers[ww.package_name])
             except SyntaxError:
                 e_type, e_value, e_tb = sys.exc_info()
                 for line in traceback.format_exception_only(e_type, e_value):
