@@ -9,11 +9,11 @@ from ucc.assembler import asm_opcodes
 from ucclib.built_in import declaration
 
 class assembler_word(declaration.word):
-    def parse_file(self, parser, project_dir):
+    def parse_file(self, parser):
         with ast.db_transaction() as db_cur:
             ast.delete_word_by_name(self.name)
             instructions = []
-            filename = self.get_filename(project_dir)
+            filename = self.get_filename()
             with open(filename) as f:
                 for i, line in enumerate(f):
                     inst = parse_asm(filename, line, i + 1)

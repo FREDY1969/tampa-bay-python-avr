@@ -5,58 +5,75 @@ from ucc.parser import parse
 from ucc.word import helpers, word as word_module
 
 class declaration(object):
-    def __init__(self, name, label):
-        self.name = name
-        self.label = label
+    r'''All defining words are subclasses of declaration.
 
-    @classmethod
-    def init_class(cls, name, label, project_dir):
-        r'''Returns new_syntax (or None).
+    Defining words are classes, while non-defining words are instances of
+    those classes.  The "kind" is used both as the base class (for defining
+    words) and the instance's class (for non-defining words).
+    
+    Thus, a defining word is a subclass of it's "kind".
+
+    And, a non-defining word is an instance of it's "kind".
+    '''
+    def __init__(self, ww):
+        r'''Initializes an instance of this declaration.
         '''
-        cls.kind = name
-        cls.kind_label = label
-        return cls.init_class2(project_dir)
+        self.ww = ww
+        self.name = ww.name
+        self.label = ww.label
 
     @classmethod
-    def init_class2(cls, project_dir):
-        r'''Returns new_syntax (or None).
+    def init_class(cls, ww):
+        r'''Initializes the declaration itself.
+        '''
+        cls.kind_ww = ww
+        cls.kind = ww.name
+        cls.kind_label = ww.label
+        cls.init_class2()
+
+    @classmethod
+    def init_class2(cls):
+        r'''Meant to be overridden by subclasses...
+        '''
+        pass
+
+    @classmethod
+    def create_subclass(cls, ww):
+        r'''Loads and initializes a subclass of this declaration.
+
+        Returns the newly loaded class object.
+        '''
+        return load_class(ww)
+
+    @classmethod
+    def new_syntax(cls):
+        r'''Returns None, or (syntax, tokens).
+
+        Syntax is a tuple of strings, e.g.:
+          "raw_statement : IF() condition [series] ( ELSE_TOK [series] )?"
+        Tokens is a dict {keyword_name: token_value}, e.g.:
+          {'if': 'IF', 'else': 'ELSE_TOK'}
         '''
         return None
-
-    @classmethod
-    def create_instance(cls, project_pkg, name, label, project_dir):
-        return load_class(project_pkg, name, label, project_dir), None
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
 
-    def parse_file(self, parser, project_dir):
+    def parse_file(self, parser):
         pass
 
 class word(declaration):
     @classmethod
-    def init_class2(cls, project_dir):
-        r'''Returns new_syntax (or None).
+    def init_class2(cls):
+        r'''Set cls.filename_suffix for my instances.
         '''
-        cls.answers = get_answers(cls.kind, project_dir)
-        return cls.init_class3(project_dir)
-
-    @classmethod
-    def init_class3(cls, project_dir):
-        r'''Returns new_syntax (or None).
-        '''
-        suffix = cls.answers['filename_suffix']
+        suffix = cls.kind_ww.get_answer('filename_suffix')
         cls.filename_suffix = None if suffix is None else suffix.value
-        return None
 
-    @classmethod
-    def create_instance(cls, project_pkg, name, label, project_dir):
-        ans = cls(name, label)
-        return ans, None
-
-    def get_filename(self, project_dir):
+    def get_filename(self):
         assert self.filename_suffix
-        return os.path.join(project_dir, self.name + '.' + self.filename_suffix)
+        return os.path.join(self.ww.package_dir,
+                            self.name + '.' + self.filename_suffix)
 
     def compile(self, db_cur, words_by_name):
         print "FIX: Implement compile for class", self.__class__.__name__
@@ -152,8 +169,8 @@ class word(declaration):
         raise AssertionError("%s used as a context manager" % self.label)
 
 class high_level_word(word):
-    def parse_file(self, parser, project_dir):
-        filename = self.get_filename(project_dir)
+    def parse_file(self, parser):
+        filename = self.get_filename()
         worked, word_body_id = parse.parse_file(parser, filename)
         if not worked:
             raise AssertionError, "parse failed for " + filename
@@ -201,21 +218,8 @@ def get_ast_nodes(db_cur, parent_id):
                    {'parent_id': parent_id})
     return db_cur.fetchall()
 
-def load_class(project_pkg, name, label, project_dir):
-    mod = helpers.import_module("%s.%s" % (project_pkg, name))
-    new_word = getattr(mod, name)
-    new_word.init_class(name, label, project_dir)
-    return new_word
-
-def get_answers(name, project_dir):
-    r'''Get_answers for this word.
-
-    The answers are returned in a dict where the question name is the key.
-
-    For non-repeatable answers, the value is an answer object or None (for
-    optional unanswered questions).
-
-    For repeatable answers, the value is a (possibly empty) list of answer
-    objects.
-    '''
-    return word_module.read_word(name, project_dir).answers
+def load_class(ww):
+    mod = helpers.import_module("%s.%s" % (ww.package_name, ww.name))
+    new_subclass = getattr(mod, ww.name)
+    new_subclass.init_class(ww)
+    return new_subclass

@@ -13,6 +13,8 @@ from xml.etree import ElementTree
 
 from ucc.word import answers, questions, xml_access
 
+unique = object()
+
 def read_word(word_name, package_dir):
     r'''Returns a single word object read in from the word's xml file.
     
@@ -82,5 +84,10 @@ class word(object):
         questions.add_xml_subelement(root, self.questions)
         return root
 
-    def get_answer(self, question_name):
+    def get_answer(self, question_name, default = unique):
+        if question_name not in self.answers:
+            if default is unique:
+                raise KeyError("%s: no answer for %s" %
+                                 (self.label, question_name))
+            return default
         return self.answers[question_name]

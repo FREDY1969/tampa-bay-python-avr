@@ -4,26 +4,23 @@ from ucclib.built_in import declaration
 
 class macro(declaration.word):
     @classmethod
-    def create_instance(cls, project_pkg, name, label, project_dir):
-        ans = declaration.load_class(project_pkg, name, label, project_dir)
-        return ans, new_syntax(name, project_dir)
+    def new_syntax(cls):
+        syntax = tuple('raw_statement : ' + x.value
+                       for x in cls.kind_ww.get_answer('syntax', ()))
+        keywords = cls.kind_ww.get_answer('new_syntax_keyword', ())
+        return syntax, dict((x.keyword_name.value, x.token_value.value)
+                            for x in keywords)
 
     def __repr__(self):
         return "<macro macro>"
 
 class macro_word(macro):
     @classmethod
-    def init_class3(cls, project_dir):
-        return None
+    def init_class2(cls):
+        # Don't need filename_suffix...
+        pass
 
     def __repr__(self):
         return "<%s %s>" % (self.__name__, self.kind)
 
-def new_syntax(name, project_dir):
-    ans = declaration.get_answers(name, project_dir)
-    #print "new_syntax:", name, ans
-    syntax = tuple('raw_statement : ' + x.value for x in ans['syntax'])
-    keywords = ans['new_syntax_keyword']
-    return syntax, dict((x.keyword_name.value, x.token_value.value)
-                        for x in keywords)
 

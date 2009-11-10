@@ -1,12 +1,12 @@
 #!/usr/bin/python
 
-# ucc.py
+# ide.py
 
 r'''Package editing GUI for uCC project.
 
 Prototype:
 
-start.py [packagePath]
+ide.py [packagePath]
 '''
 
 if __name__ == '__main__':
