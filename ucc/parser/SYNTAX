@@ -11,11 +11,9 @@ raw_statement : raw_simple_statement
 
 lvalue: lexpr as lvalue
 
-lexpr: NAME()
+lexpr: NAME
      | value '['() value... ']'
-     | value '.'() name
-
-name: NAME
+     | value '.'() NAME
 
 vexpr: APPROX_NUMBER(kind='approx',int1=p[%s][0],int2=p[%s][1])
      | CHAR(kind='int',int1=p[%s])

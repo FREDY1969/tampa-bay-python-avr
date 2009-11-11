@@ -6,8 +6,6 @@ import itertools
 
 from ucc.ast import crud
 
-Translation_dict = {}
-
 def delete_word_by_label(word_label):
     r'''Deletes the word and all of it's ast nodes from the ast table.
 
@@ -32,7 +30,8 @@ class ast(object):
     parse, this structure is stored into the database and then discarded.
     '''
     attr_cols = (
-        'kind', 'expect', 'label', 'word', 'int1', 'int2', 'str1', 'str2',
+        'kind', 'expect', 'label', 'opcode', 'symbol_id',
+        'int1', 'int2', 'str1', 'str2',
         'line_start', 'column_start', 'line_end', 'column_end',
     )
 
@@ -41,17 +40,18 @@ class ast(object):
     )
 
     # default attribute values:
-    kind = 'fn_call'
+    kind = 'call'
     expect = 'value'
-    word_symbol_id = label = word = int1 = int2 = str1 = str2 = None
+    word_symbol_id = label = opcode = symbol_id = None
+    int1 = int2 = str1 = str2 = None
     line_start = column_start = line_end = column_end = None
 
     def __init__(self, *args, **kws):
         self.args = args
         for name, value in kws.iteritems():
-            setattr(self, name, (Translation_dict.get(value, value)
-                                 if name == 'word'
-                                 else value))
+            if name not in self.attr_cols:
+                raise KeyError("ast: illegal attribute: %s" % name)
+            setattr(self, name, value)
 
     @classmethod
     def from_parser(cls, syntax_position_info, *args, **kws):
@@ -59,6 +59,16 @@ class ast(object):
         ans.line_start, ans.column_start, ans.line_end, ans.column_end = \
           syntax_position_info
         return ans
+
+    def __repr__(self):
+        if self.kind == 'word':
+            return "<ast word:%s>" % self.symbol_id
+        return "<ast %s%s%s>" % \
+                 (self.kind,
+                  ''.join(" %s:%r" % (attr, getattr(self, attr))
+                          for attr in ('int1', 'int2', 'str1', 'str2')
+                          if getattr(self, attr) is not None),
+                  ' ' + repr(self.args) if self.args else '')
 
     def save(self, word_symbol_id,
              parent = None, parent_arg_num = None, arg_order = None):
@@ -82,7 +92,6 @@ def save_args(args, word_symbol_id, parent = None):
                 x.save(word_symbol_id, parent, arg_num, position)
 
 def save_word(label, symbol_id, args):
-    print "save_word", label, symbol_id, type(symbol_id)
     delete_word_by_label(label)
     save_args(args, symbol_id)
 

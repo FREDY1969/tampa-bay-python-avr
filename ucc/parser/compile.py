@@ -15,6 +15,8 @@ from ucclib.built_in import declaration
 
 Built_in = 'ucclib.built_in'
 
+Debug = 0
+
 def load_word(ww):
     r'''Loads and returns the word_obj for ww.
     
@@ -94,7 +96,7 @@ def parse_word(ww, word_obj, parser):
     '''
     try:
         if not isinstance(word_obj, type): # word_obj not a class
-            word_obj.parse_file(parser)
+            word_obj.parse_file(parser, Debug)
     except SyntaxError:
         e_type, e_value, e_tb = sys.exc_info()
         for line in traceback.format_exception_only(e_type, e_value):
@@ -132,8 +134,6 @@ def run(top):
     #                         ucclib.built_in.declaration.declaration class)
     #
 
-    ast.Translation_dict = top.translation_dict
-
     # Gather Word_objs_by_name, and build the parsers for each package:
     Word_objs_by_name = {}   # {word.name: word_obj}
 
@@ -158,7 +158,8 @@ def run(top):
             word_obj = load_word(ww)
             if parse_word(ww, word_obj, package_parsers[ww.package_name]):
                 with crud.db_transaction() as db_cur:
-                    f, d, b, e, n = word_obj.compile(db_cur, Word_objs_by_name)
+                    f, d, b, e, n = word_obj.compile(db_cur, Word_objs_by_name,
+                                                     top.translation_dict)
                 flash.extend(f)
                 data.extend(d)
                 bss.extend(b)

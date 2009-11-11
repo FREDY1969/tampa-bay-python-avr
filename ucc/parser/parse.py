@@ -12,7 +12,7 @@ if __name__ == "__main__":
 from ucc.parser import scanner, parser_init
 from ucc.ast import ast, crud
 
-def parse_file(parser, word_word):
+def parse_file(parser, word_word, debug = 0):
     symbol_id = word_word.symbol_id
     filename = word_word.get_filename()
 
@@ -22,7 +22,7 @@ def parse_file(parser, word_word):
     assert name == word_word.name, \
            '%s != %s: internal error' % (name, word_word.name)
 
-    args = parser_init.parse(parser, scanner, filename, debug = 0,
+    args = parser_init.parse(parser, scanner, filename, debug = debug,
                              extra_arg = (symbol_id, parser.token_dict))
     if args is not None:
         with crud.db_transaction():

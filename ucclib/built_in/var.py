@@ -3,7 +3,7 @@
 from ucclib.built_in import declaration
 
 class var(declaration.word):
-    def compile(self, db_cur, words_by_name):
+    def compile(self, db_cur, words_by_name, translation_dict):
         initial_value = self.answers['initial value'][0]
         data_name = self.name + "__data"
         if initial_value == '0':

@@ -9,7 +9,7 @@ from ucc.assembler import asm_opcodes
 from ucclib.built_in import declaration
 
 class assembler_word(declaration.word):
-    def parse_file(self, parser):
+    def parse_file(self, parser, debug = 0):
         instructions = []
         filename = self.ww.get_filename()
         with open(filename) as f:
@@ -19,9 +19,9 @@ class assembler_word(declaration.word):
         with crud.db_transaction():
               ast.save_word(self.label, self.ww.symbol_id, instructions)
 
-    def compile(self, db_cur, words_by_name):
+    def compile(self, db_cur, words_by_name, translation_dict):
         insts = tuple(crud.read_as_tuples('ast',
-                                          'label', 'word', 'str1', 'str2',
+                                          'label', 'opcode', 'str1', 'str2',
                                           kind='flash',
                                           word_symbol_id=self.ww.symbol_id))
         my_labels = \
@@ -135,7 +135,7 @@ def parse_asm(filename, line, lineno):
     column_start = len(stripped_line) - len(stripped_line.lstrip()) + 1
     column_end = len(stripped_line)
     return ast.ast.from_parser((lineno, column_start, lineno, column_end),
-                               kind = 'flash', label = label, word = opcode,
+                               kind = 'flash', label = label, opcode = opcode,
                                str1 = str1, str2 = str2,
                                int1 = int1, int2 = int2)
 

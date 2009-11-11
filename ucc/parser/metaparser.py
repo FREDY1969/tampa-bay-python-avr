@@ -154,7 +154,7 @@ def normal_wrapup(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
             output("""
               p[0] = ast.ast.from_parser(
                        scanner_init.get_syntax_position_info(p),
-                       word=p[$offset], *args)
+                       p[$offset], *args)
               """,
               output_file = Output_file,
               target_indent = 4,
@@ -180,10 +180,11 @@ def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
             output("""
               p[0] = (ast.ast.from_parser(
                         scanner_init.get_syntax_position_info(p),
-                        *args),)
+                        p[$offset], *args),)
               """,
               output_file = Output_file,
-              target_indent = 4)
+              target_indent = 4,
+              offset = fn_word_offset)
     elif has_ellipsis:
         scanner_init.syntaxerror(
           "ellipsis in production without function word",

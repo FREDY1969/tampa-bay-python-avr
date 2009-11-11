@@ -49,18 +49,18 @@ create table ast (
 
     kind varchar(255),                         -- type of ast node
        -- possible values are:
-          -- 'word_body': word = name of word, str1: path to source file
           -- 'approx': int1 = number_as_integer, int2 = binary_pt
              -- actual number == int1 * 2^int2
           -- 'int': int1 = integer
           -- 'ratio': int1 = numerator, int2 = denominator
           -- 'string': str1 = string
-          -- 'fn_call': word = name of fn word
+          -- 'call': first arg = fn
+          -- 'word': label = word label, symbol_id = symbol_id of word
           -- 'None': line, column info not set
           -- All of the following are assembler nodes.  These all use the
           -- following optional columns:
               -- label
-              -- word is the opcode
+              -- opcode is the opcode
               -- str1 and str2 are the operands
               -- int1 is the length (in bytes)
               -- int2 is the number of clock cycles (for machine instructions
@@ -71,8 +71,9 @@ create table ast (
               -- 'bss'
               -- 'eeprom'
 
-    label varchar(255),                        -- assembler label
-    word varchar(255) collate nocase,
+    label varchar(255),                        -- word or assembler label
+    opcode varchar(255),
+    symbol_id int references symbol_table(id),
     int1 int,
     int2 int,
     str1 varchar(2000),
@@ -104,7 +105,7 @@ create table ast (
     unique (parent_node, parent_arg_num, arg_order)
 );
 
-create index word_index on ast (word, kind, expect);
+create index word_index on ast (symbol_id, kind, expect);
 
 create index word_body_index on ast (word_symbol_id,
                                      parent_node, parent_arg_num, arg_order);

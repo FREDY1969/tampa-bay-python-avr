@@ -5,7 +5,7 @@
 r'''Dumps the ast database in a simple ascii format.
 
 id: name(kind) from source_filename
-  id: label word kind int1 int2 str1 str2 expect type_id
+  id: label symbol_id kind int1 int2 str1 str2 expect type_id
     - child1
     - child2.1
     . child2.2
@@ -47,16 +47,16 @@ def dump_word(info, db_cur):
 
 def dump_node(word_symbol_id, id, db_cur, indent = ''):
     db_cur.execute("""
-        select label, word, kind, int1, int2, str1, str2, expect, type_id
+        select label, symbol_id, kind, int1, int2, str1, str2, expect, type_id
           from ast
          where id = ?
         """,
         (id,))
     row = db_cur.fetchone()
-    label, word, kind, int1, int2, str1, str2, expect, type_id = row
+    label, symbol_id, kind, int1, int2, str1, str2, expect, type_id = row
     print indent + str(id) + ":", \
           ' '.join(itertools.imap(str, filter(lambda x: x is not None,
-                                              (label, word, kind,
+                                              (label, symbol_id, kind,
                                                int1, int2, str1, str2,
                                                expect, type_id))))
     dump_children(db_cur, word_symbol_id, id, indent)
