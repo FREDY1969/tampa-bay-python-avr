@@ -64,7 +64,7 @@ def create_parsers(top):
     for p in top.packages:
         for ww in p.get_words():
             ww.symbol_id = \
-              symbol_table.symbol.create(ww.name, ww.kind,
+              symbol_table.symbol.create(ww.label, ww.kind,
                                          source_filename=ww.get_filename()) \
                 .id
             if ww.defining:

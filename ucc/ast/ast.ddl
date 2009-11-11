@@ -8,7 +8,7 @@
 create table symbol_table (
     id integer not null primary key,
     context integer references symbol_table(id),
-    name varchar(255) not null,
+    label varchar(255) not null collate nocase,
     kind varchar(255) not null,
         -- e.g.:
            -- 'function'
@@ -20,7 +20,7 @@ create table symbol_table (
            -- 'placeholder'
     source_filename varchar(4096),      -- full path to source file
     type_id int references type(id),
-    unique (context, name)
+    unique (context, label)
 );
 
 create table type (

@@ -34,9 +34,9 @@ class db_cursor(object):
         self.db_conn.close()
 
 def dump(db_cur):
-    db_cur.execute("""select id, name, kind, source_filename from symbol_table
+    db_cur.execute("""select id, label, kind, source_filename from symbol_table
                        where context is null
-                       order by name""")
+                       order by label""")
     for info in db_cur.fetchall():
         print
         dump_word(info, db_cur)
@@ -114,9 +114,9 @@ if __name__ == "__main__":
     if sys.argv[1].lower().endswith('.ucl'):
         package_dir, file = os.path.split(sys.argv[1])
         with db_cursor(package_dir) as db_cur:
-            db_cur.execute("""select id, name, kind, source_filename
+            db_cur.execute("""select id, label, kind, source_filename
                                 from symbol_table
-                               where context is null and name = ?
+                               where context is null and label = ?
                            """,
                            (file[:-4],))
             dump_word(db_cur.fetchone(), db_cur)

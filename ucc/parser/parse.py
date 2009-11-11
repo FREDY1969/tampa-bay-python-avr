@@ -12,15 +12,21 @@ if __name__ == "__main__":
 from ucc.parser import scanner, parser_init
 from ucc.ast import ast, crud
 
-def parse_file(parser, symbol_id, filename):
+def parse_file(parser, word_word):
+    symbol_id = word_word.symbol_id
+    filename = word_word.get_filename()
+
+    # Is this really necessary?
     name, ext = os.path.splitext(os.path.basename(filename))
     assert ext == '.ucl', "unknown file extension on: " + filename
+    assert name == word_word.name, \
+           '%s != %s: internal error' % (name, word_word.name)
 
     args = parser_init.parse(parser, scanner, filename, debug = 0,
                              extra_arg = (symbol_id, parser.token_dict))
     if args is not None:
         with crud.db_transaction():
-            ast.save_word(name, symbol_id, args)
+            ast.save_word(word_word.label, symbol_id, args)
         return True
     return False
 

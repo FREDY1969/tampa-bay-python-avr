@@ -162,7 +162,7 @@ class word(declaration):
 class high_level_word(word):
     def parse_file(self, parser):
         filename = self.ww.get_filename()
-        worked = parse.parse_file(parser, self.ww.symbol_id, filename)
+        worked = parse.parse_file(parser, self.ww)
         if not worked:
             raise AssertionError, "parse failed for " + filename
 
