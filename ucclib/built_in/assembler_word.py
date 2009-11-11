@@ -4,7 +4,7 @@ from __future__ import with_statement
 
 import itertools
 
-from ucc.ast import ast, crud, symbol_table
+from ucc.ast import ast, crud
 from ucc.assembler import asm_opcodes
 from ucclib.built_in import declaration
 
@@ -12,24 +12,18 @@ class assembler_word(declaration.word):
     def parse_file(self, parser):
         instructions = []
         filename = self.ww.get_filename()
-
-        self.word_body_id = \
-          symbol_table.symbol.create(self.name, self.ww.kind,
-                                     source_filename=filename) \
-            .id
-
         with open(filename) as f:
             for i, line in enumerate(f):
                 inst = parse_asm(filename, line, i + 1)
                 if inst: instructions.append(inst)
         with crud.db_transaction():
-              ast.save_word(self.name, self.word_body_id, instructions)
+              ast.save_word(self.name, self.ww.symbol_id, instructions)
 
     def compile(self, db_cur, words_by_name):
         insts = tuple(crud.read_as_tuples('ast',
                                           'label', 'word', 'str1', 'str2',
                                           kind='flash',
-                                          word_body_id=self.word_body_id))
+                                          word_symbol_id=self.ww.symbol_id))
         my_labels = \
           frozenset(itertools.ifilter(None, itertools.imap(lambda x: x[0],
                                                            insts)))

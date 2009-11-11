@@ -45,7 +45,7 @@ def dump_word(info, db_cur):
     print "%d: %s(%s) from %s" % info
     dump_children(db_cur, info[0], indent = '  ')
 
-def dump_node(word_body_id, id, db_cur, indent = ''):
+def dump_node(word_symbol_id, id, db_cur, indent = ''):
     db_cur.execute("""
         select label, word, kind, int1, int2, str1, str2, expect, type_id
           from ast
@@ -59,31 +59,31 @@ def dump_node(word_body_id, id, db_cur, indent = ''):
                                               (label, word, kind,
                                                int1, int2, str1, str2,
                                                expect, type_id))))
-    dump_children(db_cur, word_body_id, id, indent)
+    dump_children(db_cur, word_symbol_id, id, indent)
 
-def dump_children(db_cur, word_body_id, parent_id = None, indent = ''):
+def dump_children(db_cur, word_symbol_id, parent_id = None, indent = ''):
     # Do children:
     if parent_id is None:
         db_cur.execute("""
             select id, parent_arg_num, arg_order
               from ast
-             where word_body_id = ? and parent_node is null
+             where word_symbol_id = ? and parent_node is null
              order by parent_arg_num, arg_order""",
-            (word_body_id,))
+            (word_symbol_id,))
     else:
         db_cur.execute("""
             select id, parent_arg_num, arg_order
               from ast
-             where word_body_id = ? and parent_node = ?
+             where word_symbol_id = ? and parent_node = ?
              order by parent_arg_num, arg_order""",
-            (word_body_id, parent_id))
+            (word_symbol_id, parent_id))
     last_parent_arg_num = None
     hold_id = None
     first_child = True
     if not indent: indent = '  '
     else: indent = ' ' * len(indent)
     def dump_child(child_id):
-        dump_node(word_body_id, child_id, db_cur,
+        dump_node(word_symbol_id, child_id, db_cur,
                   indent = (indent + '- ' if first_child
                                           else indent + '+ '))
     for child_id, parent_arg_num, arg_order in db_cur.fetchall():
