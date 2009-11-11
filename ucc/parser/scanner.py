@@ -5,7 +5,7 @@
 from __future__ import with_statement, division
 
 from ucc.parser import scanner_init, number
-from ucc.ast import symbol_table
+from ucc.ast import ast, symbol_table
 
 debug = 0
 
@@ -370,17 +370,20 @@ def t_NAME_n(t):
         [^])[( \r\n.:]      # last character
     '''
     if t.value in Names:
+        set_name_value(t)
         t.type = Names[t.value]
     elif t.value in Token_dict:
         t.type = Token_dict[t.value]
+        if not t.type.endswith('_TOK'): 
+            set_name_value(t)
     elif t.value[0] == '>':
-        t.value = get_name_value(t.value)
+        set_name_value(t)
         t.type = 'ARG_LEFT_WORD'
     elif t.value[-1] == '<':
-        t.value = get_name_value(t.value)
+        set_name_value(t)
         t.type = 'ARG_RIGHT_WORD'
     else:
-        t.value = get_name_value(t.value)
+        set_name_value(t)
         t.type = 'NAME'
     return t
 
@@ -389,24 +392,28 @@ def t_NAME(t): # single character NAME
         (?=[])[( \r\n.:])    # followed by [, ], (, ), space, newline, . or :
     '''
     if t.value in Names:
+        set_name_value(t)
         t.type = Names[t.value]
     elif t.value in Token_dict:
         t.type = Token_dict[t.value]
+        if not t.type.endswith('_TOK'): 
+            set_name_value(t)
     else:
-        t.value = get_name_value(t.value)
+        set_name_value(t)
     return t
 
 def t_NEGATE(t):
     r'''-
         (?=[^]) \r\n])  # followed by name, number, string, -, ( or [
     '''
-    t.value = 'negate'
+    set_name_value(t, 'negate')
     return t
 
 def t_minus(t):
     r'''-
         (?=[ \r\n])     # followed by space or newline
     '''
+    set_name_value(t)
     t.type = '-'
     return t
 
@@ -435,6 +442,15 @@ def init(debug_param, extra_arg = (None, {})):
     debug = debug_param
     Word_body_id, Token_dict = extra_arg
 
-def get_name_value(name):
-    if Word_body_id is None: return name
-    return symbol_table.symbol.lookup(name, Word_body_id).id
+def set_name_value(t, name = None):
+    if Word_body_id is None:
+        if name: t.value = name
+    else:
+        syntax_info = t.lineno, scanner_init.get_col_line(t.lexpos)[0]
+        name = name or t.value
+        t.value = \
+          ast.ast.from_parser(
+            syntax_info + syntax_info, 
+            kind='word',
+            label=name,
+            symbol_id=symbol_table.symbol.lookup(name, Word_body_id).id)

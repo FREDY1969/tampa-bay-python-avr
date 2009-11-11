@@ -9,7 +9,7 @@ def p_hi_0001(p):
     args = []
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[1], *args)
+             p[1], *args)
 <BLANKLINE>
 ['DAD_TOK']
 
@@ -21,7 +21,7 @@ def p_hi_0002(p):
     args.append(p[2])
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[1], *args)
+             p[1], *args)
 <BLANKLINE>
 []
 
@@ -33,7 +33,7 @@ def p_hi_0003(p):
     args.append(p[3])
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[1], *args)
+             p[1], *args)
 <BLANKLINE>
 []
 
@@ -46,7 +46,7 @@ def p_hi_0004(p):
     args.append(p[3])
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[2], *args)
+             p[2], *args)
 <BLANKLINE>
 []
 
@@ -58,7 +58,7 @@ def p_hi_0005(p):
     args.append(p[1])
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[2], *args)
+             p[2], *args)
 <BLANKLINE>
 []
 
@@ -71,7 +71,7 @@ def p_hi_0006(p):
     args.append(p[1])
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[2], *args)
+             p[2], *args)
 <BLANKLINE>
 []
 
@@ -101,7 +101,7 @@ def p_hi_0008(p):
 ['DAD']
 
 >>> parser_init.test(metaparser, metascanner,
-...                  "hi: mom(word=p[%s]) [dad]")
+...                  "hi: mom(symbol_id=p[%s]) [dad]")
 def p_hi_0009(p):
     r''' hi : mom dad
     '''
@@ -109,7 +109,7 @@ def p_hi_0009(p):
     args.append(p[2])
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[1], *args)
+             symbol_id=p[1], *args)
 <BLANKLINE>
 []
 
@@ -120,7 +120,7 @@ def p_hi_0010(p):
     args = []
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[1], *args)
+             p[1], *args)
 <BLANKLINE>
 def p_hi_0011(p):
     r''' hi : dad
@@ -128,7 +128,7 @@ def p_hi_0011(p):
     args = []
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[1], *args)
+             p[1], *args)
 <BLANKLINE>
 []
 
@@ -151,7 +151,7 @@ def p_hi_0012(p):
     args.append(p[2])
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[1], *args)
+             p[1], *args)
 <BLANKLINE>
 []
 
@@ -175,7 +175,7 @@ def p_hi_0013(p):
     args.append(p[2])
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[1], *args)
+             p[1], *args)
 <BLANKLINE>
 []
 
@@ -198,7 +198,7 @@ def p_hi_0014(p):
     args.append(p[2])
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[1], *args)
+             p[1], *args)
 <BLANKLINE>
 []
 
@@ -221,7 +221,7 @@ def p_hi_0015(p):
     args.extend(p[2])
     p[0] = ast.ast.from_parser(
              scanner_init.get_syntax_position_info(p),
-             word=p[1], *args)
+             p[1], *args)
 <BLANKLINE>
 []
 
