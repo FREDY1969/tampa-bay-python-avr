@@ -195,7 +195,7 @@ def t_LB_TOK(t):
 
 def t_RATIO(t):
     r'''[0-9]+/[0-9]+   # ratio
-        (?=[]) \r\n])   # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])   # followed by ], ), space or newline
     '''
     slash = t.value.index('/')
     t.value = (int(t.value[:slash]), int(t.value[slash+1:]))
@@ -203,9 +203,9 @@ def t_RATIO(t):
 
 def t_ratio_2(t):
     r'''[0-9]+
-        \.[0-9]+        # decimal point
-        /[0-9]+         # denominator
-        (?=[]) \r\n])   # followed by ], ), space or newline
+        \.[0-9]+              # decimal point
+        /[0-9]+               # denominator
+        (?=[[(:]?[]) \r\n])   # followed by ], ), space or newline
     '''
     dot = t.value.index('.')
     slash = t.value.index('/')
@@ -217,9 +217,9 @@ def t_ratio_2(t):
 
 def t_ratio_3(t):
     r'''[0-9]+
-        \.[0-9]+        # decimal point
-        /               # implied denominator
-        (?=[]) \r\n])   # followed by ], ), space or newline
+        \.[0-9]+              # decimal point
+        /                     # implied denominator
+        (?=[[(:]?[]) \r\n])   # followed by ], ), space or newline
     '''
     dot = t.value.index('.')
     denominator = 10**(len(t.value) - dot - 2)
@@ -229,9 +229,9 @@ def t_ratio_3(t):
     return t
 
 def t_ratio_4(t):
-    r'''\.[0-9]+        # decimal point
-        /               # implied denominator
-        (?=[]) \r\n])   # followed by ], ), space or newline
+    r'''\.[0-9]+              # decimal point
+        /                     # implied denominator
+        (?=[[(:]?[]) \r\n])   # followed by ], ), space or newline
     '''
     denominator = 10**(len(t.value) - 2)
     t.value = (int(t.value[1:-1]), denominator)
@@ -240,7 +240,7 @@ def t_ratio_4(t):
 
 def t_hex_RATIO(t):
     r'''0[xX][0-9a-fA-F]+/[0-9a-fA-F]+ # ratio
-        (?=[]) \r\n])                  # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])            # followed by ], ), space or newline
     '''
     slash = t.value.index('/')
     t.value = (int(t.value[:slash], 16), int(t.value[slash+1:], 16))
@@ -251,7 +251,7 @@ def t_hex_ratio_2(t):
     r'''0[xX][0-9a-fA-F]+
         \.[0-9a-fA-F]+        # decimal point
         /[0-9a-fA-F]+         # denominator
-        (?=[]) \r\n])         # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])   # followed by ], ), space or newline
     '''
     dot = t.value.index('.')
     slash = t.value.index('/')
@@ -266,7 +266,7 @@ def t_hex_ratio_3(t):
     r'''0[xX][0-9a-fA-F]+
         \.[0-9a-fA-F]+        # decimal point
         /                     # implied denominator
-        (?=[]) \r\n])         # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])   # followed by ], ), space or newline
     '''
     dot = t.value.index('.')
     denominator = 16**(len(t.value) - dot - 2)
@@ -280,7 +280,7 @@ def t_hex_ratio_4(t):
     r'''0[xX]
         \.[0-9a-fA-F]+        # decimal point
         /                     # implied denominator
-        (?=[]) \r\n])         # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])   # followed by ], ), space or newline
     '''
     denominator = 16**(len(t.value) - 4)
     t.value = (int(t.value[3:-1], 16), denominator)
@@ -292,7 +292,7 @@ def t_APPROX_NUMBER(t):
     r'''(?: [0-9]+ \.[0-9]* | \.[0-9]+ )
         (?: ~[0-9] )?
         (?: [eE] [+-]?[0-9]+ )?
-        (?=[]) \r\n])    # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])    # followed by ], ), space or newline
     '''
     t.value = number.approx(t.value).int_exp()
     return t
@@ -300,7 +300,7 @@ def t_APPROX_NUMBER(t):
 def t_approx_2(t):
     # All decimal forms without a '.':
     r'''[0-9]+ (?: (?: ~[0-9] )? [eE] [+-]?[0-9]+ | ~[0-9] )
-        (?=[]) \r\n])    # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])    # followed by ], ), space or newline
     '''
     t.value = number.approx(t.value).int_exp()
     t.type = 'APPROX_NUMBER'
@@ -311,7 +311,7 @@ def t_hex_APPROX_NUMBER(t):
     r'''0[xX] (?: [0-9a-fA-F]+ \.[0-9a-fA-F]* | \.[0-9a-fA-F]+ )
               (?: ~[0-9a-fA-F] )?
               (?: [xX] [+-]?[0-9]+ )?
-        (?=[]) \r\n])    # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])    # followed by ], ), space or newline
     '''
     t.value = number.approx(t.value).int_exp()
     t.type = 'APPROX_NUMBER'
@@ -322,7 +322,7 @@ def t_hex_approx_2(t):
     r'''0[xX] [0-9a-fA-F]+
         (?: (?: ~[0-9a-fA-F] )? [xX] [+-]?[0-9]+
           | ~[0-9a-fA-F] )
-        (?=[]) \r\n])    # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])    # followed by ], ), space or newline
     '''
     t.value = number.approx(t.value).int_exp()
     t.type = 'APPROX_NUMBER'
@@ -330,14 +330,14 @@ def t_hex_approx_2(t):
 
 def t_INTEGER(t):
     r'''[0-9]+
-        (?=[]) \r\n])   # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])   # followed by ], ), space or newline
     '''
     t.value = int(t.value)
     return t
 
 def t_hex_INTEGER(t):
     r'''0[xX][0-9]+
-        (?=[]) \r\n])   # followed by ], ), space or newline
+        (?=[[(:]?[]) \r\n])   # followed by ], ), space or newline
     '''
     t.value = int(t.value, 16)
     t.type = 'INTEGER'
@@ -405,7 +405,7 @@ def t_NEGATE(t):
 
 def t_minus(t):
     r'''-
-        (?=[]) \r\n])   # followed by space, newline, ] or )
+        (?=[ \r\n])     # followed by space or newline
     '''
     t.type = '-'
     return t
