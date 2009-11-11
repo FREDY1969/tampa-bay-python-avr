@@ -2,12 +2,45 @@
 
 -- The schema for the ast database.
 
+---------------------------------------------------------------------------
+-- These are the tables populated by the parse_file method.
+---------------------------------------------------------------------------
+create table symbol_table (
+    id integer not null primary key,
+    context integer references symbol_table(id),
+    name varchar(255) not null,
+    kind varchar(255) not null,
+        -- e.g.:
+           -- 'function'
+           -- 'task'
+           -- 'const'
+           -- 'var'
+           -- 'parameter'
+           -- 'label'
+           -- 'placeholder'
+    source_filename varchar(4096),      -- full path to source file
+    type_id int references type(id),
+    unique (context, name)
+);
+
+create table type (
+    -- Describes what is known about a value at compile time.
+
+    id integer not null primary key,
+    kind varchar(255) not null,
+    min_value int,
+    max_value int,
+    binary_pt int,
+    precision int,
+    element_type int references type(id)
+);
+
 create table ast (
     -- The Abstract Syntax Tree (AST).  See AbstractSyntaxTree page in google
     -- code project wiki.
 
     id integer not null primary key,
-    word_body_id int references ast(id),       -- NULL for the word_body itself
+    word_body_id int not null references symbol_table(id),
 
     -- For macro expansions:
     --id_replaced int unique references ast(id),
@@ -57,7 +90,7 @@ create table ast (
     type_id int references type(id),
 
     -- ast argument nodes are linked to their parent nodes:
-    parent_node int references ast(id),
+    parent_node int references ast(id),        -- null for top-level
     parent_arg_num int,
     arg_order int,                             -- for list arguments, else 0
 
@@ -76,19 +109,38 @@ create index word_index on ast (word, kind, expect);
 create index word_body_index on ast (word_body_id,
                                      parent_node, parent_arg_num, arg_order);
 
+---------------------------------------------------------------------------
+-- ucc.ast.ast.gensym stores info here.  Nobody else knows about this...
+---------------------------------------------------------------------------
 create table gensym_indexes (
     prefix varchar(255) not null,
     last_used_index int not null
 );
 
-create table type (
-    -- Describes what is known about a value at compile time.
-
+---------------------------------------------------------------------------
+-- The tables the hold the assembler sources.
+--
+-- These are broken out by blocks to facilitate the assembler playing games
+-- with the block orders to maximize the use of smaller jmp and call insts.
+---------------------------------------------------------------------------
+create table assembler_blocks (
     id integer not null primary key,
-    kind varchar(255) not null,
-    min_value int,
-    max_value int,
-    binary_pt int,
-    precision int,
-    element_type int references type(id)
+    section varchar(255) not null,
+        -- 'code'
+        -- 'data'
+        -- 'bss'
+        -- 'eeprom' (this probably gets broken out into several tables)
+    label varchar(255) unique,
+    address int,
+    length int
+);
+
+create table assembler_code (
+    id integer not null primary key,
+    block_id int not null references assembler_blocks(id),
+    opcode varchar(255) not null,
+    operand1 varchar(255),
+    operand2 varchar(255),
+    length int not null,           -- in bytes
+    clocks int                     -- for machine instructions (code section)
 );

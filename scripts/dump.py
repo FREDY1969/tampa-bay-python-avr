@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 # dump.py (package_dir | file.ucl)\n")
 
