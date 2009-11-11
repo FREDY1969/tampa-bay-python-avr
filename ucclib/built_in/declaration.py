@@ -1,6 +1,7 @@
 # declaration.py
 
 import os.path
+from ucc.ast import crud
 from ucc.parser import parse
 from ucc.word import helpers, word as word_module
 
@@ -94,7 +95,7 @@ class word(declaration):
         macros_seen = False
         for id, kind, word_name, int1, int2, str1, expect, \
             parent_arg_num, arg_order \
-         in get_ast_nodes(db_cur, ast_id):
+         in get_ast_nodes(ast_id):
             self.update_expect(id, parent_arg_num, arg_order, db_cur)
             new_id_info = getattr(words_by_name[word_name],
                                   'prepare_' + expect) \
@@ -171,7 +172,7 @@ class word(declaration):
 class high_level_word(word):
     def parse_file(self, parser):
         filename = self.get_filename()
-        worked, word_body_id = parse.parse_file(parser, filename)
+        worked, word_body_id = parse.parse_file(parser, self.ww.kind, filename)
         if not worked:
             raise AssertionError, "parse failed for " + filename
         self.word_body_id = word_body_id
@@ -180,7 +181,7 @@ class high_level_word(word):
         print "%s.compile" % (self.name,), "id", self.word_body_id
         series_to_compile = []
         for ast_id, kind, word, int1, int2, str1, expect, _, _ \
-         in get_ast_nodes(db_cur, self.word_body_id):
+         in get_ast_nodes(self.word_body_id):
             print "%s.prepare_%s" % (word, expect)
             series_to_compile.append(
               getattr(words_by_name[word], 'prepare_' + expect)
@@ -203,20 +204,17 @@ class high_level_word(word):
             words_needed.extend(n)
         return flash, data, bss, eeprom, words_needed
 
-def get_ast_nodes(db_cur, parent_id):
+def get_ast_nodes(parent_id):
     r'''Returns a list of information on the arguments for parent_id.
 
     The information is: [ast_id, kind, word_name, int1, int2, str1, expect,
                          parent_arg_num, arg_order]
     '''
-    db_cur.execute("""select id, kind, word, int1, int2, str1, expect,
-                             parent_arg_num, arg_order
-                        from ast
-                       where parent_node = :parent_id
-                       order by parent_arg_num, arg_order
-                   """,
-                   {'parent_id': parent_id})
-    return db_cur.fetchall()
+    return crud.read_as_tuples('ast',
+                                 'id', 'kind', 'word', 'int1', 'int2', 'str1',
+                                 'expect', 'parent_arg_num', 'arg_order',
+                               parent_node=parent_id,
+                               order_by=('parent_arg_num', 'arg_order'))
 
 def load_class(ww):
     mod = helpers.import_module("%s.%s" % (ww.package_name, ww.name))

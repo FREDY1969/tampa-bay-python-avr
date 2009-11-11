@@ -9,7 +9,7 @@ import traceback
 
 from ucc.word import helpers, xml_access, word
 from ucc.parser import genparser
-from ucc.ast import ast
+from ucc.ast import ast, crud
 from ucc.assembler import assemble
 from ucclib.built_in import declaration
 
@@ -81,6 +81,8 @@ def parse_word(ww, word_obj, parser):
     Return True on success, False on failure.
 
     Catches exceptions and prints its own error messages.
+
+    This needs an crud.db_connection open.
     '''
     try:
         if not isinstance(word_obj, type): # word_obj not a class
@@ -130,10 +132,11 @@ def run(top):
     Token_dict = {}
 
     # {package_name: parser module}
-    package_parsers = create_parsers(top)
+    package_parsers = create_parsers(top)  # Also does load_word on all
+                                           # defining words.
 
     # parse files in the package:
-    with ast.db_connection(top.packages[-1].package_dir):
+    with crud.db_connection(top.packages[-1].package_dir):
         flash = []      # list of (label, opcode, operand1, operand2)
         data = []       # list of (label, datatype, operand)
         bss = []        # list of (label, num_bytes)
@@ -146,7 +149,7 @@ def run(top):
             ww = top.get_word_by_name(next_word)
             word_obj = load_word(ww)
             if parse_word(ww, word_obj, package_parsers[ww.package_name]):
-                with ast.db_transaction() as db_cur:
+                with crud.db_transaction() as db_cur:
                     f, d, b, e, n = word_obj.compile(db_cur, Word_objs_by_name)
                 flash.extend(f)
                 data.extend(d)

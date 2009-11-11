@@ -1,4 +1,4 @@
-file(kind='word_body') : statement+
+[file] : statement+
 
 statement        : raw_statement as statement
 simple_statement : raw_simple_statement as statement

@@ -14,8 +14,7 @@ import string
 import sys
 
 from ucc.parser import metascanner, scanner_init
-from ucc.ast import ast
-
+from ucc.ast import ast, crud
 
 tokens = metascanner.tokens
 
@@ -72,7 +71,7 @@ def p_rule1(p):
 
 def gen_alternatives(rule_name, alternatives, wrapup_fn, param_list = None):
     for words, lineno, lexpos in alternatives:
-        p_fn_name = ast.gensym('p_' + rule_name)
+        p_fn_name = crud.gensym('p_' + rule_name)
         output("""
             def $fn_name(p):
                 r''' $rule_name : $production
@@ -215,11 +214,11 @@ def p_opt_word(p):
     '''
     rule_name = Optional_rules.get(p[1])
     if rule_name is None:
-        rule_name = ast.gensym('optional')
+        rule_name = crud.gensym('optional')
         Optional_rules[p[1]] = rule_name
         rule_text, type, offset, prep_code, params = p[1]
         p_fn_name_0, p_fn_name_n = \
-          ast.gensym('p_optional'), ast.gensym('p_optional')
+          crud.gensym('p_optional'), crud.gensym('p_optional')
         output("""
             def $fn_name1(p):
                 r''' $rule_name :
@@ -249,11 +248,11 @@ def p_one_or_more_word(p):
     '''
     rule_name = One_or_more_rules.get(p[1])
     if rule_name is None:
-        rule_name = ast.gensym('one_or_more')
+        rule_name = crud.gensym('one_or_more')
         One_or_more_rules[p[1]] = rule_name
         rule_text, type, offset, prep_code, params = p[1]
         p_fn_name_1, p_fn_name_n = \
-          ast.gensym('p_one_or_more'), ast.gensym('p_one_or_more')
+          crud.gensym('p_one_or_more'), crud.gensym('p_one_or_more')
         prep = prep_code % {'offset': offset + 2} if prep_code else ''
         output("""
             def $fn_name(p):
@@ -292,11 +291,11 @@ def p_zero_or_more_word(p):
     '''
     rule_name = Zero_or_more_rules.get(p[1])
     if rule_name is None:
-        rule_name = ast.gensym('zero_or_more')
+        rule_name = crud.gensym('zero_or_more')
         Zero_or_more_rules[p[1]] = rule_name
         rule_text, type, offset, prep_code, params = p[1]
         p_fn_name_0, p_fn_name_n = \
-          ast.gensym('p_zero_or_more'), ast.gensym('p_zero_or_more')
+          crud.gensym('p_zero_or_more'), crud.gensym('p_zero_or_more')
         output("""
             def $fn_name1(p):
                 r''' $rule_name :
@@ -326,11 +325,11 @@ def p_word_ellipsis(p):
     '''
     rule_name = Ellipsis_rules.get(p[1])
     if rule_name is None:
-        rule_name = ast.gensym('ellipsis')
+        rule_name = crud.gensym('ellipsis')
         Ellipsis_rules[p[1]] = rule_name
         rule_text, type, offset, prep_code, params = p[1]
         p_fn_name_0, p_fn_name_n = \
-          ast.gensym('p_ellipsis'), ast.gensym('p_ellipsis')
+          crud.gensym('p_ellipsis'), crud.gensym('p_ellipsis')
         output("""
             def $fn_name1(p):
                 r''' $rule_name :
@@ -378,7 +377,7 @@ def p_sub_rule(p):
 def p_sub_rule2(p):
     ''' sub_rule : '(' alternatives ')'
     '''
-    rule_name = ast.gensym('sub_rule')
+    rule_name = crud.gensym('sub_rule')
     gen_alternatives(rule_name, p[2], normal_wrapup)
     p[0] = rule_name, 'single_arg', 0, None, None
 

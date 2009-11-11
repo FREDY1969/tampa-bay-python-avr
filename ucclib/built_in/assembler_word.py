@@ -4,30 +4,27 @@ from __future__ import with_statement
 
 import itertools
 
-from ucc.ast import ast
+from ucc.ast import ast, crud
 from ucc.assembler import asm_opcodes
 from ucclib.built_in import declaration
 
 class assembler_word(declaration.word):
     def parse_file(self, parser):
-        with ast.db_transaction() as db_cur:
-            ast.delete_word_by_name(self.name)
-            instructions = []
-            filename = self.get_filename()
-            with open(filename) as f:
-                for i, line in enumerate(f):
-                    inst = parse_asm(filename, line, i + 1)
-                    if inst: instructions.append(inst)
-            root = ast.ast(kind='word_body', word=self.name, str1=filename,
-                           *instructions)
-            self.word_body_id = root.save(db_cur)
+        instructions = []
+        filename = self.get_filename()
+        with open(filename) as f:
+            for i, line in enumerate(f):
+                inst = parse_asm(filename, line, i + 1)
+                if inst: instructions.append(inst)
+        with crud.db_transaction():
+            self.word_body_id = \
+              ast.save_word(self.name, self.ww.kind, filename, instructions)
+
     def compile(self, db_cur, words_by_name):
-        db_cur.execute("""select label, word, str1, str2
-                            from ast
-                           where kind = 'flash'
-                             and word_body_id = ?
-                       """, (self.word_body_id,))
-        insts = tuple(itertools.imap(tuple, db_cur.fetchall()))
+        insts = tuple(crud.read_as_tuples('ast',
+                                          'label', 'word', 'str1', 'str2',
+                                          kind='flash',
+                                          word_body_id=self.word_body_id))
         my_labels = \
           frozenset(itertools.ifilter(None, itertools.imap(lambda x: x[0],
                                                            insts)))
@@ -36,7 +33,7 @@ class assembler_word(declaration.word):
             itertools.imap(extract_label,
               itertools.ifilter(is_legal_label,
                 itertools.chain(itertools.imap(lambda x: x[2], insts),
-                                itertools.imap(lambda x: x[2], insts)))))
+                                itertools.imap(lambda x: x[3], insts)))))
         return ((self.name, None, None, None),) + insts, (), (), (), \
                tuple(labels_used - my_labels)
 
