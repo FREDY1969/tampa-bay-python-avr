@@ -8,13 +8,13 @@ from ucc.ast import crud
 
 Translation_dict = {}
 
-def delete_word_by_name(word_name):
+def delete_word_by_label(word_label):
     r'''Deletes the word and all of it's ast nodes from the ast table.
 
     This does not report an error if the word is not in the database.
     '''
     id = crud.read1_column('symbol_table', 'id',
-                           context=None, name=word_name, zero_ok=True)
+                           context=None, label=word_label, zero_ok=True)
     if id is not None:
         delete_word_by_id(id)
 
@@ -81,8 +81,8 @@ def save_args(args, word_symbol_id, parent = None):
             for position, x in enumerate(arg):
                 x.save(word_symbol_id, parent, arg_num, position)
 
-def save_word(name, symbol_id, args):
-    print "save_word", name, symbol_id, type(symbol_id)
-    delete_word_by_name(name)
+def save_word(label, symbol_id, args):
+    print "save_word", label, symbol_id, type(symbol_id)
+    delete_word_by_label(label)
     save_args(args, symbol_id)
 

@@ -17,7 +17,7 @@ class assembler_word(declaration.word):
                 inst = parse_asm(filename, line, i + 1)
                 if inst: instructions.append(inst)
         with crud.db_transaction():
-              ast.save_word(self.name, self.ww.symbol_id, instructions)
+              ast.save_word(self.label, self.ww.symbol_id, instructions)
 
     def compile(self, db_cur, words_by_name):
         insts = tuple(crud.read_as_tuples('ast',
