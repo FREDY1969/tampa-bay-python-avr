@@ -4,11 +4,12 @@
 
 r'''Dumps the ast database in a simple ascii format.
 
-id: label word kind int1 int2 str1 str2 expect type_id
-  - child1
-  - child2.1
-    child2.2
-  < node replaced
+id: name(kind) from source_filename
+  id: label word kind int1 int2 str1 str2 expect type_id
+    - child1
+    - child2.1
+    . child2.2
+    < node replaced
 
 '''
 
@@ -33,14 +34,18 @@ class db_cursor(object):
         self.db_conn.close()
 
 def dump(db_cur):
-    db_cur.execute("""select id from ast
-                       where word_body_id is null
-                       order by word""")
-    for id, in db_cur.fetchall():
+    db_cur.execute("""select id, name, kind, source_filename from symbol_table
+                       where context is null
+                       order by name""")
+    for info in db_cur.fetchall():
         print
-        dump_word(id, db_cur)
+        dump_word(info, db_cur)
 
-def dump_word(id, db_cur, indent = ''):
+def dump_word(info, db_cur):
+    print "%d: %s(%s) from %s" % info
+    dump_children(db_cur, info[0], indent = '  ')
+
+def dump_node(word_body_id, id, db_cur, indent = ''):
     db_cur.execute("""
         select label, word, kind, int1, int2, str1, str2, expect, type_id
           from ast
@@ -54,22 +59,33 @@ def dump_word(id, db_cur, indent = ''):
                                               (label, word, kind,
                                                int1, int2, str1, str2,
                                                expect, type_id))))
+    dump_children(db_cur, word_body_id, id, indent)
 
+def dump_children(db_cur, word_body_id, parent_id = None, indent = ''):
     # Do children:
-    db_cur.execute("""
-        select id, parent_arg_num, arg_order
-          from ast
-         where parent_node = ?
-         order by parent_arg_num, arg_order""",
-        (id,))
+    if parent_id is None:
+        db_cur.execute("""
+            select id, parent_arg_num, arg_order
+              from ast
+             where word_body_id = ? and parent_node is null
+             order by parent_arg_num, arg_order""",
+            (word_body_id,))
+    else:
+        db_cur.execute("""
+            select id, parent_arg_num, arg_order
+              from ast
+             where word_body_id = ? and parent_node = ?
+             order by parent_arg_num, arg_order""",
+            (word_body_id, parent_id))
     last_parent_arg_num = None
     hold_id = None
     first_child = True
     if not indent: indent = '  '
     else: indent = ' ' * len(indent)
     def dump_child(child_id):
-        dump_word(child_id, db_cur, indent = (indent + '- ' if first_child
-                                                            else indent + '  '))
+        dump_node(word_body_id, child_id, db_cur,
+                  indent = (indent + '- ' if first_child
+                                          else indent + '+ '))
     for child_id, parent_arg_num, arg_order in db_cur.fetchall():
         if parent_arg_num == last_parent_arg_num:
             assert hold_id is not None
@@ -98,12 +114,12 @@ if __name__ == "__main__":
     if sys.argv[1].lower().endswith('.ucl'):
         package_dir, file = os.path.split(sys.argv[1])
         with db_cursor(package_dir) as db_cur:
-            db_cur.execute("""select id
-                                from ast
-                               where kind = 'word_body' and word = ?
+            db_cur.execute("""select id, name, kind, source_filename
+                                from symbol_table
+                               where context is null and name = ?
                            """,
                            (file[:-4],))
-            dump_word(db_cur.fetchone()[0], db_cur)
+            dump_word(db_cur.fetchone(), db_cur)
     else:
         with db_cursor(sys.argv[1]) as db_cur:
             dump(db_cur)
