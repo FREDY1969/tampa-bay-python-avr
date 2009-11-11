@@ -40,7 +40,7 @@ create table ast (
     -- code project wiki.
 
     id integer not null primary key,
-    word_body_id int not null references symbol_table(id),
+    word_symbol_id int not null references symbol_table(id),
 
     -- For macro expansions:
     --id_replaced int unique references ast(id),
@@ -106,7 +106,7 @@ create table ast (
 
 create index word_index on ast (word, kind, expect);
 
-create index word_body_index on ast (word_body_id,
+create index word_body_index on ast (word_symbol_id,
                                      parent_node, parent_arg_num, arg_order);
 
 ---------------------------------------------------------------------------

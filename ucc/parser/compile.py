@@ -9,7 +9,7 @@ import traceback
 
 from ucc.word import helpers, xml_access, word
 from ucc.parser import genparser
-from ucc.ast import ast, crud
+from ucc.ast import ast, crud, symbol_table
 from ucc.assembler import assemble
 from ucclib.built_in import declaration
 
@@ -55,10 +55,18 @@ def create_parsers(top):
 
     Also does load_word on all of the defining words.
     '''
+    global Rules, Token_dict
+
+    Rules = []
+    Token_dict = {}
     package_parsers = {}
     syntax_file = os.path.join(os.path.dirname(__file__), 'SYNTAX')
     for p in top.packages:
         for ww in p.get_words():
+            ww.symbol_id = \
+              symbol_table.symbol.create(ww.name, ww.kind,
+                                         source_filename=ww.get_filename()) \
+                .id
             if ww.defining:
                 load_word(ww)
 
@@ -113,7 +121,7 @@ def gen_assembler():
     pass
 
 def run(top):
-    global Word_objs_by_name, Rules, Token_dict
+    global Word_objs_by_name
 
     # The following gets a little confusing because we have two kinds of word
     # objects:
@@ -128,15 +136,15 @@ def run(top):
 
     # Gather Word_objs_by_name, and build the parsers for each package:
     Word_objs_by_name = {}   # {word.name: word_obj}
-    Rules = []
-    Token_dict = {}
 
-    # {package_name: parser module}
-    package_parsers = create_parsers(top)  # Also does load_word on all
-                                           # defining words.
-
-    # parse files in the package:
     with crud.db_connection(top.packages[-1].package_dir):
+
+        # {package_name: parser module}
+        with crud.db_transaction():
+            package_parsers = create_parsers(top)  # Also does load_word on all
+                                                   # defining words.
+
+        # parse files in the package:
         flash = []      # list of (label, opcode, operand1, operand2)
         data = []       # list of (label, datatype, operand)
         bss = []        # list of (label, num_bytes)

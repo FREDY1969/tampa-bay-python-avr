@@ -162,16 +162,15 @@ class word(declaration):
 class high_level_word(word):
     def parse_file(self, parser):
         filename = self.ww.get_filename()
-        worked, word_body_id = parse.parse_file(parser, self.ww.kind, filename)
+        worked = parse.parse_file(parser, self.ww.symbol_id, filename)
         if not worked:
             raise AssertionError, "parse failed for " + filename
-        self.word_body_id = word_body_id
 
     def compile(self, db_cur, words_by_name):
-        print "%s.compile" % (self.name,), "id", self.word_body_id
+        print "%s.compile" % (self.name,), "id", self.ww.symbol_id
         series_to_compile = []
         for ast_id, kind, word, int1, int2, str1, expect, _, _ \
-         in get_ast_nodes(self.word_body_id):
+         in get_ast_nodes(self.ww.symbol_id):
             print "%s.prepare_%s" % (word, expect)
             series_to_compile.append(
               getattr(words_by_name[word], 'prepare_' + expect)
