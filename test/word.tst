@@ -22,6 +22,7 @@
 ...     <answers>
 ...         <answer name="q5" type="int" value="123" />
 ...         <answer name="q6" type="string" value="Hi Mom!" />
+...         <answer name="filename_suffix" type="string" value="opin" />
 ...     </answers>
 ... </word>
 ... ''')
@@ -46,6 +47,8 @@ True
 <ans_int q5='123'>
 >>> w.get_answer('q6')
 <ans_string q6='Hi Mom!'>
+>>> w.get_answer('filename_suffix')
+<ans_string filename_suffix='opin'>
 
 >>> root = w.to_xml()
 >>> xml_access.indent(root)
@@ -56,6 +59,7 @@ True
     <kind>declaration</kind>
     <defining>True</defining>
     <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="opin" />
         <answer name="q5" repeated="False" type="int" value="123" />
         <answer name="q6" repeated="False" type="string" value="Hi Mom!" />
     </answers>

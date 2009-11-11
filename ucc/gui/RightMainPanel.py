@@ -3,6 +3,7 @@
 r'''
 '''
 
+import os
 import wx, wx.py
 import wx.lib.scrolledpanel as scrolled
 
@@ -66,7 +67,7 @@ class RightMainPanel(wx.Panel):
         self.topSizer.Clear(True)
 
         if Registry.currentWord:
-            for question in Registry.parentWord.questions or ():
+            for question in Registry.currentWord.kind_obj.questions or ():
                 if not hasattr(question, 'control'):
                     msg = "<%s %s> has not 'control'" % \
                             (question.__class__.__name__, question.name)
@@ -88,6 +89,8 @@ class RightMainPanel(wx.Panel):
         # bottom text
 
         self.bottomText.ClearAll()
-        if Registry.currentWordPath:
-            self.bottomText.LoadFile(Registry.currentWordPath)
+        if Registry.currentWord:
+            source_filename = Registry.currentWord.get_filename()
+            if source_filename and os.path.exists(source_filename):
+                self.bottomText.LoadFile(source_filename)
 

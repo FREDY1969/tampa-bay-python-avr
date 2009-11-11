@@ -5,6 +5,7 @@
 from __future__ import with_statement, division
 
 from ucc.parser import scanner_init, number
+from ucc.ast import symbol_table
 
 debug = 0
 
@@ -373,10 +374,13 @@ def t_NAME_n(t):
     elif t.value in Token_dict:
         t.type = Token_dict[t.value]
     elif t.value[0] == '>':
+        t.value = get_name_value(t.value)
         t.type = 'ARG_LEFT_WORD'
     elif t.value[-1] == '<':
+        t.value = get_name_value(t.value)
         t.type = 'ARG_RIGHT_WORD'
     else:
+        t.value = get_name_value(t.value)
         t.type = 'NAME'
     return t
 
@@ -388,6 +392,8 @@ def t_NAME(t): # single character NAME
         t.type = Names[t.value]
     elif t.value in Token_dict:
         t.type = Token_dict[t.value]
+    else:
+        t.value = get_name_value(t.value)
     return t
 
 def t_NEGATE(t):
@@ -410,7 +416,7 @@ def t_ANY_error(t):
                       scanner_init.syntaxerror_params())
 
 
-def init(debug_param, token_dict = {}):
+def init(debug_param, extra_arg = (None, {})):
     r'''
         >>> from ucc.parser import scanner
         >>> from ucc.parser import scanner_init
@@ -424,8 +430,11 @@ def init(debug_param, token_dict = {}):
         LexToken(NEWLINE_TOK,'\n',5,34)
     '''
     global Last_colonindent, debug
-    global Token_dict
+    global Token_dict, Word_body_id
     Last_colonindent = 0
     debug = debug_param
-    Token_dict = token_dict
+    Word_body_id, Token_dict = extra_arg
 
+def get_name_value(name):
+    if Word_body_id is None: return name
+    return symbol_table.symbol.lookup(name, Word_body_id).id

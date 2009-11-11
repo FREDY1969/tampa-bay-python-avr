@@ -42,4 +42,4 @@ class symbol(object):
                              context=context_id, name=name, kind='placeholder')
             return cls(id=id, name=name, context=context_id, kind='placeholder')
         parent_id = crud.read1_column('symbol_table', 'context', id=context_id)
-        return lookup(name, parent_id)
+        return cls.lookup(name, parent_id)

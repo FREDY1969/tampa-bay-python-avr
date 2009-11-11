@@ -118,7 +118,8 @@ LexToken(NAME,'~',1,9)
 ...               'elif': 'ELIF_TOK',
 ... }
 
->>> scanner_init.tokenize(scanner, 'x if bar< elif "hi" else 7', token_dict)
+>>> scanner_init.tokenize(scanner, 'x if bar< elif "hi" else 7',
+...                       (None, token_dict))
 LexToken(NAME,'x',1,0)
 LexToken(IF,'if',1,2)
 LexToken(ARG_RIGHT_WORD,'bar<',1,5)

@@ -15,11 +15,6 @@ class macro(declaration.word):
         return "<macro macro>"
 
 class macro_word(macro):
-    @classmethod
-    def init_class2(cls):
-        # Don't need filename_suffix...
-        pass
-
     def __repr__(self):
         return "<%s %s>" % (self.__name__, self.kind)
 

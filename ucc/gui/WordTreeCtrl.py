@@ -55,24 +55,4 @@ class WordTreeCtrl(wx.TreeCtrl):
         import pprint
         pprint.pprint(Registry.currentWord)
 
-        # figure out path to word text file
-        if Registry.currentWord:
-            Registry.parentWord = Registry.currentWord.kind_obj
-            suffix = Registry.parentWord.get_answer('filename_suffix')
-        else:
-            Registry.parentWord = None
-            suffix = None
-        if suffix is None:
-            path = None
-        else:
-            if suffix:
-                filename = Registry.currentWord.name + '.' + suffix.value
-            else:
-                filename = Registry.currentWord.name
-            path = os.path.join(Registry.currentWord.package_dir, filename)
-            if not os.path.exists(path):
-                print "creating", path
-                with open(path, 'w'): pass
-        Registry.currentWordPath = path
-
         Registry.rightMainPanel.paint()

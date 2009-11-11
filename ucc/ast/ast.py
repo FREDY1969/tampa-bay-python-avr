@@ -4,7 +4,7 @@ from __future__ import with_statement
 
 import itertools
 
-from ucc.ast import crud, symbol_table
+from ucc.ast import crud
 
 Translation_dict = {}
 
@@ -81,12 +81,7 @@ def save_args(args, word_body_id, parent = None):
             for position, x in enumerate(arg):
                 x.save(word_body_id, parent, arg_num, position)
 
-def save_word(name, kind, source_filename, args):
+def save_word(name, symbol_id, args):
     delete_word_by_name(name)
-    symbol_id = \
-          symbol_table.symbol.create(name, kind,
-                                     source_filename=source_filename) \
-            .id
     save_args(args, symbol_id)
-    return symbol_id
 

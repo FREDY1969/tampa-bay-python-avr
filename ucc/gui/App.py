@@ -80,8 +80,6 @@ class App(wx.App):
         Registry.currentPackage = None # full absolute path to package directory
         Registry.top_package = None    # ucc.word.top_package.top instance
         Registry.currentWord = None    # current word loaded in rightMainPanel
-        Registry.currentWordPath = None # path to current word text file
-        Registry.parentWord = None     # parent word of current word
 
         # process input arguments for package/mode, if not ask for package/mode
 
@@ -176,9 +174,9 @@ class App(wx.App):
         print "saving word"
         if Registry.currentWord and Registry.currentWord.top:
             Registry.currentWord.write_xml()
-            if Registry.currentWordPath:
-                Registry.rightMainPanel.bottomText.SaveFile(
-                  Registry.currentWordPath)
+            source_filename = Registry.currentWord.get_filename()
+            if source_filename:
+                Registry.rightMainPanel.bottomText.SaveFile(source_filename)
 
     def onAbout(self, event):
         dialog = wx.MessageDialog(
