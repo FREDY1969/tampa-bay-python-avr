@@ -35,6 +35,8 @@ class declaration(object):
     @classmethod
     def init_class2(cls):
         r'''Meant to be overridden by subclasses...
+
+        May not be needed anymore...
         '''
         pass
 
@@ -64,18 +66,6 @@ class declaration(object):
         pass
 
 class word(declaration):
-    @classmethod
-    def init_class2(cls):
-        r'''Set cls.filename_suffix for my instances.
-        '''
-        suffix = cls.kind_ww.get_answer('filename_suffix')
-        cls.filename_suffix = None if suffix is None else suffix.value
-
-    def get_filename(self):
-        assert self.filename_suffix
-        return os.path.join(self.ww.package_dir,
-                            self.name + '.' + self.filename_suffix)
-
     def compile(self, db_cur, words_by_name):
         print "FIX: Implement compile for class", self.__class__.__name__
         return (), (), (), (), ()
@@ -171,7 +161,7 @@ class word(declaration):
 
 class high_level_word(word):
     def parse_file(self, parser):
-        filename = self.get_filename()
+        filename = self.ww.get_filename()
         worked, word_body_id = parse.parse_file(parser, self.ww.kind, filename)
         if not worked:
             raise AssertionError, "parse failed for " + filename

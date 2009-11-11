@@ -164,6 +164,12 @@ def run(top):
             sys.stderr.write("%s files had syntax errors\n" % num_errors)
             sys.exit(1)
 
+        macro_expand()
+        gen_intermediate_code()
+
+        optimize()
+        gen_assembler()
+
         #print "flash", flash
         #print "data", data
         #print "bss", bss

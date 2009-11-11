@@ -1,6 +1,33 @@
 # word.py
 
 r'''The generic word class, along with xml read/write routines for it.
+
+This is one of several representations for a word.  This word object is
+created by the IDE when a package is opened and lives for a long as the
+package stays open.  This may encompass several compile and load steps.
+
+This word object knows the name (internal name), label (user name), kind (name
+of the word that this is a kind of), defining (bool, True if subclass of
+declaration, False if instance), questions and answers, and the location of
+the permanent .xml and source files for this word.  The top_package object
+loads all of the words needed for a package and adds some other attributes to
+each word:
+
+    - top          -- A boolean indicating whether this word is directly in the
+                      top-level package (the one opened in the IDE) or not.
+    - package_name -- The full dotted module name of the package containing
+                      this word.  This is set by the package object.
+    - kind_obj     -- The kind word object (whereas 'kind' is just its name).
+    - subclasses   -- A list of word objects that are direct subclasses of this
+                      word (only defining words have anything here).  This list
+                      is sorted by label.lower().
+    - instances    -- A list of word objects that are direct instances of this
+                      word (only defining words have anything here).  This list
+                      is sorted by label.lower().
+
+These word objects are used by the compiler, along with the subclasses and
+instances of the ucclib.built_in.declaration class.  The IDE doesn't use the
+declaration classes and instances.
 '''
 
 from __future__ import with_statement
@@ -50,6 +77,10 @@ class word(object):
 
     def __init__(self, package_dir, name, label, defining, kind,
                  answers = None, questions = None):
+        r'''This is called by the read_word function.
+
+        Or you can call it directly to create a new word.
+        '''
         self.package_dir = package_dir
         self.name = name            # internal name
         self.label = label          # name that user sees
@@ -62,19 +93,38 @@ class word(object):
                                     #   or - a list of answer objects
                                     #        (repetition)
         self.questions = questions  # list of question objects or None.
+        if defining:
+            suffix = self.get_answer('filename_suffix')
+            if suffix is not None:
+                suffix = suffix.value
+                if suffix and suffix[0] != '.':
+                    suffix = '.' + suffix
+            self.filename_suffix = suffix
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
 
     def is_root(self):
+        r'''Is this word a root word?
+
+        A root word is not derived from another word.
+        '''
         return self.kind == self.name
 
     def write_xml(self, package_dir = None):
+        r'''Writes the xml file for this word.
+
+        The package_dir defaults to the word's package_dir.
+        '''
         xml_access.write_element(self.to_xml(),
                                  os.path.join(package_dir or self.package_dir,
                                               self.name + '.xml'))
 
     def to_xml(self):
+        r'''This generates and returns the xml for the word.
+
+        The return value is an ElementTree.Element object.
+        '''
         root = ElementTree.Element('word')
         ElementTree.SubElement(root, 'name').text = self.name
         ElementTree.SubElement(root, 'label').text = self.label
@@ -85,9 +135,30 @@ class word(object):
         return root
 
     def get_answer(self, question_name, default = unique):
+        r'''Return the answer to question_name.
+
+        If no default parameter is passed, this will raise a KeyError if the
+        answer is not found.  Otherwise it will return default.
+
+        An answer can be one of three things:
+
+            - None  (for an optional answer that was left unanswered)
+            - an answer object (see ucc.word.answers).
+            - a list of 0 or more answer objects (for a repeating question).
+        '''
         if question_name not in self.answers:
             if default is unique:
                 raise KeyError("%s: no answer for %s" %
                                  (self.label, question_name))
             return default
         return self.answers[question_name]
+
+    def get_filename(self):
+        r'''Returns the complete path to the source file.
+
+        Or None if there is no source file for this kind of word.
+        '''
+        suffix = self.kind_obj.filename_suffix
+        if suffix is None: return None
+        return os.path.join(self.package_dir, self.name + suffix)
+

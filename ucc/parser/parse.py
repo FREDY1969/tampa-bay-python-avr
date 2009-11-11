@@ -10,17 +10,21 @@ if __name__ == "__main__":
     setpath.setpath(__file__, remove_first = True)
 
 from ucc.parser import scanner, parser_init
-from ucc.ast import ast, crud
+from ucc.ast import ast, crud, symbol_table
 
 def parse_file(parser, kind, filename):
     name, ext = os.path.splitext(os.path.basename(filename))
     assert ext == '.ucl', "unknown file extension on: " + filename
 
+    symbol_id = \
+      symbol_table.symbol.create(name, kind, source_filename=filename).id
+
     args = parser_init.parse(parser, scanner, filename, debug = 0,
-                             extra_arg = parser.token_dict)
+                             extra_arg = (symbol_id, parser.token_dict))
     if args is not None:
         with crud.db_transaction():
-            return True, ast.save_word(name, kind, filename, args)
+            ast.save_word(name, symbol_id, args)
+        return True, symbol_id
     return False, None
 
 def usage():
