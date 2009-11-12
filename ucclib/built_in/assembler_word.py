@@ -9,7 +9,7 @@ from ucc.assembler import asm_opcodes
 from ucclib.built_in import declaration
 
 class assembler_word(declaration.word):
-    def parse_file(self, parser, debug = 0):
+    def parse_file(self, parser, words_by_label, debug = 0):
         instructions = []
         filename = self.ww.get_filename()
         with open(filename) as f:

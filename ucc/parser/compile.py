@@ -95,7 +95,7 @@ def parse_word(ww, word_obj, parser):
     '''
     try:
         if not isinstance(word_obj, type): # word_obj not a class
-            word_obj.parse_file(parser, Debug)
+            word_obj.parse_file(parser, Word_objs_by_label, Debug)
     except SyntaxError:
         e_type, e_value, e_tb = sys.exc_info()
         for line in traceback.format_exception_only(e_type, e_value):
@@ -130,13 +130,14 @@ def run(top):
     #                         ucclib.built_in.declaration.declaration class)
     #
 
-    # Gather Word_objs_by_label, and build the parsers for each package:
     Word_objs_by_label = {}  # {word.label: word_obj}
 
     with crud.db_connection(top.packages[-1].package_dir):
 
-        # {package_name: parser module}
         with crud.db_transaction():
+            # Gather Word_objs_by_label, and build the parsers for each package:
+
+            # {package_name: parser module}
             package_parsers = create_parsers(top)  # Also loads all of the
                                                    # word objs
 
