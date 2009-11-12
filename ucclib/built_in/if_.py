@@ -3,8 +3,8 @@
 from ucclib.built_in import macro
 
 class if_(macro.macro_word):
-    def compile_macro(self, ast_id, db_cur):
-        condition, true_branch, false_branch = get_ast_args(ast_id, db_cur)
+    def compile_macro(self, ast_id):
+        condition, true_branch, false_branch = get_ast_args(ast_id)
         else_label = gensym('else')
         endif_label = gensym('endif')
         new_ast = (condition.compile_cond('...'),
@@ -20,5 +20,5 @@ class if_(macro.macro_word):
                 false_branch.compile_statement('...'),
                 ('label', endif_label),
               )
-        replace_ast(ast_id, new_ast, db_cur)
+        replace_ast(ast_id, new_ast)
 

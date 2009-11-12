@@ -3,8 +3,8 @@
 from ucclib.built_in import macro
 
 class repeat(macro.macro_word):
-    def compile_macro(self, ast_id, db_cur):
-        args = get_ast_args(ast_id, db_cur)
+    def compile_macro(self, ast_id):
+        args = get_ast_args(ast_id)
         loop_label = gensym('repeat')
         if len(args) == 1:
             new_ast = (('label', loop_label),
@@ -22,5 +22,5 @@ class repeat(macro.macro_word):
                        ('label', test),
                        ('jmp-true', loop_var, loop_label),
                       )
-        replace_ast(ast_id, new_ast, db_cur)
+        replace_ast(ast_id, new_ast)
 

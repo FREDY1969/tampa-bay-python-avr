@@ -65,110 +65,53 @@ class declaration(object):
     def parse_file(self, parser, debug = 0):
         pass
 
+    def get_method(self, prefix, expect):
+        return getattr(self, prefix + '_' + expect) or \
+               getattr(self, prefix + '_generic')
+
 class word(declaration):
-    def compile(self, db_cur, words_by_name, translation_dict):
+    def compile(self, words_by_label):
         print "FIX: Implement compile for class", self.__class__.__name__
         return (), (), (), (), ()
 
-    def update_expect(self, child_ast_id, arg_num, pos_num, db_cur):
+    def update_expect(self, child_ast_id, arg_num, pos_num):
         r'''Updates expect for child_ast_id node in database.
         '''
         pass
 
-    def update_type(self, ast_id, args, db_cur):
+    def update_type(self, ast_id, args):
         r'''Updates type for ast_id node in database and returns new type.
         '''
         return None
 
-    def prepare_children(self, ast_id, expect, db_cur, words_by_name,
-                               translation_dict):
+    def prepare_children(self, ast_id, expect, words_by_label):
         args = []
         macros_seen = False
         for id, kind, word_label, int1, int2, str1, expect, \
             parent_arg_num, arg_order \
          in get_ast_nodes(ast_id):
-            self.update_expect(id, parent_arg_num, arg_order, db_cur)
+            self.update_expect(id, parent_arg_num, arg_order)
             new_id_info = \
-              getattr(words_by_name[
-                        translation_dict.get(word_label, word_label)],
-                      'prepare_' + expect) \
-                (id, kind, int1, int2, str1, db_cur, words_by_name,
-                 translation_dict)
+              words_by_label[word_label].get_method('prepare', expect) \
+                (id, kind, int1, int2, str1, words_by_label)
             args.append(new_id_info + [parent_arg_num, arg_order])
             if new_id_info[0] != id: macros_seen = True
-        return macros_seen, args, self.update_type(ast_id, args, db_cur)
+        return macros_seen, args, self.update_type(ast_id, args)
 
     def create_macro(self, ast_id, kind, int1, int2, str1, expect, type,
-                           db_cur, args, macros_seen):
+                           args, macros_seen):
         return ast_id, kind, self.name, int1, int2, str1, expect, type
 
-    def generic_prepare(self, ast_id, kind, int1, int2, str1, expect, db_cur,
-                              words_by_name, translation_dict):
-        macros_seen, args, type = self.prepare_children(ast_id, expect, db_cur,
-                                                        words_by_name,
-                                                        translation_dict)
+    def prepare_generic(self, ast_id, kind, int1, int2, str1, expect,
+                              words_by_label):
+        macros_seen, args, type = self.prepare_children(ast_id, expect,
+                                                        words_by_label)
         return self.create_macro(ast_id, kind, int1, int2, str1, expect, type,
-                                 db_cur, args, macros_seen)
+                                 args, macros_seen)
 
-    def prepare_statement(self, ast_id, kind, int1, int2, str1, db_cur,
-                                words_by_name, translation_dict):
-        return self.generic_prepare(ast_id, kind, int1, int2, str1,
-                                    'statement', db_cur, words_by_name,
-                                    translation_dict)
-
-    def compile_statement(self, ast_id, kind, int1, int2, str1, type, db_cur,
-                                words_by_name):
-        raise AssertionError("%s used as a statement" % self.label)
-
-    def prepare_cond(self, ast_id, kind, int1, int2, str1, db_cur,
-                           words_by_name, translation_dict):
-        return self.generic_prepare(ast_id, kind, int1, int2, str1,
-                                    'cond', db_cur, words_by_name,
-                                    translation_dict)
-
-    def compile_cond(self, ast_id, kind, int1, int2, str1, type, db_cur,
-                           words_by_name):
-        raise AssertionError("%s used as a condition" % self.label)
-
-    def prepare_value(self, ast_id, kind, int1, int2, str1, db_cur,
-                            words_by_name, translation_dict):
-        return self.generic_prepare(ast_id, kind, int1, int2, str1,
-                                    'value', db_cur, words_by_name,
-                                    translation_dict)
-
-    def compile_value(self, ast_id, kind, int1, int2, str1, type, db_cur,
-                            words_by_name):
-        raise AssertionError("%s used as a value" % self.label)
-
-    def prepare_lvalue(self, ast_id, kind, int1, int2, str1, db_cur,
-                             words_by_name, translation_dict):
-        return self.generic_prepare(ast_id, kind, int1, int2, str1,
-                                    'lvalue', db_cur, words_by_name,
-                                    translation_dict)
-
-    def compile_lvalue(self, ast_id, kind, int1, int2, str1, type, db_cur,
-                             words_by_name):
-        raise AssertionError("tried to assign to %s" % self.label)
-
-    def prepare_producer(self, ast_id, kind, int1, int2, str1, db_cur,
-                               words_by_name, translation_dict):
-        return self.generic_prepare(ast_id, kind, int1, int2, str1,
-                                    'producer', db_cur, words_by_name,
-                                    translation_dict)
-
-    def compile_producer(self, ast_id, kind, int1, int2, str1, type, db_cur,
-                               words_by_name):
-        raise AssertionError("%s used as a producer" % self.label)
-
-    def prepare_start_stop(self, ast_id, kind, int1, int2, str1, db_cur,
-                                 words_by_name, translation_dict):
-        return self.generic_prepare(ast_id, kind, int1, int2, str1,
-                                    'start_stop', db_cur, words_by_name,
-                                    translation_dict)
-
-    def compile_start_stop(self, ast_id, kind, int1, int2, str1, type, db_cur,
-                                 words_by_name):
-        raise AssertionError("%s used as a context manager" % self.label)
+    def compile_generic(self, ast_id, kind, int1, int2, str1, type,
+                              words_by_label):
+        raise ValueError("%s used as a %s" % (self.label, ast.expect))
 
 class high_level_word(word):
     def parse_file(self, parser, debug = 0):
@@ -177,29 +120,26 @@ class high_level_word(word):
         if not worked:
             raise AssertionError, "parse failed for " + filename
 
-    def compile(self, db_cur, words_by_name, translation_dict):
+    def compile(self, words_by_label):
         print "%s.compile" % (self.name,), "id", self.ww.symbol_id
         series_to_compile = []
         for ast_id, kind, word_label, int1, int2, str1, expect, _, _ \
          in get_ast_nodes(self.ww.symbol_id):
             print "%s.prepare_%s" % (word_label, expect)
             series_to_compile.append(
-              getattr(words_by_name[
-                        translation_dict.get(word_label, word_label)],
-                      'prepare_' + expect)
-                (ast_id, kind, int1, int2, str1, db_cur, words_by_name,
-                 translation_dict))
+              words_by_label[word_label].get_method('prepare', expect) \
+                (ast_id, kind, int1, int2, str1, words_by_label))
         flash = []
         data = []
         bss = []
         eeprom = []
         words_needed = []
-        for ast_id, kind, word, int1, int2, str1, expect, type \
+        for ast_id, kind, word_label, int1, int2, str1, expect, type \
          in series_to_compile:
             print "%s.compile_%s" % (word, expect)
-            f, d, b, e, n = getattr(words_by_name[word], 'compile_' + expect) \
-                              (ast_id, kind, int1, int2, str1, type,
-                               db_cur, words_by_name)
+            f, d, b, e, n = \
+              words_by_label[word_label].get_method('compile', expect) \
+                (ast_id, kind, int1, int2, str1, type, words_by_label)
             flash.extend(f)
             data.extend(d)
             bss.extend(b)
