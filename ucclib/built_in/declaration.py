@@ -1,7 +1,7 @@
 # declaration.py
 
 import os.path
-from ucc.ast import crud
+from ucc.ast import ast, crud
 from ucc.parser import parse
 from ucc.word import helpers, word as word_module
 
@@ -62,11 +62,11 @@ class declaration(object):
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
 
-    def parse_file(self, parser, debug = 0):
+    def parse_file(self, parser, words_by_label, debug = 0):
         pass
 
     def get_method(self, prefix, expect):
-        return getattr(self, prefix + '_' + expect) or \
+        return getattr(self, prefix + '_' + expect, None) or \
                getattr(self, prefix + '_generic')
 
 class word(declaration):
@@ -74,51 +74,50 @@ class word(declaration):
         print "FIX: Implement compile for class", self.__class__.__name__
         return (), (), (), (), ()
 
-    def update_expect(self, child_ast_id, arg_num, pos_num):
-        r'''Updates expect for child_ast_id node in database.
+    def update_expect(self, ast_node):
+        r'''Chance to update 'expect' for ast_node.
+
+        This is done prior to macro expanding the ast args and the ast_node
+        itself.
         '''
         pass
 
-    def update_type(self, ast_id, args):
-        r'''Updates type for ast_id node in database and returns new type.
+    def update_types(self, ast_node):
+        r'''Chance to update the types for the ast_node and/or its args.
+
+        This is done after update_expect and after macro expanding the ast
+        args.
         '''
         return None
 
-    def prepare_children(self, ast_id, expect, words_by_label):
-        args = []
-        macros_seen = False
-        for id, kind, word_label, int1, int2, str1, expect, \
-            parent_arg_num, arg_order \
-         in get_ast_nodes(ast_id):
-            self.update_expect(id, parent_arg_num, arg_order)
-            new_id_info = \
-              words_by_label[word_label].get_method('prepare', expect) \
-                (id, kind, int1, int2, str1, words_by_label)
-            args.append(new_id_info + [parent_arg_num, arg_order])
-            if new_id_info[0] != id: macros_seen = True
-        return macros_seen, args, self.update_type(ast_id, args)
+    def macro_expand(self, ast_node, words_by_label):
+        r'''Chance to macro expand the ast_node itself.
 
-    def create_macro(self, ast_id, kind, int1, int2, str1, expect, type,
-                           args, macros_seen):
-        return ast_id, kind, self.name, int1, int2, str1, expect, type
+        This is the last step in preparing the ast_node prior to storing it in
+        the database.
 
-    def prepare_generic(self, ast_id, kind, int1, int2, str1, expect,
-                              words_by_label):
-        macros_seen, args, type = self.prepare_children(ast_id, expect,
-                                                        words_by_label)
-        return self.create_macro(ast_id, kind, int1, int2, str1, expect, type,
-                                 args, macros_seen)
+        Returns the (possibly new) ast_node.
+        '''
+        return ast_node
 
-    def compile_generic(self, ast_id, kind, int1, int2, str1, type,
-                              words_by_label):
-        raise ValueError("%s used as a %s" % (self.label, ast.expect))
+    def prepare_generic(self, ast_node, words_by_label):
+        self.update_expect(ast_node)
+        ast_node.prepare_args(words_by_label)
+        self.update_types(ast_node)
+        return self.macro_expand(ast_node, words_by_label)
+
+    def compile_generic(self, ast_node, words_by_label):
+        raise ValueError("%s used as a %s" % (self.label, ast_node.expect))
 
 class high_level_word(word):
-    def parse_file(self, parser, debug = 0):
+    def parse_file(self, parser, words_by_label, debug = 0):
         filename = self.ww.get_filename()
-        worked = parse.parse_file(parser, self.ww, debug)
+        worked, args = parse.parse_file(parser, self.ww, debug)
         if not worked:
             raise AssertionError, "parse failed for " + filename
+        args = ast.prepare_args(args, words_by_label)
+        with crud.db_transaction():
+            ast.save_word(self.label, self.ww.symbol_id, args)
 
     def compile(self, words_by_label):
         print "%s.compile" % (self.name,), "id", self.ww.symbol_id
@@ -146,19 +145,6 @@ class high_level_word(word):
             eeprom.extend(e)
             words_needed.extend(n)
         return flash, data, bss, eeprom, words_needed
-
-def get_ast_nodes(parent_id):
-    r'''Returns a list of information on the arguments for parent_id.
-
-    The information is: [ast_id, kind, label, int1, int2, str1, expect,
-                         parent_arg_num, arg_order]
-    '''
-    return crud.read_as_tuples('ast',
-                                 'id', 'kind', 'label',
-                                 'int1', 'int2', 'str1',
-                                 'expect', 'parent_arg_num', 'arg_order',
-                               parent_node=parent_id,
-                               order_by=('parent_arg_num', 'arg_order'))
 
 def load_class(ww):
     mod = helpers.import_module("%s.%s" % (ww.package_name, ww.name))

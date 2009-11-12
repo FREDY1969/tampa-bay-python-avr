@@ -29,12 +29,19 @@ class ast(object):
     This is the AST representation created by the parser.  At the end of the
     parse, this structure is stored into the database and then discarded.
     '''
-    attr_cols = (
-        'kind', 'expect', 'label', 'opcode', 'symbol_id',
-        'int1', 'int2', 'str1', 'str2',
-        'line_start', 'column_start', 'line_end', 'column_end',
+
+    # Values passed as keyword args and stored as attributes that describe
+    # this ast node (and are set to None on macro_expand):
+    attr_cols_node = (
+        'kind', 'label', 'opcode', 'symbol_id', 'int1', 'int2', 'str1', 'str2',
     )
 
+    # All values passed as keyword args and stored as attributes.
+    attr_cols = attr_cols_node + (
+        'expect', 'line_start', 'column_start', 'line_end', 'column_end',
+    )
+
+    # Values passed as parameters to the save method:
     arg_cols = (
         'word_symbol_id', 'parent_node', 'parent_arg_num', 'arg_order',
     )
@@ -60,6 +67,15 @@ class ast(object):
           syntax_position_info
         return ans
 
+    def macro_expand(self, args, **kws):
+        self.args = args
+        for key, value in kws.iteritems():
+            setattr(self, key, value)
+        for key in self.attr_cols_node:
+            if key not in kws:
+                setattr(self, key, None)
+        return self
+
     def __repr__(self):
         if self.kind == 'word':
             return "<ast word:%s>" % self.symbol_id
@@ -69,6 +85,19 @@ class ast(object):
                           for attr in ('int1', 'int2', 'str1', 'str2')
                           if getattr(self, attr) is not None),
                   ' ' + repr(self.args) if self.args else '')
+
+    def prepare(self, words_by_label):
+        if self.kind == 'call':
+            if self.args and isinstance(self.args[0], ast) and \
+               self.args[0].kind == 'word':
+                word_obj = words_by_label[self.args[0].label]
+                prepare_method = word_obj.get_method('prepare', self.expect)
+                return prepare_method(self, words_by_label)
+            self.prepare_args(words_by_label)
+        return self
+
+    def prepare_args(self, words_by_label):
+        self.args = prepare_args(self.args, words_by_label)
 
     def save(self, word_symbol_id,
              parent = None, parent_arg_num = None, arg_order = None):
@@ -90,6 +119,12 @@ def save_args(args, word_symbol_id, parent = None):
         else:
             for position, x in enumerate(arg):
                 x.save(word_symbol_id, parent, arg_num, position)
+
+def prepare_args(args, words_by_label):
+    return tuple(arg.prepare(words_by_label)
+                   if isinstance(arg, ast)
+                   else prepare_args(arg, words_by_label)
+                 for arg in args)
 
 def save_word(label, symbol_id, args):
     delete_word_by_label(label)
