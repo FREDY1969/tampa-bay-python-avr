@@ -20,10 +20,10 @@ Debug = 0
 def load_word(ww):
     r'''Loads and returns the word_obj for ww.
     
-    And updates Word_objs_by_name, Rules and Token_dict.
+    And updates Word_objs_by_label, Rules and Token_dict.
     '''
-    global Word_objs_by_name, Rules, Token_dict
-    if ww.name not in Word_objs_by_name:
+    global Word_objs_by_label, Rules, Token_dict
+    if ww.label not in Word_objs_by_label:
         if not ww.is_root():
             load_word(ww.kind_obj)
 
@@ -33,9 +33,9 @@ def load_word(ww):
                    "%s: root word that is not a defining word" % ww.label
             new_word = declaration.load_class(ww)
         elif ww.defining:
-            new_word = Word_objs_by_name[ww.kind].create_subclass(ww)
+            new_word = Word_objs_by_label[ww.kind_obj.label].create_subclass(ww)
         else:
-            new_word = Word_objs_by_name[ww.kind](ww)
+            new_word = Word_objs_by_label[ww.kind_obj.label](ww)
 
         # get new_syntax
         if ww.defining:
@@ -45,10 +45,10 @@ def load_word(ww):
                 Rules.extend(r)
                 Token_dict.update(td)
 
-        # Add new word to Word_objs_by_name
-        Word_objs_by_name[ww.name] = new_word
+        # Add new word to Word_objs_by_label
+        Word_objs_by_label[ww.label] = new_word
         return new_word
-    return Word_objs_by_name[ww.name]
+    return Word_objs_by_label[ww.label]
 
 def create_parsers(top):
     r'''Creates a parser in each package.
@@ -69,8 +69,7 @@ def create_parsers(top):
               symbol_table.symbol.create(ww.label, ww.kind,
                                          source_filename=ww.get_filename()) \
                 .id
-            if ww.defining:
-                load_word(ww)
+            load_word(ww)
 
         #print "Rules", Rules
         #print "Token_dict", Token_dict
@@ -110,9 +109,6 @@ def parse_word(ww, word_obj, parser):
 def parse_needed_words():
     pass
 
-def macro_expand():
-    pass
-
 def gen_intermediate_code():
     pass
 
@@ -123,7 +119,7 @@ def gen_assembler():
     pass
 
 def run(top):
-    global Word_objs_by_name
+    global Word_objs_by_label
 
     # The following gets a little confusing because we have two kinds of word
     # objects:
@@ -134,15 +130,15 @@ def run(top):
     #                         ucclib.built_in.declaration.declaration class)
     #
 
-    # Gather Word_objs_by_name, and build the parsers for each package:
-    Word_objs_by_name = {}   # {word.name: word_obj}
+    # Gather Word_objs_by_label, and build the parsers for each package:
+    Word_objs_by_label = {}  # {word.label: word_obj}
 
     with crud.db_connection(top.packages[-1].package_dir):
 
         # {package_name: parser module}
         with crud.db_transaction():
-            package_parsers = create_parsers(top)  # Also does load_word on all
-                                                   # defining words.
+            package_parsers = create_parsers(top)  # Also loads all of the
+                                                   # word objs
 
         # parse files in the package:
         flash = []      # list of (label, opcode, operand1, operand2)
@@ -155,11 +151,10 @@ def run(top):
         while words_needed:
             next_word = words_needed.pop()
             ww = top.get_word_by_name(next_word)
-            word_obj = load_word(ww)
+            word_obj = Word_objs_by_label[ww.label]
             if parse_word(ww, word_obj, package_parsers[ww.package_name]):
-                with crud.db_transaction() as db_cur:
-                    f, d, b, e, n = word_obj.compile(db_cur, Word_objs_by_name,
-                                                     top.translation_dict)
+                with crud.db_transaction():
+                    f, d, b, e, n = word_obj.compile(Word_objs_by_label)
                 flash.extend(f)
                 data.extend(d)
                 bss.extend(b)
@@ -173,9 +168,7 @@ def run(top):
             sys.stderr.write("%s files had syntax errors\n" % num_errors)
             sys.exit(1)
 
-        macro_expand()
         gen_intermediate_code()
-
         optimize()
         gen_assembler()
 

@@ -19,7 +19,7 @@ class assembler_word(declaration.word):
         with crud.db_transaction():
               ast.save_word(self.label, self.ww.symbol_id, instructions)
 
-    def compile(self, db_cur, words_by_name, translation_dict):
+    def compile(self, words_by_label):
         insts = tuple(crud.read_as_tuples('ast',
                                           'label', 'opcode', 'str1', 'str2',
                                           kind='flash',
