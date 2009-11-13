@@ -46,7 +46,16 @@ class declaration(object):
 
         Returns the newly loaded class object.
         '''
-        return load_class(ww)
+        ans = load_class(ww)
+        return ans, ans.new_syntax()
+
+    @classmethod
+    def create_instance(cls, ww):
+        r'''Creates an instance of this declaration.
+
+        Returns the new instance.
+        '''
+        return cls(ww), None
 
     @classmethod
     def new_syntax(cls):
@@ -121,8 +130,9 @@ class high_level_word(word):
 
     def compile(self, words_by_label):
         print "%s.compile" % (self.name,), "id", self.ww.symbol_id
+        return (), (), (), (), ()
         series_to_compile = []
-        for ast_id, kind, word_label, int1, int2, str1, expect, _, _ \
+        for ast_id, kind, word_label, int1, int2, str1, expect \
          in get_ast_nodes(self.ww.symbol_id):
             print "%s.prepare_%s" % (word_label, expect)
             series_to_compile.append(

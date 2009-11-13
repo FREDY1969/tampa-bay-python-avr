@@ -32,18 +32,19 @@ def load_word(ww):
             assert ww.defining, \
                    "%s: root word that is not a defining word" % ww.label
             new_word = declaration.load_class(ww)
+            new_syntax = None
         elif ww.defining:
-            new_word = Word_objs_by_label[ww.kind_obj.label].create_subclass(ww)
+            new_word, new_syntax = \
+              Word_objs_by_label[ww.kind_obj.label].create_subclass(ww)
         else:
-            new_word = Word_objs_by_label[ww.kind_obj.label](ww)
+            new_word, new_syntax = \
+              Word_objs_by_label[ww.kind_obj.label].create_instance(ww)
 
-        # get new_syntax
-        if ww.defining:
-            new_syntax = new_word.new_syntax()
-            if new_syntax:
-                r, td = new_syntax
-                Rules.extend(r)
-                Token_dict.update(td)
+        # store new_syntax
+        if new_syntax:
+            r, td = new_syntax
+            Rules.extend(r)
+            Token_dict.update(td)
 
         # Add new word to Word_objs_by_label
         Word_objs_by_label[ww.label] = new_word

@@ -67,6 +67,10 @@ class ast(object):
           syntax_position_info
         return ans
 
+    def get_syntax_position_info(self):
+        return (self.line_start, self.column_start,
+                self.line_end, self.column_end)
+
     def macro_expand(self, args, **kws):
         self.args = args
         for key, value in kws.iteritems():
@@ -101,13 +105,14 @@ class ast(object):
 
     def save(self, word_symbol_id,
              parent = None, parent_arg_num = None, arg_order = None):
-        my_id = crud.insert('ast',
-                  **dict(itertools.chain(
-                           map(lambda attr: (attr, getattr(self, attr)),
-                               self.attr_cols),
-                           zip(self.arg_cols,
-                               (word_symbol_id, parent, parent_arg_num,
-                                arg_order)))))
+        kws = dict(itertools.chain(
+                     map(lambda attr: (attr, getattr(self, attr)),
+                         self.attr_cols),
+                     zip(self.arg_cols,
+                         (word_symbol_id, parent, parent_arg_num,
+                          arg_order))))
+        #print "save", kws
+        my_id = crud.insert('ast', **kws)
         save_args(self.args, word_symbol_id, my_id)
 
 def save_args(args, word_symbol_id, parent = None):

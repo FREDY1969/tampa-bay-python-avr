@@ -56,6 +56,12 @@ create table ast (
           -- 'string': str1 = string
           -- 'call': first arg = fn
           -- 'word': label = word label, symbol_id = symbol_id of word
+          -- 'no-op':
+          -- 'label': label = label
+          -- 'jump': label = target
+          -- 'if-false': label = jump-false target, first arg is condition
+          -- 'if-true': label = jump-true target, first arg is condition
+          -- 'series': args are statements to splice in
           -- 'None': line, column info not set
           -- All of the following are assembler nodes.  These all use the
           -- following optional columns:
