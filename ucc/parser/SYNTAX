@@ -44,12 +44,8 @@ vexpr: APPROX_NUMBER(kind='approx',int1=p[%s][0],int2=p[%s][1])
 value: vexpr as value
      | LP_TOK value ')'
      | NOT() value
-     | condition AND() value
-     | condition OR() value
+     | value AND() value
+     | value OR() value
 
-condition: vexpr as condition
-         | LP_TOK condition ')'
-         | NOT() condition
-         | condition AND() condition
-         | condition OR() condition
+condition: value as condition
 

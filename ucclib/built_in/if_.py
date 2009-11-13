@@ -1,24 +1,34 @@
 # if_.py
 
+from ucc.ast import ast, crud
 from ucclib.built_in import macro
 
 class if_(macro.macro_word):
-    def compile_macro(self, ast_id):
-        condition, true_branch, false_branch = get_ast_args(ast_id)
-        else_label = gensym('else')
-        endif_label = gensym('endif')
-        new_ast = (condition.compile_cond('...'),
-                   ('jmp-false', else_label),
-                   true_branch.compile_statement('...'),
-                  )
+    def macro_expand(self, ast_node, words_by_label):
+        _, condition, true_branch, false_branch = ast_node.args
+        endif_label = crud.gensym('endif')
         if false_branch is None:
-            new_ast += (('label', else_label),)
+            new_args = (
+              ast.ast.from_parser(condition.get_syntax_position_info(),
+                                  condition,
+                                  kind='if-false',
+                                  label=endif_label,
+                                  expect='statement'),
+              true_branch,
+              ast.ast(kind='label', label=endif_label, expect='statement'),
+            )
         else:
-            new_ast += (
-                ('jmp', endif_label),
-                ('label', else_label),
-                false_branch.compile_statement('...'),
-                ('label', endif_label),
-              )
-        replace_ast(ast_id, new_ast)
-
+            else_label = crud.gensym('else')
+            new_args = (
+              ast.ast.from_parser(condition.get_syntax_position_info(),
+                                  condition,
+                                  kind='if-false',
+                                  label=else_label,
+                                  expect='statement'),
+              true_branch,
+              ast.ast(kind='jump', label=endif_label, expect='statement'),
+              ast.ast(kind='label', label=else_label, expect='statement'),
+              false_branch,
+              ast.ast(kind='label', label=endif_label, expect='statement'),
+            )
+        return ast_node.macro_expand(new_args, kind='series')

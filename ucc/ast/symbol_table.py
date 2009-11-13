@@ -2,10 +2,19 @@
 
 from ucc.ast import crud
 
+Keep_symbols_labels = (
+    'set',
+    '-',
+)
+
+Keep_symbols = {} # label: symbol
+
 class symbol(object):
     def __init__(self, **attributes):
         for name, value in attributes.iteritems():
             setattr(self, name, value)
+        if self.context is None and self.label in Keep_symbols_labels:
+            Keep_symbols[self.label] = self
 
     @classmethod
     def read(cls, label, context_id = None):
@@ -45,3 +54,6 @@ class symbol(object):
                        kind='placeholder')
         parent_id = crud.read1_column('symbol_table', 'context', id=context_id)
         return cls.lookup(label, parent_id)
+
+    def __repr__(self):
+        return "<symbol %s:%s>" % (self.id, self.label)
