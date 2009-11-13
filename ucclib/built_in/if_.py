@@ -1,6 +1,6 @@
 # if_.py
 
-from ucc.ast import ast, crud
+from ucc.database import ast, crud
 from ucclib.built_in import macro
 
 class if_(macro.macro_word):

@@ -4,7 +4,7 @@ from __future__ import with_statement
 
 import itertools
 
-from ucc.ast import crud
+from ucc.database import crud
 
 def delete_word_by_label(word_label):
     r'''Deletes the word and all of it's ast nodes from the ast table.

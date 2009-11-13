@@ -5,7 +5,7 @@
 from __future__ import with_statement, division
 
 from ucc.parser import scanner_init, number
-from ucc.ast import ast, symbol_table
+from ucc.database import ast, symbol_table
 
 debug = 0
 

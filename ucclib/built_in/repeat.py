@@ -1,6 +1,6 @@
 # repeat.py
 
-from ucc.ast import ast, crud, symbol_table
+from ucc.database import ast, crud, symbol_table
 from ucclib.built_in import macro
 
 class repeat(macro.macro_word):

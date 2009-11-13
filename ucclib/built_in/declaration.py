@@ -1,7 +1,7 @@
 # declaration.py
 
 import os.path
-from ucc.ast import ast, crud
+from ucc.database import ast, crud
 from ucc.parser import parse
 from ucc.word import helpers, word as word_module
 

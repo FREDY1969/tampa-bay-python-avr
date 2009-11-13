@@ -16,7 +16,7 @@ def genparser(filename, rules, token_dict, output_file = sys.stdout):
         # parser.py
 
         from ucc.parser import scanner_init
-        from ucc.ast import ast
+        from ucc.database import ast
 
         start = 'file'
 

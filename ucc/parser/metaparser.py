@@ -14,7 +14,7 @@ import string
 import sys
 
 from ucc.parser import metascanner, scanner_init
-from ucc.ast import ast, crud
+from ucc.database import ast, crud
 
 tokens = metascanner.tokens
 
