@@ -9,7 +9,7 @@ import traceback
 
 from ucc.word import helpers, xml_access, word
 from ucc.parser import genparser
-from ucc.ast import ast, crud, symbol_table
+from ucc.database import ast, crud, symbol_table
 from ucc.assembler import assemble
 from ucclib.built_in import declaration
 

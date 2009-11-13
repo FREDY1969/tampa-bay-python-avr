@@ -1,6 +1,6 @@
 # symbol_table.py
 
-from ucc.ast import crud
+from ucc.database import crud
 
 Keep_symbols_labels = (
     'set',

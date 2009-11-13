@@ -4,7 +4,7 @@ from __future__ import with_statement
 
 import itertools
 
-from ucc.ast import ast, crud
+from ucc.database import ast, crud
 from ucc.assembler import asm_opcodes
 from ucclib.built_in import declaration
 
