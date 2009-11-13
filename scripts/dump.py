@@ -19,7 +19,7 @@ import itertools
 import os.path
 import sqlite3 as db
 
-Db_filename = "ucl.db"
+Db_filename = "ucc.db"
 
 class db_cursor(object):
     def __init__(self, package_dir):
