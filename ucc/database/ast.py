@@ -4,17 +4,16 @@ from __future__ import with_statement
 
 import itertools
 
-from ucc.database import crud
+from ucc.database import crud, symbol_table
 
 def delete_word_by_label(word_label):
     r'''Deletes the word and all of it's ast nodes from the ast table.
 
     This does not report an error if the word is not in the database.
     '''
-    id = crud.read1_column('symbol_table', 'id',
-                           context=None, label=word_label, zero_ok=True)
-    if id is not None:
-        delete_word_by_id(id)
+    sym = symbol_table.get(word_label)
+    if sym is not None:
+        delete_word_by_id(sym.id)
 
 def delete_word_by_id(id):
     r'''Delete node, and all subordinate nodes, from database.

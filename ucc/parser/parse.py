@@ -8,7 +8,7 @@ import os.path
 from ucc.parser import scanner, parser_init
 
 def parse_file(parser, word_word, debug = 0):
-    symbol_id = word_word.symbol_id
+    symbol = word_word.symbol
     filename = word_word.get_filename()
 
     # Is this really necessary?
@@ -18,7 +18,7 @@ def parse_file(parser, word_word, debug = 0):
            '%s != %s: internal error' % (name, word_word.name)
 
     args = parser_init.parse(parser, scanner, filename, debug = debug,
-                             extra_arg = (symbol_id, parser.token_dict))
+                             extra_arg = (symbol, parser.token_dict))
     if args is not None:
         return True, args
     return False, ()

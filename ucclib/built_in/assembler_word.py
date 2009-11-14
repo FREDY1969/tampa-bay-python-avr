@@ -17,13 +17,13 @@ class assembler_word(declaration.word):
                 inst = parse_asm(filename, line, i + 1)
                 if inst: instructions.append(inst)
         with crud.db_transaction():
-              ast.save_word(self.label, self.ww.symbol_id, instructions)
+              ast.save_word(self.label, self.ww.symbol.id, instructions)
 
     def compile(self, words_by_label):
         insts = tuple(crud.read_as_tuples('ast',
                                           'label', 'opcode', 'str1', 'str2',
                                           kind='flash',
-                                          word_symbol_id=self.ww.symbol_id))
+                                          word_symbol_id=self.ww.symbol.id))
         my_labels = \
           frozenset(itertools.ifilter(None, itertools.imap(lambda x: x[0],
                                                            insts)))

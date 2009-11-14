@@ -126,14 +126,14 @@ class high_level_word(word):
             raise AssertionError, "parse failed for " + filename
         args = ast.prepare_args(args, words_by_label)
         with crud.db_transaction():
-            ast.save_word(self.label, self.ww.symbol_id, args)
+            ast.save_word(self.label, self.ww.symbol.id, args)
 
     def compile(self, words_by_label):
-        print "%s.compile" % (self.name,), "id", self.ww.symbol_id
+        print "%s.compile" % (self.name,), "id", self.ww.symbol.id
         return (), (), (), (), ()
         series_to_compile = []
         for ast_id, kind, word_label, int1, int2, str1, expect \
-         in get_ast_nodes(self.ww.symbol_id):
+         in get_ast_nodes(self.ww.symbol.id):
             print "%s.prepare_%s" % (word_label, expect)
             series_to_compile.append(
               words_by_label[word_label].get_method('prepare', expect) \
