@@ -437,13 +437,13 @@ def init(debug_param, extra_arg = (None, {})):
         LexToken(NEWLINE_TOK,'\n',5,34)
     '''
     global Last_colonindent, debug
-    global Token_dict, Word_body_id
+    global Token_dict, Word_body_symbol
     Last_colonindent = 0
     debug = debug_param
-    Word_body_id, Token_dict = extra_arg
+    Word_body_symbol, Token_dict = extra_arg
 
 def set_name_value(t, name = None):
-    if Word_body_id is None:
+    if Word_body_symbol is None:
         if name: t.value = name
     else:
         syntax_info = t.lineno, scanner_init.get_col_line(t.lexpos)[0]
@@ -453,4 +453,4 @@ def set_name_value(t, name = None):
             syntax_info + syntax_info, 
             kind='word',
             label=name,
-            symbol_id=symbol_table.symbol.lookup(name, Word_body_id).id)
+            symbol_id=symbol_table.lookup(name, Word_body_symbol).id)

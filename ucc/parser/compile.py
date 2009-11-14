@@ -66,10 +66,9 @@ def create_parsers(top):
     syntax_file = os.path.join(os.path.dirname(__file__), 'SYNTAX')
     for p in top.packages:
         for ww in p.get_words():
-            ww.symbol_id = \
+            ww.symbol = \
               symbol_table.symbol.create(ww.label, ww.kind,
-                                         source_filename=ww.get_filename()) \
-                .id
+                                         source_filename=ww.get_filename())
             load_word(ww)
 
         #print "Rules", Rules
