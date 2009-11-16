@@ -1,4 +1,4 @@
--- ast.ddl
+-- ucc.ddl
 
 -- The schema for the ast database.
 
@@ -20,7 +20,9 @@ create table symbol_table (
            -- 'placeholder'
     source_filename varchar(4096),      -- full path to source file
     type_id int references type(id),
-    unique (context, label)
+    side_effects bool default 0,        -- only for functions/tasks
+    suspends bool default 0,            -- only for functions/tasks
+    unique (label, context)
 );
 
 create table type (
@@ -116,13 +118,126 @@ create index word_index on ast (symbol_id, kind, expect);
 create index word_body_index on ast (word_symbol_id,
                                      parent_node, parent_arg_num, arg_order);
 
+
 ---------------------------------------------------------------------------
--- ucc.ast.ast.gensym stores info here.  Nobody else knows about this...
+-- Needed to construct the next two tables
+---------------------------------------------------------------------------
+create table fn_calls (
+    -- who calls who
+    caller_id int not null references symbol_table(id),
+    called_id int not null references symbol_table(id),
+    primary key (caller_id, called_id)
+);
+
+---------------------------------------------------------------------------
+-- Needed to generate the intermediate code
+---------------------------------------------------------------------------
+create table fn_global_var_uses (
+    -- the global variables used by a function (directly or indirectly)
+    fn_id int not null references symbol_table(id),
+    var_id int not null references symbol_table(id),
+    sets bool not null,
+    depth int not null default 0,
+    primary key (fn_id, var_id, sets)
+);
+
+---------------------------------------------------------------------------
+-- ucc.database.crud.gensym stores info here.
+--
+-- Nobody else knows about this...
 ---------------------------------------------------------------------------
 create table gensym_indexes (
     prefix varchar(255) not null,
     last_used_index int not null
 );
+
+
+---------------------------------------------------------------------------
+-- These are the tables for the intermediate code.
+---------------------------------------------------------------------------
+create table blocks (
+    id integer not null primary key,
+    name varchar(255) not null unique,
+    compare_triple_id int references triples(id),
+
+    -- also used for unconditional branch
+    next_t varchar(255) references blocks(name),
+
+    next_f varchar(255) references blocks(name)
+);
+
+create table block_successors (
+    predecessor int not null references blocks(id),
+    successor int not null references blocks(id)
+);
+
+create index block_successors_predecessor_index
+    on block_successors (predecessor);
+
+create index block_successors_successor_index on block_successors (successor);
+
+create table triples (
+    id integer not null primary key,
+    block_id int not null references blocks(id),
+    operator varchar(255) not null,
+       -- special values:
+       --   'global_addr'   -- int_1 is symbol_table id
+       --   'global'        -- int_1 is symbol_table id
+       --   'local_addr'    -- int_1 is symbol_table id
+       --   'local'         -- int_1 is symbol_table id
+       --   'int'           -- int_1
+       --   'ratio'         -- int_1 is numerator, int_2 is denominator
+       --   'approx'        -- int_1 * 2**int_2
+       --   'param'         -- int_1 is which param, int_2 is triples id
+       --   'call_direct'   -- int_1 is symbol_table id
+       --   'call_indirect' -- int_1 is triples id
+       --   'var_data'      -- string is initialization bytes
+       --   'const_data'    -- string is initialization bytes
+       --   'bss'           -- int_1 is number of bytes
+       --   'ioreg_init'    -- string is ioreg name, int_1 is value
+       --   'eeprom'        -- string is initialization bytes
+       -- else operator applies to int_1 and int_2 as triples ids
+    int1 int,
+    int2 int,
+    string varchar(32768),
+    line_start int,
+    column_start int,
+    line_end int,
+    column_end int
+);
+
+-- also serves as labels for the triples
+create table gens (
+    block_id int not null references blocks(id),
+    symbol_id int not null references symbol_table(id),
+    triple_id int not null references triples(id)
+);
+
+create table triple_order_constraints (
+    predecessor int not null references triples(id),
+    successor int not null references triples(id)
+);
+
+create table kills (
+    block_id int not null references blocks(id),
+    symbol_id int not null references symbol_table(id),
+    unique (block_id, symbol_id)
+);
+
+create table ins (
+    block_id int not null references blocks(id),
+    symbol_id int not null references symbol_table(id),
+    triple_id int not null references triples(id),
+    unique (block_id, symbol_id, triple_id)
+);
+
+create table outs (
+    block_id int not null references blocks(id),
+    symbol_id int not null references symbol_table(id),
+    triple_id int not null references triples(id),
+    unique (block_id, symbol_id, triple_id)
+);
+
 
 ---------------------------------------------------------------------------
 -- The tables the hold the assembler sources.

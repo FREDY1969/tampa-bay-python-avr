@@ -11,6 +11,8 @@
         <question>
             <name>initial_value</name>
             <label>initial value</label>
+            <min>0</min>
+            <max>1</max>
             <type>string</type>
         </question>
     </questions>
