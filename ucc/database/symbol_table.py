@@ -24,6 +24,14 @@ def write_symbols():
     for sym in Symbols.itervalues():
         sym.write()
 
+def update():
+    r'''Update side_effects and suspends from database.
+    '''
+    for id in crud.read_column('symbol_table', 'id', side_effects=1):
+        Symbols_by_id[id].side_effects = True
+    for id in crud.read_column('symbol_table', 'id', suspends=1):
+        Symbols_by_id[id].suspends = True
+
 class symbol(object):
     doing_init = True
     def __init__(self, id, label, context = None, **attributes):

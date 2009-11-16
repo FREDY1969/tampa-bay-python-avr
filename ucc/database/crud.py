@@ -299,6 +299,9 @@ def read1_column(table, column, **keys):
         del keys['zero_ok']
     return return1(read_column(table, column, **keys), zero_ok)
 
+def count(table, **keys):
+    return read1_column(table, 'count(*)', **keys)
+
 def update(table, where, **set):
     r'''Updates row in table.
 
@@ -330,7 +333,7 @@ def delete(table, **keys):
     Db_cur.execute(string_lookup("delete from %s%s" % (table, where_clause)),
                    params)
 
-def insert(table, replace = False, **cols):
+def insert(table, option = None, **cols):
     r'''Inserts a row in table.
 
     Returns the id of the new row.
@@ -341,13 +344,13 @@ def insert(table, replace = False, **cols):
         query: insert into a (c, d) values (?, ?)
         parameters: [7, 8]
         123
-        >>> insert('a', True, c=7, d=8)
+        >>> insert('a', 'replace', c=7, d=8)
         query: insert or replace into a (c, d) values (?, ?)
         parameters: [7, 8]
         123
     '''
     Db_cur.execute(string_lookup("insert %sinto %s (%s) values (%s)" %
-                                   ("or replace " if replace else '',
+                                   ("or %s " % option if option else '',
                                     table,
                                     ', '.join(cols.keys()),
                                     ', '.join('?' for c in cols.keys()))),
