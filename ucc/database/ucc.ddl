@@ -65,27 +65,14 @@ create table ast (
           -- 'if-true': label = jump-true target, first arg is condition
           -- 'series': args are statements to splice in
           -- 'None': line, column info not set
-          -- All of the following are assembler nodes.  These all use the
-          -- following optional columns:
-              -- label
-              -- opcode is the opcode
-              -- str1 and str2 are the operands
-              -- int1 is the length (in bytes)
-              -- int2 is the number of clock cycles (for machine instructions
-              -- in flash)
-          -- and the kinds are:
-              -- 'flash'
-              -- 'data'
-              -- 'bss'
-              -- 'eeprom'
 
-    label varchar(255),                        -- word or assembler label
-    opcode varchar(255),
+    label varchar(255),                        -- word label
     symbol_id int references symbol_table(id),
     int1 int,
     int2 int,
     str1 varchar(2000),
-    str2 varchar(2000),
+    str2 varchar(2000),                        -- not used, but leaving it here
+                                               -- for the moment...
 
     expect varchar(255),                       -- what's expected by the parent
        -- possible values are:
