@@ -4,7 +4,7 @@ from __future__ import with_statement
 
 import itertools
 
-from ucc.database import ast, crud
+from ucc.database import assembler, ast, crud
 from ucc.assembler import asm_opcodes
 from ucclib.built_in import declaration
 
@@ -17,24 +17,29 @@ class assembler_word(declaration.word):
                 inst = parse_asm(filename, line, i + 1)
                 if inst: instructions.append(inst)
         with crud.db_transaction():
-              ast.save_word(self.label, self.ww.symbol.id, instructions)
+            assembler.block('flash', self.label, self.ww.get_value('address')) \
+                     .write(instructions)
+        return self.labels_needed(instructions)
 
-    def compile(self, words_by_label):
-        insts = tuple(crud.read_as_tuples('ast',
-                                          'label', 'opcode', 'str1', 'str2',
-                                          kind='flash',
-                                          word_symbol_id=self.ww.symbol.id))
-        my_labels = \
-          frozenset(itertools.ifilter(None, itertools.imap(lambda x: x[0],
-                                                           insts)))
+    def labels_needed(self, instructions):
+        labels_defined = \
+          frozenset(
+            itertools.chain(
+              itertools.ifilter(None, itertools.imap(lambda x: x.label,
+                                                     instructions)),
+              (self.label,)))
         labels_used = \
           frozenset(
             itertools.imap(extract_label,
               itertools.ifilter(is_legal_label,
-                itertools.chain(itertools.imap(lambda x: x[2], insts),
-                                itertools.imap(lambda x: x[3], insts)))))
-        return ((self.name, None, None, None),) + insts, (), (), (), \
-               tuple(labels_used - my_labels)
+                itertools.chain(itertools.imap(lambda x: x.operand1,
+                                               instructions),
+                                itertools.imap(lambda x: x.operand2,
+                                               instructions)))))
+        return labels_used - labels_defined
+
+    def compile(self, words_by_label):
+        pass
 
 def extract_label(operand):
     r'''Extract the label out of the operand.
@@ -86,7 +91,7 @@ def is_legal_label(operand):
     return True
 
 def parse_asm(filename, line, lineno):
-    r'''Parses one line of assembler code.  Returns ast node or None.
+    r'''Parses one line of assembler code.  Returns assembler.inst or None.
     '''
     stripped_line = line.rstrip()
     comment = stripped_line.find('#')
@@ -111,12 +116,12 @@ def parse_asm(filename, line, lineno):
         second_comma = line.find(',', line.find(',') + 1) + 1
         raise SyntaxError("no more than 2 operands are allowed",
                           (filename, lineno, second_comma, line))
-    str1 = str2 = None
+    operand1 = operand2 = None
     if operands:
-        str1 = operands[0]
+        operand1 = operands[0]
     if len(operands) > 1:
-        str2 = operands[1]
-    int1 = int2 = 0
+        operand2 = operands[1]
+    length = clocks = 0
     if opcode is not None:
         inst_obj = getattr(asm_opcodes, opcode.upper(), None)
         if inst_obj is None:
@@ -129,13 +134,11 @@ def parse_asm(filename, line, lineno):
                 opcode_column = len(line) - len(line.lstrip()) + 1
             raise SyntaxError("unknown opcode: %s" % opcode,
                               (filename, lineno, opcode_column, line))
-        int1 = inst_obj.len
-        if isinstance(inst_obj.cycles, int): int2 = inst_obj.cycles
-        else: int2 = max(inst_obj.cycles)
+        length = inst_obj.len
+        if isinstance(inst_obj.cycles, int): clocks = inst_obj.cycles
+        else: clocks = max(inst_obj.cycles)
     column_start = len(stripped_line) - len(stripped_line.lstrip()) + 1
     column_end = len(stripped_line)
-    return ast.ast.from_parser((lineno, column_start, lineno, column_end),
-                               kind = 'flash', label = label, opcode = opcode,
-                               str1 = str1, str2 = str2,
-                               int1 = int1, int2 = int2)
+    return assembler.inst(label, opcode, operand1, operand2, length, clocks,
+                          (lineno, column_start, lineno, column_end))
 

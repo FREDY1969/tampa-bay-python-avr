@@ -4,7 +4,7 @@ from __future__ import with_statement
 
 import itertools
 
-from ucc.database import crud, symbol_table
+from ucc.database import crud, fn_xref, symbol_table
 
 def delete_word_by_label(word_label):
     r'''Deletes the word and all of it's ast nodes from the ast table.
@@ -89,18 +89,29 @@ class ast(object):
                           if getattr(self, attr) is not None),
                   ' ' + repr(self.args) if self.args else '')
 
-    def prepare(self, words_by_label):
+    def prepare(self, fn_symbol, words_by_label, words_needed):
         if self.kind == 'call':
+            self.prepare_args(fn_symbol, words_by_label, words_needed)
             if self.args and isinstance(self.args[0], ast) and \
                self.args[0].kind == 'word':
                 word_obj = words_by_label[self.args[0].label]
+                fn_xref.calls(fn_symbol.id, word_obj.ww.symbol.id)
                 prepare_method = word_obj.get_method('prepare', self.expect)
-                return prepare_method(self, words_by_label)
-            self.prepare_args(words_by_label)
+                return prepare_method(self, fn_symbol, words_by_label,
+                                            words_needed)
+        if self.kind == 'word':
+            sym = symbol_table.get_by_id(self.symbol_id)
+            if sym.context is None:
+                words_needed.add(sym.label)
+                if self.expects == 'lvalue':
+                    fn_xref.sets(fn_symbol.id, self.symbol_id)
+                else:
+                    fn_xref.uses(fn_symbol.id, self.symbol_id)
         return self
 
-    def prepare_args(self, words_by_label):
-        self.args = prepare_args(self.args, words_by_label)
+    def prepare_args(self, fn_symbol, words_by_label, words_needed):
+        self.args = \
+          prepare_args(fn_symbol, self.args, words_by_label, words_needed)
 
     def save(self, word_symbol_id,
              parent = None, parent_arg_num = None, arg_order = None):
@@ -124,13 +135,30 @@ def save_args(args, word_symbol_id, parent = None):
             for position, x in enumerate(arg):
                 x.save(word_symbol_id, parent, arg_num, position)
 
-def prepare_args(args, words_by_label):
-    return tuple(arg.prepare(words_by_label)
+def prepare_args(fn_symbol, args, words_by_label, words_needed):
+    r'''Prepares each of the args.
+
+    This involves setting the 'expect' and 'type_id' attributes for each ast
+    and macro expansion.
+
+    It also sets the 'side_effects' and 'suspends' attributes on the symbols
+    for functions, and records xref info using the ucc.database.fn_xref
+    'calls', 'uses', and 'sets' functions.
+
+    The labels of the words needed by these args are added to the
+    'words_needed' set.
+
+    Returns a tuple of the new args to use in place of the args passed in.
+    '''
+    return tuple(arg.prepare(words_by_label, words_needed)
                    if isinstance(arg, ast)
-                   else prepare_args(arg, words_by_label)
+                   else prepare_args(fn_symbol, arg, words_by_label,
+                                     words_needed)
                  for arg in args)
 
 def save_word(label, symbol_id, args):
+    r'''Writes the ast for word 'symbol_id' to the database.
+    '''
     delete_word_by_label(label)
-    save_args(args, symbol_id)
+    return tuple(save_args(args, symbol_id))
 

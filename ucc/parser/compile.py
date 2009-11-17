@@ -7,9 +7,9 @@ import os.path
 import itertools
 import traceback
 
-from ucc.word import helpers, xml_access, word
-from ucc.parser import genparser
-from ucc.database import ast, crud, symbol_table
+from ucc.word import helpers
+from ucc.parser import genparser, hex_file
+from ucc.database import crud, symbol_table
 from ucc.assembler import assemble
 from ucclib.built_in import declaration
 
@@ -63,25 +63,28 @@ def create_parsers(top):
     Rules = []
     Token_dict = {}
     package_parsers = {}
+
     syntax_file = os.path.join(os.path.dirname(__file__), 'SYNTAX')
-    for p in top.packages:
-        for ww in p.get_words():
-            ww.symbol = \
-              symbol_table.symbol.create(ww.label, ww.kind,
-                                         source_filename=ww.get_filename())
-            load_word(ww)
+    with crud.db_transaction():
+        for p in top.packages:
+            for ww in p.get_words():
+                ww.symbol = \
+                  symbol_table.symbol.create(ww.label, ww.kind,
+                                             source_filename=ww.get_filename())
+                load_word(ww)
 
-        #print "Rules", Rules
-        #print "Token_dict", Token_dict
+            #print "Rules", Rules
+            #print "Token_dict", Token_dict
 
-        # compile new parser for this package:
-        with open(os.path.join(p.package_dir, 'parser.py'), 'w') as output_file:
-            genparser.genparser(syntax_file, '\n'.join(Rules), Token_dict,
-                                output_file)
+            # compile new parser for this package:
+            with open(os.path.join(p.package_dir, 'parser.py'), 'w') \
+              as output_file:
+                genparser.genparser(syntax_file, '\n'.join(Rules), Token_dict,
+                                    output_file)
 
-        # import needed modules from the package:
-        package_parsers[p.package_name] = \
-          helpers.import_module(p.package_name + '.parser')
+            # import needed modules from the package:
+            package_parsers[p.package_name] = \
+              helpers.import_module(p.package_name + '.parser')
     return package_parsers
 
 def parse_word(ww, word_obj, parser):
@@ -95,28 +98,95 @@ def parse_word(ww, word_obj, parser):
     '''
     try:
         if not isinstance(word_obj, type): # word_obj not a class
-            word_obj.parse_file(parser, Word_objs_by_label, Debug)
+            needs = word_obj.parse_file(parser, Word_objs_by_label, Debug)
     except SyntaxError:
         e_type, e_value, e_tb = sys.exc_info()
         for line in traceback.format_exception_only(e_type, e_value):
             sys.stderr.write(line)
-        return False
+        return False, None
     except Exception:
         traceback.print_exc()
-        return False
-    return True
+        return False, None
+    return True, needs
 
-def parse_needed_words():
-    pass
+def parse_needed_words(top, package_parsers):
+    r'''Parses all of the needed word files.
 
-def gen_intermediate_code():
-    pass
+    Returns a set of the labels of the words parsed.
+    '''
+    words_done = set()
+    words_needed = set(['startup'])
+    num_errors = 0
+    while words_needed:
+        next_word = words_needed.pop()
+        ww = top.get_word_by_name(next_word)
+        word_obj = Word_objs_by_label[ww.label]
+        status, more_words_needed = \
+          parse_word(ww, word_obj, package_parsers[ww.package_name])
+        if status:
+            words_done.add(next_word)
+            words_needed.update(more_words_needed - words_done)
+        else:
+            num_errors += 1
+
+    if num_errors:
+        sys.stderr.write("%s files had syntax errors\n" % num_errors)
+        sys.exit(1)
+
+    return words_done
 
 def optimize():
     pass
 
 def gen_assembler():
     pass
+
+def assemble_program(package_dir):
+    r'''Assemble all of the sections.
+
+    Generates .hex files in package_dir.
+    '''
+
+    # Assign addresses to all labels in all sections:
+    labels = {}         # {label: address}
+
+    # flash
+    start_data = assemble.assign_labels('flash', labels)
+
+    # data
+    assert 'start_data' not in labels, \
+           "duplicate assembler label: start_data"
+    labels['start_data'] = start_data
+    data_len = assemble.assign_labels('data', labels)
+    assert 'data_len' not in labels, \
+           "duplicate assembler label: data_len"
+    labels['data_len'] = data_len
+
+    # bss
+    bss_end = assemble.assign_labels('bss', labels, data_len)
+    assert 'bss_len' not in labels, \
+           "duplicate assembler label: bss_len"
+    labels['bss_len'] = bss_end - data_len
+
+    # eeprom
+    assemble.assign_labels('eeprom', labels)
+
+    # assemble flash and data:
+    hex_file.write(itertools.chain(assemble.assemble('flash', labels),
+                                   assemble.assemble('data', labels)),
+                   package_dir, 'flash')
+
+    # check that bss is blank!
+    try:
+        assemble.assemble('bss', labels).next()
+    except StopIteration:
+        pass
+    else:
+        raise AssertionError("bss is not blank!")
+
+    # assemble eeprom:
+    hex_file.write(assemble.assemble('eeprom', labels), package_dir, 'eeprom')
+
 
 def run(top):
     global Word_objs_by_label
@@ -134,85 +204,25 @@ def run(top):
 
     with crud.db_connection(top.packages[-1].package_dir):
 
-        with crud.db_transaction():
-            # Gather Word_objs_by_label, and build the parsers for each package:
+        # Gather Word_objs_by_label, and build the parsers for each package:
+        #
+        # {package_name: parser module}
+        package_parsers = create_parsers(top)  # Also loads all of the word objs
 
-            # {package_name: parser module}
-            package_parsers = create_parsers(top)  # Also loads all of the
-                                                   # word objs
+        # word files => ast
+        words_done = parse_needed_words(top, package_parsers)
 
-        # parse files in the package:
-        flash = []      # list of (label, opcode, operand1, operand2)
-        data = []       # list of (label, datatype, operand)
-        bss = []        # list of (label, num_bytes)
-        eeprom = []     # list of (label, datatype, operand)
-        words_done = set()
-        words_needed = set(['startup'])
-        num_errors = 0
-        while words_needed:
-            next_word = words_needed.pop()
-            ww = top.get_word_by_name(next_word)
-            word_obj = Word_objs_by_label[ww.label]
-            if parse_word(ww, word_obj, package_parsers[ww.package_name]):
-                with crud.db_transaction():
-                    f, d, b, e, n = word_obj.compile(Word_objs_by_label)
-                flash.extend(f)
-                data.extend(d)
-                bss.extend(b)
-                eeprom.extend(e)
-                words_done.add(next_word)
-                words_needed.update(frozenset(n) - words_done)
-            else:
-                num_errors += 1
+        # ast => intermediate code
+        for word_label in words_done:
+            with crud.db_transaction():
+                Word_objs_by_label[word_label].compile(Word_objs_by_label)
 
-        if num_errors:
-            sys.stderr.write("%s files had syntax errors\n" % num_errors)
-            sys.exit(1)
-
-        gen_intermediate_code()
+        # intermediate code => optimized intermediate code
         optimize()
+
+        # intermediate code => assembler
         gen_assembler()
 
-        #print "flash", flash
-        #print "data", data
-        #print "bss", bss
-        #print "eeprom", eeprom
-
-        with open(os.path.join(top.packages[-1].package_dir, 'flash.hex'),
-                  'w') \
-          as flash_file:
-            insts = assemble.assemble(flash)
-            for i in itertools.count():
-                data_hex = ''.join(itertools.imap(
-                                     lambda n: "%04x" % byte_reverse(n),
-                                     itertools.islice(insts, 8)))
-                if not data_hex: break
-                line = "%02x%04x00%s" % (len(data_hex)/2, i * 16, data_hex)
-                flash_file.write(":%s%02x\r\n" % (line, check_sum(line)))
-                if len(data_hex) < 32: break
-            assert not data
-            assert not bss
-            flash_file.write(":00000001FF\r\n")
-        assert not eeprom
-
-def byte_reverse(n):
-    r'''Reverses the two bytes in a 16 bit number.
-
-    >>> hex(byte_reverse(0x1234))
-    '0x3412'
-    '''
-    return ((n << 8) & 0xff00) | (n >> 8)
-
-def check_sum(data):
-    r'''Calculates the .hex checksum.
-
-    >>> hex(check_sum('100000000C9445010C9467110C9494110C946D01'))
-    '0x9f'
-    >>> hex(check_sum('10008000202D2068656C70202874686973206F75'))
-    '0x56'
-    '''
-    sum = 0
-    for i in range(0, len(data), 2):
-        sum += int(data[i:i+2], 16)
-    return (256 - (sum & 0xff)) & 0xFF
+        # assembler => .hex files
+        assemble_program(top.packages[-1].package_dir)
 

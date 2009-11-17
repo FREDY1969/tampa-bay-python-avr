@@ -33,6 +33,7 @@ declaration classes and instances.
 from __future__ import with_statement
 
 import os.path
+import itertools
 from xml.etree import ElementTree
 
 #import setpath
@@ -145,6 +146,8 @@ class word(object):
             - None  (for an optional answer that was left unanswered)
             - an answer object (see ucc.word.answers).
             - a list of 0 or more answer objects (for a repeating question).
+
+        See also, get_value.
         '''
         if question_name not in self.answers:
             if default is unique:
@@ -152,6 +155,22 @@ class word(object):
                                  (self.label, question_name))
             return default
         return self.answers[question_name]
+
+    def get_value(self, question_name, default = None):
+        r'''Return the value of the answer to question_name.
+
+        If the answer was optional and left unanswered, default is returned.
+
+        This is like get_answer, but also does the get_value() call on the
+        answer for you.  If the answer is repeating, it calls get_answer on
+        each element.
+
+        This does not work for series or choice answers.
+        '''
+        ans = self.get_answer(question_name)
+        if ans is None: return ans
+        if isinstance(ans, answers.answer): return ans.get_value()
+        return tuple(itertools.imap(lambda x: x.get_value(), ans))
 
     def get_filename(self):
         r'''Returns the complete path to the source file.

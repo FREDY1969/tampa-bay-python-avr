@@ -57,7 +57,19 @@ class symbol(object):
 
         Returns the id of the row.
         '''
+        if context is None:
+            id = crud.read1_column('symbol_table', 'id',
+                                   label=label, context=None,
+                                   zero_ok=True)
+            if id is not None:
+                crud.update('symbol_table', {'id': id}, kind=kind,
+                            **attributes)
+                if id in Symbols_by_id:
+                    del Symbols_by_id[id]
+                    del Symbols[label, None]
+                return cls(id, label, context, kind=kind, **attributes)
         id = crud.insert('symbol_table',
+                         option='replace',
                          label=label,
                          kind=kind,
                          context=context and context.id,

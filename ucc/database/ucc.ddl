@@ -245,7 +245,7 @@ create table outs (
 -- These are broken out by blocks to facilitate the assembler playing games
 -- with the block orders to maximize the use of smaller jmp and call insts.
 ---------------------------------------------------------------------------
-create table assembler_blocks (
+create table assembler_words (
     id integer not null primary key,
     section varchar(255) not null,
         -- 'code'
@@ -260,9 +260,18 @@ create table assembler_blocks (
 create table assembler_code (
     id integer not null primary key,
     block_id int not null references assembler_blocks(id),
-    opcode varchar(255) not null,
+    inst_order int not null,
+    label varchar(255) unique,
+    opcode varchar(255),
     operand1 varchar(255),
     operand2 varchar(255),
     length int not null,           -- in bytes
-    clocks int                     -- for machine instructions (code section)
+    clocks int,                    -- for machine instructions (code section)
+    line_start int,
+    column_start int,
+    line_end int,
+    column_end int,
+
+    unique (block_id, inst_order)
 );
+
