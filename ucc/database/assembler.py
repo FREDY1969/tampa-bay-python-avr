@@ -26,6 +26,9 @@ def gen_insts(block_id):
                             order_by=('inst_order',)):
         yield label, opcode, op1, op2
 
+def update_block_address(block_id, address):
+    crud.update('assembler_words', {'id': block_id}, address=address)
+
 class block(object):
     def __init__(self, section, label, address = None, length = None):
         self.section = section
