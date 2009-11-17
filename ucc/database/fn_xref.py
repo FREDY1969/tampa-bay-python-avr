@@ -52,13 +52,13 @@ def expand():
     # Fill out symbol_table.side_effects:
     for depth in itertools.count(0):
         crud.Db_cur.execute("""
-          update symbol_table caller
+          update symbol_table
              set side_effects = 1
-           where caller.side_effects = 0
+           where side_effects = 0
              and exists (select null
                            from fn_calls inner join symbol_table called
                              on fn_calls.called_id = called.id
-                          where caller.id = fn_calls.caller_id
+                          where id = fn_calls.caller_id
                             and called.side_effects = 1)
            """)
         if not crud.Db_cur.rowcount:
@@ -69,13 +69,13 @@ def expand():
     # Fill out symbol_table.suspends:
     for depth in itertools.count(0):
         crud.Db_cur.execute("""
-          update symbol_table caller
+          update symbol_table
              set suspends = 1
-           where caller.suspends = 0
+           where suspends = 0
              and exists (select null
                            from fn_calls inner join symbol_table called
                              on fn_calls.called_id = called.id
-                          where caller.id = fn_calls.caller_id
+                          where id = fn_calls.caller_id
                             and called.suspends = 1)
            """)
         if not crud.Db_cur.rowcount:

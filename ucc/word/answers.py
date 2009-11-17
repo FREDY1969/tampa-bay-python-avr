@@ -98,7 +98,7 @@ class answer(object):
 
     def get_value(self):
         ans = self.convert(self.value)
-        print "answers.get_value", self.value, ans
+        #print "answers.get_value", repr(self.value), repr(ans)
         return ans
 
 # These might later convert the answer from a string to the appropriate python

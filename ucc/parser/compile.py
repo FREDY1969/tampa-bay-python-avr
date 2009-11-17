@@ -9,7 +9,7 @@ import traceback
 
 from ucc.word import helpers
 from ucc.parser import genparser, hex_file
-from ucc.database import crud, symbol_table
+from ucc.database import crud, fn_xref, symbol_table
 from ucc.assembler import assemble
 from ucclib.built_in import declaration
 
@@ -133,6 +133,7 @@ def parse_needed_words(top, package_parsers):
         sys.stderr.write("%s files had syntax errors\n" % num_errors)
         sys.exit(1)
 
+    fn_xref.expand()
     return words_done
 
 def optimize():
