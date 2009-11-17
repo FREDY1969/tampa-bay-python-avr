@@ -32,7 +32,7 @@ class ast(object):
     # Values passed as keyword args and stored as attributes that describe
     # this ast node (and are set to None on macro_expand):
     attr_cols_node = (
-        'kind', 'label', 'opcode', 'symbol_id', 'int1', 'int2', 'str1', 'str2',
+        'kind', 'label', 'symbol_id', 'int1', 'int2', 'str1', 'str2',
     )
 
     # All values passed as keyword args and stored as attributes.
@@ -48,7 +48,7 @@ class ast(object):
     # default attribute values:
     kind = 'call'
     expect = 'value'
-    word_symbol_id = label = opcode = symbol_id = None
+    word_symbol_id = label = symbol_id = None
     int1 = int2 = str1 = str2 = None
     line_start = column_start = line_end = column_end = None
 
