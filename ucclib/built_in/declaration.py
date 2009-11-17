@@ -5,6 +5,8 @@ from ucc.database import ast, crud
 from ucc.parser import parse
 from ucc.word import helpers, word as word_module
 
+Empty_set = frozenset()
+
 class declaration(object):
     r'''All defining words are subclasses of declaration.
 
@@ -72,7 +74,16 @@ class declaration(object):
         return "<%s %s>" % (self.__class__.__name__, self.name)
 
     def parse_file(self, parser, words_by_label, debug = 0):
-        pass
+        r'''Returns a frozenset of the labels of the words needed.
+
+        This must also update the 'side_effects' and 'suspends' attributes of
+        the symbol, as well as record info in the 'fn_calls' and
+        'fn_global_variables' tables using the ucc.database.fn_xref routines:
+        'calls', 'uses' and 'sets'.
+
+        The implementation of this method is left up to the subclass...
+        '''
+        return Empty_set
 
     def get_method(self, prefix, expect):
         return getattr(self, prefix + '_' + expect, None) or \
@@ -99,7 +110,7 @@ class word(declaration):
         '''
         return None
 
-    def macro_expand(self, ast_node, words_by_label):
+    def macro_expand(self, fn_symbol, ast_node, words_by_label, words_needed):
         r'''Chance to macro expand the ast_node itself.
 
         This is the last step in preparing the ast_node prior to storing it in
@@ -109,11 +120,13 @@ class word(declaration):
         '''
         return ast_node
 
-    def prepare_generic(self, ast_node, words_by_label):
+    def prepare_generic(self, fn_symbol, ast_node, words_by_label,
+                              words_needed):
         self.update_expect(ast_node)
-        ast_node.prepare_args(words_by_label)
+        ast_node.prepare_args(fn_symbol, words_by_label, words_needed)
         self.update_types(ast_node)
-        return self.macro_expand(ast_node, words_by_label)
+        return self.macro_expand(fn_symbol, ast_node, words_by_label,
+                                 words_needed)
 
     def compile_generic(self, ast_node, words_by_label):
         raise ValueError("%s used as a %s" % (self.label, ast_node.expect))
@@ -124,9 +137,12 @@ class high_level_word(word):
         worked, args = parse.parse_file(parser, self.ww, debug)
         if not worked:
             raise AssertionError, "parse failed for " + filename
-        args = ast.prepare_args(args, words_by_label)
+        words_needed = set()
+        args = ast.prepare_args(self.ww.symbol, args, words_by_label,
+                                words_needed)
         with crud.db_transaction():
             ast.save_word(self.label, self.ww.symbol.id, args)
+        return frozenset(words_needed)
 
     def compile(self, words_by_label):
         print "%s.compile" % (self.name,), "id", self.ww.symbol.id

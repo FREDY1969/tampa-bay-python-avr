@@ -12,6 +12,7 @@ import os.path
 import itertools
 import sqlite3 as db
 
+Debug = False           # the doctests will fail when this is True
 Db_conn = None
 Db_filename = 'ucc.db'
 _Gensyms = {}
@@ -48,8 +49,10 @@ class db_connection(object):
         return Db_conn
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None and exc_val is None and exc_tb is None:
+            if Debug: print "crud: commit"
             Db_conn.commit()
         else:
+            if Debug: print "crud: rollback"
             Db_conn.rollback()
         fini()
         return False    # don't ignore exception (if any)
@@ -201,11 +204,14 @@ def run_query(table, cols, keys):
         parameters: []
     '''
     where, params = create_where(keys)
-    Db_cur.execute(string_lookup("select %s from %s%s" % 
-                                   (', '.join(cols) if cols else '*',
-                                    table,
-                                    where)),
-                   params)
+    command = string_lookup("select %s from %s%s" % 
+                              (', '.join(cols) if cols else '*',
+                               table,
+                               where))
+    if Debug:
+        print "crud:", command
+        print "  params:", params
+    Db_cur.execute(command, params)
 
 def read_as_tuples(table, *cols, **keys):
     r'''Reads rows from table, returning a sequence of tuples.
@@ -313,11 +319,14 @@ def update(table, where, **set):
         parameters: [7, 8, 44]
     '''
     where_clause, params = create_where(where)
-    Db_cur.execute(string_lookup("update %s set %s%s" %
-                                   (table,
-                                    ', '.join(c + ' = ?' for c in set.keys()),
-                                    where_clause)),
-                   set.values() + params)
+    command = string_lookup("update %s set %s%s" %
+                              (table,
+                               ', '.join(c + ' = ?' for c in set.keys()),
+                               where_clause))
+    if Debug:
+        print "crud:", command
+        print "  params:", set.values() + params
+    Db_cur.execute(command, set.values() + params)
 
 def delete(table, **keys):
     r'''Deletes rows in table.
@@ -330,8 +339,11 @@ def delete(table, **keys):
         parameters: [7, 8]
     '''
     where_clause, params = create_where(keys)
-    Db_cur.execute(string_lookup("delete from %s%s" % (table, where_clause)),
-                   params)
+    command = string_lookup("delete from %s%s" % (table, where_clause))
+    if Debug:
+        print "crud:", command
+        print "  params:", params
+    Db_cur.execute(command, params)
 
 def insert(table, option = None, **cols):
     r'''Inserts a row in table.
@@ -349,10 +361,15 @@ def insert(table, option = None, **cols):
         parameters: [7, 8]
         123
     '''
-    Db_cur.execute(string_lookup("insert %sinto %s (%s) values (%s)" %
-                                   ("or %s " % option if option else '',
-                                    table,
-                                    ', '.join(cols.keys()),
-                                    ', '.join('?' for c in cols.keys()))),
-                   cols.values())
+    command = string_lookup("insert %sinto %s (%s) values (%s)" %
+                              ("or %s " % option if option else '',
+                               table,
+                               ', '.join(cols.keys()),
+                               ', '.join('?' for c in cols.keys())))
+    if Debug:
+        print "crud:", command
+        print "  params:", cols.values()
+    Db_cur.execute(command, cols.values())
+    if Debug:
+        print "  id:", Db_cur.lastrowid
     return Db_cur.lastrowid

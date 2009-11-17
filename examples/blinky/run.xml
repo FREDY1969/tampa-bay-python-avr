@@ -4,4 +4,7 @@
     <label>run</label>
     <kind>assembler_word</kind>
     <defining>False</defining>
+    <answers>
+        <answer name="address" repeated="False" />
+    </answers>
 </word>
