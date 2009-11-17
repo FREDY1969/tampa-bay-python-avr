@@ -151,26 +151,27 @@ def assemble_program(package_dir):
     # Assign addresses to all labels in all sections:
     labels = {}         # {label: address}
 
-    # flash
-    start_data = assemble.assign_labels('flash', labels)
+    with crud.db_transaction():
+        # flash
+        start_data = assemble.assign_labels('flash', labels)
 
-    # data
-    assert 'start_data' not in labels, \
-           "duplicate assembler label: start_data"
-    labels['start_data'] = start_data
-    data_len = assemble.assign_labels('data', labels)
-    assert 'data_len' not in labels, \
-           "duplicate assembler label: data_len"
-    labels['data_len'] = data_len
+        # data
+        assert 'start_data' not in labels, \
+               "duplicate assembler label: start_data"
+        labels['start_data'] = start_data
+        data_len = assemble.assign_labels('data', labels)
+        assert 'data_len' not in labels, \
+               "duplicate assembler label: data_len"
+        labels['data_len'] = data_len
 
-    # bss
-    bss_end = assemble.assign_labels('bss', labels, data_len)
-    assert 'bss_len' not in labels, \
-           "duplicate assembler label: bss_len"
-    labels['bss_len'] = bss_end - data_len
+        # bss
+        bss_end = assemble.assign_labels('bss', labels, data_len)
+        assert 'bss_len' not in labels, \
+               "duplicate assembler label: bss_len"
+        labels['bss_len'] = bss_end - data_len
 
-    # eeprom
-    assemble.assign_labels('eeprom', labels)
+        # eeprom
+        assemble.assign_labels('eeprom', labels)
 
     # assemble flash and data:
     hex_file.write(itertools.chain(assemble.assemble('flash', labels),

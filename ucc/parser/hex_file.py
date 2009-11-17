@@ -4,22 +4,29 @@ import os
 import itertools
 
 def write(words, package_dir, filetype):
+    r'''Writes words to .hex file in package_dir.
+
+    'words' is a sequence of (starting_address, byte sequence).
+    '''
     filename = os.path.join(package_dir, filetype + '.hex')
     with open(filename, 'w') as hex_file:
         generated_something = False
-        for i in itertools.count():
-            data_hex = ''.join(itertools.imap(
-                                 lambda n: "%04x" % byte_reverse(n),
-                                 itertools.islice(words, 8)))
-            if not data_hex: break
-            line = "%02x%04x00%s" % (len(data_hex)/2, i * 16, data_hex)
-            hex_file.write(":%s%02x\r\n" % (line, check_sum(line)))
-            generated_something = True
-            if len(data_hex) < 32: break 
+        for address, bytes in words:
+            bytes_iter = iter(bytes)
+            for i in itertools.count():
+                data_hex = ''.join(itertools.imap(
+                                     lambda n: "%02x" % n,
+                                     itertools.islice(bytes_iter, 16)))
+                if not data_hex: break
+                line = "%02x%04x00%s" % \
+                         (len(data_hex)/2, address + i * 16, data_hex)
+                hex_file.write(":%s%02x\r\n" % (line, check_sum(line)))
+                generated_something = True
+                if len(data_hex) < 32: break 
         hex_file.write(":00000001FF\r\n")
     if not generated_something:
         os.remove(filename)
- 
+
 def byte_reverse(n):
     r'''Reverses the two bytes in a 16 bit number.
 

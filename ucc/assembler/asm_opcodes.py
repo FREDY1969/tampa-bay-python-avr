@@ -109,13 +109,13 @@ LD = inst1('LD', '1001 000d dddd xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
                                            #    01 post inc
                                            #    10 pre dec
 LDD = inst1('LDD', '10q0 qq0d dddd yqqq', 2) # y=1 for Y, 0 for Z
-LDS = inst2('LDS', '1001 000d dddd 0000 kkkk kkkk kkkk kkkk', 2)
+LDS = inst2('LDS', '1001 000d dddd 0000 KKKK KKKK KKKK KKKK', 2)
 ST = inst1('ST', '1001 001r rrrr xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
                                            # pp=00 no inc/dec
                                            #    01 post inc
                                            #    10 pre dec
 STD = inst1('STD', '10q0 qq1r rrrr yqqq', 2) # y=1 for Y, 0 for Z
-STS = inst2('STS', '1001 001r rrrr 0000 kkkk kkkk kkkk kkkk', 2)
+STS = inst2('STS', '1001 001r rrrr 0000 KKKK KKKK KKKK KKKK', 2)
 #LPM = inst1('LPM', '1001 0101 1100 1000', 3) # R0 implied
 LPM = inst1('LPM', '1001 000d dddd 010p', 3) # pp=00 no inc/dec
                                              #    01 post inc

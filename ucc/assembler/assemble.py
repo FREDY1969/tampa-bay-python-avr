@@ -12,6 +12,7 @@ def assign_labels(section, labels, starting_address = 0):
     for block_id, block_label, block_address in assembler.gen_blocks(section):
         if block_address is None:
             address = running_address
+            assembler.update_block_address(block_id, address)
         else:
             address = block_address
         assert block_label not in labels, \
@@ -24,7 +25,7 @@ def assign_labels(section, labels, starting_address = 0):
                 labels[label] = address
             if opcode is not None:
                 address += getattr(asm_opcodes, opcode.upper()).len
-        if block_address is None:
+        if address > running_address:
             running_address = address
     return running_address
 
@@ -32,11 +33,17 @@ def assemble(section, labels):
     r'''Yields individual bytes for all instructions in 'section'.
     '''
     for block_id, block_label, block_address in assembler.gen_blocks(section):
-        address = labels[block_label]
-        for label, opcode, op1, op2 in assembler.gen_insts(block_id):
-            if opcode is not None:
-                inst = getattr(asm_opcodes, opcode.upper())
-                for n in inst.assemble(op1, op2, labels, address):
-                    yield n
-                address += getattr(asm_opcodes, opcode.upper()).len
+        yield block_address, assemble_word(block_id, block_address, labels)
+
+def assemble_word(block_id, block_address, labels):
+    r'''Yields individual bytes for all instructions in 'section'.
+    '''
+    address = block_address
+    for label, opcode, op1, op2 in assembler.gen_insts(block_id):
+        if opcode is not None:
+            inst = getattr(asm_opcodes, opcode.upper())
+            for n in inst.assemble(op1, op2, labels, address):
+                yield n
+                address += 1
+            #address += getattr(asm_opcodes, opcode.upper()).len
 

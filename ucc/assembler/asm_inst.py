@@ -18,6 +18,8 @@ Bits = {
 def convert_reg(arg, num_bits, note, labels, address):
     r'''Convert register operand to number.
 
+    'address' is in bytes.
+
     >>> convert_reg('r0', 5, None, None, None)
     0
     >>> convert_reg('r31', 5, None, None, None)
@@ -87,9 +89,9 @@ Convert = {
         convert_reg,
     'k':        # addr (data or flash memory), offset in flash
         lambda arg, num_bits, note, labels, address: \
-          eval(arg, globals(), labels) \
-            if num_bits >= 16 \
-            else eval(arg, globals(), labels) - address,
+          eval(arg, globals(), labels) // 2 
+            if num_bits > 16
+            else (eval(arg, globals(), labels) - address) // 2,
     'K':        # an immediate number
         lambda arg, num_bits, note, labels, address: \
           eval(arg, globals(), labels),
@@ -164,7 +166,7 @@ Order = {
 def invalid_operand(arg, expected):
     raise SyntaxError("expected %s, got %s" % (expected, arg))
 
-def format(s, operands, notes, args, labels, address):
+def format(s, operands, notes, args, labels, next_address):
     r'''
         >>> hex(format('0000 0000 0000 0000'.replace(' ',''),
         ...            {}, {}, {}, {}, 0))
@@ -183,11 +185,11 @@ def format(s, operands, notes, args, labels, address):
         >>> hex(format('1111 1111 1111 1111 kkkk kkkk kkkk kkkk'
         ...              .replace(' ',''),
         ...            {'k': 16}, {}, {'k':'foo'}, {'foo': 0x1234}, 0x1000))
-        '0xffff1234L'
+        '0xffff011aL'
         >>> hex(format('0000 1100 kkkk kkkk'.replace(' ',''),
         ...            {'k': 8}, {}, {'k':'foo'},
         ...            {'foo': 0x1234}, 0x1280))
-        '0xcb4'
+        '0xcda'
         >>> hex(format('0000 1100 KKKK KKKK'.replace(' ',''),
         ...            {'K': 8}, {}, {'K':'hi8(foo)'},
         ...            {'foo': 0x1234}, 0x1280))
@@ -200,7 +202,7 @@ def format(s, operands, notes, args, labels, address):
     assert len(s) % 16 == 0
     values = dict((name, lookup(name, Convert, notes)
                            (args[name], num_bits, notes.get(name), labels,
-                            address))
+                            next_address))
                   for name, num_bits in operands.iteritems())
     ans = 0
     for i, x in enumerate(s[::-1]):
@@ -231,7 +233,7 @@ def operand_order(operands, notes):
                        key = lambda x: x[0])))
 
 class inst1(object):
-    len = 1
+    len = 2
 
     def __init__(self, name, opcode, cycles, **notes):
         self.name = name
@@ -266,14 +268,18 @@ class inst1(object):
                                      itertools.repeat(op2))))
 
     def assemble(self, op1, op2, labels, address):
-        yield format(self.opcode, self.operands, self.notes,
-                     self.make_args(op1, op2), labels, address)
+        bits = format(self.opcode, self.operands, self.notes,
+                      self.make_args(op1, op2), labels, address + self.len)
+        yield bits & 0xff
+        yield bits >> 8
 
 class inst2(inst1):
-    len = 2
+    len = 4
 
     def assemble(self, op1, op2, labels, address):
         bits = format(self.opcode, self.operands, self.notes,
                       self.make_args(op1, op2), labels, address)
-        yield int(bits >> 16)
-        yield int(bits & 0xffff)
+        yield int((bits >> 16) & 0xff)
+        yield int((bits >> 24) & 0xff)
+        yield int(bits & 0xff)
+        yield int((bits >> 8) & 0xff)
