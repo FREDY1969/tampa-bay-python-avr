@@ -54,18 +54,17 @@ class top(object):
             else:
                 if w.defining:
                     w.kind_obj.subclasses.append(w)
-                    suffix = w.get_answer('filename_suffix')
-                    if suffix is not None:
-                        suffix = suffix.value
-                        if suffix and suffix[0] != '.':
-                            suffix = '.' + suffix
-                    w.filename_suffix = suffix
                 else:
                     w.kind_obj.instances.append(w)
         self.roots.sort(key=lambda w: w.label.lower())
         for w in self.word_dict.itervalues():
             w.subclasses.sort(key=lambda w: w.label.lower())
             w.instances.sort(key=lambda w: w.label.lower())
+            if w.defining:
+                suffix = w.get_value('filename_suffix')
+                if suffix and suffix[0] != '.':
+                    suffix = '.' + suffix
+                w.filename_suffix = suffix
 
     def get_word_by_name(self, name):
         r'''Lookup word by name from all packages.

@@ -1,8 +1,8 @@
 # macro.py
 
-from ucclib.built_in import declaration
+from ucclib.built_in import singleton
 
-class macro(declaration.singleton):
+class macro(singleton.singleton):
     def new_syntax2(self):
         syntax = tuple('raw_statement : ' + x.value
                        for x in self.ww.get_answer('syntax') or ())

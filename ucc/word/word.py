@@ -13,17 +13,20 @@ the permanent .xml and source files for this word.  The top_package object
 loads all of the words needed for a package and adds some other attributes to
 each word:
 
-    - top          -- A boolean indicating whether this word is directly in the
-                      top-level package (the one opened in the IDE) or not.
-    - package_name -- The full dotted module name of the package containing
-                      this word.  This is set by the package object.
-    - kind_obj     -- The kind word object (whereas 'kind' is just its name).
-    - subclasses   -- A list of word objects that are direct subclasses of this
-                      word (only defining words have anything here).  This list
-                      is sorted by label.lower().
-    - instances    -- A list of word objects that are direct instances of this
-                      word (only defining words have anything here).  This list
-                      is sorted by label.lower().
+    - top             -- A boolean indicating whether this word is directly in
+                         the top-level package (the one opened in the IDE) or
+                         not.
+    - package_name    -- The full dotted module name of the package containing
+                         this word.  This is set by the package object.
+    - kind_obj        -- The kind word object (whereas 'kind' is just its name).
+    - subclasses      -- A list of word objects that are direct subclasses of
+                         this word (only defining words have anything here).
+                         This list is sorted by label.lower().
+    - instances       -- A list of word objects that are direct instances of
+                         this word (only defining words have anything here).
+                         This list is sorted by label.lower().
+    - filename_suffix -- None or string starting with '.'.  Only set on
+                         defining words.
 
 These word objects are used by the compiler, along with the subclasses and
 instances of the ucclib.built_in.declaration class.  The IDE doesn't use the
@@ -94,13 +97,6 @@ class word(object):
                                     #   or - a list of answer objects
                                     #        (repetition)
         self.questions = questions  # list of question objects or None.
-        if defining:
-            suffix = self.get_answer('filename_suffix')
-            if suffix is not None:
-                suffix = suffix.value
-                if suffix and suffix[0] != '.':
-                    suffix = '.' + suffix
-            self.filename_suffix = suffix
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
@@ -138,6 +134,9 @@ class word(object):
     def get_answer(self, question_name, default = unique):
         r'''Return the answer to question_name.
 
+        If this is a defining word, it will check the word's kind for the
+        answer if this word doesn't have it.
+
         If no default parameter is passed, this will raise a KeyError if the
         answer is not found.  Otherwise it will return default.
 
@@ -149,7 +148,12 @@ class word(object):
 
         See also, get_value.
         '''
-        if question_name not in self.answers:
+        if not self.answers or question_name not in self.answers:
+            if self.defining:
+                try:
+                    return self.kind_obj.get_answer(question_name)
+                except KeyError:
+                    pass
             if default is unique:
                 raise KeyError("%s: no answer for %s" %
                                  (self.label, question_name))
