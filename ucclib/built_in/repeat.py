@@ -3,7 +3,7 @@
 from ucc.database import ast, crud, symbol_table
 from ucclib.built_in import macro
 
-class repeat(macro.macro_word):
+class repeat(macro.macro):
     def macro_expand(self, fn_symbol, ast_node, words_by_label, words_needed):
         #print "repeat.macro_expand"
         _, count, body = ast_node.args

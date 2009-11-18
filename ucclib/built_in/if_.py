@@ -3,7 +3,7 @@
 from ucc.database import ast, crud
 from ucclib.built_in import macro
 
-class if_(macro.macro_word):
+class if_(macro.macro):
     def macro_expand(self, fn_symbol, ast_node, words_by_label, words_needed):
         _, condition, true_branch, false_branch = ast_node.args
         endif_label = crud.gensym('endif')
