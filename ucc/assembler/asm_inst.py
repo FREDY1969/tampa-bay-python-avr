@@ -233,8 +233,6 @@ def operand_order(operands, notes):
                        key = lambda x: x[0])))
 
 class inst1(object):
-    len = 2
-
     def __init__(self, name, opcode, cycles, **notes):
         self.name = name
         self.opcode = opcode.replace(' ', '')
@@ -245,6 +243,8 @@ class inst1(object):
         self.operand_codes = operand_order(self.operands.keys(), notes)
         self.cycles = cycles
         self.notes = notes
+
+    def length(self, op1, op2): return 2
 
     def make_args(self, op1, op2):
         if len(self.operand_codes) == 0:
@@ -269,12 +269,15 @@ class inst1(object):
 
     def assemble(self, op1, op2, labels, address):
         bits = format(self.opcode, self.operands, self.notes,
-                      self.make_args(op1, op2), labels, address + self.len)
+                      self.make_args(op1, op2),
+                      labels,
+                      address + self.length(op1, op2))
         yield bits & 0xff
         yield bits >> 8
 
+
 class inst2(inst1):
-    len = 4
+    def length(self, op1, op2): return 4
 
     def assemble(self, op1, op2, labels, address):
         bits = format(self.opcode, self.operands, self.notes,
@@ -283,3 +286,54 @@ class inst2(inst1):
         yield int((bits >> 24) & 0xff)
         yield int(bits & 0xff)
         yield int((bits >> 8) & 0xff)
+
+
+class bytes(inst1):
+    def __init__(self): pass
+
+    def length(self, op1, op2):
+        assert len(op1) % 2 == 0, \
+               "bytes opcode must have an even number of hex digits"
+        return len(op1) // 2
+
+    def assemble(self, op1, op2, labels, address):
+        for i in range(0, len(op1), 2):
+            yield int(op1[i:i+2], 16)
+
+
+class int8(bytes):
+    def length(self, op1, op2):
+        return 1
+
+    def assemble(self, op1, op2, labels, address):
+        yield int(op1, 0)
+
+
+class int16(bytes):
+    def length(self, op1, op2):
+        return 2
+
+    def assemble(self, op1, op2, labels, address):
+        n = int(op1, 0)
+        yield n & 0xff
+        yield (n >> 8) & 0xff
+
+
+class int32(bytes):
+    def length(self, op1, op2):
+        return 4
+
+    def assemble(self, op1, op2, labels, address):
+        n = int(op1, 0)
+        yield n & 0xff
+        yield (n >> 8) & 0xff
+        yield (n >> 16) & 0xff
+        yield (n >> 24) & 0xff
+
+
+class zeroes(bytes):
+    def length(self, op1, op2):
+        return int(op1, 0)
+
+    def assemble(self, op1, op2, labels, address):
+        return ()

@@ -91,8 +91,9 @@ class declaration(object):
 
 class word(declaration):
     def compile(self, words_by_label):
-        print "FIX: Implement compile for class", self.__class__.__name__
-        return (), (), (), (), ()
+        r'''Empty stub as default action.
+        '''
+        pass
 
     def update_expect(self, ast_node):
         r'''Chance to update 'expect' for ast_node.

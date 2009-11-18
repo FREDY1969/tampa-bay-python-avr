@@ -250,6 +250,15 @@ create table assembler_code (
     inst_order int not null,
     label varchar(255) unique,
     opcode varchar(255),
+        -- special opcodes:
+           -- 'bytes', operand1 has data value in hex form (no initial '0x')
+           -- 'int8', operand1 has data value in string form
+              -- (may have '0x' prefix)
+           -- 'int16', operand1 has data value in string form
+              -- (may have '0x' prefix)
+           -- 'int32', operand1 has data value in string form
+              -- (may have '0x' prefix)
+           -- 'zeroes', operand1 has data length in string form.
     operand1 varchar(255),
     operand2 varchar(255),
     length int not null,           -- in bytes

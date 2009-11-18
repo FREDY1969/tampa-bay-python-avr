@@ -38,9 +38,6 @@ class assembler_word(declaration.word):
                                                instructions)))))
         return labels_used - labels_defined
 
-    def compile(self, words_by_label):
-        pass
-
 def extract_label(operand):
     r'''Extract the label out of the operand.
 
@@ -134,11 +131,11 @@ def parse_asm(filename, line, lineno):
                 opcode_column = len(line) - len(line.lstrip()) + 1
             raise SyntaxError("unknown opcode: %s" % opcode,
                               (filename, lineno, opcode_column, line))
-        length = inst_obj.len
+        length = inst_obj.length(operand1, operand2)
         if isinstance(inst_obj.cycles, int): clocks = inst_obj.cycles
         else: clocks = max(inst_obj.cycles)
     column_start = len(stripped_line) - len(stripped_line.lstrip()) + 1
     column_end = len(stripped_line)
-    return assembler.inst(label, opcode, operand1, operand2, length, clocks,
+    return assembler.inst(opcode, operand1, operand2, label, length, clocks,
                           (lineno, column_start, lineno, column_end))
 
