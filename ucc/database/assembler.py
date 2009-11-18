@@ -52,8 +52,8 @@ class block(object):
             inst.write(id, i)
 
 class inst(object):
-    def __init__(self, label, opcode, operand1 = None, operand2 = None,
-                       length = None, clocks = None,
+    def __init__(self, opcode, operand1 = None, operand2 = None,
+                       label = None, length = None, clocks = None,
                        position_info = (None, None, None, None)):
         self.label = label
         self.opcode = opcode

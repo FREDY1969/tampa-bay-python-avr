@@ -1,6 +1,6 @@
 # asm_opcodes.py
 
-from asm_inst import inst1, inst2
+from asm_inst import inst1, inst2, bytes, int8, int16, int32, zeroes
 
 # Arithmetic and logic instructions
 ADD = inst1('ADD', '0000 11rd dddd rrrr', 1)
@@ -130,4 +130,12 @@ NOP = inst1('NOP', '0000 0000 0000 0000', 1)
 SLEEP = inst1('SLEEP', '1001 0101 1000 1000', 1)
 WDR = inst1('WDR', '1001 0101 1010 1000', 1)
 BREAK = inst1('BREAK', '1001 0101 1001 1000', 1)
+
+
+# Special instructions:
+BYTES = bytes()
+INT8 = int8()
+INT16 = int16()
+INT32 = int32()
+ZEROES = zeroes()
 

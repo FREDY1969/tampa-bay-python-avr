@@ -24,7 +24,7 @@ def assign_labels(section, labels, starting_address = 0):
                        "duplicate assembler label: " + label
                 labels[label] = address
             if opcode is not None:
-                address += getattr(asm_opcodes, opcode.upper()).len
+                address += getattr(asm_opcodes, opcode.upper()).length(op1, op2)
         if address > running_address:
             running_address = address
     return running_address
@@ -45,5 +45,4 @@ def assemble_word(block_id, block_address, labels):
             for n in inst.assemble(op1, op2, labels, address):
                 yield n
                 address += 1
-            #address += getattr(asm_opcodes, opcode.upper()).len
-
+            #address += getattr(asm_opcodes, opcode.upper()).length(op1, op2)
