@@ -75,6 +75,6 @@ class top(object):
     def get_word_by_label(self, label):
         r'''Lookup word by label from all packages.
         '''
-        return self.get_name(self.translation_dict.get(label, label))
+        return self.get_word_by_name(self.translation_dict.get(label, label))
 
 

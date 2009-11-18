@@ -90,7 +90,8 @@ def create_parsers(top):
 def parse_word(ww, word_obj, parser):
     r'''Parses the word with the parser.
 
-    Return True on success, False on failure.
+    Return (True, frozenset(word labels needed)) on success,
+           (False, None) on failure.
 
     Catches exceptions and prints its own error messages.
 
@@ -119,7 +120,7 @@ def parse_needed_words(top, package_parsers):
     num_errors = 0
     while words_needed:
         next_word = words_needed.pop()
-        ww = top.get_word_by_name(next_word)
+        ww = top.get_word_by_label(next_word)
         word_obj = Word_objs_by_label[ww.label]
         status, more_words_needed = \
           parse_word(ww, word_obj, package_parsers[ww.package_name])
