@@ -1,6 +1,6 @@
 # triple.py
 
-from ucc.database import crud
+from ucc.database import crud, symbol_table
 
 class triple(object):
     id = None
@@ -34,8 +34,8 @@ class triple(object):
         This may be called multiple times with the same symbol_id.  It
         silently ignores all but the first call.
         '''
-        if label not in self.labels:
-            self.labels.append(label)
+        if symbol_id not in self.labels:
+            self.labels.append(symbol_id)
 
     def add_soft_predecessor(self, pred):
         r'''Adds a soft link between 'pred' and self.
@@ -70,10 +70,12 @@ class triple(object):
                 int1 = self.int1.write(block_id)
             elif isinstance(self.int1, symbol_table.symbol):
                 int1 = self.int1.id
+            else:
+                int1 = self.int1
             if isinstance(self.int2, triple):
                 int2 = self.int2.write(block_id)
             elif isinstance(self.int2, symbol_table.symbol):
-                int1 = self.int2.id
+                int2 = self.int2.id
             else:
                 int2 = self.int2
             self.id = crud.insert('triples',

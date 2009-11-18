@@ -1,7 +1,7 @@
 # block.py
 
 import collections
-from ucc.database import crud
+from ucc.database import crud, triple
 
 Current_block = None
 
@@ -119,10 +119,10 @@ class block(object):
 
     def new_label(self, name):
         global Current_block
-        assert self.write_pending, \
-               "%s: block not terminated properly" % self.name
-        self.write_pending = True
-        self.write(name)
+        if self.write_pending:
+            self.write(name)
+        else:
+            self.unconditional_to(name)
         Current_block = block(name)
 
     def block_end(self):
@@ -193,7 +193,7 @@ class block(object):
                                              if self.compare_triple
                                              else None,
                          next=next,
-                         next_conditional=self.name_conditional)
+                         next_conditional=self.next_conditional)
 
         # add final labels to their associated triples:
         for var_id, t in self.labels.iteritems():
@@ -223,10 +223,10 @@ class block(object):
         assert self.name not in Block_ids
         Block_ids[self.name] = id
 
-        if name_t is not None:
-            Block_predecessors[name_t].append(id)
-        if name_f is not None:
-            Block_predecessors[name_f].append(id)
+        if next is not None:
+            Block_predecessors[next].append(id)
+        if self.next_conditional is not None:
+            Block_predecessors[self.next_conditional].append(id)
 
         return id
 
