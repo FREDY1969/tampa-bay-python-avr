@@ -145,12 +145,10 @@ create table gensym_indexes (
 create table blocks (
     id integer not null primary key,
     name varchar(255) not null unique,
+
     compare_triple_id int references triples(id),
-
-    -- also used for unconditional branch
-    next_t varchar(255) references blocks(name),
-
-    next_f varchar(255) references blocks(name)
+    next varchar(255) references blocks(name),
+    next_conditional varchar(255) references blocks(name)
 );
 
 create table block_successors (
@@ -178,11 +176,8 @@ create table triples (
        --   'param'         -- int_1 is which param, int_2 is triples id
        --   'call_direct'   -- int_1 is symbol_table id
        --   'call_indirect' -- int_1 is triples id
-       --   'var_data'      -- string is initialization bytes
-       --   'const_data'    -- string is initialization bytes
-       --   'bss'           -- int_1 is number of bytes
-       --   'ioreg_init'    -- string is ioreg name, int_1 is value
-       --   'eeprom'        -- string is initialization bytes
+       --   'if_false'      -- int_1 is triples id to cond, string is label
+       --   'if_true'       -- int_1 is triples id to cond, string is label
        -- else operator applies to int_1 and int_2 as triples ids
     int1 int,
     int2 int,
@@ -252,6 +247,7 @@ create table assembler_code (
     opcode varchar(255),
         -- special opcodes:
            -- 'bytes', operand1 has data value in hex form (no initial '0x')
+              -- or in 'string' or "string" form (with standard python escapes).
            -- 'int8', operand1 has data value in string form
               -- (may have '0x' prefix)
            -- 'int16', operand1 has data value in string form

@@ -292,13 +292,20 @@ class bytes(inst1):
     def __init__(self): pass
 
     def length(self, op1, op2):
-        assert len(op1) % 2 == 0, \
-               "bytes opcode must have an even number of hex digits"
-        return len(op1) // 2
+        if op1[0] in "\"'":
+            return len(eval(op1))
+        else:
+            assert len(op1) % 2 == 0, \
+                   "bytes opcode must have an even number of hex digits"
+            return len(op1) // 2
 
     def assemble(self, op1, op2, labels, address):
-        for i in range(0, len(op1), 2):
-            yield int(op1[i:i+2], 16)
+        if op1[0] in "\"'":
+            for c in eval(op1):
+                yield ord(c)
+        else:
+            for i in range(0, len(op1), 2):
+                yield int(op1[i:i+2], 16)
 
 
 class int8(bytes):

@@ -4,7 +4,7 @@ from __future__ import with_statement
 
 import itertools
 
-from ucc.database import crud, fn_xref, symbol_table
+from ucc.database import block, crud, fn_xref, symbol_table
 
 def delete_word_by_label(word_label):
     r'''Deletes the word and all of it's ast nodes from the ast table.
@@ -125,15 +125,64 @@ class ast(object):
         my_id = crud.insert('ast', **kws)
         save_args(self.args, word_symbol_id, my_id)
 
-def save_args(args, word_symbol_id, parent = None):
-    for arg_num, arg in enumerate(args):
-        if arg is None:
-            arg = ast(kind = 'None', expect = None)
-        if isinstance(arg, ast):
-            arg.save(word_symbol_id, parent, arg_num, 0)
-        else:
-            for position, x in enumerate(arg):
-                x.save(word_symbol_id, parent, arg_num, position)
+    def compile(self, words_by_label):
+        if self.kind in ('approx', 'int', 'ratio'):
+            return block.Current_block.gen_triple(
+                     self.kind, self.int1, self.int2,
+                     syntax_position_info= self.get_syntax_position_info())
+
+        if self.kind == 'string':
+            name = crud.gensym('strlit')
+            sym = symbol_table.symbol.create(name, 'const')
+            assembler.block('flash', name).write((
+                assembler.inst('int16', str(len(self.str1)), length=2),
+                assembler.inst('bytes', repr(self.str1), length=len(self.str1)),
+            ))
+            return block.Current_block.gen_triple(
+                     'global', sym.id,
+                     syntax_position_info= self.get_syntax_position_info())
+
+        if self.kind == 'call':
+            if self.args and isinstance(self.args[0], ast) and \
+               self.args[0].kind == 'word':
+                word_obj = words_by_label[self.args[0].label]
+                compile_method = word_obj.get_method('compile', self.expect)
+                return compile_method(self, words_by_label)
+            else:
+                raise AssertionError("call indirect not supported yet")
+
+        if self.kind == 'word':
+            word_obj = words_by_label[self.label]
+            compile_method = word_obj.get_method('compile', self.expect)
+            return compile_method(self, words_by_label)
+
+        if self.kind in ('no-op', 'None'):
+            return None
+
+        if self.kind == 'label':
+            block.Current_block.new_label(self.label)
+            return None
+
+        if self.kind == 'jump':
+            block.Current_block.unconditional_to(self.label)
+            return None
+
+        if self.kind == 'if-true':
+            arg_triples = self.compile_args(words_by_label)
+            block.Current_block.true_to(arg_triples[0].id, self.label)
+            return None
+
+        if self.kind == 'if-false':
+            arg_triples = self.compile_args(words_by_label)
+            block.Current_block.false_to(arg_triples[0].id, self.label)
+            return None
+
+        if self.kind == 'series':
+            self.compile_args(words_by_label)
+            return None
+
+    def compile_args(self, words_by_label):
+        return compile_args(self.args, words_by_label)
 
 def prepare_args(fn_symbol, args, words_by_label, words_needed):
     r'''Prepares each of the args.
@@ -154,6 +203,26 @@ def prepare_args(fn_symbol, args, words_by_label, words_needed):
                    if isinstance(arg, ast)
                    else prepare_args(fn_symbol, arg, words_by_label,
                                      words_needed)
+                 for arg in args)
+
+def save_args(args, word_symbol_id, parent = None):
+    for arg_num, arg in enumerate(args):
+        if arg is None:
+            arg = ast(kind = 'None', expect = None)
+        if isinstance(arg, ast):
+            arg.save(word_symbol_id, parent, arg_num, 0)
+        else:
+            for position, x in enumerate(arg):
+                x.save(word_symbol_id, parent, arg_num, position)
+
+def compile_args(args, words_by_label):
+    r'''Compiles each of the args.
+
+    Returns a tuple of triples.
+    '''
+    return tuple(arg.compile(words_by_label)
+                   if isinstance(arg, ast)
+                   else compile_args(arg, words_by_label)
                  for arg in args)
 
 def save_word(label, symbol_id, args):

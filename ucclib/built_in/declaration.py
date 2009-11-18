@@ -1,7 +1,7 @@
 # declaration.py
 
 import os.path
-from ucc.database import ast, crud
+from ucc.database import ast, block, crud
 from ucc.parser import parse
 from ucc.word import helpers, word as word_module
 
@@ -139,40 +139,19 @@ class high_level_word(word):
         if not worked:
             raise AssertionError, "parse failed for " + filename
         words_needed = set()
-        args = ast.prepare_args(self.ww.symbol, args, words_by_label,
-                                words_needed)
+        self.ast_args = ast.prepare_args(self.ww.symbol, args, words_by_label,
+                                         words_needed)
         with crud.db_transaction():
-            ast.save_word(self.label, self.ww.symbol.id, args)
+            ast.save_word(self.label, self.ww.symbol.id, self.ast_args)
         return frozenset(words_needed)
 
     def compile(self, words_by_label):
-        print "%s.compile" % (self.name,), "id", self.ww.symbol.id
-        return
-
-        series_to_compile = []
-        for ast_id, kind, word_label, int1, int2, str1, expect \
-         in get_ast_nodes(self.ww.symbol.id):
-            print "%s.prepare_%s" % (word_label, expect)
-            series_to_compile.append(
-              words_by_label[word_label].get_method('prepare', expect) \
-                (ast_id, kind, int1, int2, str1, words_by_label))
-        flash = []
-        data = []
-        bss = []
-        eeprom = []
-        words_needed = []
-        for ast_id, kind, word_label, int1, int2, str1, expect, type \
-         in series_to_compile:
-            print "%s.compile_%s" % (word, expect)
-            f, d, b, e, n = \
-              words_by_label[word_label].get_method('compile', expect) \
-                (ast_id, kind, int1, int2, str1, type, words_by_label)
-            flash.extend(f)
-            data.extend(d)
-            bss.extend(b)
-            eeprom.extend(e)
-            words_needed.extend(n)
-        return flash, data, bss, eeprom, words_needed
+        assert not block.Current_block, \
+               "%s.compile: previous block(%s) not written" % \
+                 (self.label, block.Current_block.name)
+        block.block(self.label)
+        ast.compile_args(self.ast_args, words_by_label)
+        if block.Current_block: block.Current_block.write()
 
 
 def load_class(ww):
