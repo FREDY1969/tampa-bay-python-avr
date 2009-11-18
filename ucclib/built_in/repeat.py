@@ -19,8 +19,7 @@ class repeat(macro.macro_word):
             count = count[0]
             #print "count", count
             loop_var = crud.gensym('repeat_var')
-            symbol_id = symbol_table.symbol.create(loop_var, 'var',
-                                                   ast_node.word_symbol_id) \
+            symbol_id = symbol_table.symbol.create(loop_var, 'var', fn_symbol) \
                                     .id
             test = crud.gensym('repeat_test')
             new_args = (

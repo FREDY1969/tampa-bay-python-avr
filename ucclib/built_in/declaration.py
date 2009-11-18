@@ -146,7 +146,8 @@ class high_level_word(word):
 
     def compile(self, words_by_label):
         print "%s.compile" % (self.name,), "id", self.ww.symbol.id
-        return (), (), (), (), ()
+        return
+
         series_to_compile = []
         for ast_id, kind, word_label, int1, int2, str1, expect \
          in get_ast_nodes(self.ww.symbol.id):

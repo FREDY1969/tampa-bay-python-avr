@@ -16,8 +16,8 @@ def uses(fn_id, var_id):
     Fn_id and var_id are the symbol_ids of the function and global variable,
     respectively.
     '''
-    crud.insert('fn_calls', 'ignore',
-                caller_id=caller_id, called_id=called_id, sets=False)
+    crud.insert('fn_global_var_uses', 'ignore',
+                fn_id=fn_id, var_id=var_id, sets=False)
 
 def sets(fn_id, var_id):
     r'''Function fn_id directly sets global variable var_id.
@@ -25,8 +25,8 @@ def sets(fn_id, var_id):
     Fn_id and var_id are the symbol_ids of the function and global variable,
     respectively.
     '''
-    crud.insert('fn_calls', 'ignore',
-                caller_id=caller_id, called_id=called_id, sets=True)
+    crud.insert('fn_global_var_uses', 'ignore',
+                fn_id=fn_id, var_id=var_id, sets=True)
 
 def expand():
     r'''Expand the fn_global_var_uses and symbol_table.side_effects/suspends.

@@ -4,9 +4,9 @@ from ucclib.built_in import declaration
 
 class var(declaration.word):
     def compile(self, words_by_label):
-        initial_value = self.answers['initial value'][0]
+        initial_value = self.ww.get_value('initial_value')
         data_name = self.name + "__data"
-        if initial_value == '0':
+        if initial_value is None:
             return (((self.name, 'code-addr', 'do-var', None),
                      (None, 'data-addr', data_name, None)),
                     (),
