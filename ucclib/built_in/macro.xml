@@ -2,11 +2,8 @@
 <word>
     <name>macro</name>
     <label>macro</label>
-    <kind>declaration</kind>
+    <kind>singleton</kind>
     <defining>True</defining>
-    <answers>
-        <answer name="filename_suffix" repeated="False" type="string" value="py" />
-    </answers>
     <questions>
         <question>
             <name>syntax</name>

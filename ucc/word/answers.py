@@ -127,7 +127,7 @@ class ans_real(answer):
     convert = float
 
 class ans_string(answer):
-    convert = lambda x: x
+    convert = lambda self, x: x
 
 class ans_series(answer):
     r'''This handles a nested <answers> tag represented a series of answers.
