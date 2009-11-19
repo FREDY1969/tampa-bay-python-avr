@@ -23,7 +23,11 @@ def load_word(ww):
     And updates Word_objs_by_label, Rules and Token_dict.
     '''
     global Word_objs_by_label, Rules, Token_dict
-    if ww.label not in Word_objs_by_label:
+    if not hasattr(ww, 'symbol') or ww.symbol is None:
+        ww.symbol = \
+          symbol_table.symbol.create(ww.label, ww.kind,
+                                     source_filename=ww.get_filename())
+    if ww.symbol.word_obj is None:
         if not ww.is_root():
             load_word(ww.kind_obj)
 
@@ -35,10 +39,10 @@ def load_word(ww):
             new_syntax = None
         elif ww.defining:
             new_word, new_syntax = \
-              Word_objs_by_label[ww.kind_obj.label].create_subclass(ww)
+              ww.kind_obj.symbol.word_obj.create_subclass(ww)
         else:
             new_word, new_syntax = \
-              Word_objs_by_label[ww.kind_obj.label].create_instance(ww)
+              ww.kind_obj.symbol.word_obj.create_instance(ww)
 
         # store new_syntax
         if new_syntax:
@@ -46,10 +50,11 @@ def load_word(ww):
             Rules.extend(r)
             Token_dict.update(td)
 
-        # Add new word to Word_objs_by_label
+        # Add new word to ww.symbol and Word_objs_by_label
+        ww.symbol.word_obj = new_word
         Word_objs_by_label[ww.label] = new_word
         return new_word
-    return Word_objs_by_label[ww.label]
+    return ww.symbol.word_obj
 
 def create_parsers(top):
     r'''Creates a parser in each package.
@@ -68,9 +73,6 @@ def create_parsers(top):
     with crud.db_transaction():
         for p in top.packages:
             for ww in p.get_words():
-                ww.symbol = \
-                  symbol_table.symbol.create(ww.label, ww.kind,
-                                             source_filename=ww.get_filename())
                 load_word(ww)
 
             #print "Rules", Rules
@@ -121,7 +123,7 @@ def parse_needed_words(top, package_parsers):
     while words_needed:
         next_word = words_needed.pop()
         ww = top.get_word_by_label(next_word)
-        word_obj = Word_objs_by_label[ww.label]
+        word_obj = ww.symbol.word_obj
         status, more_words_needed = \
           parse_word(ww, word_obj, package_parsers[ww.package_name])
         if status:
@@ -218,7 +220,8 @@ def run(top):
         # ast => intermediate code
         for word_label in words_done:
             with crud.db_transaction():
-                Word_objs_by_label[word_label].compile(Word_objs_by_label)
+                symbol_table.get(word_label).word_obj \
+                  .compile(Word_objs_by_label)
 
         # intermediate code => optimized intermediate code
         optimize()

@@ -7,14 +7,18 @@ Symbols = {}            # {(label, context): symbol}
 
 Symbols_by_id = {}      # {id: symbol}
 
-def get(label, context = None):
-    return Symbols.get((label, context))
+unique = object()
+
+def get(label, context = None, default = unique):
+    if default is unique:
+        return Symbols[label, context]
+    return Symbols.get((label, context), default)
 
 def get_by_id(id):
     return Symbols_by_id[id]
 
 def lookup(label, context = None):
-    ans = get(label, context)
+    ans = get(label, context, None)
     if ans: return ans
     if context is not None:
         return lookup(label, context.context)
@@ -37,6 +41,8 @@ class symbol(object):
     side_effects = 0
     suspends = 0
     int1 = None
+    word_word = None
+    word_obj = None
 
     def __init__(self, id, label, context = None, **attributes):
         self.id = id
@@ -90,7 +96,8 @@ class symbol(object):
             assert attr not in ('id', 'label', 'context', 'updated_attrs',
                                 'doing_init')
             super(symbol, self).__setattr__(attr, value)
-            self.updated_attrs.add(attr)
+            if attr not in ('word_word', 'word_obj'):
+                self.updated_attrs.add(attr)
 
     def write(self):
         if self.updated_attrs:

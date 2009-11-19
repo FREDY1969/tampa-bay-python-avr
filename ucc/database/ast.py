@@ -11,7 +11,7 @@ def delete_word_by_label(word_label):
 
     This does not report an error if the word is not in the database.
     '''
-    sym = symbol_table.get(word_label)
+    sym = symbol_table.get(word_label, default=None)
     if sym is not None:
         delete_word_by_id(sym.id)
 
@@ -95,7 +95,7 @@ class ast(object):
             self.prepare_args(fn_symbol, words_by_label, words_needed)
             if self.args and isinstance(self.args[0], ast) and \
                self.args[0].kind == 'word':
-                word_obj = words_by_label[self.args[0].label]
+                word_obj = symbol_table.get(self.args[0].label).word_obj
                 fn_xref.calls(fn_symbol.id, word_obj.ww.symbol.id)
                 prepare_method = word_obj.get_method('prepare', self.expect)
                 return prepare_method(fn_symbol, self, words_by_label,
@@ -147,14 +147,14 @@ class ast(object):
         if self.kind == 'call':
             if self.args and isinstance(self.args[0], ast) and \
                self.args[0].kind == 'word':
-                word_obj = words_by_label[self.args[0].label]
+                word_obj = symbol_table.get(self.args[0].label).word_obj
                 compile_method = word_obj.get_method('compile', self.expect)
                 return compile_method(self, words_by_label)
             else:
                 raise AssertionError("call indirect not supported yet")
 
         if self.kind == 'word':
-            word_obj = words_by_label[self.label]
+            word_obj = symbol_table.get(self.label).word_obj
             compile_method = word_obj.get_method('compile', self.expect)
             return compile_method(self, words_by_label)
 
