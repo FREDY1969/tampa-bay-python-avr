@@ -1,6 +1,6 @@
 # var.py
 
-from ucc.database import assembler
+from ucc.database import assembler, block
 from ucclib.built_in import declaration
 
 class var(declaration.word):
@@ -14,4 +14,7 @@ class var(declaration.word):
             assembler.block('data', self.name).write((
                 assembler.inst('int16', str(initial_value), length=2),
             ))
+
+    def compile_value(self, ast_node, words_by_label):
+        return block.Current_block.gen_triple('global', self.ww.symbol)
 

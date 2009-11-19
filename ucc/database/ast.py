@@ -70,14 +70,15 @@ class ast(object):
         return (self.line_start, self.column_start,
                 self.line_end, self.column_end)
 
-    def macro_expand(self, args, **kws):
+    def macro_expand(self, fn_symbol, words_by_label, words_needed,
+                           args, **kws):
         self.args = args
         for key, value in kws.iteritems():
             setattr(self, key, value)
         for key in self.attr_cols_node:
             if key not in kws:
                 setattr(self, key, None)
-        return self
+        return self.prepare(fn_symbol, words_by_label, words_needed)
 
     def __repr__(self):
         if self.kind == 'word':
@@ -126,6 +127,7 @@ class ast(object):
         save_args(self.args, word_symbol_id, my_id)
 
     def compile(self, words_by_label):
+        #print "%s.compile" % self.kind
         if self.kind in ('approx', 'int', 'ratio'):
             return block.Current_block.gen_triple(
                      self.kind, self.int1, self.int2,
@@ -160,7 +162,7 @@ class ast(object):
             return None
 
         if self.kind == 'label':
-            block.Current_block.new_label(self.label)
+            block.new_label(self.label)
             return None
 
         if self.kind == 'jump':

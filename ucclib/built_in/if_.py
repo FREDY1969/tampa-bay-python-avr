@@ -31,4 +31,5 @@ class if_(macro.macro):
               false_branch,
               ast.ast(kind='label', label=endif_label, expect='statement'),
             )
-        return ast_node.macro_expand(new_args, kind='series')
+        return ast_node.macro_expand(fn_symbol, words_by_label, words_needed,
+                                     new_args, kind='series')
