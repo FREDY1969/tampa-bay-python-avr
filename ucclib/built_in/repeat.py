@@ -4,7 +4,7 @@ from ucc.database import ast, crud, symbol_table
 from ucclib.built_in import macro
 
 class repeat(macro.macro):
-    def macro_expand(self, fn_symbol, ast_node, words_by_label, words_needed):
+    def macro_expand(self, fn_symbol, ast_node, words_needed):
         #print "repeat.macro_expand"
         _, count, body = ast_node.args
         loop_label = crud.gensym('repeat')
@@ -31,7 +31,7 @@ class repeat(macro.macro):
                       ),
                       kind='call',
                       expect='statement') \
-                 .prepare(fn_symbol, words_by_label, words_needed),
+                 .prepare(fn_symbol, words_needed),
               ast.ast(kind='jump', label=test, expect='statement'),
               ast.ast(kind='label', label=loop_label, expect='statement'),
             ) + body + (
@@ -46,11 +46,11 @@ class repeat(macro.macro):
                                ast.ast(kind='int', int1=1),
                                kind='call',
                               ) \
-                          .prepare(fn_symbol, words_by_label, words_needed),
+                          .prepare(fn_symbol, words_needed),
                       ),
                       kind='call',
                       expect='statement') \
-                 .prepare(fn_symbol, words_by_label, words_needed),
+                 .prepare(fn_symbol, words_needed),
               ast.ast(kind='label', label=test, expect='statement'),
               ast.ast(ast.ast(kind='word', label=loop_var,
                               symbol_id=symbol_id, expect='condition'),
@@ -58,6 +58,6 @@ class repeat(macro.macro):
                       label=loop_label,
                       expect='statement'),
             )
-        return ast_node.macro_expand(fn_symbol, words_by_label, words_needed,
-                                     new_args, kind='series')
+        return ast_node.macro_expand(fn_symbol, words_needed, new_args,
+                                     kind='series')
 

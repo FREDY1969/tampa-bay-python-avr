@@ -20,9 +20,9 @@ Debug = 0
 def load_word(ww):
     r'''Loads and returns the word_obj for ww.
     
-    And updates Word_objs_by_label, Rules and Token_dict.
+    And updates Rules and Token_dict.
     '''
-    global Word_objs_by_label, Rules, Token_dict
+    global Rules, Token_dict
     if not hasattr(ww, 'symbol') or ww.symbol is None:
         ww.symbol = \
           symbol_table.symbol.create(ww.label, ww.kind,
@@ -50,9 +50,8 @@ def load_word(ww):
             Rules.extend(r)
             Token_dict.update(td)
 
-        # Add new word to ww.symbol and Word_objs_by_label
+        # Add new word to ww.symbol
         ww.symbol.word_obj = new_word
-        Word_objs_by_label[ww.label] = new_word
         return new_word
     return ww.symbol.word_obj
 
@@ -101,7 +100,7 @@ def parse_word(ww, word_obj, parser):
     '''
     try:
         if not isinstance(word_obj, type): # word_obj not a class
-            needs = word_obj.parse_file(parser, Word_objs_by_label, Debug)
+            needs = word_obj.parse_file(parser, Debug)
     except SyntaxError:
         e_type, e_value, e_tb = sys.exc_info()
         for line in traceback.format_exception_only(e_type, e_value):
@@ -194,8 +193,6 @@ def assemble_program(package_dir):
 
 
 def run(top):
-    global Word_objs_by_label
-
     # The following gets a little confusing because we have two kinds of word
     # objects:
     #
@@ -205,11 +202,9 @@ def run(top):
     #                         ucclib.built_in.declaration.declaration class)
     #
 
-    Word_objs_by_label = {}  # {word.label: word_obj}
-
     with crud.db_connection(top.packages[-1].package_dir):
 
-        # Gather Word_objs_by_label, and build the parsers for each package:
+        # Create symbols, word_objs and build the parsers for each package:
         #
         # {package_name: parser module}
         package_parsers = create_parsers(top)  # Also loads all of the word objs
@@ -220,8 +215,7 @@ def run(top):
         # ast => intermediate code
         for word_label in words_done:
             with crud.db_transaction():
-                symbol_table.get(word_label).word_obj \
-                  .compile(Word_objs_by_label)
+                symbol_table.get(word_label).word_obj.compile()
 
         # intermediate code => optimized intermediate code
         optimize()

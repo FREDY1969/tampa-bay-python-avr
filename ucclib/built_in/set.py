@@ -7,7 +7,7 @@ class set(singleton.singleton):
     def update_expect(self, ast_node):
         ast_node.args[1][0].expect = 'lvalue'
 
-    def compile_statement(self, ast_node, words_by_label):
+    def compile_statement(self, ast_node):
         assert len(ast_node.args) == 2
         assert len(ast_node.args[1]) == 2, \
                "incorrect number of arguments to 'set', expected 2, got %d" % \
@@ -19,7 +19,7 @@ class set(singleton.singleton):
                "set: can only assign to variables, " \
                "fancier assignments not implemented"
 
-        ans = rvalue.compile(words_by_label)
+        ans = rvalue.compile()
         block.Current_block.label(lvalue.symbol_id, ans)
         return ans
 

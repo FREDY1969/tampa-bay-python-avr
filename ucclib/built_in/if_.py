@@ -4,7 +4,7 @@ from ucc.database import ast, crud
 from ucclib.built_in import macro
 
 class if_(macro.macro):
-    def macro_expand(self, fn_symbol, ast_node, words_by_label, words_needed):
+    def macro_expand(self, fn_symbol, ast_node, words_needed):
         _, condition, true_branch, false_branch = ast_node.args
         endif_label = crud.gensym('endif')
         if false_branch is None:
@@ -31,5 +31,5 @@ class if_(macro.macro):
               false_branch,
               ast.ast(kind='label', label=endif_label, expect='statement'),
             )
-        return ast_node.macro_expand(fn_symbol, words_by_label, words_needed,
-                                     new_args, kind='series')
+        return ast_node.macro_expand(fn_symbol, words_needed, new_args,
+                                     kind='series')
