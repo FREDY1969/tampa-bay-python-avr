@@ -4,7 +4,7 @@ from ucc.database import assembler, block
 from ucclib.built_in import declaration
 
 class var(declaration.word):
-    def compile(self, words_by_label):
+    def compile(self):
         initial_value = self.ww.get_value('initial_value')
         if initial_value is None:
             assembler.block('bss', self.name).write((
@@ -15,6 +15,6 @@ class var(declaration.word):
                 assembler.inst('int16', str(initial_value), length=2),
             ))
 
-    def compile_value(self, ast_node, words_by_label):
+    def compile_value(self, ast_node):
         return block.Current_block.gen_triple('global', self.ww.symbol)
 

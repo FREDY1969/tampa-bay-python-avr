@@ -73,7 +73,7 @@ class declaration(object):
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
 
-    def parse_file(self, parser, words_by_label, debug = 0):
+    def parse_file(self, parser, debug = 0):
         r'''Returns a frozenset of the labels of the words needed.
 
         This must also update the 'side_effects' and 'suspends' attributes of
@@ -90,7 +90,7 @@ class declaration(object):
                getattr(self, prefix + '_generic')
 
 class word(declaration):
-    def compile(self, words_by_label):
+    def compile(self):
         r'''Empty stub as default action.
         '''
         pass
@@ -111,7 +111,7 @@ class word(declaration):
         '''
         return None
 
-    def macro_expand(self, fn_symbol, ast_node, words_by_label, words_needed):
+    def macro_expand(self, fn_symbol, ast_node, words_needed):
         r'''Chance to macro expand the ast_node itself.
 
         This is the last step in preparing the ast_node prior to storing it in
@@ -121,19 +121,17 @@ class word(declaration):
         '''
         return ast_node
 
-    def prepare_generic(self, fn_symbol, ast_node, words_by_label,
-                              words_needed):
+    def prepare_generic(self, fn_symbol, ast_node, words_needed):
         self.update_expect(ast_node)
-        ast_node.prepare_args(fn_symbol, words_by_label, words_needed)
+        ast_node.prepare_args(fn_symbol, words_needed)
         self.update_types(ast_node)
-        return self.macro_expand(fn_symbol, ast_node, words_by_label,
-                                 words_needed)
+        return self.macro_expand(fn_symbol, ast_node, words_needed)
 
-    def compile_generic(self, ast_node, words_by_label):
+    def compile_generic(self, ast_node):
         raise ValueError("%s used as a %s" % (self.label, ast_node.expect))
 
 class high_level_word(word):
-    def parse_file(self, parser, words_by_label, debug = 0):
+    def parse_file(self, parser, debug = 0):
         filename = self.ww.get_filename()
         for i, label in enumerate(self.ww.get_value('argument')):
             symbol_table.symbol.create(label, 'parameter', self.ww.symbol,
@@ -142,21 +140,20 @@ class high_level_word(word):
         if not worked:
             raise AssertionError, "parse failed for " + filename
         words_needed = set()
-        self.ast_args = ast.prepare_args(self.ww.symbol, ast_args,
-                                         words_by_label, words_needed)
+        self.ast_args = ast.prepare_args(self.ww.symbol, ast_args, words_needed)
         with crud.db_transaction():
             ast.save_word(self.label, self.ww.symbol.id, self.ast_args)
         return frozenset(words_needed)
 
-    def compile(self, words_by_label):
+    def compile(self):
         assert not block.Current_block, \
                "%s.compile: previous block(%s) not written" % \
                  (self.label, block.Current_block.name)
         block.block(self.label)
-        ast.compile_args(self.ast_args, words_by_label)
+        ast.compile_args(self.ast_args)
         if block.Current_block: block.Current_block.write()
 
-    def compile_value(self, ast_node, words_by_label):
+    def compile_value(self, ast_node):
         assert len(ast_node.args) == 2
         fn_args = self.ww.get_value('argument')
         assert len(ast_node.args[1]) == len(fn_args), \
@@ -164,13 +161,13 @@ class high_level_word(word):
                  (self.label, len(fn_args), len(ast_node.args[1]))
         for i, arg in enumerate(ast_node.args[1]):
             block.Current_block.gen_triple('param', i,
-                                           arg.compile(words_by_label),
+                                           arg.compile(),
                                            syntax_position_info=
                                              arg.get_syntax_position_info())
         return block.Current_block.gen_triple('call_direct', self.ww.symbol)
 
-    def compile_statement(self, ast_node, words_by_label):
-        self.compile_value(ast_node, words_by_label)
+    def compile_statement(self, ast_node):
+        self.compile_value(ast_node)
 
 
 def load_class(ww):

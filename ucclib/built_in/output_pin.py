@@ -5,7 +5,7 @@ from ucc.assembler import io
 from ucclib.built_in import declaration
 
 class output_pin(declaration.word):
-    def macro_expand(self, fn_symbol, ast_node, words_by_label, words_needed):
+    def macro_expand(self, fn_symbol, ast_node, words_needed):
         assert len(ast_node.args) == 2
         assert len(ast_node.args[1]) == 1, \
                "%s: incorrect number of arguments, expected 1, got %s" % \
@@ -29,8 +29,8 @@ class output_pin(declaration.word):
              value,
             )
         )
-        return ast_node.macro_expand(fn_symbol, words_by_label, words_needed,
-                                     new_args, kind='call')
+        return ast_node.macro_expand(fn_symbol, words_needed, new_args,
+                                     kind='call')
 
 digital_pin_lookup = {
     0: (io.portd, 0),

@@ -70,15 +70,14 @@ class ast(object):
         return (self.line_start, self.column_start,
                 self.line_end, self.column_end)
 
-    def macro_expand(self, fn_symbol, words_by_label, words_needed,
-                           args, **kws):
+    def macro_expand(self, fn_symbol, words_needed, args, **kws):
         self.args = args
         for key, value in kws.iteritems():
             setattr(self, key, value)
         for key in self.attr_cols_node:
             if key not in kws:
                 setattr(self, key, None)
-        return self.prepare(fn_symbol, words_by_label, words_needed)
+        return self.prepare(fn_symbol, words_needed)
 
     def __repr__(self):
         if self.kind == 'word':
@@ -90,16 +89,15 @@ class ast(object):
                           if getattr(self, attr) is not None),
                   ' ' + repr(self.args) if self.args else '')
 
-    def prepare(self, fn_symbol, words_by_label, words_needed):
+    def prepare(self, fn_symbol, words_needed):
         if self.kind == 'call':
-            self.prepare_args(fn_symbol, words_by_label, words_needed)
+            self.prepare_args(fn_symbol, words_needed)
             if self.args and isinstance(self.args[0], ast) and \
                self.args[0].kind == 'word':
                 word_obj = symbol_table.get(self.args[0].label).word_obj
                 fn_xref.calls(fn_symbol.id, word_obj.ww.symbol.id)
                 prepare_method = word_obj.get_method('prepare', self.expect)
-                return prepare_method(fn_symbol, self, words_by_label,
-                                      words_needed)
+                return prepare_method(fn_symbol, self, words_needed)
         if self.kind == 'word':
             sym = symbol_table.get_by_id(self.symbol_id)
             if sym.context is None:
@@ -110,9 +108,9 @@ class ast(object):
                     fn_xref.uses(fn_symbol.id, self.symbol_id)
         return self
 
-    def prepare_args(self, fn_symbol, words_by_label, words_needed):
+    def prepare_args(self, fn_symbol, words_needed):
         self.args = \
-          prepare_args(fn_symbol, self.args, words_by_label, words_needed)
+          prepare_args(fn_symbol, self.args, words_needed)
 
     def save(self, word_symbol_id,
              parent = None, parent_arg_num = None, arg_order = None):
@@ -126,7 +124,7 @@ class ast(object):
         my_id = crud.insert('ast', **kws)
         save_args(self.args, word_symbol_id, my_id)
 
-    def compile(self, words_by_label):
+    def compile(self):
         #print "%s.compile" % self.kind
         if self.kind in ('approx', 'int', 'ratio'):
             return block.Current_block.gen_triple(
@@ -149,14 +147,14 @@ class ast(object):
                self.args[0].kind == 'word':
                 word_obj = symbol_table.get(self.args[0].label).word_obj
                 compile_method = word_obj.get_method('compile', self.expect)
-                return compile_method(self, words_by_label)
+                return compile_method(self)
             else:
                 raise AssertionError("call indirect not supported yet")
 
         if self.kind == 'word':
             word_obj = symbol_table.get(self.label).word_obj
             compile_method = word_obj.get_method('compile', self.expect)
-            return compile_method(self, words_by_label)
+            return compile_method(self)
 
         if self.kind in ('no-op', 'None'):
             return None
@@ -170,23 +168,23 @@ class ast(object):
             return None
 
         if self.kind == 'if-true':
-            arg_triples = self.compile_args(words_by_label)
+            arg_triples = self.compile_args()
             block.Current_block.true_to(arg_triples[0].id, self.label)
             return None
 
         if self.kind == 'if-false':
-            arg_triples = self.compile_args(words_by_label)
+            arg_triples = self.compile_args()
             block.Current_block.false_to(arg_triples[0].id, self.label)
             return None
 
         if self.kind == 'series':
-            self.compile_args(words_by_label)
+            self.compile_args()
             return None
 
-    def compile_args(self, words_by_label):
-        return compile_args(self.args, words_by_label)
+    def compile_args(self):
+        return compile_args(self.args)
 
-def prepare_args(fn_symbol, args, words_by_label, words_needed):
+def prepare_args(fn_symbol, args, words_needed):
     r'''Prepares each of the args.
 
     This involves setting the 'expect' and 'type_id' attributes for each ast
@@ -201,10 +199,9 @@ def prepare_args(fn_symbol, args, words_by_label, words_needed):
 
     Returns a tuple of the new args to use in place of the args passed in.
     '''
-    return tuple(arg.prepare(fn_symbol, words_by_label, words_needed)
+    return tuple(arg.prepare(fn_symbol, words_needed)
                    if isinstance(arg, ast)
-                   else prepare_args(fn_symbol, arg, words_by_label,
-                                     words_needed)
+                   else prepare_args(fn_symbol, arg, words_needed)
                  for arg in args)
 
 def save_args(args, word_symbol_id, parent = None):
@@ -217,14 +214,14 @@ def save_args(args, word_symbol_id, parent = None):
             for position, x in enumerate(arg):
                 x.save(word_symbol_id, parent, arg_num, position)
 
-def compile_args(args, words_by_label):
+def compile_args(args):
     r'''Compiles each of the args.
 
     Returns a tuple of triples.
     '''
-    return tuple(arg.compile(words_by_label)
+    return tuple(arg.compile()
                    if isinstance(arg, ast)
-                   else compile_args(arg, words_by_label)
+                   else compile_args(arg)
                  for arg in args)
 
 def save_word(label, symbol_id, args):
