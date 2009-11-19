@@ -6,6 +6,10 @@
         <word name="Arduino-pin-Port" />
         <word name="assembler_word" />
         <word name="ATmega328_port" />
+        <word name="bit-and" />
+        <word name="bit-not" />
+        <word name="bit-or" />
+        <word name="bit-xor" />
         <word name="const" />
         <word name="declaration" />
         <word name="divide" />
@@ -29,6 +33,7 @@
         <word name="pwm" />
         <word name="repeat" />
         <word name="set" />
+        <word name="set_pin" />
         <word name="singleton" />
         <word name="start_stop" />
         <word name="startup" />

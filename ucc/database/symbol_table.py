@@ -34,6 +34,10 @@ def update():
 
 class symbol(object):
     doing_init = True
+    side_effects = 0
+    suspends = 0
+    int1 = None
+
     def __init__(self, id, label, context = None, **attributes):
         self.id = id
         self.label = label
@@ -92,7 +96,7 @@ class symbol(object):
         if self.updated_attrs:
             crud.update('symbol_table',
                         {'label': self.label,
-                         'context': context and context.id},
+                         'context': self.context and self.context.id},
                         **dict((attr, getattr(self, attr))
                                for attr in self.updated_attrs))
             self.updated_attrs.clear()

@@ -1,12 +1,21 @@
 # block.py
 
 import collections
-from ucc.database import crud, triple
+from ucc.database import crud, fn_xref, symbol_table, triple
 
 Current_block = None
 
 Block_ids = {}                                        # {block_name: block_id}
 Block_predecessors = collections.defaultdict(list)    # {block_name: [pred_id]}
+
+def new_label(name):
+    global Current_block
+    if Current_block:
+        if Current_block.write_pending:
+            Current_block.write(name)
+        else:
+            Current_block.unconditional_to(name)
+    block(name)
 
 class block(object):
     compare_triple = None
@@ -140,10 +149,11 @@ class block(object):
         if operator in ('global', 'local'):
             if int1 in self.labels: return self.labels[int1]
         if operator == 'call_direct':
-            fn_symbol = symbol_table.get_by_id(int1)
-            ans = triple.triple(operator, int1, int2, string,
+            assert isinstance(int1, symbol_table.symbol)
+            fn_symbol = int1
+            ans = triple.triple(operator, fn_symbol, int2, string,
                                 syntax_position_info)
-            uses_vars, sets_vars = fn_xref.get_var_uses(int1)
+            uses_vars, sets_vars = fn_xref.get_var_uses(fn_symbol.id)
             for var_id in uses_vars.intersection(self.labels):
                 self.labels[var_id].add_label(var_id)
             if fn_symbol.side_effects:
@@ -158,9 +168,9 @@ class block(object):
              in uses_vars.union(sets_vars).intersection(self.sets_global):
                 ans.add_hard_dependency(self.sets_global[var_id])
             for var_id in uses_vars:
-                self.uses_globals[var_id].append(ans)
+                self.uses_global[var_id].append(ans)
             for var_id in sets_vars:
-                self.sets_globals[var_id] = ans
+                self.sets_global[var_id] = ans
                 if var_id in self.labels: del self.labels[var_id]
             return ans
         if operator == 'call_indirect':
@@ -229,6 +239,7 @@ class block(object):
             Block_predecessors[self.next_conditional].append(id)
 
         return id
+
 
 def write_block_successors():
     r'''Writes all of the block successor info to the database.

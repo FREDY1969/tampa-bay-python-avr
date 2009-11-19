@@ -15,11 +15,12 @@ create table symbol_table (
            -- 'task'
            -- 'const'
            -- 'var'
-           -- 'parameter'
+           -- 'parameter' -- int1 is parameter number
            -- 'label'
            -- 'placeholder'
     source_filename varchar(4096),      -- full path to source file
     type_id int references type(id),
+    int1 int,
     side_effects bool default 0,        -- only for functions/tasks
     suspends bool default 0,            -- only for functions/tasks
     unique (label, context)

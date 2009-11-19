@@ -1,7 +1,7 @@
 # declaration.py
 
 import os.path
-from ucc.database import ast, block, crud
+from ucc.database import ast, block, crud, symbol_table
 from ucc.parser import parse
 from ucc.word import helpers, word as word_module
 
@@ -135,12 +135,15 @@ class word(declaration):
 class high_level_word(word):
     def parse_file(self, parser, words_by_label, debug = 0):
         filename = self.ww.get_filename()
-        worked, args = parse.parse_file(parser, self.ww, debug)
+        for i, label in enumerate(self.ww.get_value('argument')):
+            symbol_table.symbol.create(label, 'parameter', self.ww.symbol,
+                                       int1=i)
+        worked, ast_args = parse.parse_file(parser, self.ww, debug)
         if not worked:
             raise AssertionError, "parse failed for " + filename
         words_needed = set()
-        self.ast_args = ast.prepare_args(self.ww.symbol, args, words_by_label,
-                                         words_needed)
+        self.ast_args = ast.prepare_args(self.ww.symbol, ast_args,
+                                         words_by_label, words_needed)
         with crud.db_transaction():
             ast.save_word(self.label, self.ww.symbol.id, self.ast_args)
         return frozenset(words_needed)
@@ -152,6 +155,22 @@ class high_level_word(word):
         block.block(self.label)
         ast.compile_args(self.ast_args, words_by_label)
         if block.Current_block: block.Current_block.write()
+
+    def compile_value(self, ast_node, words_by_label):
+        assert len(ast_node.args) == 2
+        fn_args = self.ww.get_value('argument')
+        assert len(ast_node.args[1]) == len(fn_args), \
+               "%s: incorrect number of arguments, expected %s, got %s" % \
+                 (self.label, len(fn_args), len(ast_node.args[1]))
+        for i, arg in enumerate(ast_node.args[1]):
+            block.Current_block.gen_triple('param', i,
+                                           arg.compile(words_by_label),
+                                           syntax_position_info=
+                                             arg.get_syntax_position_info())
+        return block.Current_block.gen_triple('call_direct', self.ww.symbol)
+
+    def compile_statement(self, ast_node, words_by_label):
+        self.compile_value(ast_node, words_by_label)
 
 
 def load_class(ww):

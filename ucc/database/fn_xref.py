@@ -50,6 +50,7 @@ def expand():
             break
 
     # Fill out symbol_table.side_effects:
+    symbol_table.write_symbols()        # flush attribute changes to database
     for depth in itertools.count(0):
         crud.Db_cur.execute("""
           update symbol_table
