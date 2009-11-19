@@ -11,8 +11,10 @@ Block_predecessors = collections.defaultdict(list)    # {block_name: [pred_id]}
 def new_label(name):
     global Current_block
     if Current_block:
-        if Current_block.write_pending:
+        if Current_block.state == 'end_fall_through':
             Current_block.write(name)
+        if Current_block.state == 'end_absolute':
+            Current_block.write()
         else:
             Current_block.unconditional_to(name)
     block(name)
@@ -89,7 +91,7 @@ class block(object):
 
         self.predecessors = set([])  # [block_id]
 
-        self.write_pending = False
+        self.state = 'not_ended'
 
         Current_block = self
 
@@ -100,52 +102,45 @@ class block(object):
         assert pred_id not in self.predecessors
         self.predecessors.add(pred_id)
 
+    def more(self):
+        global Current_block
+        assert self.state != 'end_absolute', \
+               "%s: block missing label after jump" % self.name
+        if self.state == 'end_fall_through':
+            name = crud.gensym('block')
+            self.write(name)
+            Current_block = block(name)
+
     def true_to(self, cond_id, name_t):
         r'''Branch to name_t if cond_id is true.
         
         False falls through.
         '''
-        assert not self.write_pending, \
-               "%s: block missing label after jump" % self.name
+        self.more()
         self.compare_triple = triple.triple('if-true', cond_id, string=name_t)
         self.next_conditional = name_t
-        self.write_pending = True
+        self.state = 'end_fall_through'
 
     def false_to(self, cond_id, name_f):
-        assert not self.write_pending, \
-               "%s: block missing label after jump" % self.name
+        self.more()
         self.compare_triple = triple.triple('if-false', cond_id, string=name_f)
         self.next_conditional = name_f
-        self.write_pending = True
+        self.state = 'end_fall_through'
 
     def unconditional_to(self, name):
-        global Current_block
-        assert not self.write_pending, \
-               "%s: block missing label after jump" % self.name
-        self.write_pending = True
+        self.more()
+        self.state = 'end_absolute'
         self.write(name)
-        Current_block = None
-
-    def new_label(self, name):
-        global Current_block
-        if self.write_pending:
-            self.write(name)
-        else:
-            self.unconditional_to(name)
-        Current_block = block(name)
 
     def block_end(self):
-        global Current_block
-        assert not self.write_pending, \
-               "%s: block missing label after jump" % self.name
-        self.write_pending = True
+        assert self.state == 'not_ended', \
+               "%s: double block end" % self.name
+        self.state = 'end_absolute'
         self.write()
-        Current_block = None
 
     def gen_triple(self, operator, int1=None, int2=None, string=None,
                          syntax_position_info=None):
-        assert not self.write_pending, \
-               "%s: block missing label after jump" % self.name
+        self.more()
         if operator in ('global', 'local'):
             if int1 in self.labels: return self.labels[int1]
         if operator == 'call_direct':
@@ -195,8 +190,14 @@ class block(object):
 
         Returns the id assigned to the block.
         '''
-        assert self.write_pending, \
-               "%s: block not terminated properly" % self.name
+
+        global Current_block
+
+        if self.state == 'end_absolute':
+            next = None
+        elif next is None:
+            next = crud.gensym('block')
+
         id = crud.insert('blocks',
                          name=self.name,
                          compare_triple_id=self.compare_triple.id
@@ -238,6 +239,7 @@ class block(object):
         if self.next_conditional is not None:
             Block_predecessors[self.next_conditional].append(id)
 
+        Current_block = None
         return id
 
 
