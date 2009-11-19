@@ -152,9 +152,15 @@ class ast(object):
                 raise AssertionError("call indirect not supported yet")
 
         if self.kind == 'word':
-            word_obj = symbol_table.get(self.label).word_obj
-            compile_method = word_obj.get_method('compile', self.expect)
-            return compile_method(self)
+            sym = symbol_table.get_by_id(self.symbol_id)
+            if sym.context is None:
+                word_obj = symbol_table.get_by_id(self.symbol_id).word_obj
+                compile_method = word_obj.get_method('compile', self.expect)
+                return compile_method(self)
+            if sym.kind in ('parameter', 'var'):
+                return block.Current_block.gen_triple('local', sym,
+                         syntax_position_info=self.get_syntax_position_info())
+            raise ValueError("%s.compile: unknown symbol.kind %r" % sym.kind)
 
         if self.kind in ('no-op', 'None'):
             return None

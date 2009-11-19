@@ -352,10 +352,10 @@ Names = {
     '%': '%',
     '+': '+',
     'and': 'AND',
-    'bit_and': 'BIT_AND',
-    'bit_not': 'BIT_NOT',
-    'bit_or': 'BIT_OR',
-    'bit_xor': 'BIT_XOR',
+    'bit-and': 'BIT_AND',
+    'bit-not': 'BIT_NOT',
+    'bit-or': 'BIT_OR',
+    'bit-xor': 'BIT_XOR',
     '=': 'EQ',
     '>=': 'GE',
     '<=': 'LE',
@@ -370,21 +370,21 @@ def t_NAME_n(t):
         [^])[( \r\n.:]      # last character
     '''
     if t.value in Names:
-        set_name_value(t)
         t.type = Names[t.value]
+        set_name_value(t)
     elif t.value in Token_dict:
         t.type = Token_dict[t.value]
         if not t.type.endswith('_TOK'): 
             set_name_value(t)
     elif t.value[0] == '>':
-        set_name_value(t)
         t.type = 'ARG_LEFT_WORD'
+        set_name_value(t)
     elif t.value[-1] == '<':
-        set_name_value(t)
         t.type = 'ARG_RIGHT_WORD'
-    else:
         set_name_value(t)
+    else:
         t.type = 'NAME'
+        set_name_value(t)
     return t
 
 def t_NAME(t): # single character NAME
@@ -392,8 +392,8 @@ def t_NAME(t): # single character NAME
         (?=[])[( \r\n.:])    # followed by [, ], (, ), space, newline, . or :
     '''
     if t.value in Names:
-        set_name_value(t)
         t.type = Names[t.value]
+        set_name_value(t)
     elif t.value in Token_dict:
         t.type = Token_dict[t.value]
         if not t.type.endswith('_TOK'): 
@@ -413,8 +413,8 @@ def t_minus(t):
     r'''-
         (?=[ \r\n])     # followed by space or newline
     '''
-    set_name_value(t)
     t.type = '-'
+    set_name_value(t)
     return t
 
 def t_ANY_error(t):
