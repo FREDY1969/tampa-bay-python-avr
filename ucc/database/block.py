@@ -6,7 +6,6 @@ from ucc.database import crud, fn_xref, symbol_table, triple
 Current_block = None
 
 Block_ids = {}                                        # {block_name: block_id}
-Block_predecessors = collections.defaultdict(list)    # {block_name: [pred_id]}
 
 def new_label(name):
     global Current_block
@@ -20,7 +19,7 @@ def new_label(name):
     block(name)
 
 class block(object):
-    compare_triple = None
+    last_triple = None
     next_conditional = None
 
     def __init__(self, name):
@@ -89,18 +88,12 @@ class block(object):
         # block write is done.
         self.sets_global = {}        # {symbol_id: triple}
 
-        self.predecessors = set([])  # [block_id]
-
         self.state = 'not_ended'
 
         Current_block = self
 
     def __repr__(self):
         return "<block %s>" % self.name
-
-    def add_predecessor(self, pred_id):
-        assert pred_id not in self.predecessors
-        self.predecessors.add(pred_id)
 
     def more(self):
         global Current_block
@@ -117,25 +110,26 @@ class block(object):
         False falls through.
         '''
         self.more()
-        self.compare_triple = triple.triple('if-true', cond_id, string=name_t)
+        self.last_triple = triple.triple('if-true', cond_id, string=name_t)
         self.next_conditional = name_t
         self.state = 'end_fall_through'
 
     def false_to(self, cond_id, name_f):
         self.more()
-        self.compare_triple = triple.triple('if-false', cond_id, string=name_f)
+        self.last_triple = triple.triple('if-false', cond_id, string=name_f)
         self.next_conditional = name_f
         self.state = 'end_fall_through'
 
     def unconditional_to(self, name):
         self.more()
-        self.state = 'end_absolute'
+        self.state = 'end_fall_through'
         self.write(name)
 
-    def block_end(self):
+    def block_end(self, last_triple):
         assert self.state == 'not_ended', \
                "%s: double block end" % self.name
         self.state = 'end_absolute'
+        self.last_triple = last_triple
         self.write()
 
     def gen_triple(self, operator, int1=None, int2=None, string=None,
@@ -195,14 +189,14 @@ class block(object):
 
         if self.state == 'end_absolute':
             next = None
-        elif next is None:
-            next = crud.gensym('block')
+        else:
+            assert next is not None
 
         id = crud.insert('blocks',
                          name=self.name,
-                         compare_triple_id=self.compare_triple.id
-                                             if self.compare_triple
-                                             else None,
+                         last_triple_id=self.last_triple.id
+                                          if self.last_triple
+                                          else None,
                          next=next,
                          next_conditional=self.next_conditional)
 
@@ -218,8 +212,8 @@ class block(object):
         if self.side_effects is not None:
             forced_triples.add(self.side_effects)
         forced_triples.update(self.sets_global.values())
-        if self.compare_triple is not None:
-            forced_triples.add(self.compare_triple)
+        if self.last_triple is not None:
+            forced_triples.add(self.last_triple)
         #
         # then write them all:
         #
@@ -234,23 +228,6 @@ class block(object):
         assert self.name not in Block_ids
         Block_ids[self.name] = id
 
-        if next is not None:
-            Block_predecessors[next].append(id)
-        if self.next_conditional is not None:
-            Block_predecessors[self.next_conditional].append(id)
-
         Current_block = None
         return id
 
-
-def write_block_successors():
-    r'''Writes all of the block successor info to the database.
-
-    This must be called once after all of the blocks have been written.
-    '''
-    for name, pred_ids in Block_predecessors.iteritems():
-        succ_id = Block_ids[name]
-        for pred_id in pred_ids:
-            crud.insert('block_successors',
-                        predecessor=pred_id,
-                        successor=succ_id)

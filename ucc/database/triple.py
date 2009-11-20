@@ -5,6 +5,8 @@ from ucc.database import crud, symbol_table
 class triple(object):
     id = None
     soft_predecessors_written = False
+    writing = False
+
     def __init__(self, operator, int1=None, int2=None, string=None,
                        syntax_position_info=None):
         r'''Creates the object, but does not write it to the database (yet).
@@ -22,7 +24,7 @@ class triple(object):
         self.hard_predecessors = []     # [triple]
 
     def __repr__(self):
-        return "<triple %d:%s(%d,%d)>" % \
+        return "<triple %s:%s(%s,%s)>" % \
                  (self.id, self.operator, self.int1, self.int2)
 
     def add_label(self, symbol_id):
@@ -44,6 +46,8 @@ class triple(object):
         requires 'pred', but this dependency alone is not enough to cause
         'pred' to be saved to the database.
 
+        'pred' must be a triple.
+
         See also, add_hard_predecessor.
         '''
         self.soft_predecessors.append(pred)
@@ -52,6 +56,8 @@ class triple(object):
         r'''Adds a hard link between 'pred' and self.
 
         This guarantees that self is needed, then 'pred' is also needed.
+
+        'pred' must be a triple.
 
         See also, add_soft_predecessor.
         '''
@@ -66,6 +72,8 @@ class triple(object):
         writes have been done for the block!
         '''
         if self.id is None:
+            assert not self.writing
+            self.writing = True
             if isinstance(self.int1, triple):
                 int1 = self.int1.write(block_id)
             elif isinstance(self.int1, symbol_table.symbol):
@@ -96,6 +104,7 @@ class triple(object):
                 crud.insert('triple_order_constraints',
                             predecessor=t0.write(block_id),
                             successor=self.id)
+            self.writing = False
         return self.id
 
     def write_soft_predecessors(self, block_id):
