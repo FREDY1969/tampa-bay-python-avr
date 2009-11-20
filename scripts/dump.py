@@ -7,9 +7,9 @@ r'''Dumps the ast database in a simple ascii format.
 id: name(kind) from source_filename
   id: label symbol_id kind int1 int2 str1 str2 expect type_id
     - child1
-    - child2.1
-    . child2.2
-    < node replaced
+    / child2.1
+    | child2.2
+    \ child2.last
 
 '''
 
@@ -79,26 +79,33 @@ def dump_children(db_cur, word_symbol_id, parent_id = None, indent = ''):
             (word_symbol_id, parent_id))
     last_parent_arg_num = None
     hold_id = None
-    first_child = True
     if not indent: indent = '  '
     else: indent = ' ' * len(indent)
     def dump_child(child_id):
-        dump_node(word_symbol_id, child_id, db_cur,
-                  indent = (indent + '- ' if first_child
-                                          else indent + '+ '))
+        if last_arg_order == 0:
+            if last_child: flag = '- '
+            else: flag = '/ '
+        elif last_child:
+            flag = r'\ '
+        else:
+            flag = '| '
+        dump_node(word_symbol_id, child_id, db_cur, indent = (indent + flag))
     for child_id, parent_arg_num, arg_order in db_cur.fetchall():
         if parent_arg_num == last_parent_arg_num:
             assert hold_id is not None
+            last_child = False
             dump_child(hold_id)
             hold_id = child_id
-            first_child = False
+            last_arg_order = arg_order
         else:
             last_parent_arg_num = parent_arg_num
             if hold_id is not None:
+                last_child = True
                 dump_child(hold_id)
             hold_id = child_id
-            first_child = True
+            last_arg_order = arg_order
     if hold_id is not None:
+        last_child = True
         dump_child(hold_id)
 
 

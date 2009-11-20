@@ -147,7 +147,7 @@ create table blocks (
     id integer not null primary key,
     name varchar(255) not null unique,
 
-    compare_triple_id int references triples(id),
+    last_triple_id int references triples(id),
     next varchar(255) references blocks(name),
     next_conditional varchar(255) references blocks(name)
 );
@@ -177,6 +177,7 @@ create table triples (
        --   'param'         -- int_1 is which param, int_2 is triples id
        --   'call_direct'   -- int_1 is symbol_table id
        --   'call_indirect' -- int_1 is triples id
+       --   'return'        -- int_1 is optional triples id
        --   'if_false'      -- int_1 is triples id to cond, string is label
        --   'if_true'       -- int_1 is triples id to cond, string is label
        -- else operator applies to int_1 and int_2 as triples ids

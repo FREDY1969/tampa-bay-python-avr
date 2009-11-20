@@ -120,12 +120,10 @@ class ast(object):
                      zip(self.arg_cols,
                          (word_symbol_id, parent, parent_arg_num,
                           arg_order))))
-        #print "save", kws
         my_id = crud.insert('ast', **kws)
         save_args(self.args, word_symbol_id, my_id)
 
     def compile(self):
-        #print "%s.compile" % self.kind
         if self.kind in ('approx', 'int', 'ratio'):
             return block.Current_block.gen_triple(
                      self.kind, self.int1, self.int2,
@@ -156,7 +154,8 @@ class ast(object):
             if sym.context is None:
                 word_obj = symbol_table.get_by_id(self.symbol_id).word_obj
                 compile_method = word_obj.get_method('compile', self.expect)
-                return compile_method(self)
+                ans = compile_method(self)
+                return ans
             if sym.kind in ('parameter', 'var'):
                 return block.Current_block.gen_triple('local', sym,
                          syntax_position_info=self.get_syntax_position_info())
@@ -175,12 +174,12 @@ class ast(object):
 
         if self.kind == 'if-true':
             arg_triples = self.compile_args()
-            block.Current_block.true_to(arg_triples[0].id, self.label)
+            block.Current_block.true_to(arg_triples[0], self.label)
             return None
 
         if self.kind == 'if-false':
             arg_triples = self.compile_args()
-            block.Current_block.false_to(arg_triples[0].id, self.label)
+            block.Current_block.false_to(arg_triples[0], self.label)
             return None
 
         if self.kind == 'series':

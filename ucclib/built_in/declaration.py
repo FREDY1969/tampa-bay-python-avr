@@ -151,7 +151,9 @@ class high_level_word(word):
                  (self.label, block.Current_block.name)
         block.block(self.label)
         ast.compile_args(self.ast_args)
-        if block.Current_block: block.Current_block.write()
+        if block.Current_block:
+            block.Current_block.block_end(
+              block.Current_block.gen_triple('return'))
 
     def compile_value(self, ast_node):
         assert len(ast_node.args) == 2
@@ -159,12 +161,14 @@ class high_level_word(word):
         assert len(ast_node.args[1]) == len(fn_args), \
                "%s: incorrect number of arguments, expected %s, got %s" % \
                  (self.label, len(fn_args), len(ast_node.args[1]))
+        ans = block.Current_block.gen_triple('call_direct', self.ww.symbol)
         for i, arg in enumerate(ast_node.args[1]):
-            block.Current_block.gen_triple('param', i,
-                                           arg.compile(),
-                                           syntax_position_info=
-                                             arg.get_syntax_position_info())
-        return block.Current_block.gen_triple('call_direct', self.ww.symbol)
+            p = block.Current_block.gen_triple('param', i,
+                                               arg.compile(),
+                                               syntax_position_info=
+                                                 arg.get_syntax_position_info())
+            ans.add_hard_predecessor(p)
+        return ans
 
     def compile_statement(self, ast_node):
         self.compile_value(ast_node)
