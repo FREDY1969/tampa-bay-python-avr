@@ -5,7 +5,7 @@ from asm_inst import inst1, inst2, bytes, int8, int16, int32, zeroes
 # Arithmetic and logic instructions
 ADD = inst1('ADD', '0000 11rd dddd rrrr', 1)
 ADC = inst1('ADC', '0001 11rd dddd rrrr', 1)
-ADIW = inst1('ADIW', '1001 0110 KKdd KKKK', 2)
+ADIW = inst1('ADIW', '1001 0110 KKdd KKKK', 2, d=(24,30))
 SUB = inst1('SUB', '0001 10rd dddd rrrr', 1)
 SUBI = inst1('SUBI', '0101 KKKK dddd KKKK', 1, d=(16,31))
 SBC = inst1('SBC', '0000 10rd dddd rrrr', 1)

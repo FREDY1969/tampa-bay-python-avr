@@ -58,6 +58,22 @@ def convert_reg(arg, num_bits, note, labels, address):
     Traceback (most recent call last):
         ...
     AssertionError: r17: illegal register
+    >>> convert_reg('r23', 2, (24, 30), None, None)
+    Traceback (most recent call last):
+        ...
+    AssertionError: r23: illegal register
+    >>> convert_reg('r24', 2, (24, 30), None, None)
+    0
+    >>> convert_reg('r30', 2, (24, 30), None, None)
+    3
+    >>> convert_reg('r31', 2, (24, 30), None, None)
+    Traceback (most recent call last):
+        ...
+    AssertionError: r31: illegal register
+    >>> convert_reg('r25', 2, (24, 30), None, None)
+    Traceback (most recent call last):
+        ...
+    AssertionError: r25: illegal register
     '''
     assert arg[0].lower() == 'r', "%s: illegal register" % arg
     max = 2**num_bits
