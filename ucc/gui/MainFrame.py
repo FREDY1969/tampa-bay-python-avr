@@ -38,12 +38,14 @@ class MainFrame(wx.Frame):
         Registry.mainToolbar.AddLabelTool(Registry.ID_SAVE_WORD, '', wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE, wx.ART_TOOLBAR))
         # Registry.mainToolbar.AddLabelTool(Registry.ID_VERIFY, '', wx.ArtProvider.GetBitmap(wx.ART_TICK_MARK, wx.ART_TOOLBAR))
         # Registry.mainToolbar.AddSeparator()
-        # Registry.mainToolbar.AddLabelTool(Registry.ID_COMPILE, '', wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR))
-        # Registry.mainToolbar.AddLabelTool(Registry.ID_PUSH, '', wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR))
+        Registry.mainToolbar.AddLabelTool(Registry.ID_COMPILE, '', wx.ArtProvider.GetBitmap(wx.ART_EXECUTABLE_FILE, wx.ART_TOOLBAR))
+        Registry.mainToolbar.AddLabelTool(Registry.ID_LOAD, '', wx.ArtProvider.GetBitmap(wx.ART_GO_FORWARD, wx.ART_TOOLBAR))
         Registry.mainToolbar.Realize()
         
         self.Bind(wx.EVT_TOOL, Registry.app.onOpen, id=Registry.ID_OPEN)
         self.Bind(wx.EVT_TOOL, Registry.app.onSaveWord, id=Registry.ID_SAVE_WORD)
+        self.Bind(wx.EVT_TOOL, Registry.app.onCompile, id=Registry.ID_COMPILE)
+        self.Bind(wx.EVT_TOOL, Registry.app.onLoad, id=Registry.ID_LOAD)
         
         # setup mainPanel
         
@@ -86,8 +88,9 @@ class MainFrame(wx.Frame):
         
         self.Center()
         self.Show(True)
-        
+    
     def paint(self):
         print "painting mainFrame"
         Registry.leftTreePanel.paint()
         Registry.rightMainPanel.paint()
+    
