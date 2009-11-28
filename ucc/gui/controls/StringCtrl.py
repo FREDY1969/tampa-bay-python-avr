@@ -1,7 +1,7 @@
 r'''Control for string word values'''
 
-from ucc.gui.controls import BoolCtrl
+from ucc.gui.controls.BaseCtrl import BaseCtrl
 
-class StringCtrl(BoolCtrl.BaseCtrl):
+class StringCtrl(BaseCtrl):
     def paintControl(self, parent):
         super(StringCtrl, self).paintControl(parent)
