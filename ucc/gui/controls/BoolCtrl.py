@@ -12,6 +12,6 @@ class BoolCtrl(BaseCtrl):
         self.cb.SetValue(self.answer_getter().get_value())
 
     def checked(self, event):
-        self.answer_setter(repr(event.IsChecked()))
+        self.answer_getter().value = repr(event.IsChecked())
         print "IsChecked", self.answer_getter().value
 

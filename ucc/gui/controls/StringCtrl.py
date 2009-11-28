@@ -8,10 +8,10 @@ class StringCtrl(BaseCtrl):
         self.t1 = wx.TextCtrl(self, -1, size=(125, -1))
         self.Bind(wx.EVT_TEXT, self.TextChange, self.t1)
         
-    def setInitialValue():
-        self.t1.SetValue(self.answer_getter())
+    def setInitialValue(self):
+        self.t1.WriteText(self.answer_getter().get_value())
     
     def TextChange(self, event):
         print event.GetString()
-        self.answer_setter(event.GetString())
+        self.answer_getter().value = event.GetString()
     
