@@ -147,28 +147,34 @@ class q_atomic(question):
             validation = ElementTree.SubElement(question, 'validation')
             for v in self.validation: v.add_xml_subelement(validation)
 
-    def make_answer(self, value):
-        return self.answer_cls(self.name, value)
+    def make_default_answer(self):
+        return self.answer_cls(self.name, self.default_value)
 
 class q_bool(q_atomic):
     answer_cls = answers.ans_bool
+    default_value = "False"
     control = 'BoolCtrl'
 
 class q_number(q_atomic):
     answer_cls = answers.ans_number
+    default_value = "0"
 
 class q_int(q_atomic):
     answer_cls = answers.ans_int
+    default_value = "0"
     control = 'IntegerCtrl'
 
 class q_rational(q_atomic):
     answer_cls = answers.ans_rational
+    default_value = "0"
 
 class q_real(q_atomic):
     answer_cls = answers.ans_real
+    default_value = "0.0"
 
 class q_string(q_atomic):
     answer_cls = answers.ans_string
+    default_value = ""
     control = 'StringCtrl'
 
 class q_series(question):
@@ -193,6 +199,11 @@ class q_series(question):
 
     def add_subelements(self, question):
         for subq in self.subquestions: subq.add_xml_subelement(question)
+
+    def make_default_answer(self):
+        return answers.ans_series(self.name,
+                                  dict((q.name, q.make_default_answer())
+                                       for q in self.subquestions))
 
 
 class q_choice(question):
@@ -228,10 +239,22 @@ class q_choice(question):
                                             name = name, value = str(value))
             add_xml_subelement(option, questions)
 
+    def make_default_answer(self):
+        for name, value, subquestions in self.options:
+            if value == self.default:
+                return answers.ans_choice(self.name,
+                                          self.default,
+                                          dict((q.name, q.make_default_answer())
+                                               for q in subquestions))
+        raise AssertionError("q_choice(%s): default, %r, not found in options" %
+                               (self.name, self.default))
+
 
 class q_multichoice(q_choice):
     r'''A question where the user selects from a set of choices.
 
     This class covers the multiple selection choice.  Compare to choice.
     '''
-    pass
+    def make_default_answer(self):
+        return answers.ans_multichoice(self.name, {})
+

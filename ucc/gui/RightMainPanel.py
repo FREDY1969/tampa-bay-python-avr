@@ -23,9 +23,10 @@ class RightMainPanel(wx.Panel):
 
         topPanel = self.topPanel = \
           scrolled.ScrolledPanel(splitter, wx.ID_ANY, style=wx.BORDER_SUNKEN)
-        topSizer = self.topSizer = wx.BoxSizer(wx.VERTICAL)
+        topSizer = self.topSizer = wx.FlexGridSizer(cols=2, hgap=5, vgap=5)
+        topSizer.AddGrowableCol(1)
         topPanel.SetSizer(topSizer)
-        topPanel.SetAutoLayout(1)
+        #topPanel.SetAutoLayout(1)
         #topPanel.SetupScrolling()
         topPanel.SetupScrolling(scroll_x = False)
         bottomText = self.bottomText = \
@@ -71,23 +72,26 @@ class RightMainPanel(wx.Panel):
 
         if Registry.currentWord:
             for question in Registry.currentWord.kind_obj.questions or ():
+                self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY,
+                                                question.label)),
                 if not hasattr(question, 'control'):
                     msg = "<%s %s> has not 'control'" % \
                             (question.__class__.__name__, question.name)
                     print msg
                     self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY,
-                                                    msg),
-                                      0, wx.RIGHT | wx.LEFT | wx.EXPAND, 0)
+                                                    msg))
                 else:
                     cls = getattr(getattr(controls, question.control),
                                   question.control)
                     print question.control, cls
-                    self.topSizer.Add(cls(self.topPanel,
-                                          question,
-                                          Registry.currentWord.get_answer(
-                                            question.name),
-                                          question.label),
-                                      0, wx.RIGHT | wx.LEFT | wx.EXPAND, 0)
+                    self.topSizer.Add(
+                      cls(self.topPanel,
+                          question,
+                          lambda question=question:
+                            Registry.currentWord.get_answer(question.name),
+                          lambda new_ans, question=question:
+                            Registry.currentWord.set_answer(question.name,
+                                                            new_ans)))
 
         self.topSizer.Layout()
 

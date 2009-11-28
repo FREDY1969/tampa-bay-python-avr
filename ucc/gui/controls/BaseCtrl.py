@@ -2,13 +2,13 @@
 import wx
 
 class BaseCtrl(wx.Panel):
-    def __init__(self, parent, question, answer, label='Base Control'):
+    def __init__(self, parent, question, answer_getter, answer_setter):
         super(BaseCtrl, self).__init__(parent)
 
         self.parent = parent
         self.question = question
-        self.answer = answer
-        self.label = label
+        self.answer_getter = answer_getter
+        self.answer_setter = answer_setter
 
         self.makeControl()
 
@@ -17,8 +17,8 @@ class BaseCtrl(wx.Panel):
         parent = self
         print self.__class__.__name__, "makeControl: question", self.question
         if self.question.is_optional():
-            self.label1 = "Click here to answer " + self.question.name
-            self.label2 = "Click here to discard " + self.question.name
+            self.label1 = "Click here to answer"
+            self.label2 = "Click here not to answer"
             self.cp = cp = wx.CollapsiblePane(self, label=self.label1,
                                               style=wx.CP_DEFAULT_STYLE
                                                   | wx.CP_NO_TLW_RESIZE)
@@ -34,15 +34,14 @@ class BaseCtrl(wx.Panel):
             self.SetSizer(sizer)
             sizer.Add(cp, 0, wx.RIGHT|wx.LEFT|wx.EXPAND, 0)
 
-            if self.answer is None:
+            if self.answer_getter() is None:
                 print "answer is None"
                 self.cp.Collapse(False)
                 self.cp.Collapse(True)
-                #self.onCollapsiblePaneChanged()
             else:
                 print "answer is not None"
+                self.setInitialValue()
                 self.cp.Collapse(False)
-                #self.onCollapsiblePaneChanged()
 
         elif self.question.is_repeatable():
             msg = "<%s %s>: can't do repeatable questions yet" % \
@@ -51,20 +50,22 @@ class BaseCtrl(wx.Panel):
                 pass
         else:
             self.paintControl(parent)
+            self.setInitialValue()
         if msg:
             print msg
-            st = wx.StaticText(self, wx.ID_ANY, msg)
-            sizer = wx.BoxSizer(wx.VERTICAL)
-            self.SetSizer(sizer)
-            sizer.Add(st, 0, wx.RIGHT | wx.LEFT | wx.EXPAND, 0)
+            wx.StaticText(self, wx.ID_ANY, msg)
 
     def onCollapsiblePaneChanged(self, evt = None):
         print "onCollapsiblePaneChanged: IsExpanded", self.cp.IsExpanded()
         self.parent.Layout()
         print "onCollapsiblePaneChanged: after Layout(), IsExpanded", self.cp.IsExpanded()
         if self.cp.IsExpanded():
+            if self.answer_getter() is None:
+                self.answer_setter(self.question.make_default_answer())
+            self.setInitialValue()
             self.cp.SetLabel(self.label2)
         else:
+            self.answer_setter(None)
             self.cp.SetLabel(self.label1)
 
     def paintControl(self, parent):
@@ -72,7 +73,4 @@ class BaseCtrl(wx.Panel):
           (self.question.__class__.__name__, self.question.name,
            self.__class__.__name__)
         print msg
-        st = wx.StaticText(parent, wx.ID_ANY, msg)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        parent.SetSizer(sizer)
-        sizer.Add(st, 0, wx.RIGHT | wx.LEFT | wx.EXPAND, 25)
+        wx.StaticText(parent, wx.ID_ANY, msg)

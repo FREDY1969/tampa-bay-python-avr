@@ -186,3 +186,7 @@ class word(object):
         if suffix is None: return None
         return os.path.join(self.package_dir, self.name + suffix)
 
+    def set_answer(self, question_name, answer):
+        if not self.answers or question_name not in self.answers:
+            raise KeyError("%s: no answer for %s" % (self.label, question_name))
+        self.answers[question_name] = answer
