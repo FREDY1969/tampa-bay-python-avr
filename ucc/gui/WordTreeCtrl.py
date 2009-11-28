@@ -24,7 +24,7 @@ class WordTreeCtrl(wx.TreeCtrl):
         root = self.root = self.AddRoot('hidden')
         self.SetPyData(root, None)
 
-        self.expandThese = [root]
+        self.expandThese = []
         self.buildWordTree(Registry.top_package.roots, root)
         self.expandThem()
 
