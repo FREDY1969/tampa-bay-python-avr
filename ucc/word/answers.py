@@ -117,7 +117,7 @@ class ans_number(answer):
             return float(str)
 
 class ans_int(answer):
-    convert = int
+    convert = lambda s: int(s, 0)
 
 class ans_rational(answer):
     def convert(self, str):
