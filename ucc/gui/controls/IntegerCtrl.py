@@ -4,4 +4,4 @@ from ucc.gui.controls import BoolCtrl
 
 class IntegerCtrl(BoolCtrl.BaseCtrl):
     def paintControl(self, parent):
-        pass
+        super(IntegerCtrl, self).paintControl(parent)
