@@ -25,8 +25,9 @@ class RightMainPanel(wx.Panel):
           scrolled.ScrolledPanel(splitter, wx.ID_ANY, style=wx.BORDER_SUNKEN)
         topSizer = self.topSizer = wx.BoxSizer(wx.VERTICAL)
         topPanel.SetSizer(topSizer)
-        #topPanel.SetAutoLayout(1)
-        topPanel.SetupScrolling()
+        topPanel.SetAutoLayout(1)
+        #topPanel.SetupScrolling()
+        topPanel.SetupScrolling(scroll_x = False)
         bottomText = self.bottomText = \
           wx.py.editwindow.EditWindow(splitter, wx.ID_ANY,
                                       style=wx.TE_MULTILINE | wx.BORDER_SUNKEN)
@@ -46,6 +47,7 @@ class RightMainPanel(wx.Panel):
 
         print "RightMainPanel height", self.GetClientSize().GetHeight()
 
+        #sizer.Add(splitter, 1, wx.RIGHT | wx.LEFT | wx.EXPAND)
         sizer.Add(splitter, 1, wx.EXPAND)
 
         self.SetSizer(sizer)
@@ -61,6 +63,7 @@ class RightMainPanel(wx.Panel):
         self.buildWord()
 
     def buildWord(self):
+        print "RightMainPanel.buildWord"
 
         # setup controls
 
@@ -73,7 +76,8 @@ class RightMainPanel(wx.Panel):
                             (question.__class__.__name__, question.name)
                     print msg
                     self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY,
-                                                    msg))
+                                                    msg),
+                                      0, wx.RIGHT | wx.LEFT | wx.EXPAND, 0)
                 else:
                     cls = getattr(getattr(controls, question.control),
                                   question.control)
@@ -82,7 +86,8 @@ class RightMainPanel(wx.Panel):
                                           question,
                                           Registry.currentWord.get_answer(
                                             question.name),
-                                          question.label))
+                                          question.label),
+                                      0, wx.RIGHT | wx.LEFT | wx.EXPAND, 0)
 
         self.topSizer.Layout()
 

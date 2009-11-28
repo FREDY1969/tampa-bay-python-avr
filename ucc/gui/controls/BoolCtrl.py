@@ -16,6 +16,7 @@ class BaseCtrl(wx.Panel):
     def makeControl(self):
         msg = None
         parent = self
+        print self.__class__.__name__, "makeControl: question", self.question
         if self.question.is_optional():
             self.label1 = "Click here to answer " + self.question.name
             self.label2 = "Click here to discard " + self.question.name
@@ -26,11 +27,23 @@ class BaseCtrl(wx.Panel):
                       self.onCollapsiblePaneChanged, cp)
             self.paintControl(cp.GetPane())
 
+            #cp.SetAutoLayout(1)
+            #self.SetAutoLayout(1)
+            #self.parent.SetAutoLayout(1)
+
             sizer = wx.BoxSizer(wx.VERTICAL)
             self.SetSizer(sizer)
-            sizer.Add(cp, 0, wx.RIGHT|wx.LEFT|wx.EXPAND, 25)
+            sizer.Add(cp, 0, wx.RIGHT|wx.LEFT|wx.EXPAND, 0)
 
-            self.cp.Collapse(self.answer is None)
+            if self.answer is None:
+                print "answer is None"
+                self.cp.Collapse(False)
+                self.cp.Collapse(True)
+                #self.onCollapsiblePaneChanged()
+            else:
+                print "answer is not None"
+                self.cp.Collapse(False)
+                #self.onCollapsiblePaneChanged()
 
         elif self.question.is_repeatable():
             msg = "<%s %s>: can't do repeatable questions yet" % \
@@ -44,10 +57,12 @@ class BaseCtrl(wx.Panel):
             st = wx.StaticText(self, wx.ID_ANY, msg)
             sizer = wx.BoxSizer(wx.VERTICAL)
             self.SetSizer(sizer)
-            sizer.Add(st, 0, wx.RIGHT|wx.LEFT|wx.EXPAND, 0)
+            sizer.Add(st, 0, wx.RIGHT | wx.LEFT | wx.EXPAND, 0)
 
     def onCollapsiblePaneChanged(self, evt = None):
-        self.Layout()
+        print "onCollapsiblePaneChanged: IsExpanded", self.cp.IsExpanded()
+        self.parent.Layout()
+        print "onCollapsiblePaneChanged: after Layout(), IsExpanded", self.cp.IsExpanded()
         if self.cp.IsExpanded():
             self.cp.SetLabel(self.label2)
         else:
@@ -61,7 +76,7 @@ class BaseCtrl(wx.Panel):
         st = wx.StaticText(parent, wx.ID_ANY, msg)
         sizer = wx.BoxSizer(wx.VERTICAL)
         parent.SetSizer(sizer)
-        sizer.Add(st, 0, wx.RIGHT|wx.LEFT|wx.EXPAND, 25)
+        sizer.Add(st, 0, wx.RIGHT | wx.LEFT | wx.EXPAND, 25)
 
 class BoolCtrl(BaseCtrl):
     def paintControl(self, parent):
