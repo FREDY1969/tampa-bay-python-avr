@@ -12,5 +12,5 @@ class IntegerCtrl(BaseCtrl):
         self.sc.SetValue(self.answer_getter().get_value())
     
     def OnSpin(self, event):
-        self.answer_setter(self.sc.GetValue())
+        self.answer_getter().value = str(self.sc.GetValue())
     
