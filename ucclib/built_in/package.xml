@@ -10,6 +10,7 @@
         <word name="bit-not" />
         <word name="bit-or" />
         <word name="bit-xor" />
+        <word name="clear_output_bit" />
         <word name="const" />
         <word name="declaration" />
         <word name="divide" />
@@ -33,12 +34,14 @@
         <word name="pwm" />
         <word name="repeat" />
         <word name="set" />
+        <word name="set_output_bit" />
         <word name="set_pin" />
         <word name="singleton" />
         <word name="start_stop" />
         <word name="startup" />
         <word name="task" />
         <word name="times" />
+        <word name="toggle" />
         <word name="translate" />
         <word name="var" />
     </words>

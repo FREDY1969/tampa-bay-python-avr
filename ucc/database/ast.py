@@ -66,6 +66,41 @@ class ast(object):
           syntax_position_info
         return ans
 
+    @classmethod
+    def call(cls, fn_symbol_id, *args, **kws):
+        r'''Returns a call to fn_symbol_id with args *args.
+
+        fn_symbol_id may be just the label of the global word.
+        '''
+        if 'syntax_position_info' in kws:
+            line_start, column_start, line_end, column_end = \
+              kws['syntax_position_info']
+            del kws['syntax_position_info']
+        else:
+            line_start = column_start = line_end = column_end = None
+        return cls(ast.word(fn_symbol_id),
+                   args,
+                   line_start=line_start, column_start=column_start,
+                   line_end=line_end, column_end=column_end,
+                   **kws)
+
+    @classmethod
+    def word(cls, symbol_id, syntax_position_info = (None, None, None, None),
+             **kws):
+        r'''Returns an ast node for the 'symbol_id' word.
+
+        symbol_id may be just the label of the global word.
+        '''
+        line_start, column_start, line_end, column_end = syntax_position_info
+        if isinstance(symbol_id, (str, unicode)):
+            symbol_id = symbol_table.get(symbol_id).id
+        return cls(kind='word',
+                   label=symbol_table.get_by_id(symbol_id).label,
+                   symbol_id=symbol_id,
+                   line_start=line_start, column_start=column_start,
+                   line_end=line_end, column_end=column_end,
+                   **kws)
+
     def get_syntax_position_info(self):
         return (self.line_start, self.column_start,
                 self.line_end, self.column_end)
@@ -106,6 +141,8 @@ class ast(object):
                     fn_xref.sets(fn_symbol.id, self.symbol_id)
                 else:
                     fn_xref.uses(fn_symbol.id, self.symbol_id)
+        if self.kind in ('ioreg', 'ioreg-bit'):
+            fn_symbol.side_effects = 1
         return self
 
     def prepare_args(self, fn_symbol, words_needed):
@@ -120,8 +157,8 @@ class ast(object):
                      zip(self.arg_cols,
                          (word_symbol_id, parent, parent_arg_num,
                           arg_order))))
-        my_id = crud.insert('ast', **kws)
-        save_args(self.args, word_symbol_id, my_id)
+        self.id = crud.insert('ast', **kws)
+        save_args(self.args, word_symbol_id, self.id)
 
     def compile(self):
         if self.kind in ('approx', 'int', 'ratio'):
@@ -138,7 +175,7 @@ class ast(object):
             ))
             return block.Current_block.gen_triple(
                      'global', sym.id,
-                     syntax_position_info= self.get_syntax_position_info())
+                     syntax_position_info=self.get_syntax_position_info())
 
         if self.kind == 'call':
             if self.args and isinstance(self.args[0], ast) and \
@@ -185,6 +222,20 @@ class ast(object):
         if self.kind == 'series':
             self.compile_args()
             return None
+
+        if self.kind in ('ioreg', 'ioreg-bit'):
+            if self.expect in ('value', 'condition'):
+                return block.Current_block.gen_triple(
+                         'input' if self.kind == 'ioreg' else 'input-bit',
+                         string=self.label, int1=self.int1,
+                         syntax_position_info=self.get_syntax_position_info())
+            else:
+                raise AssertionError("ast node[%s]: expect %s not supported "
+                                     "for %s" %
+                                       (self.id, self.expect, self.kind))
+
+        raise AssertionError("ast node[%s]: unknown ast kind -- %s" %
+                               (self.id, self.kind))
 
     def compile_args(self):
         return compile_args(self.args)

@@ -59,6 +59,8 @@ create table ast (
           -- 'string': str1 = string
           -- 'call': first arg = fn
           -- 'word': label = word label, symbol_id = symbol_id of word
+          -- 'ioreg': label = ioreg name (e.g., 'io.portd')
+          -- 'ioreg-bit': label = ioreg name (e.g., 'io.portd'), int1 = bit#
           -- 'no-op':
           -- 'label': label = label
           -- 'jump': label = target
@@ -78,7 +80,7 @@ create table ast (
     expect varchar(255),                       -- what's expected by the parent
        -- possible values are:
           -- 'statement'
-          -- 'cond'
+          -- 'condition'
           -- 'value' (rvalue)
           -- 'lvalue'
           -- 'producer'
@@ -167,19 +169,24 @@ create table triples (
     block_id int not null references blocks(id),
     operator varchar(255) not null,
        -- special values:
-       --   'global_addr'   -- int_1 is symbol_table id
-       --   'global'        -- int_1 is symbol_table id
-       --   'local_addr'    -- int_1 is symbol_table id
-       --   'local'         -- int_1 is symbol_table id
-       --   'int'           -- int_1
-       --   'ratio'         -- int_1 is numerator, int_2 is denominator
-       --   'approx'        -- int_1 * 2**int_2
-       --   'param'         -- int_1 is which param, int_2 is triples id
-       --   'call_direct'   -- int_1 is symbol_table id
-       --   'call_indirect' -- int_1 is triples id
-       --   'return'        -- int_1 is optional triples id
-       --   'if_false'      -- int_1 is triples id to cond, string is label
-       --   'if_true'       -- int_1 is triples id to cond, string is label
+       --   'input'            -- string is port name
+       --   'input-bit'        -- string is port name, int_1 is bit#
+       --   'output'           -- string is port name, int_1 is triples id
+       --   'output-bit-set'   -- string is port name, int_1 is bit#
+       --   'output-bit-clear' -- string is port name, int_1 is bit#
+       --   'global_addr'      -- int_1 is symbol_table id
+       --   'global'           -- int_1 is symbol_table id
+       --   'local_addr'       -- int_1 is symbol_table id
+       --   'local'            -- int_1 is symbol_table id
+       --   'int'              -- int_1
+       --   'ratio'            -- int_1 is numerator, int_2 is denominator
+       --   'approx'           -- int_1 * 2**int_2
+       --   'param'            -- int_1 is which param, int_2 is triples id
+       --   'call_direct'      -- int_1 is symbol_table id
+       --   'call_indirect'    -- int_1 is triples id
+       --   'return'           -- int_1 is optional triples id
+       --   'if_false'         -- int_1 is triples id to cond, string is label
+       --   'if_true'          -- int_1 is triples id to cond, string is label
        -- else operator applies to int_1 and int_2 as triples ids
     int1 int,
     int2 int,

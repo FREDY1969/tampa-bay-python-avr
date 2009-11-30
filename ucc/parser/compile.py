@@ -27,6 +27,7 @@ def load_word(ww):
         ww.symbol = \
           symbol_table.symbol.create(ww.label, ww.kind,
                                      source_filename=ww.get_filename())
+        ww.symbol.word_word = ww
     if ww.symbol.word_obj is None:
         if not ww.is_root():
             load_word(ww.kind_obj)

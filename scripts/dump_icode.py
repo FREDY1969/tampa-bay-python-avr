@@ -91,11 +91,19 @@ class triple(object):
         elif operator in ('global_addr', 'global', 'local_addr', 'local',
                           'call_direct'):
             self.op1 = get_symbol(db_cur, int1)
+        elif operator in ('input', 'input-bit',
+                          'output', 'output-bit-set', 'output-bit-clear'):
+            self.op1 = string
+            string = None
         elif int1 is not None:
             self.triple1 = int1
 
         if operator in ('ratio', 'approx'):
             self.op2 = str(int2)
+        elif operator in ('input-bit', 'output-bit-set', 'output-bit-clear'):
+            self.op2 = str(int1)
+        elif operator == 'output':
+            self.triple2 = int1
         elif int2 is not None:
             self.triple2 = int2
 

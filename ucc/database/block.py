@@ -103,27 +103,32 @@ class block(object):
             name = crud.gensym('block')
             self.write(name)
             Current_block = block(name)
+            return True
+        return False
 
     def true_to(self, cond_id, name_t):
         r'''Branch to name_t if cond_id is true.
         
         False falls through.
         '''
-        self.more()
-        self.last_triple = triple.triple('if-true', cond_id, string=name_t)
-        self.next_conditional = name_t
-        self.state = 'end_fall_through'
+        if self.more(): Current_block.true_to(cond_id, name_t)
+        else:
+            self.last_triple = triple.triple('if-true', cond_id, string=name_t)
+            self.next_conditional = name_t
+            self.state = 'end_fall_through'
 
     def false_to(self, cond_id, name_f):
-        self.more()
-        self.last_triple = triple.triple('if-false', cond_id, string=name_f)
-        self.next_conditional = name_f
-        self.state = 'end_fall_through'
+        if self.more(): Current_block.false_to(cond_id, name_f)
+        else:
+            self.last_triple = triple.triple('if-false', cond_id, string=name_f)
+            self.next_conditional = name_f
+            self.state = 'end_fall_through'
 
     def unconditional_to(self, name):
-        self.more()
-        self.state = 'end_fall_through'
-        self.write(name)
+        if self.more(): Current_block.unconditional_to(name)
+        else:
+            self.state = 'end_fall_through'
+            self.write(name)
 
     def block_end(self, last_triple):
         assert self.state == 'not_ended', \
@@ -134,7 +139,10 @@ class block(object):
 
     def gen_triple(self, operator, int1=None, int2=None, string=None,
                          syntax_position_info=None):
-        self.more()
+        #print self.name, "gen_triple", operator, int1, int2, string
+        if self.more():
+            return Current_block.gen_triple(operator, int1, int2, string,
+                                            syntax_position_info)
         if operator in ('global', 'local'):
             if int1 in self.labels: return self.labels[int1]
         if operator == 'call_direct':
@@ -164,8 +172,10 @@ class block(object):
             return ans
         if operator == 'call_indirect':
             raise AssertionError("call_indirect not yet implemented")
-        if operator not in ('param', 'var_data', 'const_data', 'bss',
-                            'ioreg_init', 'eeprom'):
+        if operator not in ('param', 'input', 'input-bit',
+                            'output', 'output-bit-set', 'output-bit-clear',
+                            'var_data', 'const_data', 'bss', 'ioreg_init',
+                            'eeprom'):
             key = operator, int1, int2, string
             if key not in self.triples:
                 self.triples[key] = triple.triple(operator, int1, int2, string,
@@ -174,6 +184,12 @@ class block(object):
         ans = triple.triple(operator, int1, int2, string, syntax_position_info)
         if operator == 'global':
             self.uses_global[int1].append(ans)
+        if operator in ('input', 'input-bit',
+                        'output', 'output-bit-set', 'output-bit-clear'):
+            #print self.name, "got", operator, "storing in side_effects"
+            if self.side_effects is not None:
+                ans.add_hard_predecessor(self.side_effects)
+            self.side_effects = ans
         return ans
 
     def label(self, symbol_id, triple):
@@ -186,6 +202,8 @@ class block(object):
         '''
 
         global Current_block
+
+        #print self.name, "write"
 
         if self.state == 'end_absolute':
             next = None
@@ -210,9 +228,11 @@ class block(object):
         # written:
         forced_triples = set(self.labels.values())
         if self.side_effects is not None:
+            #print self.name, "adding", self.side_effects, "due to side_effects"
             forced_triples.add(self.side_effects)
         forced_triples.update(self.sets_global.values())
         if self.last_triple is not None:
+            #print self.name, "adding", self.last_triple, "as last_triple"
             forced_triples.add(self.last_triple)
         #
         # then write them all:
@@ -229,5 +249,6 @@ class block(object):
         Block_ids[self.name] = id
 
         Current_block = None
+        #print self.name, "write returning", id
         return id
 
