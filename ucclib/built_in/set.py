@@ -15,11 +15,14 @@ class set(singleton.singleton):
 
         lvalue, rvalue = ast_node.args[1]
 
-        assert lvalue.kind == 'word', \
-               "set: can only assign to variables, " \
+        assert lvalue.kind in ('word', 'ioreg'), \
+               "set: can only assign to variables or ioregs, " \
                "fancier assignments not implemented"
 
         ans = rvalue.compile()
-        block.Current_block.label(lvalue.symbol_id, ans)
-        return ans
+        if lvalue.kind == 'word':
+            block.Current_block.label(lvalue.symbol_id, ans)
+            return ans
+        return block.Current_block.gen_triple('output',
+                                              string=lvalue.label, int1=ans)
 

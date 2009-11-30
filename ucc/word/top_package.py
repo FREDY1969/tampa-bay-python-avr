@@ -12,6 +12,7 @@ class top(object):
     def __init__(self, package_dir = None):
         r'''Omit package_dir to treat built_in as top-level package.
         '''
+        global Top
         self.word_dict = {}
         self.translation_dict = {}
         self.packages = []              # top package last!
@@ -22,6 +23,7 @@ class top(object):
             self.add_package(p, False)
         self.add_package(self.packages[-1], True)
         self.connect_the_dots()
+        Top = self
 
     def add_package(self, package, top):
         for w in package.get_words():

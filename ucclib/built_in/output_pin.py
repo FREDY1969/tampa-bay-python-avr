@@ -6,6 +6,22 @@ from ucclib.built_in import declaration
 
 class output_pin(declaration.word):
     def macro_expand(self, fn_symbol, ast_node, words_needed):
+        r'''This macro expands to an if statement.
+
+        if arg:
+            set-output-bit port_name bit#
+        else:
+            clear-output-bit port_name bit#
+
+        or
+
+        if arg:
+            clear-output-bit port_name bit#
+        else:
+            set-output-bit port_name bit#
+
+        depending on on-is setting.
+        '''
         assert len(ast_node.args) == 2
         assert len(ast_node.args[1]) == 1, \
                "%s: incorrect number of arguments, expected 1, got %s" % \
@@ -13,44 +29,44 @@ class output_pin(declaration.word):
         fn_symbol.side_effects = 1
         pin_number = self.ww.get_value('pin_number')
         on_is = self.ww.get_answer('on_is').tag
-        register, bit_number = digital_pin_lookup[pin_number]
+        port_label, bit_number = digital_pin_lookup[pin_number]
+        print "output_pin: port_label", port_label, ", bit_number", bit_number
+        ioreg_bit = ast.ast(kind='ioreg-bit',
+                            label='io.port' + port_label, int1=bit_number)
         if on_is == 'HIGH':
-            value = ast_node.args[1][0]
+            true_call = 'set-output-bit'
+            false_call = 'clear-output-bit'
         else:
-            value = ast.ast(ast.ast(kind='word', label='negate',
-                                    symbol_id=symbol_table.get('negate').id),
-                            ast_node.args[1][0],
-                            kind='call')
+            true_call = 'clear-output-bit'
+            false_call = 'set-output-bit'
         new_args = (
-            ast.ast(kind='word', label='set_pin',
-                    symbol_id=symbol_table.get('set_pin').id),
-            (ast.ast(kind='int', int1=register),
-             ast.ast(kind='int', int1=(1 << bit_number)),
-             value,
-            )
+            ast.ast.word('if'),
+            ast_node.args[1][0],
+            (ast.ast.call(true_call, ioreg_bit, expect='statement'),),
+            (ast.ast.call(false_call, ioreg_bit, expect='statement'),),
         )
         return ast_node.macro_expand(fn_symbol, words_needed, new_args,
                                      kind='call')
 
 digital_pin_lookup = {
-    0: (io.portd, 0),
-    1: (io.portd, 1),
-    2: (io.portd, 2),
-    3: (io.portd, 3),
-    4: (io.portd, 4),
-    5: (io.portd, 5),
-    6: (io.portd, 6),
-    7: (io.portd, 7),
-    8: (io.portb, 0),
-    9: (io.portb, 1),
-    10: (io.portb, 2),
-    11: (io.portb, 3),
-    12: (io.portb, 4),
-    13: (io.portb, 5),
-    14: (io.portc, 0),
-    15: (io.portc, 1),
-    16: (io.portc, 2),
-    17: (io.portc, 3),
-    18: (io.portc, 4),
-    19: (io.portc, 5),
+    0: ('d', 0),
+    1: ('d', 1),
+    2: ('d', 2),
+    3: ('d', 3),
+    4: ('d', 4),
+    5: ('d', 5),
+    6: ('d', 6),
+    7: ('d', 7),
+    8: ('b', 0),
+    9: ('b', 1),
+    10: ('b', 2),
+    11: ('b', 3),
+    12: ('b', 4),
+    13: ('b', 5),
+    14: ('c', 0),
+    15: ('c', 1),
+    16: ('c', 2),
+    17: ('c', 3),
+    18: ('c', 4),
+    19: ('c', 5),
 }
