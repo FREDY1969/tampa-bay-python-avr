@@ -6,6 +6,7 @@ import sys
 import os.path
 import itertools
 import traceback
+import time
 
 from ucc.word import helpers
 from ucc.parser import genparser, hex_file
@@ -192,8 +193,7 @@ def assemble_program(package_dir):
     # assemble eeprom:
     hex_file.write(assemble.assemble('eeprom', labels), package_dir, 'eeprom')
 
-
-def run(top):
+def run(top, prime_start_time = True):
     # The following gets a little confusing because we have two kinds of word
     # objects:
     #
@@ -203,27 +203,47 @@ def run(top):
     #                         ucclib.built_in.declaration.declaration class)
     #
 
+    if prime_start_time:
+        elapsed()       # prime the Start_time...
+    else:
+        print "top:", elapsed()
+
     with crud.db_connection(top.packages[-1].package_dir):
+        print "crud.db_connection:", elapsed()
 
         # Create symbols, word_objs and build the parsers for each package:
         #
         # {package_name: parser module}
         package_parsers = create_parsers(top)  # Also loads all of the word objs
+        print "create parsers:", elapsed()
 
         # word files => ast
         words_done = parse_needed_words(top, package_parsers)
+        print "parse_needed_words:", elapsed()
 
         # ast => intermediate code
         for word_label in words_done:
             with crud.db_transaction():
                 symbol_table.get(word_label).word_obj.compile()
+        print "generate intermediate code:", elapsed()
 
         # intermediate code => optimized intermediate code
         optimize()
+        print "optimize:", elapsed()
 
         # intermediate code => assembler
         gen_assembler()
+        print "gen_assembler:", elapsed()
 
         # assembler => .hex files
         assemble_program(top.packages[-1].package_dir)
+        print "assemble_program:", elapsed()
 
+Start_time = 0.0
+
+def elapsed():
+    global Start_time
+    end_time = time.time()
+    ans = end_time - Start_time
+    Start_time = end_time
+    return ans
