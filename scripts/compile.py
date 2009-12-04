@@ -22,5 +22,7 @@ if __name__ == '__main__':
         compile.Debug = 1
         del sys.argv[1]
     if len(sys.argv) != 2: usage()
-    compile.run(top_package.top(sys.argv[1]))
+    compile.elapsed()
+    top = top_package.top(sys.argv[1])
+    compile.run(top, False)
 
