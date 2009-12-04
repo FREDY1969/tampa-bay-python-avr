@@ -148,6 +148,7 @@ create table gensym_indexes (
 create table blocks (
     id integer not null primary key,
     name varchar(255) not null unique,
+    word_symbol_id int not null references symbol_table(id),
 
     last_triple_id int references triples(id),
     next varchar(255) references blocks(name),

@@ -48,7 +48,7 @@ class ast(object):
     # default attribute values:
     kind = 'call'
     expect = 'value'
-    word_symbol_id = label = symbol_id = None
+    label = symbol_id = None
     int1 = int2 = str1 = str2 = None
     line_start = column_start = line_end = column_end = None
 
@@ -157,6 +157,7 @@ class ast(object):
                      zip(self.arg_cols,
                          (word_symbol_id, parent, parent_arg_num,
                           arg_order))))
+        self.word_symbol_id = word_symbol_id
         self.id = crud.insert('ast', **kws)
         save_args(self.args, word_symbol_id, self.id)
 
@@ -202,7 +203,7 @@ class ast(object):
             return None
 
         if self.kind == 'label':
-            block.new_label(self.label)
+            block.new_label(self.label, self.word_symbol_id)
             return None
 
         if self.kind == 'jump':
