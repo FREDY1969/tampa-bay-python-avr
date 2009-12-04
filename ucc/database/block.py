@@ -7,7 +7,7 @@ Current_block = None
 
 Block_ids = {}                                        # {block_name: block_id}
 
-def new_label(name):
+def new_label(name, word_symbol_id):
     global Current_block
     if Current_block:
         if Current_block.state == 'end_fall_through':
@@ -16,19 +16,20 @@ def new_label(name):
             Current_block.write()
         else:
             Current_block.unconditional_to(name)
-    block(name)
+    block(name, word_symbol_id)
 
 class block(object):
     last_triple = None
     next_conditional = None
 
-    def __init__(self, name):
+    def __init__(self, name, word_symbol_id):
         global Current_block
 
         assert not Current_block, \
                "%s: previous block(%s) not written" % (name, Current_block.name)
 
         self.name = name
+        self.word_symbol_id = word_symbol_id
 
         # The final labels left in this dict when the block is written are
         # added as labels to the indicated triples.  These can be either
@@ -102,7 +103,7 @@ class block(object):
         if self.state == 'end_fall_through':
             name = crud.gensym('block')
             self.write(name)
-            Current_block = block(name)
+            Current_block = block(name, self.word_symbol_id)
             return True
         return False
 
@@ -212,6 +213,7 @@ class block(object):
 
         id = crud.insert('blocks',
                          name=self.name,
+                         word_symbol_id=self.word_symbol_id,
                          last_triple_id=self.last_triple.id
                                           if self.last_triple
                                           else None,

@@ -4,7 +4,7 @@
 
 r'''Dumps the icode database in a simple ascii format.
 
-id: name [next id [/ id]] (predecessor ids)
+fun_name.id: name [next id [/ id]] (predecessor ids)
   id: operator int1 int2 string (predecessor ids)
     child1
     child2
@@ -32,24 +32,26 @@ class db_cursor(object):
         self.db_conn.close()
 
 def dump(db_cur):
-    db_cur.execute("""select id, name, last_triple_id, next, next_conditional
-                        from blocks
-                       order by id
+    db_cur.execute("""select b.id, b.name, st.label,
+                             b.last_triple_id, b.next, b.next_conditional
+                        from blocks b inner join symbol_table st
+                          on b.word_symbol_id = st.id
+                       order by b.id
                    """)
     for info in db_cur.fetchall():
         print
         dump_block(info, db_cur)
 
 def dump_block(info, db_cur):
-    id, name, last_triple_id, next, next_cond = info
+    id, name, fun_name, last_triple_id, next, next_cond = info
     db_cur.execute("""select predecessor
                         from block_successors
                        where successor = ?
                    """,
                    (id,))
     predecessors = ' '.join(map(lambda x: str(x[0]), db_cur))
-    print "%d: %s%s%s%s" % \
-            (id, name,
+    print "%s.%d: %s%s%s%s" % \
+            (fun_name, id, name,
              ' next %s' % next if next else '',
              ' / %s' % next_cond if next_cond else '',
              ' (%s)' % predecessors if predecessors else '')
@@ -184,13 +186,17 @@ if __name__ == "__main__":
     if sys.argv[1].lower().endswith('.ucl'):
         package_dir, file = os.path.split(sys.argv[1])
         with db_cursor(package_dir) as db_cur:
-            db_cur.execute("""select id, name, last_triple_id,
-                                     next, next_conditional
-                                from blocks
-                               where name = ?
+            db_cur.execute("""select b.id, b.name, st.label, b.last_triple_id,
+                                     b.next, b.next_conditional
+                                from blocks b inner join symbol_table st
+                                  on b.word_symbol_id = st.id
+                               where st.label = ?
+                               order by b.id
                            """,
                            (file[:-4],))
-            dump_block(db_cur.fetchone(), db_cur)
+            for info in db_cur.fetchall():
+                print
+                dump_block(info, db_cur)
     else:
         with db_cursor(sys.argv[1]) as db_cur:
             dump(db_cur)

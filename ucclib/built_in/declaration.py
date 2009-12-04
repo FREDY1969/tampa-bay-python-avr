@@ -149,7 +149,7 @@ class high_level_word(word):
         assert not block.Current_block, \
                "%s.compile: previous block(%s) not written" % \
                  (self.label, block.Current_block.name)
-        block.block(self.label)
+        block.block(self.label, self.ww.symbol.id)
         ast.compile_args(self.ast_args)
         if block.Current_block:
             block.Current_block.block_end(
