@@ -75,7 +75,7 @@ class RightMainPanel(wx.Panel):
                 self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY,
                                                 question.label)),
                 if not hasattr(question, 'control'):
-                    msg = "<%s %s> has not 'control'" % \
+                    msg = "<%s %s> has no 'control'" % \
                             (question.__class__.__name__, question.name)
                     print msg
                     self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY,
