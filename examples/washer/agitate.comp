@@ -1,0 +1,87 @@
+agitate.ucl:
+
+with clutch-on< agitate:
+    with motor-on< get< agitate-speed
+        wait how-long
+
+agitate ast:
+
+agitate word_body ./agitate.ucl value
+  - with fn_call statement
+    - clutch-on< fn_call value
+      - agitate fn_call value
+    - with fn_call statement
+      - motor-on< fn_call value
+        - get< fn_call value
+          - agitate-speed fn_call value
+      - wait fn_call statement
+        - how-long fn_call value
+
+prepared agitate:
+
+agitate word_body ./agitate.ucl value
+  - block (on exit: stop clutch-on<)
+    - clutch-on< fn_call statement
+      - constant 1 value (exact: max 1, min 1, den 1)
+    - block (on exit: stop motor-on<)
+      - motor-on< fn_call statement
+        - get< fn_call value (exact: max 2, min 1, den 1)
+          - constant 1 value (exact: max 1, min 1, den 1)
+      - wait fn_call statement
+        - arg0 fn_call value (exact: max 3600, min 1, den 1)
+
+compiled agitate:
+  - block (on exit: stop clutch-on<)
+    - param 0, 1
+    - call clutch-on<
+    - block (on exit: stop motor-on<)
+      - param 0, 1
+      - t := call get<
+      - param 0, t
+      - call motor-on<
+      - param 0, *frame + args_offset + 0
+      - call wait
+    - param 0, motor-on<
+    - call stop
+  - param 0, clutch-on<
+  - call stop
+  - ret
+
+agitate assembler:
+    ldi r30, low8(agitate)      # my fp to Z
+    ldi r31, hi8(agitate)
+    std Z + fp, r28             # save caller's Y (fp)
+    std Z + fp + 1, r29
+    movw r28,r30
+    pop r0                      # save ret address
+    std Y + ret, r0
+    pop r0
+    std Y + ret + 1, r0
+    std Y + arg_offset + 0, r24 # save arg
+    std Y + arg_offset + 1, r25
+    .block      block1, stop clutch-on<
+block1_start
+    ldi r24, 1
+    call clutch-on<
+    .block      block2, stop motor-on<
+block2_start
+    ldi r24, 1
+    call get<
+    call motor-on<
+    ldd  r24,Y + arg_offset + 0
+    ldd  r25,Y + arg_offset + 1
+    call wait
+block2_end
+    ldi  r24, low8(motor-on<)
+    ldi  r25, hi8(motor-on<)
+    call stop
+block1_end
+    ldi  r24, low8(clutch-on<)
+    ldi  r24, hi8(clutch-on<)
+    call stop
+    ldd r30, Y + ret
+    ldd r31, Y + ret + 1
+    ldd r0, Y + fp
+    ldd r29, Y + fp + 1
+    mov r28,r0
+    ijmp

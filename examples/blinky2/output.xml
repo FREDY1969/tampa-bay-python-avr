@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>output</name>
+    <label>output</label>
+    <kind>var</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="initial_value" repeated="False" />
+    </answers>
+</word>
