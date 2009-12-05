@@ -65,7 +65,9 @@
             <label>My Series</label>
             <min>int</min>
             <max>int|infinite</max>
-            <!-- Additional Questions as a Set -->
+            <question>...</question>
+            <question>...</question>
+            <question>...</question>
         </questions>
     </questions>
     
