@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package>
+    <name>gui_test</name>
+    <words>
+        <word name="test_defining_word" />
+        <word name="test_word" />
+    </words>
+</package>

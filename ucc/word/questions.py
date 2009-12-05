@@ -211,6 +211,10 @@ class q_choice(question):
 
     This class covers the single selection choice.  Compare to multichoice.
     '''
+    
+    answer_cls = answers.ans_string
+    default_value = ""
+    control = 'ChoiceCtrl'
 
     def __init__(self, name, label, options = None, default = None,
                        min = None, max = None, orderable = None):
