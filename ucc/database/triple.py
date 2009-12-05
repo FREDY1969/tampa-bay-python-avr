@@ -19,7 +19,10 @@ class triple(object):
         self.string = string
         self.line_start, self.column_start, self.line_end, self.column_end = \
           syntax_position_info or (None, None, None, None)
-        self.labels = []  # All the symbol_ids to store this value into.
+
+        # All the symbol_ids to store this value into.
+        self.labels = {}        # {symbol_id: is_gen}
+
         self.soft_predecessors = []     # [triple]
         self.hard_predecessors = []     # [triple]
 
@@ -27,17 +30,18 @@ class triple(object):
         return "<triple %s:%s(%s,%s)>" % \
                  (self.id, self.operator, self.int1, self.int2)
 
-    def add_label(self, symbol_id):
+    def add_label(self, symbol_id, is_gen):
         r'''Adds a label to this triple.
 
         This means that the results of this triple will be stored in the
         symbol_id variable (which could be either a local or global variable).
 
         This may be called multiple times with the same symbol_id.  It
-        silently ignores all but the first call.
+        silently ignores all but the first call, but sets is_gen if any of the
+        calls has it set.
         '''
-        if symbol_id not in self.labels:
-            self.labels.append(symbol_id)
+        if is_gen or symbol_id not in self.labels:
+            self.labels[symbol_id] = is_gen
 
     def add_soft_predecessor(self, pred):
         r'''Adds a soft link between 'pred' and self.
@@ -97,9 +101,11 @@ class triple(object):
                                   line_end=self.line_end,
                                   column_end=self.column_end,
                                  )
-            for label in self.labels:
-                crud.insert('gens', block_id=block_id, symbol_id=label,
-                                    triple_id=self.id)
+            for label, is_gen in self.labels.iteritems():
+                crud.insert('triple_labels',
+                            triple_id=self.id,
+                            symbol_id=label,
+                            is_gen=is_gen)
             for t0 in self.hard_predecessors:
                 crud.insert('triple_order_constraints',
                             predecessor=t0.write(block_id),

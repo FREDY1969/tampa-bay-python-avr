@@ -198,7 +198,13 @@ create table triples (
     column_end int
 );
 
--- also serves as labels for the triples
+create table triple_labels (
+    triple_id int not null references triples(id),
+    symbol_id int not null references symbol_table(id),
+    is_gen bool not null,
+    primary key (triple_id, symbol_id)
+);
+
 create table gens (
     block_id int not null references blocks(id),
     symbol_id int not null references symbol_table(id),
