@@ -131,13 +131,15 @@ class triple(object):
                            (self.id,))
             predecessors = ' '.join(map(lambda x: str(x[0]), db_cur))
 
-            db_cur.execute("""select symbol_id
-                                from gens
+            db_cur.execute("""select symbol_id, is_gen
+                                from triple_labels
                                where triple_id = ?
                            """,
                            (self.id,))
-            labels = ' '.join(map(lambda x: ' => %s' % get_symbol(db_cur, x[0]),
-                                  db_cur))
+            labels = ' '.join(map(lambda x:
+                                    (' => %s' if x[1] else ' -> %s') %
+                                      get_symbol(db_cur, x[0]),
+                                  db_cur.fetchall()))
 
             print "%s%d: %s%s%s%s%s%s" % \
                   (' ' * indent,
