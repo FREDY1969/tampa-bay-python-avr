@@ -36,11 +36,11 @@ class BaseCtrl(wx.Panel):
 
             if self.answer_getter() is None:
                 print "answer is None"
-                self.cp.Collapse(False)
+                #self.cp.Collapse(False)
                 self.cp.Collapse(True)
             else:
                 print "answer is not None"
-                self.setInitialValue()
+                #self.setInitialValue()
                 self.cp.Collapse(False)
 
         elif self.question.is_repeatable():
