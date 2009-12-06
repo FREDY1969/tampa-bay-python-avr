@@ -4,8 +4,8 @@ import wx
 from ucc.gui.controls.BaseCtrl import BaseCtrl
 
 class BoolCtrl(BaseCtrl):
-    def paintControl(self, parent):
-        self.cb = wx.CheckBox(parent, wx.ID_ANY, self.label)
+    def init2(self):
+        self.cb = wx.CheckBox(self, wx.ID_ANY, self.label)
         self.Bind(wx.EVT_CHECKBOX, self.checked, self.cb)
     
     def setInitialValue(self):
