@@ -24,7 +24,8 @@ class RightMainPanel(wx.Panel):
         topPanel = self.topPanel = \
           scrolled.ScrolledPanel(splitter, wx.ID_ANY, style=wx.BORDER_SUNKEN)
         topSizer = self.topSizer = wx.FlexGridSizer(cols=2, hgap=5, vgap=5)
-        topSizer.AddGrowableCol(1)
+        topSizer.SetFlexibleDirection(wx.HORIZONTAL)
+        topSizer.AddGrowableCol(1, 1)
         topPanel.SetSizer(topSizer)
         #topPanel.SetAutoLayout(1)
         #topPanel.SetupScrolling()
@@ -73,7 +74,9 @@ class RightMainPanel(wx.Panel):
         if Registry.currentWord:
             for question in Registry.currentWord.kind_obj.questions or ():
                 self.topSizer.Add(wx.StaticText(self.topPanel, wx.ID_ANY,
-                                                question.label)),
+                                                question.label),
+                                  flag=wx.TOP,
+                                  border=6),
                 if not hasattr(question, 'control'):
                     msg = "<%s %s> has no 'control'" % \
                             (question.__class__.__name__, question.name)
@@ -85,11 +88,12 @@ class RightMainPanel(wx.Panel):
                                   question.control)
                     print question.control, cls
                     self.topSizer.Add(
-                      cls(self.topPanel,
-                          question,
-                          lambda question=question:
+                      cls.makeControl(
+                        self.topPanel,
+                        question,
+                        lambda question=question:
                             Registry.currentWord.get_answer(question.name),
-                          lambda new_ans, question=question:
+                        lambda new_ans, question=question:
                             Registry.currentWord.set_answer(question.name,
                                                             new_ans)))
 
