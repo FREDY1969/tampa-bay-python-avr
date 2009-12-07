@@ -4,7 +4,7 @@ from __future__ import with_statement
 
 import itertools
 
-from ucc.database import block, crud, fn_xref, symbol_table
+from ucc.database import assembler, block, crud, fn_xref, symbol_table
 
 def delete_word_by_label(word_label):
     r'''Deletes the word and all of it's ast nodes from the ast table.
@@ -170,10 +170,11 @@ class ast(object):
         if self.kind == 'string':
             name = crud.gensym('strlit')
             sym = symbol_table.symbol.create(name, 'const')
-            assembler.block('flash', name).write((
-                assembler.inst('int16', str(len(self.str1)), length=2),
-                assembler.inst('bytes', repr(self.str1), length=len(self.str1)),
-            ))
+            asm_block = assembler.block('flash', name)
+            asm_block.append_inst('int16', str(len(self.str1)), length=2)
+            asm_block.append_inst('bytes', repr(self.str1),
+                                  length=len(self.str1))
+            asm_block.write()
             return block.Current_block.gen_triple(
                      'global', sym.id,
                      syntax_position_info=self.get_syntax_position_info())
