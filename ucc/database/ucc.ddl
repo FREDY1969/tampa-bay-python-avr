@@ -21,6 +21,11 @@ create table symbol_table (
     source_filename varchar(4096),      -- full path to source file
     type_id int references type(id),
     int1 int,
+    address int,
+    flash_size int,
+    ram_size int,
+    far_size int,
+    clock_cycles int,
     side_effects bool default 0,        -- only for functions/tasks
     suspends bool default 0,            -- only for functions/tasks
     unique (label, context)
@@ -243,7 +248,7 @@ create table outs (
 -- These are broken out by blocks to facilitate the assembler playing games
 -- with the block orders to maximize the use of smaller jmp and call insts.
 ---------------------------------------------------------------------------
-create table assembler_words (
+create table assembler_blocks (
     id integer not null primary key,
     section varchar(255) not null,
         -- 'code'
@@ -252,7 +257,8 @@ create table assembler_words (
         -- 'eeprom' (this probably gets broken out into several tables)
     label varchar(255) unique,
     address int,
-    length int
+    length int,
+    clock_cycles int
 );
 
 create table assembler_code (
