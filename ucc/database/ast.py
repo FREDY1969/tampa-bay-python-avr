@@ -171,9 +171,8 @@ class ast(object):
             name = crud.gensym('strlit')
             sym = symbol_table.symbol.create(name, 'const')
             asm_block = assembler.block('flash', name)
-            asm_block.append_inst('int16', str(len(self.str1)), length=2)
-            asm_block.append_inst('bytes', repr(self.str1),
-                                  length=len(self.str1))
+            asm_block.append_inst('int16', str(len(self.str1)))
+            asm_block.append_inst('bytes', repr(self.str1))
             asm_block.write()
             return block.Current_block.gen_triple(
                      'global', sym.id,

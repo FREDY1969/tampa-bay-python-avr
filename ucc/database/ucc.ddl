@@ -256,9 +256,12 @@ create table assembler_blocks (
         -- 'bss'
         -- 'eeprom' (this probably gets broken out into several tables)
     label varchar(255) unique,
+    next_label varchar(255),
     address int,
-    length int,
-    clock_cycles int
+    min_length int,
+    max_length int,
+    min_clock_cycles int,
+    max_clock_cycles int
 );
 
 create table assembler_code (
@@ -279,8 +282,11 @@ create table assembler_code (
            -- 'zeroes', operand1 has data length in string form.
     operand1 varchar(255),
     operand2 varchar(255),
-    length int not null,           -- in bytes
-    clocks int,                    -- for machine instructions (code section)
+    min_length int not null,       -- in bytes
+    max_length int not null,       -- in bytes
+    min_clocks int,                -- for machine instructions (code section)
+    max_clocks int,                -- for machine instructions (code section)
+    end bool,                      -- 1 if this inst doesn't fall through
     line_start int,
     column_start int,
     line_end int,

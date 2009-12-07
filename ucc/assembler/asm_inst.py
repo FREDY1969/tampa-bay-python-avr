@@ -260,7 +260,18 @@ class inst1(object):
         self.cycles = cycles
         self.notes = notes
 
-    def length(self, op1, op2): return 2
+    def length(self, op1, op2): return 2, 2
+
+    def clock_cycles(self):
+        r'''Returns min and max cycles.
+        '''
+        if isinstance(self.cycles, (list, tuple)): return self.cycles
+        return self.cycles, self.cycles
+
+    def end(self):
+        r'''True if this instruction does not fall-through.'''
+        if 'end' in self.notes: return self.notes['end']
+        return False
 
     def make_args(self, op1, op2):
         if len(self.operand_codes) == 0:
@@ -284,16 +295,19 @@ class inst1(object):
                                      itertools.repeat(op2))))
 
     def assemble(self, op1, op2, labels, address):
+        min_len, max_len = self.length(op1, op2)
+        assert min_len == max_len, \
+               "min_len != max_len for asm_inst " + self.name
         bits = format(self.opcode, self.operands, self.notes,
                       self.make_args(op1, op2),
                       labels,
-                      address + self.length(op1, op2))
+                      address + min_len)
         yield bits & 0xff
         yield bits >> 8
 
 
 class inst2(inst1):
-    def length(self, op1, op2): return 4
+    def length(self, op1, op2): return 4, 4
 
     def assemble(self, op1, op2, labels, address):
         bits = format(self.opcode, self.operands, self.notes,
@@ -305,15 +319,21 @@ class inst2(inst1):
 
 
 class bytes(inst1):
+    cycles = 0
+
     def __init__(self): pass
 
     def length(self, op1, op2):
         if op1[0] in "\"'":
-            return len(eval(op1))
+            l = len(eval(op1))
         else:
             assert len(op1) % 2 == 0, \
                    "bytes opcode must have an even number of hex digits"
-            return len(op1) // 2
+            l = len(op1) // 2
+        return l, l
+
+    def end(self):
+        return True
 
     def assemble(self, op1, op2, labels, address):
         if op1[0] in "\"'":
@@ -326,7 +346,7 @@ class bytes(inst1):
 
 class int8(bytes):
     def length(self, op1, op2):
-        return 1
+        return 1, 1
 
     def assemble(self, op1, op2, labels, address):
         yield int(op1, 0)
@@ -334,7 +354,7 @@ class int8(bytes):
 
 class int16(bytes):
     def length(self, op1, op2):
-        return 2
+        return 2, 2
 
     def assemble(self, op1, op2, labels, address):
         n = int(op1, 0)
@@ -344,7 +364,7 @@ class int16(bytes):
 
 class int32(bytes):
     def length(self, op1, op2):
-        return 4
+        return 4, 4
 
     def assemble(self, op1, op2, labels, address):
         n = int(op1, 0)
@@ -356,7 +376,8 @@ class int32(bytes):
 
 class zeroes(bytes):
     def length(self, op1, op2):
-        return int(op1, 0)
+        l = int(op1, 0)
+        return l, l
 
     def assemble(self, op1, op2, labels, address):
         return ()

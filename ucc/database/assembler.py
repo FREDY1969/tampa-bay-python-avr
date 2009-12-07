@@ -2,6 +2,7 @@
 
 import itertools
 from ucc.database import crud
+from ucc.assembler import asm_opcodes
 
 def gen_blocks(section):
     for block_id, label, address \
@@ -12,7 +13,8 @@ def gen_blocks(section):
                               order_by=('address',)),
           crud.read_as_tuples('assembler_blocks', 'id', 'label', 'address',
                               section=section,
-                              address=None)):
+                              address=None,
+                              order_by=('id',))):
         yield block_id, label, address
 
 def gen_insts(block_id):
@@ -34,17 +36,33 @@ class block(object):
         self.section = section
         self.label = label
         self.address = address
-        self.length = length or 0
-        self.clock_cycles = 0
+        self.min_length = length or 0
+        self.max_length = length or 0
+        self.min_clock_cycles = 0
+        self.max_clock_cycles = 0
+        self.next_label = None
         self.instructions = []
 
     def append_inst(self, opcode, operand1 = None, operand2 = None,
-                    length = None, clocks = None,
-                    position_info = (None, None, None, None)):
-        self.instructions.append(inst(opcode, operand1, operand2,
-                                      length, clocks, position_info))
-        self.length += length
-        self.clock_cycles += clocks
+                    position_info = (None, None, None, None),
+                    syntax_error_info = None):
+        i = inst(opcode, operand1, operand2, position_info,
+                 syntax_error_info=syntax_error_info)
+        self.instructions.append(i)
+
+        self.min_length += i.min_length
+        self.max_length += i.max_length
+        self.min_clock_cycles += i.min_clocks
+        self.max_clock_cycles += i.max_clocks
+
+    def falls_through(self):
+        r'''Return True iff the block falls through to the next block.'''
+        if self.instructions and self.instructions[-1].end:
+            return False
+        return True
+
+    def next_block(self, next_label):
+        self.next_label = next_label
 
     def write(self):
         old_id = crud.read1_column('assembler_blocks', 'id',
@@ -56,22 +74,34 @@ class block(object):
                               section=self.section,
                               label=self.label,
                               address=self.address,
-                              length=self.length,
-                              clock_cycles=self.clock_cycles,
+                              min_length=self.min_length,
+                              max_length=self.max_length,
+                              min_clock_cycles=self.min_clock_cycles,
+                              max_clock_cycles=self.max_clock_cycles,
+                              next_label=self.next_label
+                                           if self.falls_through()
+                                           else None,
                              )
         for i, instruction in enumerate(self.instructions):
             instruction.write(self.id, i)
 
 class inst(object):
     def __init__(self, opcode, operand1 = None, operand2 = None,
-                       length = None, clocks = None,
-                       position_info = (None, None, None, None)):
+                       position_info = (None, None, None, None),
+                       syntax_error_info = None):
         self.label = None
         self.opcode = opcode
         self.operand1 = operand1
         self.operand2 = operand2
-        self.length = length
-        self.clocks = clocks
+        inst_obj = getattr(asm_opcodes, opcode.upper(), None)
+        if inst_obj is None:
+            if syntax_error_info:
+                raise SyntaxError("unknown opcode: %s" % opcode,
+                                  syntax_error_info)
+            raise AssertionError("unknown opcode: %s" % opcode)
+        self.min_length, self.max_length = inst_obj.length(operand1, operand2)
+        self.min_clocks, self.max_clocks = inst_obj.clock_cycles()
+        self.end = inst_obj.end()
         self.line_start, self.column_start, self.line_end, self.column_end = \
           position_info
 
@@ -83,8 +113,11 @@ class inst(object):
                            opcode=self.opcode,
                            operand1=self.operand1,
                            operand2=self.operand2,
-                           length=self.length,
-                           clocks=self.clocks,
+                           min_length=self.min_length,
+                           max_length=self.max_length,
+                           min_clocks=self.min_clocks,
+                           max_clocks=self.max_clocks,
+                           end=self.end,
                            line_start=self.line_start,
                            column_start=self.column_start,
                            line_end=self.line_end,
