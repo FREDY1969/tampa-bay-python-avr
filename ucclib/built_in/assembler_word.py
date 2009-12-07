@@ -5,7 +5,6 @@ from __future__ import with_statement
 import itertools
 
 from ucc.database import assembler, ast, crud
-from ucc.assembler import asm_opcodes
 from ucclib.built_in import declaration
 
 class assembler_word(declaration.word):
@@ -20,6 +19,7 @@ class assembler_word(declaration.word):
                 new_block = parse_asm(block, filename, line, i + 1)
                 if new_block:
                     blocks.append(new_block)
+                    block.next_block(new_block.label)
                     block = new_block
         with crud.db_transaction():
             for b in blocks: b.write()
@@ -126,24 +126,20 @@ def parse_asm(block, filename, line, lineno):
     if len(operands) > 1:
         operand2 = operands[1]
     length = clocks = 0
+    syntax_error_info = None
     if opcode is not None:
-        inst_obj = getattr(asm_opcodes, opcode.upper(), None)
-        if inst_obj is None:
-            if label is not None:
-                label_len = len(label)
-                no_label = line[label_len:]
-                opcode_column = \
-                  label_len + len(no_label) - len(no_label.lstrip()) + 1
-            else:
-                opcode_column = len(line) - len(line.lstrip()) + 1
-            raise SyntaxError("unknown opcode: %s" % opcode,
-                              (filename, lineno, opcode_column, line))
-        length = inst_obj.length(operand1, operand2)
-        if isinstance(inst_obj.cycles, int): clocks = inst_obj.cycles
-        else: clocks = max(inst_obj.cycles)
+        if label is not None:
+            label_len = len(label)
+            no_label = line[label_len:]
+            opcode_column = \
+              label_len + len(no_label) - len(no_label.lstrip()) + 1
+        else:
+            opcode_column = len(line) - len(line.lstrip()) + 1
+        syntax_error_info = (filename, lineno, opcode_column, line)
     column_start = len(stripped_line) - len(stripped_line.lstrip()) + 1
     column_end = len(stripped_line)
-    block.append_inst(opcode, operand1, operand2, length, clocks,
-                      (lineno, column_start, lineno, column_end))
+    block.append_inst(opcode, operand1, operand2,
+                      (lineno, column_start, lineno, column_end),
+                      syntax_error_info=syntax_error_info)
     return ans
 

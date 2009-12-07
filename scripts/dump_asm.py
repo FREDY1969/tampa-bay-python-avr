@@ -4,8 +4,8 @@
 
 r'''Dumps the assembler source database in a simple ascii format.
 
-id: label(section) @address for length, clock_cycles ticks
-  id: opcode operand1 operand2 for length, clocks ticks
+id: label(section) @address for min_len-max_len, min_cycles-max_cycles ticks
+  id: opcode operand1 operand2 for min_len-max_len, min_clocks-max_clocks ticks
 '''
 
 from __future__ import with_statement
@@ -30,7 +30,9 @@ class db_cursor(object):
         self.db_conn.close()
 
 def dump(db_cur):
-    db_cur.execute("""select id, label, section, address, length, clock_cycles
+    db_cur.execute("""select id, label, section, address,
+                             min_length, max_length,
+                             min_clock_cycles, max_clock_cycles, next_label
                         from assembler_blocks
                        order by id
     """)
@@ -39,34 +41,41 @@ def dump(db_cur):
         dump_block(info, db_cur)
 
 def dump_block(info, db_cur):
-    print "%d: %s(%s) @%s for %s, %s ticks" % info
+    if info[8] is None:
+        print "%d: %s(%s) @%s for %s-%s, %s-%s ticks" % info[:-1]
+    else:
+        print "%d: %s(%s) @%s for %s-%s, %s-%s ticks, next %s" % info
     dump_insts(db_cur, info[0])
 
 def dump_insts(db_cur, id):
     db_cur.execute("""
-        select id, opcode, operand1, operand2, length, clocks
+        select id, opcode, operand1, operand2, min_length, max_length,
+               min_clocks, max_clocks
           from assembler_code
          where block_id = ?
          order by inst_order
         """,
         (id,))
-    for id, opcode, operand1, operand2, length, clocks in db_cur:
+    for id, opcode, operand1, operand2, \
+        min_length, max_length, min_clocks, max_clocks \
+     in db_cur:
         id_str = str(id)
         for_spaces = For_column - len(id_str) - len(opcode) - 3
         if operand1 is None:
             assert operand2 is None, "operand2 with no operand1"
-            print "  %s: %s%sfor %s, %s ticks" % \
-                    (id_str, opcode, ' ' * for_spaces, length, clocks)
+            print "  %s: %s%sfor %s-%s, %s-%s ticks" % \
+                    (id_str, opcode, ' ' * for_spaces,
+                     min_length, max_length, min_clocks, max_clocks)
         elif operand2 is None:
-            print "  %s: %s %s%sfor %s, %s ticks" % \
+            print "  %s: %s %s%sfor %s-%s, %s-%s ticks" % \
                     (id_str, opcode, operand1,
                      ' ' * (for_spaces - len(operand1) - 1), 
-                     length, clocks)
+                     min_length, max_length, min_clocks, max_clocks)
         else:
-            print "  %s: %s %s, %s%sfor %s, %s ticks" % \
+            print "  %s: %s %s, %s%sfor %s-%s, %s-%s ticks" % \
                     (id_str, opcode, operand1, operand2,
                      ' ' * (for_spaces - len(operand1) - len(operand2) - 3),
-                     length, clocks)
+                     min_length, max_length, min_clocks, max_clocks)
 
 if __name__ == "__main__":
     import sys
@@ -81,8 +90,10 @@ if __name__ == "__main__":
     if sys.argv[1].lower().endswith(('.ucl', '.asm')):
         package_dir, file = os.path.split(sys.argv[1])
         with db_cursor(package_dir) as db_cur:
-            db_cur.execute("""select id, label, section, address, length,
-                                     clock_cycles
+            db_cur.execute("""select id, label, section, address,
+                                     min_length, max_length,
+                                     min_clock_cycles, max_clock_cycles,
+                                     next_label
                                 from assembler_blocks
                                where label = ?
                            """,
