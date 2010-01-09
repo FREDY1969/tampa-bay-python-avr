@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>abogus</name>
+    <label>abogus</label>
+    <kind>bogus</kind>
+    <defining>False</defining>
+    <answers>
+        <answers name="the_series" repeated="False">
+            <answer name="q1" repeated="False" type="string" value="hi mom" />
+            <answer name="q2" repeated="False" type="int" value="47" />
+        </answers>
+    </answers>
+</word>

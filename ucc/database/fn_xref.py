@@ -25,6 +25,7 @@ def sets(fn_id, var_id):
     Fn_id and var_id are the symbol_ids of the function and global variable,
     respectively.
     '''
+                                      # FIX: Shouldn't this be 'replace'?
     crud.insert('fn_global_var_uses', 'ignore',
                 fn_id=fn_id, var_id=var_id, sets=True)
 
