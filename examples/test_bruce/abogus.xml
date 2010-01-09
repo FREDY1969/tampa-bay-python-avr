@@ -6,7 +6,8 @@
     <defining>False</defining>
     <answers>
         <answers name="the_series" repeated="False">
-            <answer name="q1" repeated="False" type="string" value="hi mom" />
+            <answer name="q1" repeated="True" type="string" value="hi mom" />
+            <answer name="q1" repeated="True" type="string" value="hi dad" />
             <answer name="q2" repeated="False" type="int" value="47" />
         </answers>
     </answers>

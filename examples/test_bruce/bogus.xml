@@ -16,8 +16,9 @@
             <question>
                 <name>q1</name>
                 <label>q1</label>
-                <min>1</min>
-                <max>1</max>
+                <min>0</min>
+                <max>infinite</max>
+                <orderable>False</orderable>
                 <type>string</type>
             </question>
             <question>
