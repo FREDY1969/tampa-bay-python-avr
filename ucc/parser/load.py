@@ -70,7 +70,7 @@ def run(
             '-c', avrdude_programmer,
             '-b', upload_rate,
             '-U', memory_type + ':w:' + os.path.join(load_path,
-                                                     memory_type + '.hex'),
+                                                     memory_type + '.hex')+":i",
         )
     )
 
