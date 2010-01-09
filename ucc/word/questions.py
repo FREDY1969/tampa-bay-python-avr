@@ -184,6 +184,7 @@ class q_series(question):
     '''
 
     tag = 'questions'
+    control = 'SeriesCtrl'
 
     def __init__(self, name, label, subquestions = None,
                        min = None, max = None, orderable = None):

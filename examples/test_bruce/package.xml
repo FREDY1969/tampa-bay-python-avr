@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package>
+    <name>blinky</name>
+    <words>
+        <word name="led-pin" />
+        <word name="output" />
+        <word name="run" />
+        <word name="bogus" />
+        <word name="abogus" />
+    </words>
+</package>
