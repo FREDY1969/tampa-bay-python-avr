@@ -5,7 +5,6 @@ from __future__ import with_statement
 import itertools
 
 from ucc.database import assembler, ast, crud
-from ucc.assembler import asm_opcodes
 from ucclib.built_in import declaration
 
 class assembler_word(declaration.word):
@@ -13,30 +12,32 @@ class assembler_word(declaration.word):
         instructions = []
         filename = self.ww.get_filename()
         with open(filename) as f:
+            block = assembler.block('flash', self.label,
+                                    self.ww.get_value('address'))
+            blocks = [block]
             for i, line in enumerate(f):
-                inst = parse_asm(filename, line, i + 1)
-                if inst: instructions.append(inst)
+                new_block = parse_asm(block, filename, line, i + 1)
+                if new_block:
+                    blocks.append(new_block)
+                    block.next_block(new_block.label)
+                    block = new_block
         with crud.db_transaction():
-            assembler.block('flash', self.label, self.ww.get_value('address')) \
-                     .write(instructions)
-        return self.labels_needed(instructions)
-
-    def labels_needed(self, instructions):
-        labels_defined = \
-          frozenset(
-            itertools.chain(
-              itertools.ifilter(None, itertools.imap(lambda x: x.label,
-                                                     instructions)),
-              (self.label,)))
+            for b in blocks: b.write()
+        labels_defined = frozenset(b.label for b in blocks)
         labels_used = \
-          frozenset(
+          self.labels_used(
+            tuple(itertools.chain.from_iterable(b.instructions
+                                                for b in blocks)))
+        return labels_used - labels_defined
+
+    def labels_used(self, instructions):
+        return frozenset(
             itertools.imap(extract_label,
               itertools.ifilter(is_legal_label,
                 itertools.chain(itertools.imap(lambda x: x.operand1,
                                                instructions),
                                 itertools.imap(lambda x: x.operand2,
                                                instructions)))))
-        return labels_used - labels_defined
 
 def extract_label(operand):
     r'''Extract the label out of the operand.
@@ -87,8 +88,12 @@ def is_legal_label(operand):
     if operand.startswith('io.'): return False
     return True
 
-def parse_asm(filename, line, lineno):
-    r'''Parses one line of assembler code.  Returns assembler.inst or None.
+def parse_asm(block, filename, line, lineno):
+    r'''Parses one line of assembler code and appends it block.
+    
+    If the line has a label, it creates a new block, appends the instruction,
+    and returns it.
+    Otherwise it returns None.
     '''
     stripped_line = line.rstrip()
     comment = stripped_line.find('#')
@@ -97,6 +102,7 @@ def parse_asm(filename, line, lineno):
     fields = stripped_line.split()
     label = opcode = None
     operands = ()
+    ans = None
     if stripped_line[0] == ' ':
         if fields:
             opcode = fields[0]
@@ -104,11 +110,12 @@ def parse_asm(filename, line, lineno):
     else:
         if fields:
             label = fields[0]
+            ans = block = assembler.block('flash', label)
             if len(fields) > 1:
                 opcode = fields[1]
                 operands = ''.join(fields[2:]).split(',')
     if len(operands) == 1 and not operands[0]: operands = ()
-    if label is None and opcode is None and not operands: return None
+    if opcode is None and not operands: return ans
     if len(operands) > 2:
         second_comma = line.find(',', line.find(',') + 1) + 1
         raise SyntaxError("no more than 2 operands are allowed",
@@ -119,23 +126,20 @@ def parse_asm(filename, line, lineno):
     if len(operands) > 1:
         operand2 = operands[1]
     length = clocks = 0
+    syntax_error_info = None
     if opcode is not None:
-        inst_obj = getattr(asm_opcodes, opcode.upper(), None)
-        if inst_obj is None:
-            if label is not None:
-                label_len = len(label)
-                no_label = line[label_len:]
-                opcode_column = \
-                  label_len + len(no_label) - len(no_label.lstrip()) + 1
-            else:
-                opcode_column = len(line) - len(line.lstrip()) + 1
-            raise SyntaxError("unknown opcode: %s" % opcode,
-                              (filename, lineno, opcode_column, line))
-        length = inst_obj.length(operand1, operand2)
-        if isinstance(inst_obj.cycles, int): clocks = inst_obj.cycles
-        else: clocks = max(inst_obj.cycles)
+        if label is not None:
+            label_len = len(label)
+            no_label = line[label_len:]
+            opcode_column = \
+              label_len + len(no_label) - len(no_label.lstrip()) + 1
+        else:
+            opcode_column = len(line) - len(line.lstrip()) + 1
+        syntax_error_info = (filename, lineno, opcode_column, line)
     column_start = len(stripped_line) - len(stripped_line.lstrip()) + 1
     column_end = len(stripped_line)
-    return assembler.inst(opcode, operand1, operand2, label, length, clocks,
-                          (lineno, column_start, lineno, column_end))
+    block.append_inst(opcode, operand1, operand2,
+                      (lineno, column_start, lineno, column_end),
+                      syntax_error_info=syntax_error_info)
+    return ans
 

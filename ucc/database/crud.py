@@ -145,25 +145,58 @@ def string_lookup(s):
     Strings[s] = s
     return s
 
-def doctor_test(item):
+def doctor_test(item, values):
     r'''Returns the SQL test for a given key item ((key, value) pair).
 
-        >>> doctor_test(('col', None))
+    Also appends SQL parameters to 'values'.
+
+        >>> values = []
+        >>> doctor_test(('col', None), values)
         'col is null'
-        >>> doctor_test(('col_', None))
+        >>> values
+        []
+        >>> doctor_test(('col_', None), values)
         'col is not null'
-        >>> doctor_test(('col', 44))
+        >>> values
+        []
+        >>> doctor_test(('col', 44), values)
         'col = ?'
-        >>> doctor_test(('col_', 44))
+        >>> values
+        [44]
+        >>> doctor_test(('col_', 45), values)
         'col <> ?'
+        >>> values
+        [44, 45]
+        >>> doctor_test(('col', (1, 2)), values)
+        'col in (?, ?)'
+        >>> values
+        [44, 45, 1, 2]
+        >>> doctor_test(('col_', (3, 4, 5)), values)
+        'col not in (?, ?, ?)'
+        >>> values
+        [44, 45, 1, 2, 3, 4, 5]
+        >>> doctor_test(('col', (10,)), values)
+        'col = ?'
+        >>> values
+        [44, 45, 1, 2, 3, 4, 5, 10]
     '''
     key, value = item
     if value is None:
         if key.endswith('_'): return key[:-1] + ' is not null'
-        else: return key + ' is null'
-    else:
-        if key.endswith('_'): return key[:-1] + ' <> ?'
-        else: return key + ' = ?'
+        return key + ' is null'
+    if hasattr(value, '__iter__'):
+        t = tuple(value)
+        assert t, "crud key tuples can't be empty"
+        if len(t) == 1:
+            value = t[0]
+        else:
+            values.extend(t)
+            if key.endswith('_'):
+                return '%s not in (%s)' % (key[:-1], ', '.join(('?',) * len(t)))
+            return '%s in (%s)' % (key, ', '.join(('?',) * len(t)))
+    values.append(value)
+    if key.endswith('_'): return key[:-1] + ' <> ?'
+    return key + ' = ?'
 
 def create_where(keys):
     r'''Returns where and order by clauses and parameters.
@@ -185,10 +218,10 @@ def create_where(keys):
     else:
         order_by_clause = ''
     if keys:
-        return " where " + ' and '.join(doctor_test(item)
-                                        for item in keys.items()) \
-                 + order_by_clause, \
-               filter(lambda x: x is not None, keys.values())
+        values = []
+        tests = tuple(doctor_test(item, values) for item in keys.items())
+        return " where " + ' and '.join(tests) + order_by_clause, \
+               values
     else:
         return order_by_clause, []
 
@@ -256,7 +289,7 @@ def read1_as_tuple(table, *cols, **keys):
     return return1(read_as_tuple(table, *cols, **keys), zero_ok)
 
 def read_as_dicts(table, *cols, **keys):
-    r'''Reads rows from table, returning a sequence of tuples.
+    r'''Reads rows from table, returning a sequence of dicts.
 
     cols are just the names of the columns to return.  If no cols are
     specified, all cols are returned.

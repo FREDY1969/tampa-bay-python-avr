@@ -21,6 +21,11 @@ create table symbol_table (
     source_filename varchar(4096),      -- full path to source file
     type_id int references type(id),
     int1 int,
+    address int,
+    flash_size int,
+    ram_size int,
+    far_size int,
+    clock_cycles int,
     side_effects bool default 0,        -- only for functions/tasks
     suspends bool default 0,            -- only for functions/tasks
     unique (label, context)
@@ -243,7 +248,7 @@ create table outs (
 -- These are broken out by blocks to facilitate the assembler playing games
 -- with the block orders to maximize the use of smaller jmp and call insts.
 ---------------------------------------------------------------------------
-create table assembler_words (
+create table assembler_blocks (
     id integer not null primary key,
     section varchar(255) not null,
         -- 'code'
@@ -251,8 +256,12 @@ create table assembler_words (
         -- 'bss'
         -- 'eeprom' (this probably gets broken out into several tables)
     label varchar(255) unique,
+    next_label varchar(255),
     address int,
-    length int
+    min_length int,
+    max_length int,
+    min_clock_cycles int,
+    max_clock_cycles int
 );
 
 create table assembler_code (
@@ -273,8 +282,11 @@ create table assembler_code (
            -- 'zeroes', operand1 has data length in string form.
     operand1 varchar(255),
     operand2 varchar(255),
-    length int not null,           -- in bytes
-    clocks int,                    -- for machine instructions (code section)
+    min_length int not null,       -- in bytes
+    max_length int not null,       -- in bytes
+    min_clocks int,                -- for machine instructions (code section)
+    max_clocks int,                -- for machine instructions (code section)
+    end bool,                      -- 1 if this inst doesn't fall through
     line_start int,
     column_start int,
     line_end int,
