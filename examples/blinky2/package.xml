@@ -3,7 +3,6 @@
     <name>blinky</name>
     <words>
         <word name="led-pin" />
-        <word name="output" />
         <word name="run" />
     </words>
 </package>
