@@ -9,11 +9,15 @@ import optparse
 from doctest_tools import setpath
 setpath.setpath(__file__, remove_first = True)
 
+import wx
 from ucc.parser import load
+import ucc.config
+
+config = ucc.config.load()
 
 class options_dict(dict):
     def __setattr__(self, key, value):
-        if value is not None:
+        if value is not None:   
             self[key] = value
 
 def run():
@@ -38,8 +42,30 @@ def run():
     optparser.set_defaults()
 
     options, args = optparser.parse_args(values=options_dict())
+
+    kw_args = dict((param, config.get('arduino', param))
+        for param in (
+            'install_dir',
+            'avrdude_port',
+            'mcu',
+            'avr_dude_path',
+            'avr_config_path',
+            'avrdude_programmer',
+            'upload_rate'
+        ) if Registry.config.has_option('arduino', param)
+    )
+    for k in kw_args.keys():
+        if options.has_key(k): continue
+        else: options[k] = kw_args[k]
+        
+    load_path = args[0]
+    for memory_type in 'flash', 'eeprom':
+        if os.path.exists(os.path.join(load_path, memory_type + '.hex')):
+            print "loading", memory_type + '.hex'
+            load.run(load_path=load_path, memory_type=memory_type,
+                     **kw_args)
+    
     load.run(*args, **options)
 
 if __name__ == '__main__':
     run()
-

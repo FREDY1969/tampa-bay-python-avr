@@ -6,9 +6,9 @@ r'''
 import sys
 import os.path
 import itertools
-import ConfigParser
 import wx
 
+import ucc.config
 from ucc.gui.Registry import Registry
 from ucc.gui.MainFrame import MainFrame
 from ucc.word import top_package, xml_access
@@ -30,22 +30,8 @@ class App(wx.App):
         
         # load configuration
         
-        if sys.platform.startswith('win') or \
-           sys.platform in ('os2', 'os2emx', 'riscos', 'atheos'):
-            configFile = 'ucc.ini'
-        else:
-            configFile = '.ucc.ini'
-        configPath = os.path.join(Registry.paths.GetUserConfigDir(), configFile)
-        print "configPath", configPath
-        if not os.path.exists(configPath):
-            # This may need to be changed eventually to support zipped
-            # installations of this compiler.
-            defaultFile = os.path.join(sys.path[0], 'ucc', 'ucc-default.ini')
-            from distutils import file_util
-            file_util.copy_file(defaultFile, configPath)
-        Registry.config = ConfigParser.RawConfigParser()
-        Registry.config.read(configPath)
-        #Registry.config.get('gui', 'editor')
+        Registry.config = ucc.config.load(Registry.paths)
+        print 'Configration loaded'
         
         # setup registry
         
