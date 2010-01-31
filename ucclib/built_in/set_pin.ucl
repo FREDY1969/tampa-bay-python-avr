@@ -1,0 +1,4 @@
+if value:
+    set register register bit-or mask
+else:
+    set register register bit-and bit-not mask

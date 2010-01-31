@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.5: http://docutils.sourceforge.net/" />
+<title>Domain Specific Languages as First Class Citizens</title>
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 5196 2007-06-03 20:25:28Z wiemann $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left {
+  clear: left }
+
+img.align-right {
+  clear: right }
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font-family: serif ;
+  font-size: 100% }
+
+pre.literal-block, pre.doctest-block {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="domain-specific-languages-as-first-class-citizens">
+<h1 class="title">Domain Specific Languages as First Class Citizens</h1>
+
+<div class="section" id="introduction-1-min">
+<h1>Introduction (1 min)</h1>
+<ul class="simple">
+<li>I represent the Tampa Bay Python meetup group.</li>
+<li>We are using Python for a group hands-on development exercise to tackle a
+large problem: that of writing a compiler for the Arduino microcontroller.</li>
+<li>This project demonstrates what a group of 4 newcomers to Python with
+full-time jobs and 1 Pythonista without a job can do.</li>
+<li>I want you to ask yourself, during this talk, whether this could be done in
+any other language!</li>
+</ul>
+</div>
+<div class="section" id="writing-your-library-as-a-domain-specific-language-dsl-2-mins">
+<h1>Writing your library as a Domain Specific Language (DSL) (2 mins)</h1>
+<ul class="simple">
+<li>DSLs provide language abstraction tools for unique computational models
+(<em>how</em> to do computation, vs abstractions for <em>what</em> a computation does)</li>
+<li>allows you to empower the user of your library by writing the library
+as a DSL</li>
+</ul>
+</div>
+<div class="section" id="dsls-as-first-class-citizens-it-s-all-about-declarations-4-mins">
+<h1>DSLs as First Class Citizens: It's all about Declarations! (4 mins)</h1>
+<ul class="simple">
+<li>manage the program's collection of declarations graphically in a GUI,
+rather than grammatically in source modules<ul>
+<li>so the focus changes from source module, to the individual declaration</li>
+<li>so each source file only has one function body</li>
+<li>now different declarations can use different grammars for their
+bodies!</li>
+</ul>
+</li>
+<li>adding new kinds of declarations (something like types)<ul>
+<li>you develop new kinds of declarations, possibly with new grammars</li>
+</ul>
+</li>
+<li>declare objects<ul>
+<li>your user uses your declaration to declare objects in his program,
+and writes code in your syntax (if you've defined one)</li>
+</ul>
+</li>
+<li>refer to these objects in normal functions<ul>
+<li>your user refers to these objects<ul>
+<li>here we're only thinking new syntax for new control statements</li>
+<li>otherwise, it's about allowing you to have funny ways to compile calls
+to these objects</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="questions-answers-vs-syntax-5-mins">
+<h1>Questions &amp; Answers vs. Syntax (5 mins)</h1>
+<ul class="simple">
+<li>Q&amp;A can accomplish much of what syntax is used for.<ul>
+<li>the user doesn't have to learn new syntax (reduces the &quot;surface area&quot;)<ul>
+<li>doesn't start out staring at a blank screen</li>
+</ul>
+</li>
+<li>still need text with syntax for executable code</li>
+</ul>
+</li>
+<li>at the declaration level<ul>
+<li>Q&amp;A for declaration details<ul>
+<li>with Q&amp;A, most declarations don't need any text and syntax at all</li>
+</ul>
+</li>
+<li>text and syntax for executable code</li>
+</ul>
+</li>
+<li>at the library level (import)<ul>
+<li>can customize our use of libraries</li>
+</ul>
+</li>
+<li>at the program level (build and install)<ul>
+<li>can customize programs to our specific hardware and site</li>
+<li>vs ini files or xml files, which are text and syntax (starting with the
+blank screen)</li>
+</ul>
+</li>
+<li>makes the easy stuff easy, for both you and your users</li>
+</ul>
+</div>
+<div class="section" id="roll-your-own-syntax-4-mins">
+<h1>Roll your own syntax (4 mins)</h1>
+<ul class="simple">
+<li>use standard tools (e.g., lex/yacc, xml parsers) to develop your parser<ul>
+<li>SQLAlchemy</li>
+<li>HTML Templates</li>
+<li>Grammars for parser generators</li>
+<li>regular expressions</li>
+</ul>
+</li>
+<li>sort of like Zope's &quot;Through The Web&quot; style of development</li>
+</ul>
+</div>
+<div class="section" id="integrating-your-dsl-with-the-compiler-2-mins">
+<h1>Integrating your DSL with the compiler (2 mins)</h1>
+<ul class="simple">
+<li>three levels of hooks<ul>
+<li>when your user instantiates your declaration<ul>
+<li>hooks for your own parser</li>
+</ul>
+</li>
+<li>when your user refers to this instance somewhere else<ul>
+<li>hooks for write macros</li>
+<li>hooks for generating your own intermediate code</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="performance-4-mins">
+<h1>Performance (4 mins)</h1>
+<ul class="simple">
+<li>better developer productivity<ul>
+<li>Q&amp;A guides user through the gory details</li>
+<li>DSL more productive for its specific task than general purpose programming
+language</li>
+</ul>
+</li>
+<li>better run-time performance<ul>
+<li>decision making code in your library moved to compile-time</li>
+<li>global optimizations<ul>
+<li>better register allocation on Arduino</li>
+<li>possible order of magnitude performance boost for Python</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="conclusion-3-mins">
+<h1>Conclusion (3 mins)</h1>
+<ul class="simple">
+<li>I hope that you have enjoyed the ideas presented here; but let me step back
+and leave you with one last idea.</li>
+<li>Does Python complete the modern challenge to &quot;capitalism&quot; going on within the
+software world?<ul>
+<li>consider the distinction between central planning and free enterprise
+vs the distinction between capitalism and ??? (open source?)</li>
+<li>capital needed for marketing<ul>
+<li>challenged by<ul>
+<li>internet</li>
+<li>open source</li>
+<li>search engines</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>capital needed for equipment<ul>
+<li>challenged by<ul>
+<li>computers now a consumer commodity</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>capital needed for labor<ul>
+<li>challenged by<ul>
+<li>Python<ul>
+<li>1 person can now do with Python what would have taken 5 to 10 people
+in any other language</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>All of these factors lead away from central planning and towards more free
+enterprise -- in a way, more chaos.<ul>
+<li>So is it capital, or is it free enterprise that has been the key to our
+success?</li>
+<li>Is capital the enabler, or an impediment (to those that lack it) of free
+enterprise?</li>
+</ul>
+</li>
+<li>Finally, don't just think of Python as a toy &quot;scripting&quot; language.
+Try _really_ leaning on it to do some seriously heavy lifting.<ul>
+<li>You will be pleasantly surprised!</li>
+<li>... and empowered!</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="notes-for-reviewers">
+<h1>Notes for Reviewers</h1>
+<p>These ideas are being implemented in an open source project.  The talk is
+presented from the perspective of the developer of a library that wants to
+build a domain specific language to put more power into his user's hands.
+It does not discuss the internal compiler details necessary to provide these
+capabilities to the library writer.  Thus, I have labeled this as an
+intermediate talk.</p>
+<p>The project development is about half-way through, so we haven't quite gotten
+to the point of seeing how well these ideas work in practice.</p>
+<p>I expect to have a running prototype by the conference date, and that we will
+be just starting to get a feel for how well these ideas work by then.  This
+will affect the presentation somewhat.</p>
+<p>Finally, I will be paying my own way to the conference and asking for
+financial aid.</p>
+</div>
+</div>
+</body>
+</html>

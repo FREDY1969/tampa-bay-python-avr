@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>startup</name>
+    <label>startup</label>
+    <kind>assembler_word</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="address" repeated="False" type="int" value="0" />
+    </answers>
+</word>
