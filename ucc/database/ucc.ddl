@@ -11,17 +11,22 @@ create table symbol_table (
     label varchar(255) not null collate nocase,
     kind varchar(255) not null,
         -- e.g.:
-           -- 'function'
-           -- 'task'
-           -- 'const'
-           -- 'var'
-           -- 'parameter' -- int1 is parameter number
-           -- 'label'
-           -- 'placeholder'
+           -- 'function'        -- address
+           -- 'task'            -- address
+           -- 'const'           -- reg_class, register or address
+           -- 'var'             -- reg_class, register or address
+           -- 'parameter'       -- int1 is parameter number, param_register, 
+                                -- reg_class, register or address
+           -- 'return'          -- reg_class, register
+           -- 'label'           -- address
+           -- 'placeholder'     -- temp kind, to be updated later to real kind.
     source_filename varchar(4096),      -- full path to source file
     type_id int references type(id),
     int1 int,
+    param_register varchar(255),
     address int,
+    reg_class int,
+    register varchar(255),
     flash_size int,
     ram_size int,
     far_size int,
@@ -36,11 +41,41 @@ create table type (
 
     id integer not null primary key,
     kind varchar(255) not null,
+        -- 'int' (min_value, max_value)
+        -- 'fixedpt' (min_value, max_value, binary_pt)
+        -- 'array' (min_value, max_value of array size, element_type)
+        -- 'pointer' (memory, element_type)
+        -- 'record' (see sub_element table)
+        -- 'function' (element_type is return type,
+        --             min_value, max_value of arguments,
+        --             sub_element table is arg types)
     min_value int,
     max_value int,
-    binary_pt int,
-    precision int,
+    binary_pt int,              -- Number of bits _before_ the binary point
+                                --   so that a number taken as an int *
+                                --   2**binary_pt is the desired value.
+                                -- For example, 1/4 would be 1 with a
+                                --   binary_pt of -2.
+    memory varchar(255),        -- only for pointers
+        -- 'flash'
+        -- 'eeprom'
+        -- 'ram'
     element_type int references type(id)
+);
+
+create index numeric_type_index on type
+    (kind, max_value, min_value, binary_pt);
+
+create index compound_type_index on type
+    (kind, element_type, max_value, min_value);
+
+create table sub_element (
+    parent_id int not null references type(id),
+    order int not null,
+    name varchar(255) not null,
+    element_type int not null references type(id),
+    primary key (parent_id, name),
+    unique (parent_id, order)
 );
 
 create table ast (
@@ -148,11 +183,13 @@ create table gensym_indexes (
 
 
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
 -- These are the tables for the intermediate code.
+---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 create table blocks (
     id integer not null primary key,
-    name varchar(255) not null unique,
+    name varchar(255) not null unique,               -- used as jump target
     word_symbol_id int not null references symbol_table(id),
 
     last_triple_id int references triples(id),
@@ -162,13 +199,12 @@ create table blocks (
 
 create table block_successors (
     predecessor int not null references blocks(id),
-    successor int not null references blocks(id)
+    successor int not null references blocks(id),
+    primary key (predecessor, successor)
 );
 
-create index block_successors_predecessor_index
-    on block_successors (predecessor);
-
-create index block_successors_successor_index on block_successors (successor);
+create index block_successors_index
+          on block_successors (successor, predecessor);
 
 create table triples (
     id integer not null primary key,
@@ -176,27 +212,33 @@ create table triples (
     operator varchar(255) not null,
        -- special values:
        --   'input'            -- string is port name
-       --   'input-bit'        -- string is port name, int_1 is bit#
-       --   'output'           -- string is port name, int_1 is triples id
-       --   'output-bit-set'   -- string is port name, int_1 is bit#
-       --   'output-bit-clear' -- string is port name, int_1 is bit#
-       --   'global_addr'      -- int_1 is symbol_table id
-       --   'global'           -- int_1 is symbol_table id
-       --   'local_addr'       -- int_1 is symbol_table id
-       --   'local'            -- int_1 is symbol_table id
-       --   'int'              -- int_1
-       --   'ratio'            -- int_1 is numerator, int_2 is denominator
-       --   'approx'           -- int_1 * 2**int_2
-       --   'param'            -- int_1 is which param, int_2 is triples id
-       --   'call_direct'      -- int_1 is symbol_table id
-       --   'call_indirect'    -- int_1 is triples id
-       --   'return'           -- int_1 is optional triples id
-       --   'if_false'         -- int_1 is triples id to cond, string is label
-       --   'if_true'          -- int_1 is triples id to cond, string is label
-       -- else operator applies to int_1 and int_2 as triples ids
+       --   'input-bit'        -- string is port name, int1 is bit#
+       --   'output'           -- string is port name, int1 is triples id
+       --   'output-bit-set'   -- string is port name, int1 is bit#
+       --   'output-bit-clear' -- string is port name, int1 is bit#
+       --   'global_addr'      -- int1 is symbol_table id
+       --   'global'           -- int1 is symbol_table id
+       --   'local_addr'       -- int1 is symbol_table id
+       --   'local'            -- int1 is symbol_table id
+       --   'int'              -- int1
+       --   'ratio'            -- int1 is numerator, int2 is denominator
+       --   'approx'           -- int1 * 2**int2
+       --   'param'            -- int1 is which param, int2 is triples id
+       --   'call_direct'      -- int1 is symbol_table id
+       --   'call_indirect'    -- int1 is triples id
+       --   'return'           -- int1 is optional triples id
+       --   'if_false'         -- int1 is triples id to cond, string is label
+       --   'if_true'          -- int1 is triples id to cond, string is label
+       -- else operator applies to int1 and int2 as triples ids
     int1 int,
     int2 int,
     string varchar(32768),
+    type_id int references type(id),
+    reg_class int,
+    register_est int,          -- Estimate of number of registers needed by
+                               -- this node and all of it's decendants.
+    reverse_children int,      -- If true, evaluate int2 operand first.
+    order int,                 -- order within block
     line_start int,
     column_start int,
     line_end int,
@@ -204,9 +246,14 @@ create table triples (
 );
 
 create table triple_labels (
+    -- The symbols (if any) that each triple's result must be stored in.
+
     triple_id int not null references triples(id),
     symbol_id int not null references symbol_table(id),
+
+    -- True if this is the last triple to set this symbol in this block.
     is_gen bool not null,
+
     primary key (triple_id, symbol_id)
 );
 
@@ -218,36 +265,39 @@ create table gens (
 
 create table triple_order_constraints (
     predecessor int not null references triples(id),
-    successor int not null references triples(id)
+    successor int not null references triples(id),
+    primary key (predecessor, successor)
 );
 
 create table kills (
     block_id int not null references blocks(id),
     symbol_id int not null references symbol_table(id),
-    unique (block_id, symbol_id)
+    primary key (block_id, symbol_id)
 );
 
 create table ins (
     block_id int not null references blocks(id),
     symbol_id int not null references symbol_table(id),
     triple_id int not null references triples(id),
-    unique (block_id, symbol_id, triple_id)
+    primary key (block_id, symbol_id, triple_id)
 );
 
 create table outs (
     block_id int not null references blocks(id),
     symbol_id int not null references symbol_table(id),
     triple_id int not null references triples(id),
-    unique (block_id, symbol_id, triple_id)
+    primary key (block_id, symbol_id, triple_id)
 );
 
 
----------------------------------------------------------------------------
--- The tables the hold the assembler sources.
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
+-- The tables that hold the assembler sources.
 --
 -- These are broken out by blocks to facilitate the assembler playing games
--- with the block orders to maximize the use of smaller jmp and call insts.
----------------------------------------------------------------------------
+-- with the block ordering to maximize the use of smaller jmp and call insts.
+-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 create table assembler_blocks (
     id integer not null primary key,
     section varchar(255) not null,

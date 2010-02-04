@@ -16,7 +16,7 @@ def gen_fun(fun_id, fun_label, fun_kind):
     prolog.append_inst('push', 'r29')
     prolog.append_inst('push', 'r28')
     for id, kind, param_num \
-     in crud.read_as_tuples('symbol_table', 'id', 'kind', 'int1'
+     in crud.read_as_tuples('symbol_table', 'id', 'kind', 'int1',
                             context=fun_id,
                             order_by=('kind', 'desc', 'int1')):
         sym = symbol_table.get_by_id(id)
@@ -30,7 +30,7 @@ def gen_fun(fun_id, fun_label, fun_kind):
     for id, name, next, next_conditional \
      in crud.read_as_tuples('blocks', 'id', 'name', 'next',
                             'next_conditional',
-                            word_symbol_id=fun_id
+                            word_symbol_id=fun_id,
                             order_by=('id',)):
         asm_block = assembler.block('flash', name)
         if next: asm_block.next_label(next)
