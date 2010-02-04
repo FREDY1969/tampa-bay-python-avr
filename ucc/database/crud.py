@@ -394,15 +394,16 @@ def insert(table, option = None, **cols):
         parameters: [7, 8]
         123
     '''
+    keys = sorted(cols.keys())
     command = string_lookup("insert %sinto %s (%s) values (%s)" %
                               ("or %s " % option if option else '',
                                table,
-                               ', '.join(cols.keys()),
-                               ', '.join('?' for c in cols.keys())))
+                               ', '.join(keys),
+                               ', '.join('?' for c in keys)))
     if Debug:
         print "crud:", command
-        print "  params:", cols.values()
-    Db_cur.execute(command, cols.values())
+        print "  params:", [cols[key] for key in keys]
+    Db_cur.execute(command, [cols[key] for key in keys])
     if Debug:
         print "  id:", Db_cur.lastrowid
     return Db_cur.lastrowid
