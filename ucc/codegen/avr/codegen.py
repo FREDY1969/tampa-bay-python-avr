@@ -12,7 +12,7 @@ def gen_assembler():
 def gen_fun(fun_id, fun_label, fun_kind):
     if fun_kind == 'function': far_size = 2
     else: far_size = 4
-    prolog = assembler.block('flash', fun_label)
+    prolog = assembler.block(fun_id, 'flash', fun_label)
     prolog.append_inst('push', 'r29')
     prolog.append_inst('push', 'r28')
     for id, kind, param_num \
@@ -32,8 +32,11 @@ def gen_fun(fun_id, fun_label, fun_kind):
                             'next_conditional',
                             word_symbol_id=fun_id,
                             order_by=('id',)):
-        asm_block = assembler.block('flash', name)
+        asm_block = assembler.block(fun_id, 'flash', name)
         if next: asm_block.next_label(next)
-        for \
+        for what, should, this, be \
          in crud.read_as_tuples('triples',
                                 block_id=id,
+                                # FIX: finish...
+                               ): pass
+

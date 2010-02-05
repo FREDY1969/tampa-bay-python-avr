@@ -52,4 +52,6 @@ class candidate(object):
         for b in self.edges:
             if b.degree > 0: b.degree -= 1
     def squeeze(self):
+        # FIX: ...
+        pass
 

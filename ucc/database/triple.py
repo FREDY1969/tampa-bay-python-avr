@@ -137,3 +137,9 @@ class triple(object):
                                 successor=self.id)
             self.soft_predecessors_written = True
 
+def delete(block_ids):
+    triple_ids = crud.read_column('triples', 'id', block_id=block_ids)
+    crud.delete('triple_order_constraints', predecessor=triple_ids)
+    crud.delete('triple_order_constraints', successor=triple_ids)
+    crud.delete('triple_labels', triple_id=triple_ids)
+    crud.delete('triples', id=triple_ids)

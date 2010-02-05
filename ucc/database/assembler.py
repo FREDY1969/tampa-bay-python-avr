@@ -32,7 +32,9 @@ def update_block_address(block_id, address):
     crud.update('assembler_blocks', {'id': block_id}, address=address)
 
 class block(object):
-    def __init__(self, section, label, address = None, length = None):
+    def __init__(self, word_symbol_id, section, label,
+                 address = None, length = None):
+        self.word_symbol_id = word_symbol_id
         self.section = section
         self.label = label
         self.address = address
@@ -65,11 +67,6 @@ class block(object):
         self.next_label = next_label
 
     def write(self):
-        old_id = crud.read1_column('assembler_blocks', 'id',
-                                   label=self.label, zero_ok=True)
-        if old_id is not None:
-            crud.delete('assembler_blocks', id=old_id)
-            crud.delete('assembler_code', block_id=old_id)
         self.id = crud.insert('assembler_blocks',
                               section=self.section,
                               label=self.label,
@@ -81,6 +78,7 @@ class block(object):
                               next_label=self.next_label
                                            if self.falls_through()
                                            else None,
+                              word_symbol_id=self.word_symbol_id,
                              )
         for i, instruction in enumerate(self.instructions):
             instruction.write(self.id, i)
@@ -124,3 +122,8 @@ class inst(object):
                            column_end=self.column_end,
                           )
 
+def delete(symbol):
+    asm_block_ids = crud.read_column('assembler_blocks', 'id',
+                                     word_symbol_id=symbol.id)
+    crud.delete('assembler_code', block_id=asm_block_ids)
+    crud.delete('assembler_blocks', id=asm_block_ids)

@@ -12,16 +12,18 @@ class assembler_word(declaration.word):
         instructions = []
         filename = self.ww.get_filename()
         with open(filename) as f:
-            block = assembler.block('flash', self.label,
+            block = assembler.block(self.ww.symbol.id, 'flash', self.label,
                                     self.ww.get_value('address'))
             blocks = [block]
             for i, line in enumerate(f):
-                new_block = parse_asm(block, filename, line, i + 1)
+                new_block = parse_asm(self.ww.symbol.id, block, filename, line,
+                                      i + 1)
                 if new_block:
                     blocks.append(new_block)
                     block.next_block(new_block.label)
                     block = new_block
         with crud.db_transaction():
+            assembler.delete(self.ww.symbol)
             for b in blocks: b.write()
         labels_defined = frozenset(b.label for b in blocks)
         labels_used = \
@@ -88,7 +90,7 @@ def is_legal_label(operand):
     if operand.startswith('io.'): return False
     return True
 
-def parse_asm(block, filename, line, lineno):
+def parse_asm(word_symbol_id, block, filename, line, lineno):
     r'''Parses one line of assembler code and appends it block.
     
     If the line has a label, it creates a new block, appends the instruction,
@@ -110,7 +112,7 @@ def parse_asm(block, filename, line, lineno):
     else:
         if fields:
             label = fields[0]
-            ans = block = assembler.block('flash', label)
+            ans = block = assembler.block(word_symbol_id, 'flash', label)
             if len(fields) > 1:
                 opcode = fields[1]
                 operands = ''.join(fields[2:]).split(',')

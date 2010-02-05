@@ -9,6 +9,7 @@ Prepare a couple of types first:
         >>> cur = crud.db_cur_test()
 
         >>> cur.lastrowid = 1
+        >>> crud.dummy_transaction()
         >>> int.lookup(400, -100)
         query: insert into type (kind, max_value, min_value) values (?, ?, ?)
         parameters: ['int', 400, -100]
@@ -41,7 +42,7 @@ class base_type(object):
                     type = field
                 else:
                     name, type = field
-                crud.insert('sub_element', parent_id=self.id, order=i,
+                crud.insert('sub_element', parent_id=self.id, element_order=i,
                                            name=name, element_type=type.id)
 
     def __repr__(self):
@@ -64,6 +65,7 @@ class int(base_type):
         >>> cur = crud.db_cur_test()
 
         >>> cur.lastrowid = 3
+        >>> crud.dummy_transaction()
         >>> int.lookup(400, 100)
         query: insert into type (kind, max_value, min_value) values (?, ?, ?)
         parameters: ['int', 400, 100]
@@ -103,6 +105,7 @@ class fixedpt(base_type):
         >>> cur = crud.db_cur_test()
 
         >>> cur.lastrowid = 6
+        >>> crud.dummy_transaction()
         >>> fixedpt.lookup(400, 100, -2)
         query: insert into type (binary_pt, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [-2, 'fixedpt', 400, 100]
@@ -154,6 +157,7 @@ class array(base_type):
         >>> fixedpt1_type = fixedpt.lookup(400, -100, -2)
 
         >>> cur.lastrowid = 10
+        >>> crud.dummy_transaction()
         >>> array.lookup(int1_type, 400, 100)
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [1, 'array', 400, 100]
@@ -206,6 +210,7 @@ class pointer(base_type):
         >>> fixedpt1_type = fixedpt.lookup(400, -100, -2)
 
         >>> cur.lastrowid = 14
+        >>> crud.dummy_transaction()
         >>> pointer.lookup(int1_type, 'ram')
         query: insert into type (element_type, kind, memory) values (?, ?, ?)
         parameters: [1, 'pointer', 'ram']
@@ -256,13 +261,14 @@ class record(base_type):
         >>> fixedpt1_type = fixedpt.lookup(400, -100, -2)
 
         >>> cur.lastrowid = 18
+        >>> crud.dummy_transaction()
         >>> record.lookup(('foo', int1_type), ('bar', int1_type))
         query: insert into type (kind) values (?)
         parameters: ['record']
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'foo', 0, 18]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'bar', 1, 18]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [0, 1, 'foo', 18]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [1, 1, 'bar', 18]
         <record 18>
 
         >>> record.lookup(('foo', int1_type), ('bar', int1_type))
@@ -272,28 +278,28 @@ class record(base_type):
         >>> record.lookup(('foo', int1_type), ('bar', fixedpt1_type))
         query: insert into type (kind) values (?)
         parameters: ['record']
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'foo', 0, 19]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [2, 'bar', 1, 19]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [0, 1, 'foo', 19]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [1, 2, 'bar', 19]
         <record 19>
 
         >>> cur.lastrowid = 20
         >>> record.lookup(('foo', int1_type), ('baz', int1_type))
         query: insert into type (kind) values (?)
         parameters: ['record']
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'foo', 0, 20]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'baz', 1, 20]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [0, 1, 'foo', 20]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [1, 1, 'baz', 20]
         <record 20>
 
         >>> cur.lastrowid = 21
         >>> record.lookup(('foo', int1_type))
         query: insert into type (kind) values (?)
         parameters: ['record']
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'foo', 0, 21]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [0, 1, 'foo', 21]
         <record 21>
 
         >>> record.lookup(('foo', int1_type), ('bar', int1_type))
@@ -320,26 +326,31 @@ class function(base_type):
         >>> fixedpt1_type = fixedpt.lookup(400, -100, -2)
 
         >>> cur.lastrowid = 22
-        >>> function.lookup(int1_type, (('foo', int1_type), ('bar', int1_type)), ())
+        >>> crud.dummy_transaction()
+        >>> function.lookup(int1_type, (('foo', int1_type), ('bar', int1_type)),
+        ...                            ())
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [1, 'function', 2, 2]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'foo', 0, 22]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'bar', 1, 22]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [0, 1, 'foo', 22]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [1, 1, 'bar', 22]
         <function 22>
 
-        >>> function.lookup(int1_type, (('foo', int1_type), ('bar', int1_type)), ())
+        >>> function.lookup(int1_type, (('foo', int1_type), ('bar', int1_type)),
+        ...                            ())
         <function 22>
 
         >>> cur.lastrowid = 23
-        >>> function.lookup(fixedpt1_type, (('foo', int1_type), ('bar', int1_type)), ())
+        >>> function.lookup(fixedpt1_type, (('foo', int1_type),
+        ...                                 ('bar', int1_type)),
+        ...                                ())
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [2, 'function', 2, 2]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'foo', 0, 23]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'bar', 1, 23]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [0, 1, 'foo', 23]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [1, 1, 'bar', 23]
         <function 23>
 
         >>> cur.lastrowid = 24
@@ -347,10 +358,10 @@ class function(base_type):
         ...                            (('bar', int1_type),))
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [1, 'function', 2, 1]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'foo', 0, 24]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'bar', 1, 24]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [0, 1, 'foo', 24]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [1, 1, 'bar', 24]
         <function 24>
 
         >>> cur.lastrowid = 25
@@ -358,10 +369,10 @@ class function(base_type):
         ...                                 ('bar', int1_type)))
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [1, 'function', 2, 0]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'foo', 0, 25]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'bar', 1, 25]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [0, 1, 'foo', 25]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [1, 1, 'bar', 25]
         <function 25>
 
         >>> cur.lastrowid = 26
@@ -369,10 +380,10 @@ class function(base_type):
         ...                                 ('bar', fixedpt1_type)))
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [1, 'function', 2, 0]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [1, 'foo', 0, 26]
-        query: insert into sub_element (element_type, name, order, parent_id) values (?, ?, ?, ?)
-        parameters: [2, 'bar', 1, 26]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [0, 1, 'foo', 26]
+        query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
+        parameters: [1, 2, 'bar', 26]
         <function 26>
 
         >>> function.lookup(int1_type, (('foo', int1_type), ('bar', int1_type)), ())
