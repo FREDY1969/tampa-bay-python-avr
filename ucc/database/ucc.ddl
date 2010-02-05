@@ -71,11 +71,11 @@ create index compound_type_index on type
 
 create table sub_element (
     parent_id int not null references type(id),
-    order int not null,
+    element_order int not null,
     name varchar(255) not null,
     element_type int not null references type(id),
     primary key (parent_id, name),
-    unique (parent_id, order)
+    unique (parent_id, element_order)
 );
 
 create table ast (
@@ -238,7 +238,7 @@ create table triples (
     register_est int,          -- Estimate of number of registers needed by
                                -- this node and all of it's decendants.
     reverse_children int,      -- If true, evaluate int2 operand first.
-    order int,                 -- order within block
+    order_in_block int,        -- order within block
     line_start int,
     column_start int,
     line_end int,
@@ -307,6 +307,7 @@ create table assembler_blocks (
         -- 'eeprom' (this probably gets broken out into several tables)
     label varchar(255) unique,
     next_label varchar(255),
+    word_symbol_id int not null references symbol_table(id),
     address int,
     min_length int,
     max_length int,

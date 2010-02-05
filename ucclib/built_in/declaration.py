@@ -140,15 +140,17 @@ class high_level_word(word):
         if not worked:
             raise AssertionError, "parse failed for " + filename
         words_needed = set()
-        self.ast_args = ast.prepare_args(self.ww.symbol, ast_args, words_needed)
         with crud.db_transaction():
-            ast.save_word(self.label, self.ww.symbol.id, self.ast_args)
+            self.ast_args = \
+              ast.prepare_args(self.ww.symbol, ast_args, words_needed)
+            ast.save_word(self.label, self.ww.symbol, self.ast_args)
         return frozenset(words_needed)
 
     def compile(self):
         assert not block.Current_block, \
                "%s.compile: previous block(%s) not written" % \
                  (self.label, block.Current_block.name)
+        block.delete(self.ww.symbol)
         block.block(self.label, self.ww.symbol.id)
         ast.compile_args(self.ast_args)
         if block.Current_block:

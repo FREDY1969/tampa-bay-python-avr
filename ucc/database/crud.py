@@ -16,6 +16,7 @@ Debug = False           # the doctests will fail when this is True
 Db_conn = None
 Db_filename = 'ucc.db'
 _Gensyms = {}
+In_transaction = False
 
 class db_transaction(object):
     r'''Context Manager for database transactions.
@@ -26,12 +27,16 @@ class db_transaction(object):
     On exit, does a commit if there are no exceptions, rollback otherwise.
     '''
     def __enter__(self):
+        global In_transaction
+        In_transaction = True
         return Db_cur
     def __exit__(self, exc_type, exc_val, exc_tb):
+        global In_transaction
         if exc_type is None and exc_val is None and exc_tb is None:
             Db_conn.commit()
         else:
             Db_conn.rollback()
+        In_transaction = False
         return False    # don't ignore exception (if any)
 
 class db_connection(object):
@@ -347,10 +352,12 @@ def update(table, where, **set):
     Doesn't return anything.
 
         >>> cur = db_cur_test()
+        >>> dummy_transaction()
         >>> update('a', {'b': 44}, c=7, d=8)
         query: update a set c = ?, d = ? where b = ?
         parameters: [7, 8, 44]
     '''
+    assert In_transaction, "crud.update done outside of transaction"
     where_clause, params = create_where(where)
     command = string_lookup("update %s set %s%s" %
                               (table,
@@ -367,10 +374,12 @@ def delete(table, **keys):
     Doesn't return anything.
 
         >>> cur = db_cur_test()
+        >>> dummy_transaction()
         >>> delete('a', c=7, d=8)
         query: delete from a where c = ? and d = ?
         parameters: [7, 8]
     '''
+    assert In_transaction, "crud.delete done outside of transaction"
     where_clause, params = create_where(keys)
     command = string_lookup("delete from %s%s" % (table, where_clause))
     if Debug:
@@ -384,6 +393,7 @@ def insert(table, option = None, **cols):
     Returns the id of the new row.
 
         >>> cur = db_cur_test()
+        >>> dummy_transaction()
         >>> cur.lastrowid = 123
         >>> insert('a', c=7, d=8)
         query: insert into a (c, d) values (?, ?)
@@ -394,6 +404,7 @@ def insert(table, option = None, **cols):
         parameters: [7, 8]
         123
     '''
+    assert In_transaction, "crud.insert done outside of transaction"
     keys = sorted(cols.keys())
     command = string_lookup("insert %sinto %s (%s) values (%s)" %
                               ("or %s " % option if option else '',
@@ -407,3 +418,8 @@ def insert(table, option = None, **cols):
     if Debug:
         print "  id:", Db_cur.lastrowid
     return Db_cur.lastrowid
+
+def dummy_transaction():
+    global In_transaction
+    In_transaction = True
+

@@ -149,17 +149,17 @@ class ast(object):
         self.args = \
           prepare_args(fn_symbol, self.args, words_needed)
 
-    def save(self, word_symbol_id,
+    def save(self, word_symbol,
              parent = None, parent_arg_num = None, arg_order = None):
         kws = dict(itertools.chain(
                      map(lambda attr: (attr, getattr(self, attr)),
                          self.attr_cols),
                      zip(self.arg_cols,
-                         (word_symbol_id, parent, parent_arg_num,
+                         (word_symbol.id, parent, parent_arg_num,
                           arg_order))))
-        self.word_symbol_id = word_symbol_id
+        self.word_symbol = word_symbol
         self.id = crud.insert('ast', **kws)
-        save_args(self.args, word_symbol_id, self.id)
+        save_args(self.args, word_symbol, self.id)
 
     def compile(self):
         if self.kind in ('approx', 'int', 'ratio'):
@@ -170,7 +170,7 @@ class ast(object):
         if self.kind == 'string':
             name = crud.gensym('strlit')
             sym = symbol_table.symbol.create(name, 'const')
-            asm_block = assembler.block('flash', name)
+            asm_block = assembler.block(self.word_symbol.id, 'flash', name)
             asm_block.append_inst('int16', str(len(self.str1)))
             asm_block.append_inst('bytes', repr(self.str1))
             asm_block.write()
@@ -203,7 +203,7 @@ class ast(object):
             return None
 
         if self.kind == 'label':
-            block.new_label(self.label, self.word_symbol_id)
+            block.new_label(self.label, self.word_symbol.id)
             return None
 
         if self.kind == 'jump':
@@ -261,15 +261,15 @@ def prepare_args(fn_symbol, args, words_needed):
                    else prepare_args(fn_symbol, arg, words_needed)
                  for arg in args)
 
-def save_args(args, word_symbol_id, parent = None):
+def save_args(args, word_symbol, parent = None):
     for arg_num, arg in enumerate(args):
         if arg is None:
             arg = ast(kind = 'None', expect = None)
         if isinstance(arg, ast):
-            arg.save(word_symbol_id, parent, arg_num, 0)
+            arg.save(word_symbol, parent, arg_num, 0)
         else:
             for position, x in enumerate(arg):
-                x.save(word_symbol_id, parent, arg_num, position)
+                x.save(word_symbol, parent, arg_num, position)
 
 def compile_args(args):
     r'''Compiles each of the args.
@@ -281,9 +281,9 @@ def compile_args(args):
                    else compile_args(arg)
                  for arg in args)
 
-def save_word(label, symbol_id, args):
-    r'''Writes the ast for word 'symbol_id' to the database.
+def save_word(label, word_symbol, args):
+    r'''Writes the ast for word_symbol to the database.
     '''
     delete_word_by_label(label)
-    save_args(args, symbol_id)
+    save_args(args, word_symbol)
 

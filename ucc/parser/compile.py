@@ -137,7 +137,8 @@ def parse_needed_words(top, package_parsers):
         sys.stderr.write("%s files had syntax errors\n" % num_errors)
         sys.exit(1)
 
-    fn_xref.expand()
+    with crud.db_transaction():
+        fn_xref.expand()
     return words_done
 
 def optimize():
@@ -205,39 +206,42 @@ def run(top, prime_start_time = True):
 
     if prime_start_time:
         elapsed()       # prime the Start_time...
+        compile_start_time = Start_time
     else:
-        print "top:", elapsed()
+        compile_start_time = Start_time
+        print "top: %.2f" % elapsed()
 
     with crud.db_connection(top.packages[-1].package_dir):
-        print "crud.db_connection:", elapsed()
+        print "crud.db_connection: %.2f" % elapsed()
 
         # Create symbols, word_objs and build the parsers for each package:
         #
         # {package_name: parser module}
         package_parsers = create_parsers(top)  # Also loads all of the word objs
-        print "create parsers:", elapsed()
+        print "create parsers: %.2f" % elapsed()
 
         # word files => ast
         words_done = parse_needed_words(top, package_parsers)
-        print "parse_needed_words:", elapsed()
+        print "parse_needed_words: %.2f" % elapsed()
 
         # ast => intermediate code
         for word_label in words_done:
             with crud.db_transaction():
                 symbol_table.get(word_label).word_obj.compile()
-        print "generate intermediate code:", elapsed()
+        print "generate intermediate code: %.2f" % elapsed()
 
         # intermediate code => optimized intermediate code
         optimize()
-        print "optimize:", elapsed()
+        print "optimize: %.2f" % elapsed()
 
         # intermediate code => assembler
         gen_assembler()
-        print "gen_assembler:", elapsed()
+        print "gen_assembler: %.2f" % elapsed()
 
         # assembler => .hex files
         assemble_program(top.packages[-1].package_dir)
-        print "assemble_program:", elapsed()
+        print "assemble_program: %.2f" % elapsed()
+    print "TOTAL: %.2f" % (Start_time - compile_start_time)
 
 Start_time = 0.0
 
