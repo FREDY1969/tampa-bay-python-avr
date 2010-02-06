@@ -6,7 +6,7 @@ r'''
 import sys
 import wx
 
-from ucc.gui.Registry import Registry
+from ucc.gui import Registry
 from ucc.gui.MainMenuBar import MainMenuBar
 from ucc.gui.LeftTreePanel import LeftTreePanel
 from ucc.gui.RightMainPanel import RightMainPanel
