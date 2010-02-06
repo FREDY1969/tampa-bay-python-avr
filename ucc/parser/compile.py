@@ -10,7 +10,7 @@ import time
 
 from ucc.word import helpers
 from ucc.parser import genparser, hex_file
-from ucc.database import crud, fn_xref, symbol_table
+from ucc.database import crud, fn_xref, symbol_table, types
 from ucc.assembler import assemble
 from ucclib.built_in import declaration
 
@@ -213,6 +213,9 @@ def run(top, prime_start_time = True):
 
     with crud.db_connection(top.packages[-1].package_dir):
         print "crud.db_connection: %.2f" % elapsed()
+
+        types.init()
+        print "types.init: %.2f" % elapsed()
 
         # Create symbols, word_objs and build the parsers for each package:
         #

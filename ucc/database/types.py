@@ -26,15 +26,31 @@ Prepare a couple of types first:
 import itertools
 from ucc.database import crud
 
+Types_by_id = {}
+
+def init():
+    for row in crud.read_as_dicts('type'):
+        getattr(globals(), row['kind']).from_db(row)
+
 class base_type(object):
-    def __init__(self, **columns):
+    def __init__(self, id, columns, sub_elements = None):
+        self.id = id
+        Types_by_id[id] = self
         for name, value in columns.iteritems():
             setattr(self, name, value)
+        if sub_elements is not None:
+            self.sub_elements = sub_elements
+
+    @classmethod
+    def add(cls, **columns):
         sub_elements = None
         if 'sub_elements' in columns:
             sub_elements = columns['sub_elements']
             del columns['sub_elements']
-        self.id = crud.insert('type', **columns)
+        insert_columns = columns.copy()
+        if 'element_type' in insert_columns:
+            insert_columns['element_type'] = insert_columns['element_type'].id
+        id = crud.insert('type', kind=cls.__name__, **insert_columns)
         if sub_elements:
             for i, field in enumerate(sub_elements):
                 if isinstance(field, base_type):
@@ -42,22 +58,61 @@ class base_type(object):
                     type = field
                 else:
                     name, type = field
-                crud.insert('sub_element', parent_id=self.id, element_order=i,
+                crud.insert('sub_element', parent_id=id, element_order=i,
                                            name=name, element_type=type.id)
+        return cls(id, columns, sub_elements)
+
+    @classmethod
+    def from_db(cls, row):
+        if 'element_type' in row and row['element_type'] is not None:
+            row['element_type'] = Types_by_id[row['element_type']]
+        key = cls.row_to_key(row)
+        cls.Instances[key] = \
+          cls(row['id'], dict((col, row['col']) for col in cls.Columns),
+              cls.read_sub_elements(row, key))
 
     def __repr__(self):
         return "<%s %d>" % (self.__class__.__name__, self.id)
 
     @classmethod
     def lookup(cls, *args):
-        key = cls.key(*args)
+        key = cls.args_to_key(*args)
         if key not in cls.Instances:
+            cls.verify_args(*args)
             cls.Instances[key] = cls.create(*args)
         return cls.Instances[key]
 
     @classmethod
-    def key(cls, *args):
+    def args_to_key(cls, *args):
         return args
+
+    @classmethod
+    def row_to_key(cls, row):
+        return tuple((Types_by_id[row[col]] if col == 'element_type'
+                                            else row[col])
+                     for col in cls.Columns)
+
+    @classmethod
+    def read_sub_elements(cls, row, key):
+        return None
+
+    @classmethod
+    def verify_args(cls, *args):
+        pass
+
+    @classmethod
+    def create(cls, *args):
+        columns = dict(zip(cls.Columns, args))
+        return cls.add(**columns)
+
+    @classmethod
+    def get_sub_elements(cls, row_id):
+        return tuple((name, Types_by_id[element_type])
+                     for name, element_type
+                      in crud.read_as_tuples('sub_element',
+                                             'name', 'element_type',
+                                             parent_id=row_id,
+                                             order_by=('element_order',)))
 
 class int(base_type):
     r'''The class for 'int' types.
@@ -94,10 +149,7 @@ class int(base_type):
         <int 5>
     '''
     Instances = {}      # (max, min): int_obj
-
-    @classmethod
-    def create(cls, max, min):
-        return cls(kind='int', max_value=max, min_value=min)
+    Columns = ('max_value', 'min_value')
 
 class fixedpt(base_type):
     r'''The class for 'fixept' types.
@@ -142,11 +194,7 @@ class fixedpt(base_type):
         <fixedpt 9>
     '''
     Instances = {}      # (max, min): fixedpt_obj
-
-    @classmethod
-    def create(cls, max, min, binary_pt):
-        return cls(kind='fixedpt', max_value=max, min_value=min,
-                   binary_pt=binary_pt)
+    Columns = ('max_value', 'min_value', 'binary_pt')
 
 class array(base_type):
     r'''The class for 'array' types.
@@ -194,12 +242,11 @@ class array(base_type):
         <array 13>
     '''
     Instances = {}      # (element_type, max, min): array_obj
+    Columns = ('element_type', 'max_value', 'min_value')
 
     @classmethod
-    def create(cls, element_type, max, min):
+    def verify_args(cls, element_type, max, min):
         assert min >= 0
-        return cls(kind='array', element_type=element_type.id,
-                   max_value=max, min_value=min)
 
 class pointer(base_type):
     r'''The class for 'pointer' types.
@@ -247,10 +294,7 @@ class pointer(base_type):
         <pointer 17>
     '''
     Instances = {}      # (element_type, memory): pointer_obj
-
-    @classmethod
-    def create(cls, element_type, memory):
-        return cls(kind='pointer', element_type=element_type.id, memory=memory)
+    Columns = ('element_type', 'memory')
 
 class record(base_type):
     r'''The class for 'record' types.
@@ -312,10 +356,19 @@ class record(base_type):
         <record 21>
     '''
     Instances = {}      # ((name, element_type), ...): record_type
+    Columns = ()
 
     @classmethod
     def create(cls, *fields):
-        return cls(kind='record', sub_elements=fields)
+        return cls.add(sub_elements=fields)
+
+    @classmethod
+    def row_to_key(cls, row):
+        return cls.get_sub_elements(row['id'])
+
+    @classmethod
+    def read_sub_elements(cls, row, key):
+        return key
 
 class function(base_type):
     r'''The class for 'function' types.
@@ -401,11 +454,25 @@ class function(base_type):
         <function 26>
     '''
     Instances = {}      # (ret_type, req_arg_types, opt_arg_types): function_obj
+    Columns = ('element_type',)
 
     @classmethod
     def create(cls, ret, req_arg_types, opt_arg_types):
-        return cls(kind='function', element_type=ret.id,
-                   min_value=len(req_arg_types),
-                   max_value=len(req_arg_types) + len(opt_arg_types),
-                   sub_elements=itertools.chain(req_arg_types, opt_arg_types))
+        return cls.add(element_type=ret,
+                       min_value=len(req_arg_types),
+                       max_value=len(req_arg_types) + len(opt_arg_types),
+                       sub_elements=itertools.chain(req_arg_types,
+                                                    opt_arg_types))
+
+    @classmethod
+    def row_to_key(cls, row):
+        args = cls.get_sub_elements(row['id'])
+        return (Types_by_id[row['element_type']],
+                args[:row['min_value']],
+                args[row['min_value']:])
+
+    @classmethod
+    def read_sub_elements(cls, row, key):
+        ret_type, req_args, opt_args = key
+        return req_args + opt_args
 
