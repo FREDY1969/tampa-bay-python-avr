@@ -7,7 +7,7 @@ import os
 import wx, wx.py
 import wx.lib.scrolledpanel as scrolled
 
-from ucc.gui.Registry import Registry
+from ucc.gui import Registry
 from ucc.gui import controls
 
 class RightMainPanel(wx.Panel):

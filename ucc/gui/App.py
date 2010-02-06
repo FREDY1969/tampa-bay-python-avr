@@ -9,7 +9,7 @@ import itertools
 import ConfigParser
 import wx
 
-from ucc.gui.Registry import Registry
+from ucc.gui import Registry
 from ucc.gui.MainFrame import MainFrame
 from ucc.word import top_package, xml_access
 

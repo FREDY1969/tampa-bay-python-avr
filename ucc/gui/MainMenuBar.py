@@ -4,7 +4,7 @@ r'''
 '''
 
 import wx
-from ucc.gui.Registry import Registry
+from ucc.gui import Registry
 
 class MainMenuBar(wx.MenuBar):
     def __init__(self, parent):

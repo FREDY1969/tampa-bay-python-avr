@@ -7,7 +7,7 @@ import os.path
 import wx
 
 from ucc.gui.WordTreeCtrl import WordTreeCtrl
-from ucc.gui.Registry import Registry
+from ucc.gui import Registry
 
 class LeftTreePanel(wx.Panel):
     def __init__(self, parent, id, style):
