@@ -1,10 +1,15 @@
 # assembler.py
 
+r'''Helper classes for the assembler source code in the database.
+'''
+
 import itertools
 from ucc.database import crud
 from ucc.assembler import asm_opcodes
 
 def gen_blocks(section):
+    r'''Generates (block_id, label, address) for each block in section.
+    '''
     for block_id, label, address \
      in itertools.chain(
           crud.read_as_tuples('assembler_blocks', 'id', 'label', 'address',
@@ -18,6 +23,8 @@ def gen_blocks(section):
         yield block_id, label, address
 
 def gen_insts(block_id):
+    r'''Generates (label, opcode, op1, op2) for each instruction in block.
+    '''
     for label, opcode, op1, op2 \
      in crud.read_as_tuples('assembler_code',
                             'label',
@@ -32,6 +39,13 @@ def update_block_address(block_id, address):
     crud.update('assembler_blocks', {'id': block_id}, address=address)
 
 class block(object):
+    r'''This represents a block of assembler instructions.
+
+    Assembler instructions are grouped into blocks to allow the assembler to
+    order the blocks in such a way as to maximize the use of relative jump
+    instructions.  Relative jumps are one word instructions, vs the absolute
+    jump which is two words.
+    '''
     def __init__(self, word_symbol_id, section, label,
                  address = None, length = None):
         self.word_symbol_id = word_symbol_id
@@ -67,6 +81,8 @@ class block(object):
         self.next_label = next_label
 
     def write(self):
+        r'''Also writes the instructions to the database.
+        '''
         self.id = crud.insert('assembler_blocks',
                               section=self.section,
                               label=self.label,
@@ -84,6 +100,8 @@ class block(object):
             instruction.write(self.id, i)
 
 class inst(object):
+    r'''Represents a single assembler instruction.
+    '''
     def __init__(self, opcode, operand1 = None, operand2 = None,
                        position_info = (None, None, None, None),
                        syntax_error_info = None):
@@ -123,6 +141,10 @@ class inst(object):
                           )
 
 def delete(symbol):
+    r'''Deletes the block labeled 'symbol'.
+
+    Also deletes the blocks instructions.
+    '''
     asm_block_ids = crud.read_column('assembler_blocks', 'id',
                                      word_symbol_id=symbol.id)
     crud.delete('assembler_code', block_id=asm_block_ids)

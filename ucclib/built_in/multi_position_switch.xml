@@ -28,7 +28,7 @@
             <label>pin mapping</label>
             <min>0</min>
             <max>infinite</max>
-            <orderable>True</orderable>
+            <orderable>False</orderable>
             <question>
                 <name>pin_number</name>
                 <label>pin-number</label>

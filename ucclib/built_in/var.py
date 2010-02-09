@@ -1,5 +1,8 @@
 # var.py
 
+r'''A global variable.
+'''
+
 from ucc.database import assembler, block
 from ucclib.built_in import declaration
 

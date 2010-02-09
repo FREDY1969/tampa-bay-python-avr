@@ -2,18 +2,18 @@
 
 r'''These are the various kinds of input validators.
 
-All validators are subclasses of the 'validator' class.
+All validators are subclasses of the `validator` class.
 '''
 
 import re
 from xml.etree import ElementTree
 
-Validator_tag = 'validator'
+Validator_tag = 'validator'     #: XML tag for a validator
 
 def g(): return globals()
 
 def from_xml(root_element):
-    r'''Returns a list of validator objects.
+    r'''Returns a list of `validator` objects.
     '''
     ans = []
     for e in root_element.findall(Validator_tag):

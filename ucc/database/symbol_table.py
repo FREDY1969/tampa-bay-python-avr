@@ -1,23 +1,37 @@
 # symbol_table.py
 
+r'''Helpers for accessing the symbol_table table.
+'''
+
 from ucc.database import crud
 
-Symbols = {}            # {(label, context): symbol}
-                        #   where context is None or a symbol
+Symbols = {}  #: {(label, context): `symbol`}, context is None or a `symbol`
 
-Symbols_by_id = {}      # {id: symbol}
+Symbols_by_id = {}  #: {id: `symbol`}
 
 unique = object()
 
 def get(label, context = None, default = unique):
+    r'''Get `symbol` by label.
+
+    Error if not found and no 'default' given.
+    '''
     if default is unique:
         return Symbols[label, context]
     return Symbols.get((label, context), default)
 
 def get_by_id(id):
+    r'''Get `symbol` by id.
+
+    Error if not found.
+    '''
     return Symbols_by_id[id]
 
 def lookup(label, context = None):
+    r'''Get `symbol` by label, create if not found.
+
+    The symbol is created as kind='placeholder' which must be changed later.
+    '''
     ans = get(label, context, None)
     if ans: return ans
     if context is not None:
@@ -25,11 +39,13 @@ def lookup(label, context = None):
     return symbol.create(label, 'placeholder')
 
 def write_symbols():
+    r'''Write all symbols to the database.
+    '''
     for sym in Symbols.itervalues():
         sym.write()
 
 def update():
-    r'''Update side_effects and suspends from database.
+    r'''Update side_effects and suspends *from* database.
     '''
     for id in crud.read_column('symbol_table', 'id', side_effects=1):
         Symbols_by_id[id].side_effects = True
@@ -37,7 +53,9 @@ def update():
         Symbols_by_id[id].suspends = True
 
 class symbol(object):
-    doing_init = True
+    r'''The class representing symbols in the compiler.
+    '''
+    doing_init = True   #: kludge for __setattr__
     side_effects = 0
     suspends = 0
     int1 = None
@@ -45,6 +63,8 @@ class symbol(object):
     word_obj = None
 
     def __init__(self, id, label, context = None, **attributes):
+        r'''Not called directly.  Use `create` or `lookup` instead.
+        '''
         self.id = id
         self.label = label
         self.context = context
@@ -63,7 +83,7 @@ class symbol(object):
     def create(cls, label, kind, context = None, **attributes):
         r'''Creates a new symbol_table entry.
 
-        Updates an existing entry (if found), or inserts a new row.
+        Updates an existing database row (if found), or inserts a new row.
 
         Returns the id of the row.
         '''
@@ -90,6 +110,8 @@ class symbol(object):
         return "<symbol %s:%s>" % (self.id, self.label)
 
     def __setattr__(self, attr, value):
+        r'''Gathers attributes that have changed for `write`.
+        '''
         if self.doing_init:
             super(symbol, self).__setattr__(attr, value)
         else:
@@ -100,6 +122,8 @@ class symbol(object):
                 self.updated_attrs.add(attr)
 
     def write(self):
+        r'''Update database to reflect changes on this object.
+        '''
         if self.updated_attrs:
             crud.update('symbol_table',
                         {'label': self.label,

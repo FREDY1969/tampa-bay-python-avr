@@ -1,5 +1,8 @@
 # pass_.py
 
+r'''A no-op.  Like 'pass' in Python...
+'''
+
 from ucclib.built_in import macro
 
 class pass_(macro.macro):

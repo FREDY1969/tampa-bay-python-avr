@@ -1,10 +1,13 @@
 # asm_inst.py
 
+r'''The code to convert assembler instructions into machine code.
+'''
+
 import itertools
 
 from ucc.assembler import io
 
-Bits = {
+Bits = {        #: Maps bit to bit number
     0x01: 0,
     0x02: 1,
     0x04: 2,
@@ -93,6 +96,26 @@ def convert_reg(arg, num_bits, note, labels, address):
                          (arg, num_bits, note))
 
 Convert = {
+    #: Maps operand type code to parsing function.
+    #:
+    #: The parsing functions take the following arguments:
+    #:
+    #:     arg
+    #:       The operand in textual form (as a string).
+    #:     num_bits
+    #:       The number of occurances of the operand type code in the
+    #:       instruction format.  This is the number of bits taken in the
+    #:       instruction to store the operand.
+    #:     note
+    #:       The note field of the instruction.
+    #:     labels
+    #:       A dictionary mapping all assembler labels to their addresses in
+    #:       memory.
+    #:     address
+    #:       The address of this instruction in memory.
+    #:
+    #: The function returns the bits to be inserted into the instruction as an
+    #: integer.
 
     'A':        # I/O register number (0-31) or (0-63)
         lambda arg, num_bits, note, labels, address: \
@@ -164,6 +187,10 @@ def lo8(n):
     return n & 0xff
 
 Order = {
+    #: Maps operand type to an order number for multiple operands.
+    #:
+    #: This is how we figure out the order of multiple operands on an assembler
+    #: source line.  This works for AVR anyway...
 
     'A': 20,      # I/O register number (0-31) or (0-63)
     'b': 80,      # bit number (0-7)
@@ -249,6 +276,8 @@ def operand_order(operands, notes):
                        key = lambda x: x[0])))
 
 class inst1(object):
+    r'''Single word instructions.
+    '''
     def __init__(self, name, opcode, cycles, **notes):
         self.name = name
         self.opcode = opcode.replace(' ', '')
@@ -307,6 +336,8 @@ class inst1(object):
 
 
 class inst2(inst1):
+    r'''Double word instructions.
+    '''
     def length(self, op1, op2): return 4, 4
 
     def assemble(self, op1, op2, labels, address):
@@ -319,6 +350,10 @@ class inst2(inst1):
 
 
 class bytes(inst1):
+    r'''Data declaration.
+
+    Used for global variables.
+    '''
     cycles = 0
 
     def __init__(self): pass

@@ -1,6 +1,6 @@
 # top_package.py
 
-r'''This is the central point of knowledge for a top-level package.
+r'''This is the central point of knowledge for a top-level `package`.
 
 It includes complete word dictionaries that include the words in all of the
 packages used by the top package.
@@ -10,7 +10,7 @@ from ucc.word import package
 
 class top(object):
     def __init__(self, package_dir = None):
-        r'''Omit package_dir to treat built_in as top-level package.
+        r'''Omit package_dir to treat built_in as the top-level package.
         '''
         global Top
         self.word_dict = {}
@@ -39,9 +39,11 @@ class top(object):
                 self.translation_dict[w.label] = w.name
 
     def connect_the_dots(self):
-        # Link w.kind_obj to the word object (where w.kind is just the name).
-        # Add w.subclasses and w.instances lists and sort these by label.
-        # Gather the root words into self.roots and sort this by label.
+        r'''
+        - Link w.kind_obj to the word object (where w.kind is just the name).
+        - Add w.subclasses and w.instances lists and sort these by label.
+        - Gather the root words into self.roots and sort this by label.
+        '''
         for w in self.word_dict.itervalues():
             w.subclasses = []
             w.instances = []
@@ -69,12 +71,12 @@ class top(object):
                 w.filename_suffix = suffix
 
     def get_word_by_name(self, name):
-        r'''Lookup word by name from all packages.
+        r'''Lookup `word` by name from all packages.
         '''
         return self.word_dict[name]
 
     def get_word_by_label(self, label):
-        r'''Lookup word by label from all packages.
+        r'''Lookup `word` by label from all packages.
         '''
         return self.get_word_by_name(self.translation_dict.get(label, label))
 

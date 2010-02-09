@@ -1,8 +1,17 @@
 # triple.py
 
+r'''Helper class for the triples table.
+'''
+
 from ucc.database import crud, symbol_table
 
 class triple(object):
+    r'''Represents one triple.
+
+    These objects are created in memory first, then written as a block to the
+    database.  This allows them to be manipulated by `compile` process without
+    needed to update the database.
+    '''
     id = None
     soft_predecessors_written = False
     writing = False
@@ -10,6 +19,8 @@ class triple(object):
     def __init__(self, operator, int1=None, int2=None, string=None,
                        syntax_position_info=None):
         r'''Creates the object, but does not write it to the database (yet).
+
+        Use `block.block.gen_triple` instead.
 
         int1 and int2 may be integers, other triples, or symbol_table.symbols
         '''
@@ -34,11 +45,11 @@ class triple(object):
         r'''Adds a label to this triple.
 
         This means that the results of this triple will be stored in the
-        symbol_id variable (which could be either a local or global variable).
+        'symbol_id' variable (which could be either a local or global variable).
 
-        This may be called multiple times with the same symbol_id.  It
+        This may be called multiple times with the same 'symbol_id'.  It
         silently ignores all but the first call, but sets is_gen if any of the
-        calls has it set.
+        calls to this method for that 'symbol_id' has 'is_gen' set.
         '''
         if is_gen or symbol_id not in self.labels:
             self.labels[symbol_id] = is_gen
@@ -52,28 +63,29 @@ class triple(object):
 
         'pred' must be a triple.
 
-        See also, add_hard_predecessor.
+        See also, `add_hard_predecessor`.
         '''
         self.soft_predecessors.append(pred)
 
     def add_hard_predecessor(self, pred):
         r'''Adds a hard link between 'pred' and self.
 
-        This guarantees that self is needed, then 'pred' is also needed.
+        The hard link guarantees that if self is needed, then 'pred' is also
+        needed.
 
         'pred' must be a triple.
 
-        See also, add_soft_predecessor.
+        See also, `add_soft_predecessor`.
         '''
         self.hard_predecessors.append(pred)
 
     def write(self, block_id):
         r'''Writes triple to database.
 
-        Returns triple id.
+        Returns database assigned triple id.
 
-        Be sure to also call write_soft_predecessors after all of the hard
-        writes have been done for the block!
+        Be sure to also call `write_soft_predecessors` after all of the hard
+        writes have been done for the `block`!
         '''
         if self.id is None:
             assert not self.writing
@@ -119,7 +131,7 @@ class triple(object):
         This also calls write_soft_predecessors on all triples that this
         triple has a hard dependency on.
 
-        Call this only after all of the required triples for the block have
+        Call this only after all of the required triples for the `block` have
         been written.  Calling this will not cause any more triples to be
         written, and will just ignore dependencies to unwritten triples.
         '''
@@ -138,6 +150,10 @@ class triple(object):
             self.soft_predecessors_written = True
 
 def delete(block_ids):
+    r'''Delete all of the triples for all of the block_ids.
+
+    This also deletes the data associated with the triples.
+    '''
     triple_ids = crud.read_column('triples', 'id', block_id=block_ids)
     crud.delete('triple_order_constraints', predecessor=triple_ids)
     crud.delete('triple_order_constraints', successor=triple_ids)

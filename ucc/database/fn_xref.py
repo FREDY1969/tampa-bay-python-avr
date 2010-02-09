@@ -1,5 +1,8 @@
 # fn_xref.py
 
+r'''The helper functions for function cross reference info in the database.
+'''
+
 import itertools
 from ucc.database import crud, symbol_table
 
