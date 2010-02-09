@@ -1,9 +1,16 @@
 # crud.py
 
-r'''This module offers simple database access routines.
+r'''This module offers simple generic database access routines.
 
-The routines are table agnostic, but are not capable of doing joins or complex
+The routines are table agnostic, and are not capable of doing joins or complex
 queries.  You're on your own for that.
+
+This also provides routines to connect to the database and provide transaction
+support to automatically commit database transactions, or do a rollback if an
+exception is generated.
+
+Most of the crud routines use keyword arguments to specify the SQL 'where'
+clause.  See the `doctor_test` examples for how this works.
 '''
 
 from __future__ import with_statement
@@ -13,23 +20,30 @@ import itertools
 import sqlite3 as db
 
 Debug = False           # the doctests will fail when this is True
-Db_conn = None
+Db_conn = None          #: The sqlite3 database connection object.
 Db_filename = 'ucc.db'
 _Gensyms = {}
 In_transaction = False
 
 class db_transaction(object):
-    r'''Context Manager for database transactions.
+    r'''Python *Context Manager* for database transactions.
 
-    This returns the Db_cur which is assigned to the 'as' variable in the
-    'with' statement.
+    Use this in a Python 'with' statement to bracket the code that makes up a
+    database transaction.
 
-    On exit, does a commit if there are no exceptions, rollback otherwise.
+    This returns the database cursor which can be assigned to the 'as' variable
+    in the 'with' statement.  But this cursor is also assigned to the internal
+    'Db_cur' variable which is automatically used by all of the crud routines
+    here, so you can ignore this.
+
+    On exit, does a 'commit' if there are no exceptions, 'rollback' otherwise.
     '''
+
     def __enter__(self):
         global In_transaction
         In_transaction = True
         return Db_cur
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         global In_transaction
         if exc_type is None and exc_val is None and exc_tb is None:
@@ -40,18 +54,21 @@ class db_transaction(object):
         return False    # don't ignore exception (if any)
 
 class db_connection(object):
-    r'''Context Manager for database connections.
+    r'''Python *Context Manager* for database connections.
 
     This calls init and returns the Db_conn (which is assigned to the 'as'
     variable in the 'with' statement).
 
     On exit, does a commit if there are no exceptions, rollback otherwise;
-    then calls fini().
+    then calls `fini`.
     '''
+
     def __init__(self, directory):
         init(directory)
+
     def __enter__(self):
         return Db_conn
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None and exc_val is None and exc_tb is None:
             if Debug: print "crud: commit"
@@ -63,6 +80,17 @@ class db_connection(object):
         return False    # don't ignore exception (if any)
 
 def init(directory):
+    r'''Initialize the module.
+
+    Opens a database connection to the 'ucc.db' file in 'directory' and sets
+    'Db_conn' to this connection.
+
+    If the 'ucc.db' file does not exist, it creates it and sets up the schema
+    by feeding 'ucc.dll' to it.
+
+    Also initializes the `gensym` function from the information stored in the
+    database from the last run.
+    '''
     global Db_conn, Db_cur, Enums, _Gensyms
     if Db_conn is None:
         db_path = os.path.join(directory, Db_filename)
@@ -86,6 +114,8 @@ def init(directory):
         _Gensyms = dict(Db_cur)
 
 def fini():
+    r'''Saves the `gensym` info in the database and closes the connection.
+    '''
     global Db_conn
     save_gensym_indexes()
     Db_cur.close()
@@ -93,6 +123,8 @@ def fini():
     Db_conn = None
 
 def save_gensym_indexes():
+    r'''Save the `gensym` info in the database.
+    '''
     with db_transaction() as db_cur:
         db_cur.execute("delete from gensym_indexes")
         db_cur.executemany(
@@ -116,18 +148,33 @@ def gensym(root_name):
 
 class db_cur_test(object):
     r'''Proxy database cursor for doctests...
+
+    Use `set_answers` to set what `fetchall` should return.
+
+    Use the 'cols' parameter to `__init__` to specify the columns in the table
+    for use with the `read_as_dicts` function called without any 'cols'.
     '''
+
     def __init__(self, *cols):
+        r'''
+        'cols' are the columns in the table.  This is only needed for
+        `read_as_dicts` without any 'cols'.
+        '''
         global Db_cur
         if cols:
             self.description = tuple((c,) + (None,) * 6 for c in cols)
         Db_cur = self
+
     def execute(self, query, parameters = None):
         print "query:", query
         if parameters is not None:
             print "parameters:", parameters
+
     def set_answers(self, *answers):
+        r'''Sets the answers that the next `fetchall` will return.
+        '''
         self.answers = answers
+
     def fetchall(self):
         return list(self.answers)
 
@@ -135,6 +182,10 @@ Strings = {}
 
 def string_lookup(s):
     r'''Returns the same string instance when given an equal string.
+
+    This is used for sql command string to trigger prepare logic in the
+    database adaptor that only checks the string's address rather than its
+    contents.  Note sure if this is really needed for sqlite3???
 
         >>> a = 'a' * 1000
         >>> b = 'a' * 1000
@@ -151,7 +202,12 @@ def string_lookup(s):
     return s
 
 def doctor_test(item, values):
-    r'''Returns the SQL test for a given key item ((key, value) pair).
+    r'''Returns the SQL test for a given key 'item'.
+
+    This is called from other crud functions and is not intented to be
+    called directly.
+    
+    The 'item' is a (key, value) pair.
 
     Also appends SQL parameters to 'values'.
 
@@ -204,7 +260,16 @@ def doctor_test(item, values):
     return key + ' = ?'
 
 def create_where(keys):
-    r'''Returns where and order by clauses and parameters.
+    r'''Returns sql 'where' and 'order by' clauses and parameters.
+
+        This is called from other crud functions and is not intented to be
+        called directly.
+
+        'keys' is a dictionary of {key: value} mappings.  See `doctor_test` for
+        a description of how the keys are interpreted.
+
+        The key 'order_by' is treated specially to trigger the inclusion of a
+        SQL 'order by' clause.
 
         >>> create_where({'a': 44})
         (' where a = ?', [44])
@@ -233,6 +298,9 @@ def create_where(keys):
 def run_query(table, cols, keys):
     r'''Creates and executes a query.
 
+        This is called from other crud functions and is not intented to be
+        called directly.
+
         >>> _ = db_cur_test()
         >>> run_query('a', ('b', 'c'), {'d': 44})
         query: select b, c from a where d = ?
@@ -254,9 +322,9 @@ def run_query(table, cols, keys):
 def read_as_tuples(table, *cols, **keys):
     r'''Reads rows from table, returning a sequence of tuples.
 
-    cols are just the names of the columns to return.
+    'cols' are just the names of the columns to return.
 
-    keys are column=value or column=None or column_=value for !=.
+    'keys' are used to build the SQL 'where' clause (see `doctor_test`).
 
     A key of 'order_by' contains a list of columns to sort by.
 
@@ -277,6 +345,16 @@ def read_as_tuples(table, *cols, **keys):
     return Db_cur.fetchall()
 
 def return1(rows, zero_ok = False):
+    r'''Returns the first row in 'rows'.
+
+    This is called from other crud functions and is not intented to be
+    called directly.
+
+    Generates an exception if len(rows) > 1.
+
+    Also generates an exception if len(rows) == 0 and not 'zero_ok'.  If
+    'zero_ok' is True, None is returned.
+    '''
     if zero_ok:
         assert len(rows) <= 1, \
                "query returned %d rows, expected 0 or 1 row" % len(rows)
@@ -287,6 +365,16 @@ def return1(rows, zero_ok = False):
     return None
 
 def read1_as_tuple(table, *cols, **keys):
+    r'''Reads 1 row as a tuple.
+
+    'cols' are just the names of the columns to return.
+
+    'keys' are used to build the SQL 'where' clause (see the `doctor_test`
+    examples).
+
+    A key of 'zero_ok' set to True will return None if no rows are found
+    rather than raising an exception.
+    '''
     zero_ok = False
     if 'zero_ok' in keys:
         zero_ok = keys['zero_ok']
@@ -296,10 +384,12 @@ def read1_as_tuple(table, *cols, **keys):
 def read_as_dicts(table, *cols, **keys):
     r'''Reads rows from table, returning a sequence of dicts.
 
-    cols are just the names of the columns to return.  If no cols are
-    specified, all cols are returned.
+    'cols' are just the names of the columns to return.  If no 'cols' are
+    specified, all columns are returned.
 
-    keys are column=value or column=None or column_=value for !=.
+    'keys' are used to build the SQL 'where' clause (see `doctor_test`).
+
+    A key of 'order_by' contains a list of columns to sort by.
 
         >>> cur = db_cur_test('b')
         >>> cur.set_answers((1,), (3,))
@@ -313,6 +403,14 @@ def read_as_dicts(table, *cols, **keys):
     return [dict(zip(col_names, row)) for row in Db_cur.fetchall()]
 
 def read1_as_dict(table, *cols, **keys):
+    r'''Reads 1 row as a dict.
+
+    Calls `read_as_dicts` and returns the first answer.  Raises an exception
+    if not exactly one answer was found.
+
+    A key of 'zero_ok' set to True will return None if no rows are found
+    rather than raising an exception.
+    '''
     zero_ok = False
     if 'zero_ok' in keys:
         zero_ok = keys['zero_ok']
@@ -324,7 +422,9 @@ def read_column(table, column, **keys):
     
     Returns a sequence of values (1 per result row).
 
-    keys are column=value or column=None or column_=value for !=.
+    'keys' are used to build the SQL 'where' clause (see `doctor_test`).
+
+    A key of 'order_by' contains a list of columns to sort by.
 
         >>> cur = db_cur_test()
         >>> cur.set_answers((1,), (2,), (3,))
@@ -337,6 +437,14 @@ def read_column(table, column, **keys):
     return [row[0] for row in Db_cur.fetchall()]
 
 def read1_column(table, column, **keys):
+    r'''Reads one column from one row.
+
+    Calls `read_column` and returns the first answer.  Raises an exception
+    if not exactly one answer was found.
+
+    A key of 'zero_ok' set to True will return None if no rows are found
+    rather than raising an exception.
+    '''
     zero_ok = False
     if 'zero_ok' in keys:
         zero_ok = keys['zero_ok']
@@ -344,10 +452,17 @@ def read1_column(table, column, **keys):
     return return1(read_column(table, column, **keys), zero_ok)
 
 def count(table, **keys):
+    r'''Returns a count of the number of rows in a table.
+
+    'keys' are used to build the SQL 'where' clause (see `doctor_test`).
+    '''
     return read1_column(table, 'count(*)', **keys)
 
 def update(table, where, **set):
-    r'''Updates row in table.
+    r'''Updates rows in a table.
+
+    'where' is a dictionary of {key: value} pairs (see the `doctor_test`
+    examples).
 
     Doesn't return anything.
 
@@ -369,7 +484,9 @@ def update(table, where, **set):
     Db_cur.execute(command, set.values() + params)
 
 def delete(table, **keys):
-    r'''Deletes rows in table.
+    r'''Deletes rows in a table.
+
+    'keys' are used to build the SQL 'where' clause (see `doctor_test`).
 
     Doesn't return anything.
 
@@ -391,6 +508,23 @@ def insert(table, option = None, **cols):
     r'''Inserts a row in table.
 
     Returns the id of the new row.
+
+    'cols' are the columns to insert (name=value as keyword parameters).
+
+    'option' is any string that can be used in an 'or' clause with the SQL
+    insert statement::
+
+        insert or <option> into ...
+
+    Specifically, 'option' may be one of:
+
+        - 'rollback'
+        - 'abort'
+        - 'replace'
+        - 'fail'
+        - 'ignore'
+
+    Examples:
 
         >>> cur = db_cur_test()
         >>> dummy_transaction()
@@ -420,6 +554,8 @@ def insert(table, option = None, **cols):
     return Db_cur.lastrowid
 
 def dummy_transaction():
+    r'''Used in doctests to fake a transaction.
+    '''
     global In_transaction
     In_transaction = True
 

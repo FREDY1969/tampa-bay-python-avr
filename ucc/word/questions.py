@@ -2,7 +2,7 @@
 
 r'''The various kinds of questions.
 
-These are all subclasses of the 'question' class.
+These are all subclasses of the `question` class.
 '''
 
 from xml.etree import ElementTree
@@ -10,9 +10,9 @@ from xml.etree import ElementTree
 from ucc.word import validators, answers
 
 def from_xml(questions_element, allow_unknown_tags = False):
-    r'''Returns a list of question objects.
+    r'''Returns a list of `question` objects.
 
-    This will accept None for the questions_element.
+    This will accept None for the ``questions_element``.
     '''
     if questions_element is None: return []
     ans = []
@@ -31,7 +31,7 @@ def from_xml(questions_element, allow_unknown_tags = False):
 def add_xml_subelement(root_element, questions):
     r'''Adds the <questions> tag to root_element if there are any questions.
 
-    Expects a list of questions, as returned from from_xml.
+    Expects a list of questions, as returned from `from_xml`.
     '''
     if questions:
         questions_element = ElementTree.SubElement(root_element, 'questions')
@@ -42,7 +42,7 @@ class question(object):
     r'''The base class of all questions.
     '''
 
-    tag = 'question'
+    tag = 'question'    #: XML tag for this type of question.
 
     def __init__(self, name, label, min = None, max = None, orderable = None):
         self.name = name
@@ -127,8 +127,8 @@ class question(object):
 class q_atomic(question):
     r'''The base class of all atomic questions.
 
-    I.e., questions that have just a single answer.  Though these may be
-    optional or repeatable.
+    I.e., questions that have just a single answer (though this answer may be
+    optional or repeatable).
     '''
 
     def __init__(self, name, label, validation = None,
@@ -210,9 +210,9 @@ class q_series(question):
 class q_choice(question):
     r'''A question where the user selects one of a set of choices.
 
-    This class covers the single selection choice.  Compare to multichoice.
+    This class covers the single selection choice.  Compare to `q_multichoice`.
     '''
-    
+
     answer_cls = answers.ans_string
     default_value = ""
     control = 'ChoiceCtrl'
@@ -221,8 +221,9 @@ class q_choice(question):
                        min = None, max = None, orderable = None):
         super(q_choice, self).__init__(name, label, min, max, orderable)
 
-        # self.options is list of (name, value, list_of_questions)
-        self.options = [] if options is None else list(options)
+        self.options = [] if options is None else list(options) \
+          #: list of (name, value, list_of_questions)
+
         self.default = default
 
     @classmethod
@@ -258,7 +259,7 @@ class q_choice(question):
 class q_multichoice(q_choice):
     r'''A question where the user selects from a set of choices.
 
-    This class covers the multiple selection choice.  Compare to choice.
+    This class covers the multiple selection choice.  Compare to `q_choice`.
     '''
     def make_default_answer(self):
         return answers.ans_multichoice(self.name, {})

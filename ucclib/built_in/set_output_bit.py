@@ -1,5 +1,10 @@
 # set_output_bit.py
 
+r'''Generates an 'output-bit-set' intermediate code.
+
+Takes a single argument which must be an ioreg-bit.
+'''
+
 from ucc.database import block
 from ucclib.built_in import singleton
 

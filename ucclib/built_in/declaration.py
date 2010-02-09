@@ -1,5 +1,8 @@
 # declaration.py
 
+r'''The granddaddy (root) of all words!
+'''
+
 import os.path
 from ucc.database import ast, block, crud, symbol_table
 from ucc.parser import parse
@@ -8,12 +11,12 @@ from ucc.word import helpers, word as word_module
 Empty_set = frozenset()
 
 class declaration(object):
-    r'''All defining words are subclasses of declaration.
+    r'''All words are subclasses of declaration.
 
     Defining words are classes, while non-defining words are instances of
     those classes.  The "kind" is used both as the base class (for defining
     words) and the instance's class (for non-defining words).
-    
+
     Thus, a defining word is a subclass of it's "kind".
 
     And, a non-defining word is an instance of it's "kind".
@@ -61,12 +64,16 @@ class declaration(object):
 
     @classmethod
     def new_syntax(cls):
-        r'''Returns None, or (syntax, tokens).
+        r'''Returns the new syntax added by this word.
+
+        Returns None, or (syntax, tokens).
 
         Syntax is a tuple of strings, e.g.:
           "raw_statement : IF() condition [series] ( ELSE_TOK [series] )?"
         Tokens is a dict {keyword_name: token_value}, e.g.:
           {'if': 'IF', 'else': 'ELSE_TOK'}
+
+        May be overridden by base classes.
         '''
         return None
 
@@ -77,8 +84,8 @@ class declaration(object):
         r'''Returns a frozenset of the labels of the words needed.
 
         This must also update the 'side_effects' and 'suspends' attributes of
-        the symbol, as well as record info in the 'fn_calls' and
-        'fn_global_variables' tables using the ucc.database.fn_xref routines:
+        the `symbol`, as well as record info in the 'fn_calls' and
+        'fn_global_variables' tables using the `ucc.database.fn_xref` routines:
         'calls', 'uses' and 'sets'.
 
         The implementation of this method is left up to the subclass...
@@ -90,6 +97,8 @@ class declaration(object):
                getattr(self, prefix + '_generic')
 
 class word(declaration):
+    r'''Base class for all words that can be used in high-level code.
+    '''
     def compile(self):
         r'''Empty stub as default action.
         '''
@@ -98,7 +107,7 @@ class word(declaration):
     def update_expect(self, ast_node):
         r'''Chance to update 'expect' for ast_node.
 
-        This is done prior to macro expanding the ast args and the ast_node
+        This is done prior to `macro_expand`-ing the ast args and the ast_node
         itself.
         '''
         pass
@@ -106,7 +115,7 @@ class word(declaration):
     def update_types(self, ast_node):
         r'''Chance to update the types for the ast_node and/or its args.
 
-        This is done after update_expect and after macro expanding the ast
+        This is done after `update_expect` and after `macro_expand`-ing the ast
         args.
         '''
         return None
@@ -131,6 +140,8 @@ class word(declaration):
         raise ValueError("%s used as a %s" % (self.label, ast_node.expect))
 
 class high_level_word(word):
+    r'''Base class for all words with high-level code as their text.
+    '''
     def parse_file(self, parser, debug = 0):
         filename = self.ww.get_filename()
         for i, label in enumerate(self.ww.get_value('argument')):
@@ -177,6 +188,8 @@ class high_level_word(word):
 
 
 def load_class(ww):
+    r'''Imports and initializes the Python class for a defining word.
+    '''
     mod = helpers.import_module("%s.%s" % (ww.package_name, ww.name))
     new_subclass = getattr(mod, ww.name)
     new_subclass.init_class(ww)

@@ -4,7 +4,10 @@ r'''Classes for accessing types.
 
 These go into the 'type' and 'sub_element' tables.
 
-Prepare a couple of types first:
+All type objects are immutable.  They are inserted into the database when the
+object is created, and never updated after that.
+
+Prepare a couple of types for the rest of the doctests:
 
         >>> cur = crud.db_cur_test()
 
@@ -26,14 +29,23 @@ Prepare a couple of types first:
 import itertools
 from ucc.database import crud
 
-Types_by_id = {}
+Types_by_id = {}        #: {id: type object}
 
 def init():
+    r'''Reads the types in from database.
+
+    This ensures that references to the same type will have the same type id
+    as prior runs of the compiler.
+    '''
     for row in crud.read_as_dicts('type'):
         getattr(globals(), row['kind']).from_db(row)
 
 class base_type(object):
+    r'''Base class for all types.
+    '''
     def __init__(self, id, columns, sub_elements = None):
+        r'''Not called directly.  Call `lookup` or `from_db` instead.
+        '''
         self.id = id
         Types_by_id[id] = self
         for name, value in columns.iteritems():
@@ -43,6 +55,13 @@ class base_type(object):
 
     @classmethod
     def add(cls, **columns):
+        r'''Internal method called by `create`.
+
+        This inserts the new type (and sub_elements, if any) into the
+        database.
+
+        This method is shared by all base classes.
+        '''
         sub_elements = None
         if 'sub_elements' in columns:
             sub_elements = columns['sub_elements']
@@ -64,6 +83,10 @@ class base_type(object):
 
     @classmethod
     def from_db(cls, row):
+        r'''Internal method called by `init`.
+
+        Figures out what is needed from row and creates the object instance.
+        '''
         if 'element_type' in row and row['element_type'] is not None:
             row['element_type'] = Types_by_id[row['element_type']]
         key = cls.row_to_key(row)
@@ -76,6 +99,15 @@ class base_type(object):
 
     @classmethod
     def lookup(cls, *args):
+        r'''Lookup a type.
+
+        The type is created if it does not already exist.
+
+        This is called on the derived class to determine what kind of type is
+        wanted.  Each derived class defines a different set of 'args'.  The
+        'args' expected are the arguments to the derived class' `create`
+        method.
+        '''
         key = cls.args_to_key(*args)
         if key not in cls.Instances:
             cls.verify_args(*args)
@@ -84,29 +116,69 @@ class base_type(object):
 
     @classmethod
     def args_to_key(cls, *args):
+        r'''Internal method called by `lookup`.
+
+        Returns the key to the cls.Instances dictionary.
+
+        This may be overridden by base classes.
+        '''
         return args
 
     @classmethod
     def row_to_key(cls, row):
+        r'''Internal method called by `from_db`.
+
+        Returns the key to the cls.Instances dictionary.
+
+        This may be overridden by base classes.
+        '''
         return tuple((Types_by_id[row[col]] if col == 'element_type'
                                             else row[col])
                      for col in cls.Columns)
 
     @classmethod
     def read_sub_elements(cls, row, key):
+        r'''Internal method called by `from_db`.
+
+        Returns the value to be stored in self.sub_elements.  This is either a
+        tuple of (name, type) pairs, or None.
+
+        This may be overridden by base classes.
+        '''
         return None
 
     @classmethod
     def verify_args(cls, *args):
+        r'''Internal method called by `lookup`.
+
+        Raises an exception if the validation fails.
+
+        Does not return anything.
+
+        This may be overridden by base classes.
+        '''
         pass
 
     @classmethod
     def create(cls, *args):
+        r'''Internal method called by `lookup`.
+
+        Calls `add` with the proper arguments for this class.
+
+        This may be overridden by base classes.
+        '''
         columns = dict(zip(cls.Columns, args))
         return cls.add(**columns)
 
     @classmethod
     def get_sub_elements(cls, row_id):
+        r'''Internal method called by `row_to_key` in derived classes.
+
+        Reads the sub_elements from the database and returns a tuple of (name,
+        type) tuples.
+
+        This method is shared by all base classes.
+        '''
         return tuple((name, Types_by_id[element_type])
                      for name, element_type
                       in crud.read_as_tuples('sub_element',
@@ -116,6 +188,8 @@ class base_type(object):
 
 class int(base_type):
     r'''The class for 'int' types.
+
+    Use lookup(max_value, min_value).
 
         >>> cur = crud.db_cur_test()
 
@@ -153,6 +227,8 @@ class int(base_type):
 
 class fixedpt(base_type):
     r'''The class for 'fixept' types.
+
+    Use lookup(max_value, min_value, binary_pt).
 
         >>> cur = crud.db_cur_test()
 
@@ -198,6 +274,8 @@ class fixedpt(base_type):
 
 class array(base_type):
     r'''The class for 'array' types.
+
+    Use lookup(element_type, max_value, min_value).
 
         >>> cur = crud.db_cur_test()
 
@@ -251,6 +329,8 @@ class array(base_type):
 class pointer(base_type):
     r'''The class for 'pointer' types.
 
+    Use lookup(element_type, memory).
+
         >>> cur = crud.db_cur_test()
 
         >>> int1_type = int.lookup(400, -100)
@@ -298,6 +378,8 @@ class pointer(base_type):
 
 class record(base_type):
     r'''The class for 'record' types.
+
+    Use lookup((field_name, type), ...).
 
         >>> cur = crud.db_cur_test()
 
@@ -372,6 +454,14 @@ class record(base_type):
 
 class function(base_type):
     r'''The class for 'function' types.
+
+    Use::
+
+        lookup(return_type,
+               ((required_param_name, type), ...),
+               ((optional_param_name, type), ...))
+
+    Examples:
 
         >>> cur = crud.db_cur_test()
 

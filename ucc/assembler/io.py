@@ -1,6 +1,10 @@
 # io.py
 
-r'''This is a list of the io registers
+r'''This is a list of the ATMega328P IO registers.
+
+These are presented simply as module variables.  The value of the variable is
+the equivalent RAM address for the IO register (not the IO register number,
+which doesn't apply to all IO registers).
 '''
 
 clkpr = 0x61

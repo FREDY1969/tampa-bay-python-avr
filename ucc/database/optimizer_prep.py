@@ -1,5 +1,10 @@
 # optimizer_prep.py
 
+r'''Create the database cross reference tables needed by the optimizer.
+
+This isn't used yet...
+'''
+
 import itertools
 
 from ucc.database import crud

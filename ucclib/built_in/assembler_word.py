@@ -1,5 +1,10 @@
 # assembler_word.py
 
+r'''The defining word for all assembler words.
+
+Use this to write functions in assembler.
+'''
+
 from __future__ import with_statement
 
 import itertools

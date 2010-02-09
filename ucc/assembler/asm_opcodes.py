@@ -1,5 +1,11 @@
 # asm_opcodes.py
 
+r'''All of the AVR instructions.
+
+Each instruction is stored as a module variable name matching the opcode for
+that instruction.
+'''
+
 from asm_inst import inst1, inst2, bytes, int8, int16, int32, zeroes
 
 # Arithmetic and logic instructions

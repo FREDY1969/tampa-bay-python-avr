@@ -1,5 +1,8 @@
 # const.py
 
+r'''A word representing a constant value.
+'''
+
 from ucc.database import ast
 from ucclib.built_in import declaration
 

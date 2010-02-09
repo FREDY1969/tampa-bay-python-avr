@@ -1,5 +1,14 @@
 # clear_output_bit.py
 
+r'''Expects an "ioreg-bit" AST node as its single argument.
+
+This is intended to be machine independent.
+
+The "ioreg-bit" AST nodes are only generated through special words like:
+
+    - `output_pin`
+'''
+
 from ucc.database import block
 from ucclib.built_in import singleton
 

@@ -1,5 +1,12 @@
 # operator.py
 
+r'''These are the binary and unary operators of the language.
+
+They are translated straight into intermediate code, but constant operands are
+evaluated at compile time to be macro expanded into a constant.  And types are
+propogated up and down from the operator node to its arguments.
+'''
+
 from ucc.database import block, symbol_table
 from ucclib.built_in import declaration
 

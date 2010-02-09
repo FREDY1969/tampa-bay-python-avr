@@ -1,6 +1,6 @@
 # App.py
 
-r'''
+r'''The main IDE application.
 '''
 
 import sys
@@ -15,11 +15,11 @@ from ucc.word import top_package, xml_access
 
 class App(wx.App):
     def __init__(self):
-        
-        # init parent (which calls self.OnInit()...)
-        
+        r'''init base class (which calls self.OnInit()...)
+        '''
+
         wx.App.__init__(self, False)
-    
+
     def OnInit(self):
         
         self.SetAppName('ucc') # used by wx.StandardPaths

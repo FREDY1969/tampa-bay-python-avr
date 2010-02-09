@@ -14,11 +14,13 @@ class package(object):
 
     After creating the object, it has these attributes:
 
-        package_dir      - the abspath of the package directory
-        package_name     - a standard Python dotted package name that can be
-                           imported (e.g., 'examples.blinky')
+        package_dir
+          the abspath of the package directory
+        package_name
+          a standard Python dotted package name that can be imported
+          (e.g., 'examples.blinky')
 
-    Use the 'built_in' class for the ucclib.built_in package.
+    Use the `built_in` class for the `ucclib.built_in` package.
     '''
 
     def __init__(self, package_dir):
@@ -49,6 +51,10 @@ class package(object):
         return ans
 
 class built_in(package):
+    r'''Represents the `ucclib.built_in` package.
+    
+    The built_in package is automatically available to all other packages.
+    '''
     def __init__(self):
         self.package_name = Built_in
         self.package_dir = \
