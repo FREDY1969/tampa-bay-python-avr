@@ -113,7 +113,7 @@ def parse_word(ww, word_obj, parser):
         return False, None
     return True, needs
 
-def parse_needed_words(top, package_parsers):
+def parse_needed_words(top, package_parsers, quiet):
     r'''Parses all of the needed word files.
 
     Returns a set of the labels of the words parsed.
@@ -138,7 +138,7 @@ def parse_needed_words(top, package_parsers):
         sys.exit(1)
 
     with crud.db_transaction():
-        fn_xref.expand()
+        fn_xref.expand(quiet)
     return words_done
 
 def optimize():
@@ -194,7 +194,7 @@ def assemble_program(package_dir):
     # assemble eeprom:
     hex_file.write(assemble.assemble('eeprom', labels), package_dir, 'eeprom')
 
-def run(top, prime_start_time = True):
+def run(top, prime_start_time = True, quiet = False):
     # The following gets a little confusing because we have two kinds of word
     # objects:
     #
@@ -209,42 +209,42 @@ def run(top, prime_start_time = True):
         compile_start_time = Start_time
     else:
         compile_start_time = Start_time
-        print "top: %.2f" % elapsed()
+        if not quiet: print "top: %.2f" % elapsed()
 
     with crud.db_connection(top.packages[-1].package_dir):
-        print "crud.db_connection: %.2f" % elapsed()
+        if not quiet: print "crud.db_connection: %.2f" % elapsed()
 
         types.init()
-        print "types.init: %.2f" % elapsed()
+        if not quiet: print "types.init: %.2f" % elapsed()
 
         # Create symbols, word_objs and build the parsers for each package:
         #
         # {package_name: parser module}
         package_parsers = create_parsers(top)  # Also loads all of the word objs
-        print "create parsers: %.2f" % elapsed()
+        if not quiet: print "create parsers: %.2f" % elapsed()
 
         # word files => ast
-        words_done = parse_needed_words(top, package_parsers)
-        print "parse_needed_words: %.2f" % elapsed()
+        words_done = parse_needed_words(top, package_parsers, quiet)
+        if not quiet: print "parse_needed_words: %.2f" % elapsed()
 
         # ast => intermediate code
         for word_label in words_done:
             with crud.db_transaction():
                 symbol_table.get(word_label).word_obj.compile()
-        print "generate intermediate code: %.2f" % elapsed()
+        if not quiet: print "generate intermediate code: %.2f" % elapsed()
 
         # intermediate code => optimized intermediate code
         optimize()
-        print "optimize: %.2f" % elapsed()
+        if not quiet: print "optimize: %.2f" % elapsed()
 
         # intermediate code => assembler
         gen_assembler()
-        print "gen_assembler: %.2f" % elapsed()
+        if not quiet: print "gen_assembler: %.2f" % elapsed()
 
         # assembler => .hex files
         assemble_program(top.packages[-1].package_dir)
-        print "assemble_program: %.2f" % elapsed()
-    print "TOTAL: %.2f" % (Start_time - compile_start_time)
+        if not quiet: print "assemble_program: %.2f" % elapsed()
+    if not quiet: print "TOTAL: %.2f" % (Start_time - compile_start_time)
 
 Start_time = 0.0
 
