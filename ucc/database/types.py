@@ -13,16 +13,16 @@ Prepare a couple of types for the rest of the doctests:
 
         >>> cur.lastrowid = 1
         >>> crud.dummy_transaction()
-        >>> int.lookup(400, -100)
+        >>> int.lookup(-100, 400)
         query: insert into type (kind, max_value, min_value) values (?, ?, ?)
         parameters: ['int', 400, -100]
-        <int 1>
+        <int:1 -100-400>
 
         >>> cur.lastrowid = 2
-        >>> fixedpt.lookup(400, -100, -2)
+        >>> fixedpt.lookup(-100, 400, -2)
         query: insert into type (binary_pt, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [-2, 'fixedpt', 400, -100]
-        <fixedpt 2>
+        <fixedpt:2 -100-400.-2>
 
 '''
 
@@ -78,7 +78,7 @@ class base_type(object):
                 else:
                     name, type = field
                 crud.insert('sub_element', parent_id=id, element_order=i,
-                                           name=name, element_type=type.id)
+                                           name=name, element_type=type)
         return cls(id, columns, sub_elements)
 
     @classmethod
@@ -93,9 +93,6 @@ class base_type(object):
         cls.Instances[key] = \
           cls(row['id'], dict((col, row['col']) for col in cls.Columns),
               cls.read_sub_elements(row, key))
-
-    def __repr__(self):
-        return "<%s %d>" % (self.__class__.__name__, self.id)
 
     @classmethod
     def lookup(cls, *args):
@@ -189,142 +186,154 @@ class base_type(object):
 class int(base_type):
     r'''The class for 'int' types.
 
-    Use lookup(max_value, min_value).
+    Use lookup(min_value, max_value).
 
         >>> cur = crud.db_cur_test()
 
         >>> cur.lastrowid = 3
         >>> crud.dummy_transaction()
-        >>> int.lookup(400, 100)
+        >>> int.lookup(100, 400)
         query: insert into type (kind, max_value, min_value) values (?, ?, ?)
         parameters: ['int', 400, 100]
-        <int 3>
+        <int:3 100-400>
 
-        >>> int.lookup(400, 100)
-        <int 3>
+        >>> int.lookup(100, 400)
+        <int:3 100-400>
 
         >>> cur.lastrowid = 4
-        >>> int.lookup(400, 10)
+        >>> int.lookup(10, 400)
         query: insert into type (kind, max_value, min_value) values (?, ?, ?)
         parameters: ['int', 400, 10]
-        <int 4>
+        <int:4 10-400>
 
         >>> cur.lastrowid = 5
-        >>> int.lookup(410, 100)
+        >>> int.lookup(100, 410)
         query: insert into type (kind, max_value, min_value) values (?, ?, ?)
         parameters: ['int', 410, 100]
-        <int 5>
+        <int:5 100-410>
 
-        >>> int.lookup(400, 100)
-        <int 3>
-        >>> int.lookup(400, 10)
-        <int 4>
-        >>> int.lookup(410, 100)
-        <int 5>
+        >>> int.lookup(100, 400)
+        <int:3 100-400>
+        >>> int.lookup(10, 400)
+        <int:4 10-400>
+        >>> int.lookup(100, 410)
+        <int:5 100-410>
     '''
     Instances = {}      # (max, min): int_obj
-    Columns = ('max_value', 'min_value')
+    Columns = ('min_value', 'max_value')
+
+    def __repr__(self):
+        return "<int:%d %d-%d>" % (self.id, self.min_value, self.max_value)
 
 class fixedpt(base_type):
     r'''The class for 'fixept' types.
 
-    Use lookup(max_value, min_value, binary_pt).
+    Use lookup(min_value, max_value, binary_pt).
 
         >>> cur = crud.db_cur_test()
 
         >>> cur.lastrowid = 6
         >>> crud.dummy_transaction()
-        >>> fixedpt.lookup(400, 100, -2)
+        >>> fixedpt.lookup(100, 400, -2)
         query: insert into type (binary_pt, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [-2, 'fixedpt', 400, 100]
-        <fixedpt 6>
+        <fixedpt:6 100-400.-2>
 
-        >>> fixedpt.lookup(400, 100, -2)
-        <fixedpt 6>
+        >>> fixedpt.lookup(100, 400, -2)
+        <fixedpt:6 100-400.-2>
 
         >>> cur.lastrowid = 7
-        >>> fixedpt.lookup(400, 10, -2)
+        >>> fixedpt.lookup(10, 400, -2)
         query: insert into type (binary_pt, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [-2, 'fixedpt', 400, 10]
-        <fixedpt 7>
+        <fixedpt:7 10-400.-2>
 
         >>> cur.lastrowid = 8
-        >>> fixedpt.lookup(410, 100, -2)
+        >>> fixedpt.lookup(100, 410, -2)
         query: insert into type (binary_pt, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [-2, 'fixedpt', 410, 100]
-        <fixedpt 8>
+        <fixedpt:8 100-410.-2>
 
         >>> cur.lastrowid = 9
-        >>> fixedpt.lookup(400, 100, -3)
+        >>> fixedpt.lookup(100, 400, -3)
         query: insert into type (binary_pt, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [-3, 'fixedpt', 400, 100]
-        <fixedpt 9>
+        <fixedpt:9 100-400.-3>
 
-        >>> fixedpt.lookup(400, 100, -2)
-        <fixedpt 6>
-        >>> fixedpt.lookup(400, 10, -2)
-        <fixedpt 7>
-        >>> fixedpt.lookup(410, 100, -2)
-        <fixedpt 8>
-        >>> fixedpt.lookup(400, 100, -3)
-        <fixedpt 9>
+        >>> fixedpt.lookup(100, 400, -2)
+        <fixedpt:6 100-400.-2>
+        >>> fixedpt.lookup(10, 400, -2)
+        <fixedpt:7 10-400.-2>
+        >>> fixedpt.lookup(100, 410, -2)
+        <fixedpt:8 100-410.-2>
+        >>> fixedpt.lookup(100, 400, -3)
+        <fixedpt:9 100-400.-3>
     '''
     Instances = {}      # (max, min): fixedpt_obj
-    Columns = ('max_value', 'min_value', 'binary_pt')
+    Columns = ('min_value', 'max_value', 'binary_pt')
+
+    def __repr__(self):
+        return "<fixedpt:%d %d-%d.%d>" % \
+                 (self.id, self.min_value, self.max_value, self.binary_pt)
 
 class array(base_type):
     r'''The class for 'array' types.
 
-    Use lookup(element_type, max_value, min_value).
+    Use lookup(element_type, min_value, max_value).
 
         >>> cur = crud.db_cur_test()
 
-        >>> int1_type = int.lookup(400, -100)
-        >>> fixedpt1_type = fixedpt.lookup(400, -100, -2)
+        >>> int1_type = int.lookup(-100, 400)
+        >>> fixedpt1_type = fixedpt.lookup(-100, 400, -2)
 
         >>> cur.lastrowid = 10
         >>> crud.dummy_transaction()
-        >>> array.lookup(int1_type, 400, 100)
+        >>> array.lookup(int1_type, 100, 400)
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [1, 'array', 400, 100]
-        <array 10>
+        <array:10 100-400 of <int:1 -100-400>>
 
-        >>> array.lookup(int1_type, 400, 100)
-        <array 10>
+        >>> array.lookup(int1_type, 100, 400)
+        <array:10 100-400 of <int:1 -100-400>>
 
         >>> cur.lastrowid = 11
-        >>> array.lookup(int1_type, 400, 10)
+        >>> array.lookup(int1_type, 10, 400)
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [1, 'array', 400, 10]
-        <array 11>
+        <array:11 10-400 of <int:1 -100-400>>
 
         >>> cur.lastrowid = 12
-        >>> array.lookup(int1_type, 410, 100)
+        >>> array.lookup(int1_type, 100, 410)
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [1, 'array', 410, 100]
-        <array 12>
+        <array:12 100-410 of <int:1 -100-400>>
 
         >>> cur.lastrowid = 13
-        >>> array.lookup(fixedpt1_type, 400, 100)
+        >>> array.lookup(fixedpt1_type, 100, 400)
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [2, 'array', 400, 100]
-        <array 13>
+        <array:13 100-400 of <fixedpt:2 -100-400.-2>>
 
-        >>> array.lookup(int1_type, 400, 100)
-        <array 10>
-        >>> array.lookup(int1_type, 400, 10)
-        <array 11>
-        >>> array.lookup(int1_type, 410, 100)
-        <array 12>
-        >>> array.lookup(fixedpt1_type, 400, 100)
-        <array 13>
+        >>> array.lookup(int1_type, 100, 400)
+        <array:10 100-400 of <int:1 -100-400>>
+        >>> array.lookup(int1_type, 10, 400)
+        <array:11 10-400 of <int:1 -100-400>>
+        >>> array.lookup(int1_type, 100, 410)
+        <array:12 100-410 of <int:1 -100-400>>
+        >>> array.lookup(fixedpt1_type, 100, 400)
+        <array:13 100-400 of <fixedpt:2 -100-400.-2>>
     '''
     Instances = {}      # (element_type, max, min): array_obj
-    Columns = ('element_type', 'max_value', 'min_value')
+    Columns = ('element_type', 'min_value', 'max_value')
 
     @classmethod
-    def verify_args(cls, element_type, max, min):
+    def verify_args(cls, element_type, min, max):
         assert min >= 0
+
+    def __repr__(self):
+        return "<array:%d %d-%d of %s>" % \
+                 (self.id, self.min_value, self.max_value,
+                  repr(self.element_type))
 
 class pointer(base_type):
     r'''The class for 'pointer' types.
@@ -333,48 +342,52 @@ class pointer(base_type):
 
         >>> cur = crud.db_cur_test()
 
-        >>> int1_type = int.lookup(400, -100)
-        >>> fixedpt1_type = fixedpt.lookup(400, -100, -2)
+        >>> int1_type = int.lookup(-100, 400)
+        >>> fixedpt1_type = fixedpt.lookup(-100, 400, -2)
 
         >>> cur.lastrowid = 14
         >>> crud.dummy_transaction()
         >>> pointer.lookup(int1_type, 'ram')
         query: insert into type (element_type, kind, memory) values (?, ?, ?)
         parameters: [1, 'pointer', 'ram']
-        <pointer 14>
+        <pointer:14 ram to <int:1 -100-400>>
 
         >>> pointer.lookup(int1_type, 'ram')
-        <pointer 14>
+        <pointer:14 ram to <int:1 -100-400>>
 
         >>> cur.lastrowid = 15
         >>> pointer.lookup(int1_type, 'flash')
         query: insert into type (element_type, kind, memory) values (?, ?, ?)
         parameters: [1, 'pointer', 'flash']
-        <pointer 15>
+        <pointer:15 flash to <int:1 -100-400>>
 
         >>> cur.lastrowid = 16
         >>> pointer.lookup(fixedpt1_type, 'ram')
         query: insert into type (element_type, kind, memory) values (?, ?, ?)
         parameters: [2, 'pointer', 'ram']
-        <pointer 16>
+        <pointer:16 ram to <fixedpt:2 -100-400.-2>>
 
         >>> cur.lastrowid = 17
         >>> pointer.lookup(fixedpt1_type, 'flash')
         query: insert into type (element_type, kind, memory) values (?, ?, ?)
         parameters: [2, 'pointer', 'flash']
-        <pointer 17>
+        <pointer:17 flash to <fixedpt:2 -100-400.-2>>
 
         >>> pointer.lookup(int1_type, 'ram')
-        <pointer 14>
+        <pointer:14 ram to <int:1 -100-400>>
         >>> pointer.lookup(int1_type, 'flash')
-        <pointer 15>
+        <pointer:15 flash to <int:1 -100-400>>
         >>> pointer.lookup(fixedpt1_type, 'ram')
-        <pointer 16>
+        <pointer:16 ram to <fixedpt:2 -100-400.-2>>
         >>> pointer.lookup(fixedpt1_type, 'flash')
-        <pointer 17>
+        <pointer:17 flash to <fixedpt:2 -100-400.-2>>
     '''
     Instances = {}      # (element_type, memory): pointer_obj
     Columns = ('element_type', 'memory')
+
+    def __repr__(self):
+        return "<pointer:%d %s to %s>" % \
+                 (self.id, self.memory, repr(self.element_type))
 
 class record(base_type):
     r'''The class for 'record' types.
@@ -383,8 +396,8 @@ class record(base_type):
 
         >>> cur = crud.db_cur_test()
 
-        >>> int1_type = int.lookup(400, -100)
-        >>> fixedpt1_type = fixedpt.lookup(400, -100, -2)
+        >>> int1_type = int.lookup(-100, 400)
+        >>> fixedpt1_type = fixedpt.lookup(-100, 400, -2)
 
         >>> cur.lastrowid = 18
         >>> crud.dummy_transaction()
@@ -395,10 +408,10 @@ class record(base_type):
         parameters: [0, 1, 'foo', 18]
         query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
         parameters: [1, 1, 'bar', 18]
-        <record 18>
+        <record:18>
 
         >>> record.lookup(('foo', int1_type), ('bar', int1_type))
-        <record 18>
+        <record:18>
 
         >>> cur.lastrowid = 19
         >>> record.lookup(('foo', int1_type), ('bar', fixedpt1_type))
@@ -408,7 +421,7 @@ class record(base_type):
         parameters: [0, 1, 'foo', 19]
         query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
         parameters: [1, 2, 'bar', 19]
-        <record 19>
+        <record:19>
 
         >>> cur.lastrowid = 20
         >>> record.lookup(('foo', int1_type), ('baz', int1_type))
@@ -418,7 +431,7 @@ class record(base_type):
         parameters: [0, 1, 'foo', 20]
         query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
         parameters: [1, 1, 'baz', 20]
-        <record 20>
+        <record:20>
 
         >>> cur.lastrowid = 21
         >>> record.lookup(('foo', int1_type))
@@ -426,16 +439,16 @@ class record(base_type):
         parameters: ['record']
         query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
         parameters: [0, 1, 'foo', 21]
-        <record 21>
+        <record:21>
 
         >>> record.lookup(('foo', int1_type), ('bar', int1_type))
-        <record 18>
+        <record:18>
         >>> record.lookup(('foo', int1_type), ('bar', fixedpt1_type))
-        <record 19>
+        <record:19>
         >>> record.lookup(('foo', int1_type), ('baz', int1_type))
-        <record 20>
+        <record:20>
         >>> record.lookup(('foo', int1_type))
-        <record 21>
+        <record:21>
     '''
     Instances = {}      # ((name, element_type), ...): record_type
     Columns = ()
@@ -452,6 +465,9 @@ class record(base_type):
     def read_sub_elements(cls, row, key):
         return key
 
+    def __repr__(self):
+        return "<record:%d>" % (self.id,)
+
 class function(base_type):
     r'''The class for 'function' types.
 
@@ -465,8 +481,8 @@ class function(base_type):
 
         >>> cur = crud.db_cur_test()
 
-        >>> int1_type = int.lookup(400, -100)
-        >>> fixedpt1_type = fixedpt.lookup(400, -100, -2)
+        >>> int1_type = int.lookup(-100, 400)
+        >>> fixedpt1_type = fixedpt.lookup(-100, 400, -2)
 
         >>> cur.lastrowid = 22
         >>> crud.dummy_transaction()
@@ -478,11 +494,11 @@ class function(base_type):
         parameters: [0, 1, 'foo', 22]
         query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
         parameters: [1, 1, 'bar', 22]
-        <function 22>
+        <function:22 returning <int:1 -100-400>>
 
         >>> function.lookup(int1_type, (('foo', int1_type), ('bar', int1_type)),
         ...                            ())
-        <function 22>
+        <function:22 returning <int:1 -100-400>>
 
         >>> cur.lastrowid = 23
         >>> function.lookup(fixedpt1_type, (('foo', int1_type),
@@ -494,7 +510,7 @@ class function(base_type):
         parameters: [0, 1, 'foo', 23]
         query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
         parameters: [1, 1, 'bar', 23]
-        <function 23>
+        <function:23 returning <fixedpt:2 -100-400.-2>>
 
         >>> cur.lastrowid = 24
         >>> function.lookup(int1_type, (('foo', int1_type),),
@@ -505,7 +521,7 @@ class function(base_type):
         parameters: [0, 1, 'foo', 24]
         query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
         parameters: [1, 1, 'bar', 24]
-        <function 24>
+        <function:24 returning <int:1 -100-400>>
 
         >>> cur.lastrowid = 25
         >>> function.lookup(int1_type, (), (('foo', int1_type),
@@ -516,7 +532,7 @@ class function(base_type):
         parameters: [0, 1, 'foo', 25]
         query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
         parameters: [1, 1, 'bar', 25]
-        <function 25>
+        <function:25 returning <int:1 -100-400>>
 
         >>> cur.lastrowid = 26
         >>> function.lookup(int1_type, (), (('foo', int1_type),
@@ -527,21 +543,21 @@ class function(base_type):
         parameters: [0, 1, 'foo', 26]
         query: insert into sub_element (element_order, element_type, name, parent_id) values (?, ?, ?, ?)
         parameters: [1, 2, 'bar', 26]
-        <function 26>
+        <function:26 returning <int:1 -100-400>>
 
         >>> function.lookup(int1_type, (('foo', int1_type), ('bar', int1_type)), ())
-        <function 22>
+        <function:22 returning <int:1 -100-400>>
         >>> function.lookup(fixedpt1_type, (('foo', int1_type), ('bar', int1_type)), ())
-        <function 23>
+        <function:23 returning <fixedpt:2 -100-400.-2>>
         >>> function.lookup(int1_type, (('foo', int1_type),),
         ...                            (('bar', int1_type),))
-        <function 24>
+        <function:24 returning <int:1 -100-400>>
         >>> function.lookup(int1_type, (), (('foo', int1_type),
         ...                                 ('bar', int1_type)))
-        <function 25>
+        <function:25 returning <int:1 -100-400>>
         >>> function.lookup(int1_type, (), (('foo', int1_type),
         ...                                 ('bar', fixedpt1_type)))
-        <function 26>
+        <function:26 returning <int:1 -100-400>>
     '''
     Instances = {}      # (ret_type, req_arg_types, opt_arg_types): function_obj
     Columns = ('element_type',)
@@ -565,4 +581,7 @@ class function(base_type):
     def read_sub_elements(cls, row, key):
         ret_type, req_args, opt_args = key
         return req_args + opt_args
+
+    def __repr__(self):
+        return "<function:%d returning %s>" % (self.id, self.element_type)
 

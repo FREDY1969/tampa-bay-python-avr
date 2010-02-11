@@ -126,6 +126,7 @@ create table ast (
           -- 'producer'
           -- 'start_stop'
 
+    expected_type int references type(id),
     type_id int references type(id),
 
     -- ast argument nodes are linked to their parent nodes:
