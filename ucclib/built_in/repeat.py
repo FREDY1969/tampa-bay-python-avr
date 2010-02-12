@@ -43,10 +43,8 @@ class repeat(macro.macro):
               symbol_table.symbol.create(loop_var, 'var', fn_symbol).id
             test = crud.gensym('repeat_test')
             new_args = (
-              ast.ast(ast.ast(kind='word', label='set',
-                              symbol_id=symbol_table.get('set').id),
-                      (ast.ast(kind='word', label=loop_var,
-                               symbol_id=symbol_id),
+              ast.ast(ast.ast.word(symbol_table.get('set').id),
+                      (ast.ast.word(symbol_id),
                        count,
                       ),
                       kind='call',
@@ -55,14 +53,10 @@ class repeat(macro.macro):
             ) + first_jmp + (
               ast.ast(kind='label', label=loop_label, expect='statement'),
             ) + body + (
-              ast.ast(ast.ast(kind='word', label='set',
-                              symbol_id=symbol_table.get('set').id),
-                      (ast.ast(kind='word', label=loop_var,
-                               symbol_id=symbol_id),
-                       ast.ast(ast.ast(kind='word', label='-',
-                                       symbol_id=symbol_table.get('-').id),
-                               ast.ast(kind='word', label=loop_var,
-                                       symbol_id=symbol_id),
+              ast.ast(ast.ast.word(symbol_table.get('set').id),
+                      (ast.ast.word(symbol_id),
+                       ast.ast(ast.ast.word(symbol_table.get('-').id),
+                               ast.ast.word(symbol_id),
                                ast.ast(kind='int', int1=1),
                                kind='call',
                               ) \
@@ -72,8 +66,7 @@ class repeat(macro.macro):
                       expect='statement') \
                  .prepare(fn_symbol, words_needed),
               ast.ast(kind='label', label=test, expect='statement'),
-              ast.ast(ast.ast(kind='word', label=loop_var,
-                              symbol_id=symbol_id, expect='condition'),
+              ast.ast(ast.ast.word(symbol_id, expect='condition'),
                       kind='if-true',
                       label=loop_label,
                       expect='statement'),
