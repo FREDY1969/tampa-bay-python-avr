@@ -3,15 +3,16 @@
 import sys, os
 import ConfigParser
 
-def load(paths):
-    import pprint
-    pprint.pprint(paths)
+def load():
+    paths = os.path.expanduser('~')
+    #import pprint
+    #pprint.pprint(paths)
     if sys.platform.startswith('win') or \
        sys.platform in ('os2', 'os2emx', 'riscos', 'atheos'):
         configFile = 'ucc.ini'
     else:
         configFile = '.ucc.ini'
-    configPath = os.path.join(paths.GetUserConfigDir(), configFile)
+    configPath = os.path.join(paths, configFile)
     if not os.path.exists(configPath):
         # This may need to be changed eventually to support zipped
         # installations of this compiler.

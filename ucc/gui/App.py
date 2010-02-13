@@ -1,6 +1,6 @@
 # App.py
 
-r'''
+r'''The main IDE application.
 '''
 
 import sys
@@ -9,28 +9,24 @@ import itertools
 import wx
 
 import ucc.config
-from ucc.gui.Registry import Registry
+from ucc.gui import Registry
 from ucc.gui.MainFrame import MainFrame
 from ucc.word import top_package, xml_access
 
 class App(wx.App):
     def __init__(self):
-        
-        # init parent (which calls self.OnInit()...)
-        
+        r'''init base class (which calls self.OnInit()...)
+        '''
+
         wx.App.__init__(self, False)
-    
+
     def OnInit(self):
         
         self.SetAppName('ucc') # used by wx.StandardPaths
         
-        # load StandardPaths
-        
-        Registry.paths = wx.StandardPaths.Get()
-        
         # load configuration
         
-        Registry.config = ucc.config.load(Registry.paths)
+        Registry.config = ucc.config.load()
         print 'Configration loaded'
         
         # setup registry

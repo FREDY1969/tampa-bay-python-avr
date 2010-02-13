@@ -2,8 +2,8 @@
 
 import re
 
-# Python's reserved word list (for python 2.6).
 Reserved_words = set((
+    #: Python's reserved word list (for python 2.6).
     'and', 'del', 'from', 'not', 'while',
     'as', 'elif', 'global', 'or', 'with',
     'assert', 'else', 'if', 'pass', 'yield',
@@ -21,7 +21,7 @@ def legalize_name(name):
     return name
 
 def import_module(modulename):
-    ''' modulename is full package path (with dots).
+    ''' ``modulename`` is full package path (with dots).
     '''
     mod = __import__(modulename)
     for comp in modulename.split('.')[1:]:

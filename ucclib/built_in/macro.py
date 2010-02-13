@@ -1,5 +1,10 @@
 # macro.py
 
+r'''Base class for all macros.
+
+Macros may define new statements in the grammar.
+'''
+
 from ucclib.built_in import singleton
 
 class macro(singleton.singleton):

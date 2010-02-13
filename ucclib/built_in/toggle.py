@@ -1,5 +1,14 @@
 # toggle.py
 
+r'''Toggle statement.
+
+Uses the AVR PIN bits to toggle an output pin.
+
+Takes the output-pin as only argument.
+
+This is implemented as a macro.
+'''
+
 from ucc.database import ast, symbol_table
 from ucclib.built_in import macro, output_pin
 

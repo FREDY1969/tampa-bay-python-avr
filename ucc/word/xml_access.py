@@ -2,7 +2,7 @@
 
 r'''Routines to read and write the xml files.
 
-The routines for reading an individual word are in word.py.
+The routines for reading an individual word are in `ucc.word`.
 '''
 
 from __future__ import with_statement
@@ -15,15 +15,15 @@ Packages_filename = 'packages.xml'
 Package_filename = 'package.xml'
 
 def read_package_list(packages_dir):
-    r'''Returns the list of package names read from the packages.xml file.
+    r'''Returns the list of `package` names read from the packages.xml file.
 
-    Use write_package_list to write the xml file back out.
+    Use `write_package_list` to write the xml file back out.
     '''
     tree = ElementTree.parse(os.path.join(packages_dir, Packages_filename))
     return [e.get('name') for e in tree.getiterator('package')]
 
 def write_package_list(package_list, packages_dir):
-    r'''Writes a list of package names to the packages.xml file.
+    r'''Writes a list of `package` names to the packages.xml file.
 
     Sorts the names to reduce merge conflicts.
     '''
@@ -33,18 +33,18 @@ def write_package_list(package_list, packages_dir):
     write_element(root, os.path.join(packages_dir, Packages_filename))
 
 def read_word_list(package_dir):
-    r'''Returns the package_name and a list of the word names in the package.
+    r'''Returns the package_name and list of `word` names in the `package`.
 
     Read from the 'package.xml' file.
 
-    Use write_word_list to write the xml file back out.
+    Use `write_word_list` to write the xml file back out.
     '''
     tree = ElementTree.parse(os.path.join(package_dir, Package_filename))
     return (tree.find('name').text,
             [e.get('name') for e in tree.getiterator('word')])
 
 def write_word_list(package_name, word_list, package_dir):
-    r'''Writes the package_name and list of word names to the package.xml file.
+    r'''Writes the package_name and list of `word` names to package.xml file.
 
     Sorts the names to reduce merge conflicts.
     '''
@@ -56,7 +56,7 @@ def write_word_list(package_name, word_list, package_dir):
     write_element(root, os.path.join(package_dir, Package_filename))
 
 def write_element(root, filename):
-    r'''Writes root element to filename with pretty indenting.
+    r'''Writes root ElementTree element to filename with pretty indenting.
     '''
     indent(root)
     with open(filename, 'w') as xml_file:
@@ -64,7 +64,7 @@ def write_element(root, filename):
         ElementTree.ElementTree(root).write(xml_file, 'utf-8')
 
 def indent(element, level = 0, amount = 4):
-    r'''Adds pretty indenting to element and all of its children.
+    r'''Adds pretty indenting to ElementTree element and all of its children.
 
     It does this by adding a newline and spaces to the 'text' and 'tail'
     attributes of the elements.  The 'text' string is what is between the open

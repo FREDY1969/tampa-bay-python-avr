@@ -9,7 +9,7 @@ import os.path
 
 import wx
 
-from ucc.gui.Registry import Registry
+from ucc.gui import Registry
 
 class WordTreeCtrl(wx.TreeCtrl):
     gray = (170, 170, 170, 255)

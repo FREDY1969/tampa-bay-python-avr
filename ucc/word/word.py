@@ -1,35 +1,47 @@
 # word.py
 
-r'''The generic word class, along with xml read/write routines for it.
+r'''The generic `word` class, along with xml read/write routines for it.
 
-This is one of several representations for a word.  This word object is
-created by the IDE when a package is opened and lives for a long as the
-package stays open.  This may encompass several compile and load steps.
+This is one of several representations for a word.  This `word` object is
+created by the IDE when a `package` is opened and lives for as long as the
+package stays open.  This may encompass several `ucc.parser.compile` and
+`ucc.parser.load` steps.
 
-This word object knows the name (internal name), label (user name), kind (name
-of the word that this is a kind of), defining (bool, True if subclass of
-declaration, False if instance), questions and answers, and the location of
-the permanent .xml and source files for this word.  The top_package object
+This `word` object knows the name (internal name), label (user name), kind
+(name of the word that this is a kind of), defining (bool, True if subclass of
+declaration, False if instance), `questions` and `answers`, and the location of
+the permanent .xml and source files for this word.  The `top_package` object
 loads all of the words needed for a package and adds some other attributes to
 each word:
 
-    - top             -- A boolean indicating whether this word is directly in
-                         the top-level package (the one opened in the IDE) or
-                         not.
-    - package_name    -- The full dotted module name of the package containing
-                         this word.  This is set by the package object.
-    - kind_obj        -- The kind word object (whereas 'kind' is just its name).
-    - subclasses      -- A list of word objects that are direct subclasses of
-                         this word (only defining words have anything here).
-                         This list is sorted by label.lower().
-    - instances       -- A list of word objects that are direct instances of
-                         this word (only defining words have anything here).
-                         This list is sorted by label.lower().
-    - filename_suffix -- None or string starting with '.'.  Only set on
-                         defining words.
+    top
+      A boolean indicating whether this word is directly in the top-level
+      package (the one opened in the IDE) or not.
 
-These word objects are used by the compiler, along with the subclasses and
-instances of the ucclib.built_in.declaration class.  The IDE doesn't use the
+    package_name
+      The full dotted module name of the `package` containing this word.
+      This is set by the `package.package` object.
+
+    kind_obj
+      The kind `word` object (whereas 'kind' is just that object's name).
+
+    subclasses
+      A list of `word` objects that are direct subclasses of this word (only
+      defining words have anything here).
+
+      This list is sorted by label.lower().
+
+    instances
+      A list of `word` objects that are direct instances of this word (only
+      defining words have anything here).
+
+      This list is sorted by label.lower().
+
+    filename_suffix
+      None or string starting with '.'.  Only set on defining words.
+
+These `word` objects are used by the compiler, along with the subclasses and
+instances of the `ucclib.built_in.declaration` class.  The IDE doesn't use the
 declaration classes and instances.
 '''
 
@@ -39,17 +51,14 @@ import os.path
 import itertools
 from xml.etree import ElementTree
 
-#import setpath
-#setpath.setpath(__file__)
-
 from ucc.word import answers, questions, xml_access
 
 unique = object()
 
 def read_word(word_name, package_dir):
-    r'''Returns a single word object read in from the word's xml file.
+    r'''Returns a single `word` object read in from the word's xml file.
     
-    Use word.write_xml to write the xml file back out.
+    Use `word.write_xml` to write the xml file back out.
     '''
     #print "read_word", word_name
     root = ElementTree.parse(os.path.join(package_dir, word_name + '.xml')) \
@@ -82,7 +91,7 @@ class word(object):
 
     def __init__(self, package_dir, name, label, defining, kind,
                  answers = None, questions = None):
-        r'''This is called by the read_word function.
+        r'''This is called by the `read_word` function.
 
         Or you can call it directly to create a new word.
         '''
@@ -143,11 +152,14 @@ class word(object):
 
         An answer can be one of three things:
 
-            - None  (for an optional answer that was left unanswered)
-            - an answer object (see ucc.word.answers).
-            - a list of 0 or more answer objects (for a repeating question).
+            None
+              for an optional answer that was left unanswered
+            An `answer` object
+              See `ucc.word.answers` for the possibilities here.
+            A list of 0 or more `answer` objects
+              for a repeating question
 
-        See also, get_value.
+        See also, `get_value`.
         '''
         if not self.answers or question_name not in self.answers:
             if self.defining:
@@ -166,14 +178,16 @@ class word(object):
 
         If the answer was optional and left unanswered, default is returned.
 
-        This is like get_answer, but also does the get_value() call on the
-        answer for you.  If the answer is repeating, it calls get_answer on
-        each element.
+        This is like `get_answer`, but also does the get_value_
+        call for you.  If the answer is repeating, it calls get_value on each
+        element.
 
         This does not work for series or choice answers.
+
+        .. _get_value: ucc.word.answers.answer-class.html#get_value
         '''
         ans = self.get_answer(question_name)
-        if ans is None: return ans
+        if ans is None: return default
         if isinstance(ans, answers.answer): return ans.get_value()
         return tuple(itertools.imap(lambda x: x.get_value(), ans))
 

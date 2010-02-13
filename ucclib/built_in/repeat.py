@@ -1,5 +1,10 @@
 # repeat.py
 
+r'''Repeat statement.
+
+This is implemented as a macro.
+'''
+
 from ucc.database import ast, crud, symbol_table
 from ucclib.built_in import macro
 

@@ -1,13 +1,44 @@
 # block.py
 
+r'''The helper class for blocks of intermediate code.
+
+A block of code is only entered at the top, and only exited at the bottom.
+Thus, there are never any jumps into the middle of a block, or jumps out of
+the middle of a block.
+
+The code for each block is represented by a directed acyclic graph whose nodes
+are `triple` objects.  This places the least constraints on the order that the
+triples must be evaluated in to maximize the ability of the optimizer and code
+generator to play games with instruction ordering.  The final assembler code
+generation process decides on the final ordering for the triples.
+'''
+
 import collections
 from ucc.database import crud, fn_xref, symbol_table, triple
 
-Current_block = None
+Current_block = None \
+  #: Only used during the `compile` process (e.g., Current_block.gen_triple(...)).
 
-Block_ids = {}                                        # {block_name: block_id}
+Block_ids = {}         #: {block_name: block_id}
 
 def new_label(name, word_symbol_id):
+    r'''Terminate the Current_block and create a new block.
+
+    The way that the Current_block is terminated depends on which of the
+    following methods were called on it prior to calling new_label:
+
+        - `block.true_to`
+        - `block.false_to`
+        - `block.unconditional_to`
+        - `block.block_end`
+
+    'name' is used as the next block to terminate the Current_block.
+
+    If none of these have been called, `block.unconditional_to` is done
+    automatically.
+
+    'name' and 'word_symbol_id' are for the new block.
+    '''
     global Current_block
     if Current_block:
         if Current_block.state == 'end_fall_through':
@@ -117,9 +148,11 @@ class block(object):
         return False
 
     def true_to(self, cond_id, name_t):
-        r'''Branch to name_t if cond_id is true.
-        
+        r'''Branch to 'name_t' if `triple` 'cond_id' is true.
+
         False falls through.
+
+        This method is only called on Current_block.
         '''
         if self.more(): Current_block.true_to(cond_id, name_t)
         else:
@@ -128,6 +161,12 @@ class block(object):
             self.state = 'end_fall_through'
 
     def false_to(self, cond_id, name_f):
+        r'''Branch to 'name_f' if `triple` 'cond_id' is false.
+
+        True falls through.
+
+        This method is only called on Current_block.
+        '''
         if self.more(): Current_block.false_to(cond_id, name_f)
         else:
             self.last_triple = triple.triple('if-false', cond_id, string=name_f)
@@ -135,12 +174,23 @@ class block(object):
             self.state = 'end_fall_through'
 
     def unconditional_to(self, name):
+        r'''Unconditionally branch to the block named 'name'.
+
+        This method is only called on Current_block.
+        '''
         if self.more(): Current_block.unconditional_to(name)
         else:
             self.state = 'end_fall_through'
             self.write(name)
 
     def block_end(self, last_triple):
+        r'''Mark the block as having no successor block.
+
+        For example, when the block ends in a 'return' or by raising an
+        exception.
+
+        This method is only called on Current_block.
+        '''
         assert self.state == 'not_ended', \
                "%s: double block end" % self.name
         self.state = 'end_absolute'
@@ -149,6 +199,10 @@ class block(object):
 
     def gen_triple(self, operator, int1=None, int2=None, string=None,
                          syntax_position_info=None):
+        r'''Create a new triple for this block.
+
+        This method is only called on Current_block.
+        '''
         #print self.name, "gen_triple", operator, int1, int2, string
         if self.more():
             return Current_block.gen_triple(operator, int1, int2, string,
@@ -208,6 +262,12 @@ class block(object):
         return ans
 
     def label(self, symbol_id, triple):
+        r'''Attach 'symbol_id' as a "label" for 'triple'.
+
+        A "label" is a symbol (variable) that the result of the `triple` must
+        be stored into.  One triple may have multiple labels attached to it,
+        meaning that the result must be stored into multiple places.
+        '''
         self.labels[symbol_id] = triple
         if symbol_id in self.dirty_labels: self.dirty_labels.remove(symbol_id)
         if symbol_table.get_by_id(symbol_id).context is None:
@@ -221,7 +281,7 @@ class block(object):
                 del self.uses_global[symbol_id]
 
     def write(self, next = None):
-        r'''Writes the block and triples to the database.
+        r'''Writes the block and associated triples to the database.
 
         Returns the id assigned to the block.
         '''
@@ -278,3 +338,20 @@ class block(object):
         #print self.name, "write returning", id
         return id
 
+def delete(symbol):
+    r'''Deletes all of the blocks associated with 'symbol' from the database.
+
+    This also deletes all associated information in the database for the
+    deleted blocks.
+
+    This is used to delete the results from a prior compile run.
+    '''
+    block_ids = crud.read_column('blocks', 'id', word_symbol_id=symbol.id)
+    crud.delete('gens', block_id=block_ids)
+    crud.delete('kills', block_id=block_ids)
+    crud.delete('ins', block_id=block_ids)
+    crud.delete('outs', block_id=block_ids)
+    triple.delete(block_ids)
+    crud.delete('block_successors', predecessor=block_ids)
+    crud.delete('block_successors', successor=block_ids)
+    crud.delete('blocks', id=block_ids)

@@ -1,5 +1,8 @@
 # set.py
 
+r'''The assignment statement.
+'''
+
 from ucc.database import block
 from ucclib.built_in import singleton
 
