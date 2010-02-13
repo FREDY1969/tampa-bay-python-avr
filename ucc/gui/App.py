@@ -21,10 +21,7 @@ class App(wx.App):
         wx.App.__init__(self, False)
 
     def OnInit(self):
-        
-        print self.GetAppName()
         self.SetAppName('ucc') # used by wx.StandardPaths
-        print self.GetAppName()
         
         # load configuration
         
