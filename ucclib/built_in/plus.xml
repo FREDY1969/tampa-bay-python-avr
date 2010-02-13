@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>plus</name>
+    <label>+</label>
+    <kind>operator</kind>
+    <defining>False</defining>
+    <answers>
+    </answers>
+</word>

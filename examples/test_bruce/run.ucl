@@ -1,0 +1,4 @@
+repeat:
+    toggle led-pin
+    repeat 800:
+        repeat 1000: pass

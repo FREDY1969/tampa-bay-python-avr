@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_choice_defining</name>
+    <label>Test Choice Defining</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="py" />
+    </answers>
+    <questions>
+        <question>
+            <name>my_choice</name>
+            <label>My Choice</label>
+            <min>1</min>
+            <max>1</max>
+            <type>choice</type>
+            <default>1</default>
+            <options>
+                <option name="HIGH" value="1" />
+                <option name="LOW" value="0" />
+            </options>
+        </question>
+    </questions>
+</word>
