@@ -5,8 +5,6 @@ import ConfigParser
 
 def load():
     paths = os.path.expanduser('~')
-    #import pprint
-    #pprint.pprint(paths)
     if sys.platform.startswith('win') or \
        sys.platform in ('os2', 'os2emx', 'riscos', 'atheos'):
         configFile = 'ucc.ini'
