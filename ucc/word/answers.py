@@ -1,10 +1,10 @@
 # answers.py
 
-r'''Answers to questions.
+r'''Answers to `questions`.
 
 These are designed to preserve the text that the user typed in to answer the
-question.  Thus, they are special answer objects, rather than simple python
-types.
+`questions.question`.  Thus, they are special answer objects, rather than
+simple python types.
 '''
 
 from xml.etree import ElementTree
@@ -13,9 +13,13 @@ def from_xml(answers_element):
     r'''Returns a dictionary of answers.
 
     The dictionary keys are the answer names, and the values are either:
-        - None -- for an optional answer that wasn't answered
-        - a (possibly empty) list of answer objects -- for a repeating answer
-        - an answer object -- for a single answer
+
+        None
+          for an optional answer that wasn't answered
+        A (possibly empty) list of `answer` objects
+          for a repeating answer
+        An `answer` object
+          for a single answer
 
     This will accept None for answers_element
     '''
@@ -55,7 +59,7 @@ def add_xml_subelement(root_element, answers):
 def add_xml_answers(answers_element, answers):
     r'''Fills in the <answers> tag.
 
-    Expects a dictionary of answers, as returned from from_xml.
+    Expects a dictionary of answers, as returned from `from_xml`.
     '''
     for name in sorted(answers.keys()):
         value = answers[name]
@@ -75,7 +79,8 @@ class answer(object):
     All answers except omitted answers and lists are (indirect) instances of
     this class.
 
-    The names of all answer subclasses start with 'ans_', for example: ans_bool.
+    The names of all answer subclasses start with ``ans_``, for example:
+    `ans_bool`.
     '''
 
     def __init__(self, name, value):
@@ -134,7 +139,9 @@ class ans_series(answer):
 
     The individual answers can be accessed as attributes on this object.
 
-    For example: some_ans_series.subquestion_name => subquestion answer.
+    For example::
+    
+        some_ans_series.subquestion_name => subquestion_answer.
     '''
 
     def __init__(self, name, subanswers = None):
@@ -157,7 +164,7 @@ class ans_series(answer):
         add_xml_answers(my_answers_element, self.attributes)
 
 class ans_choice(answer):
-    r'''This represents the answer to a question with a list of choices.
+    r'''This represents the `answer` to a `question` with a list of choices.
 
     The tag of the choice chosen is some_ans_choice.tag, and the subordinate
     answers (if any) are some_ans_choice.subanswers (as a dict, or None).
@@ -214,10 +221,10 @@ def parse_options(answer):
     return ans
 
 class ans_multichoice(ans_choice):
-    r'''This represents the answer to a question with a list of choices.
+    r'''This represents the `answer` to a `question` with a list of choices.
 
     This class is used for questions that may have multiple choices (multi-
-    selection).  Compare to ans_choice.
+    selection).  Compare to `ans_choice`.
 
     The options chosen are in a dictionary accessed through
     some_ans_multichoice.answers.  The keys are the tags, and the values are

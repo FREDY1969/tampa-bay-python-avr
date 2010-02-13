@@ -1,5 +1,13 @@
 # output_pin.py
 
+r'''Output-pins may be assigned to.
+
+The bit representing the pin is set or reset depending on the argument to the
+output-pin.
+
+You may specify whether the argument being True sets or resets the bit.
+'''
+
 from ucc.database import ast, symbol_table
 from ucc.assembler import io
 from ucclib.built_in import declaration
@@ -9,16 +17,16 @@ class output_pin(declaration.word):
         r'''This macro expands to an if statement.
 
         if arg:
-            set-output-bit port_name bit#
+            set-output-bit ioreg-bit
         else:
-            clear-output-bit port_name bit#
+            clear-output-bit ioreg-bit
 
         or
 
         if arg:
-            clear-output-bit port_name bit#
+            clear-output-bit ioreg-bit
         else:
-            set-output-bit port_name bit#
+            set-output-bit ioreg-bit
 
         depending on on-is setting.
         '''

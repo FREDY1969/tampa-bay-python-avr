@@ -1,13 +1,16 @@
 # ast.py
 
+r'''The helper classes for the AST information in the database.
+'''
+
 from __future__ import with_statement
 
 import itertools
 
-from ucc.database import block, crud, fn_xref, symbol_table
+from ucc.database import assembler, block, crud, fn_xref, symbol_table
 
 def delete_word_by_label(word_label):
-    r'''Deletes the word and all of it's ast nodes from the ast table.
+    r'''Delete all ast nodes associated with word_label from the database.
 
     This does not report an error if the word is not in the database.
     '''
@@ -16,9 +19,7 @@ def delete_word_by_label(word_label):
         delete_word_by_id(sym.id)
 
 def delete_word_by_id(id):
-    r'''Delete node, and all subordinate nodes, from database.
-
-    This deletes both macro expansions of the deleted node and child nodes.
+    r'''Delete all ast nodes associated with word_symbol_id 'id'.
     '''
     crud.delete('ast', word_symbol_id=id)
 
@@ -27,21 +28,24 @@ class ast(object):
 
     This is the AST representation created by the parser.  At the end of the
     parse, this structure is stored into the database and then discarded.
+
+    It is a generic one-size-fits-all object that stores the column values as
+    attributes on the object, and the child ast nodes in self.args. 
     '''
 
-    # Values passed as keyword args and stored as attributes that describe
-    # this ast node (and are set to None on macro_expand):
     attr_cols_node = (
+        #: Values passed as keyword args and stored as attributes that describe
+        #: this ast node (and are set to None on `macro_expand`).
         'kind', 'label', 'symbol_id', 'int1', 'int2', 'str1', 'str2',
     )
 
-    # All values passed as keyword args and stored as attributes.
     attr_cols = attr_cols_node + (
+        #: All values passed as keyword args and stored as attributes.
         'expect', 'line_start', 'column_start', 'line_end', 'column_end',
     )
 
-    # Values passed as parameters to the save method:
     arg_cols = (
+        #: Values passed as parameters to the save method.
         'word_symbol_id', 'parent_node', 'parent_arg_num', 'arg_order',
     )
 
@@ -53,6 +57,14 @@ class ast(object):
     line_start = column_start = line_end = column_end = None
 
     def __init__(self, *args, **kws):
+        r'''Generic init function.
+
+        Generally objects are created by calling `from_parser`, `call` or
+        `word` instead.
+
+        The 'args' are the child ast nodes, and 'kws' are the attributes for
+        this node.
+        '''
         self.args = args
         for name, value in kws.iteritems():
             if name not in self.attr_cols:
@@ -61,6 +73,11 @@ class ast(object):
 
     @classmethod
     def from_parser(cls, syntax_position_info, *args, **kws):
+        r'''Called from the `ucc.parser` to generate ast nodes.
+
+        The 'args' are the child ast nodes, and 'kws' are the attributes for
+        this node.
+        '''
         ans = cls(*args, **kws)
         ans.line_start, ans.column_start, ans.line_end, ans.column_end = \
           syntax_position_info
@@ -68,9 +85,13 @@ class ast(object):
 
     @classmethod
     def call(cls, fn_symbol_id, *args, **kws):
-        r'''Returns a call to fn_symbol_id with args *args.
+        r'''Returns a call to fn_symbol_id with 'args' as its arguments.
 
-        fn_symbol_id may be just the label of the global word.
+        'fn_symbol_id' may be either the integer id, or the label of the global
+        word as a string.
+
+        'kws' may optionally include 'syntax_position_info'.  Otherwise the
+        'kws' are simply passed to __init__ as attributes.
         '''
         if 'syntax_position_info' in kws:
             line_start, column_start, line_end, column_end = \
@@ -89,7 +110,11 @@ class ast(object):
              **kws):
         r'''Returns an ast node for the 'symbol_id' word.
 
-        symbol_id may be just the label of the global word.
+        'symbol_id' may be either the integer id, or the label of the global
+        word as a string.
+
+        'kws' are simply passed to __init__ as attributes, along with the
+        'kind' and the 'label' attributes.
         '''
         line_start, column_start, line_end, column_end = syntax_position_info
         if isinstance(symbol_id, (str, unicode)):
@@ -106,6 +131,16 @@ class ast(object):
                 self.line_end, self.column_end)
 
     def macro_expand(self, fn_symbol, words_needed, args, **kws):
+        r'''Replaces this ast node with the expanded node.
+
+        Also replaces the node's children ('args').
+
+        All attribute names in self.attr_cols_node that are not included in
+        'kws' are set to None.
+
+        Finally, it calls `prepare` on the updated node (itself) and returns
+        the prepared node.
+        '''
         self.args = args
         for key, value in kws.iteritems():
             setattr(self, key, value)
@@ -125,6 +160,17 @@ class ast(object):
                   ' ' + repr(self.args) if self.args else '')
 
     def prepare(self, fn_symbol, words_needed):
+        r'''Called immediately after parsing, before writing to the database.
+
+        Calls `prepare_args` on itself first, then prepare_<expect> on the
+        word in the first arg.
+
+        Also updates `fn_xref` and `symbol_table.symbol.side_effects` info so
+        that these data will be known during the intermediate code generation
+        phase that follows parsing.  See prepare_args_ function for more info.
+
+        .. _prepare_args: ucc.database.ast-module.html#prepare_args
+        '''
         if self.kind == 'call':
             self.prepare_args(fn_symbol, words_needed)
             if self.args and isinstance(self.args[0], ast) and \
@@ -146,22 +192,28 @@ class ast(object):
         return self
 
     def prepare_args(self, fn_symbol, words_needed):
+        r'''Replaces self.args with the prepared args.
+        '''
         self.args = \
           prepare_args(fn_symbol, self.args, words_needed)
 
-    def save(self, word_symbol_id,
+    def save(self, word_symbol,
              parent = None, parent_arg_num = None, arg_order = None):
+        r'''Writes itself and its children (args) to the database.
+        '''
         kws = dict(itertools.chain(
                      map(lambda attr: (attr, getattr(self, attr)),
                          self.attr_cols),
                      zip(self.arg_cols,
-                         (word_symbol_id, parent, parent_arg_num,
+                         (word_symbol.id, parent, parent_arg_num,
                           arg_order))))
-        self.word_symbol_id = word_symbol_id
+        self.word_symbol = word_symbol
         self.id = crud.insert('ast', **kws)
-        save_args(self.args, word_symbol_id, self.id)
+        save_args(self.args, word_symbol, self.id)
 
     def compile(self):
+        r'''Generates intermediate code for this AST node.
+        '''
         if self.kind in ('approx', 'int', 'ratio'):
             return block.Current_block.gen_triple(
                      self.kind, self.int1, self.int2,
@@ -170,10 +222,10 @@ class ast(object):
         if self.kind == 'string':
             name = crud.gensym('strlit')
             sym = symbol_table.symbol.create(name, 'const')
-            assembler.block('flash', name).write((
-                assembler.inst('int16', str(len(self.str1)), length=2),
-                assembler.inst('bytes', repr(self.str1), length=len(self.str1)),
-            ))
+            asm_block = assembler.block(self.word_symbol.id, 'flash', name)
+            asm_block.append_inst('int16', str(len(self.str1)))
+            asm_block.append_inst('bytes', repr(self.str1))
+            asm_block.write()
             return block.Current_block.gen_triple(
                      'global', sym.id,
                      syntax_position_info=self.get_syntax_position_info())
@@ -203,7 +255,7 @@ class ast(object):
             return None
 
         if self.kind == 'label':
-            block.new_label(self.label, self.word_symbol_id)
+            block.new_label(self.label, self.word_symbol.id)
             return None
 
         if self.kind == 'jump':
@@ -239,17 +291,19 @@ class ast(object):
                                (self.id, self.kind))
 
     def compile_args(self):
+        r'''Returns a tuple of triples by compiling each arg.
+        '''
         return compile_args(self.args)
 
 def prepare_args(fn_symbol, args, words_needed):
     r'''Prepares each of the args.
 
-    This involves setting the 'expect' and 'type_id' attributes for each ast
-    and macro expansion.
+    This involves setting the 'expect' and 'type_id' attributes for each `ast`
+    and doing macro expansion.
 
     It also sets the 'side_effects' and 'suspends' attributes on the symbols
-    for functions, and records xref info using the ucc.database.fn_xref
-    'calls', 'uses', and 'sets' functions.
+    for functions, and records xref info using the `fn_xref.calls`,
+    'fn_xref.uses', and 'fn_xref.sets' functions.
 
     The labels of the words needed by these args are added to the
     'words_needed' set.
@@ -261,18 +315,24 @@ def prepare_args(fn_symbol, args, words_needed):
                    else prepare_args(fn_symbol, arg, words_needed)
                  for arg in args)
 
-def save_args(args, word_symbol_id, parent = None):
+def save_args(args, word_symbol, parent = None):
+    r'''Writes args as children to word_symbol in the database.
+
+    'args' is a sequence of: None, `ast` node, or sequence of these.
+    '''
     for arg_num, arg in enumerate(args):
         if arg is None:
             arg = ast(kind = 'None', expect = None)
         if isinstance(arg, ast):
-            arg.save(word_symbol_id, parent, arg_num, 0)
+            arg.save(word_symbol, parent, arg_num, 0)
         else:
             for position, x in enumerate(arg):
-                x.save(word_symbol_id, parent, arg_num, position)
+                x.save(word_symbol, parent, arg_num, position)
 
 def compile_args(args):
     r'''Compiles each of the args.
+
+    Each 'arg' is either an `ast` node or sequence of `ast` nodes.
 
     Returns a tuple of triples.
     '''
@@ -281,9 +341,12 @@ def compile_args(args):
                    else compile_args(arg)
                  for arg in args)
 
-def save_word(label, symbol_id, args):
-    r'''Writes the ast for word 'symbol_id' to the database.
+def save_word(label, word_symbol, args):
+    r'''Writes 'args' as the ast for word_symbol to the database.
+
+    Uses 'label' to delete all ast nodes associated with that label first.
+    These would the ast nodes saved from a prior compile.
     '''
     delete_word_by_label(label)
-    save_args(args, symbol_id)
+    save_args(args, word_symbol)
 

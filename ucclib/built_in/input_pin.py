@@ -1,5 +1,12 @@
 # input_pin.py
 
+r'''Input pins are used as expressions.
+
+The bit representing the pin is read each time the expression is executed.
+
+You may specify whether the bit being ON or OFF represents True.
+'''
+
 from ucc.database import block
 from ucclib.built_in import declaration, output_pin
 

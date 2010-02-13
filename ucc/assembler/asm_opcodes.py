@@ -1,5 +1,11 @@
 # asm_opcodes.py
 
+r'''All of the AVR instructions.
+
+Each instruction is stored as a module variable name matching the opcode for
+that instruction.
+'''
+
 from asm_inst import inst1, inst2, bytes, int8, int16, int32, zeroes
 
 # Arithmetic and logic instructions
@@ -33,14 +39,14 @@ FMULS = inst1('FMULS', '0000 0011 1ddd 0rrr', 2, d=(16,23), r=(16,23))
 FMULSU = inst1('FMULSU', '0000 0011 1ddd 1rrr', 2, d=(16,23), r=(16,23))
 
 # Branch instructions
-RJMP = inst1('RJMP', '1100 kkkk kkkk kkkk', 2, k=(-2048,2047))
-IJMP = inst1('IJMP', '1001 0100 0000 1001', 2)
-JMP = inst2('JMP', '1001 010k kkkk 110k kkkk kkkk kkkk kkkk', 3)
+RJMP = inst1('RJMP', '1100 kkkk kkkk kkkk', 2, k=(-2048,2047), end=True)
+IJMP = inst1('IJMP', '1001 0100 0000 1001', 2, end=True)
+JMP = inst2('JMP', '1001 010k kkkk 110k kkkk kkkk kkkk kkkk', 3, end=True)
 RCALL = inst1('RCALL', '1101 kkkk kkkk kkkk', 3, k=(-2048,2047))
 ICALL = inst1('ICALL', '1001 0101 0000 1001', 3)
 CALL = inst2('CALL', '1001 010k kkkk 111k kkkk kkkk kkkk kkkk', 4)
-RET = inst1('RET', '1001 0101 0000 1000', 4)
-RETI = inst1('RETI', '1001 0101 0001 1000', 4)
+RET = inst1('RET', '1001 0101 0000 1000', 4, end=True)
+RETI = inst1('RETI', '1001 0101 0001 1000', 4, end=True)
 CPSE = inst1('CPSE', '0001 00rd dddd rrrr', (1,2,3))
 CP = inst1('CP', '0001 01rd dddd rrrr', 1)
 CPC = inst1('CPC', '0000 01rd dddd rrrr', 1)

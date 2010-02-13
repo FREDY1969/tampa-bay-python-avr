@@ -1,5 +1,10 @@
 # if_.py
 
+r'''If statement.
+
+This is implemented as a macro.
+'''
+
 from ucc.database import ast, crud
 from ucclib.built_in import macro
 

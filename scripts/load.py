@@ -52,20 +52,11 @@ def run():
             'avr_config_path',
             'avrdude_programmer',
             'upload_rate'
-        ) if Registry.config.has_option('arduino', param)
+        ) if config.has_option('arduino', param)
     )
-    for k in kw_args.keys():
-        if options.has_key(k): continue
-        else: options[k] = kw_args[k]
-        
-    load_path = args[0]
-    for memory_type in 'flash', 'eeprom':
-        if os.path.exists(os.path.join(load_path, memory_type + '.hex')):
-            print "loading", memory_type + '.hex'
-            load.run(load_path=load_path, memory_type=memory_type,
-                     **kw_args)
-    
-    load.run(*args, **options)
+       
+    kw_args.update(options)    
+    load.run(*args, **kw_args)
 
 if __name__ == '__main__':
     run()
