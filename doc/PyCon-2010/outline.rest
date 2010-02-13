@@ -1,0 +1,201 @@
+Domain Specific Languages as First Class Citizens
+=================================================
+
+====================
+Introduction (1 min)
+====================
+
+- I represent the Tampa Bay Python meetup group.
+- We are using Python for a group hands-on development exercise to tackle a
+  large problem: that of writing a compiler for the Arduino microcontroller.
+- This project demonstrates what a group of 4 newcomers to Python with
+  full-time jobs and 1 Pythonista without a job can do.
+- I want you to ask yourself, during this talk, whether this could be done in
+  any other language!
+
+=================================================================
+Writing your library as a Domain Specific Language (DSL) (2 mins)
+=================================================================
+
+- DSLs provide language abstraction tools for unique computational models
+  (*how* to do computation, vs abstractions for *what* a computation does)
+- allows you to empower the user of your library by writing the library
+  as a DSL
+
+===================================================================
+DSLs as First Class Citizens: It's all about Declarations! (4 mins)
+===================================================================
+
+- manage the program's collection of declarations graphically in a GUI,
+  rather than grammatically in source modules
+
+  - so the focus changes from source module, to the individual declaration
+  - so each source file only has one function body
+  - now different declarations can use different grammars for their
+    bodies!
+
+- adding new kinds of declarations (something like types)
+
+  - you develop new kinds of declarations, possibly with new grammars
+
+- declare objects
+
+  - your user uses your declaration to declare objects in his program,
+    and writes code in your syntax (if you've defined one)
+
+- refer to these objects in normal functions
+
+  - your user refers to these objects
+
+    - here we're only thinking new syntax for new control statements
+    - otherwise, it's about allowing you to have funny ways to compile calls
+      to these objects
+
+=======================================
+Questions & Answers vs. Syntax (5 mins)
+=======================================
+
+- Q&A can accomplish much of what syntax is used for.
+
+  - the user doesn't have to learn new syntax (reduces the "surface area")
+
+    - doesn't start out staring at a blank screen
+
+  - still need text with syntax for executable code
+
+- at the declaration level
+
+  - Q&A for declaration details
+
+    - with Q&A, most declarations don't need any text and syntax at all
+
+  - text and syntax for executable code
+
+- at the library level (import)
+
+  - can customize our use of libraries
+
+- at the program level (build and install)
+
+  - can customize programs to our specific hardware and site
+  - vs ini files or xml files, which are text and syntax (starting with the
+    blank screen)
+
+- makes the easy stuff easy, for both you and your users
+
+=============================
+Roll your own syntax (4 mins)
+=============================
+
+- use standard tools (e.g., lex/yacc, xml parsers) to develop your parser
+
+  - SQLAlchemy
+  - HTML Templates
+  - Grammars for parser generators
+  - regular expressions
+
+- sort of like Zope's "Through The Web" style of development
+
+===============================================
+Integrating your DSL with the compiler (2 mins)
+===============================================
+
+- three levels of hooks
+
+  - when your user instantiates your declaration
+
+    - hooks for your own parser
+
+  - when your user refers to this instance somewhere else
+
+    - hooks for write macros
+    - hooks for generating your own intermediate code
+
+====================
+Performance (4 mins)
+====================
+
+- better developer productivity
+
+  - Q&A guides user through the gory details
+  - DSL more productive for its specific task than general purpose programming
+    language
+
+- better run-time performance
+
+  - decision making code in your library moved to compile-time
+  - global optimizations
+
+    - better register allocation on Arduino
+    - possible order of magnitude performance boost for Python
+
+===================
+Conclusion (3 mins)
+===================
+
+- I hope that you have enjoyed the ideas presented here; but let me step back
+  and leave you with one last idea.
+- Does Python complete the modern challenge to "capitalism" going on within the
+  software world?
+
+  - consider the distinction between central planning and free enterprise
+    vs the distinction between capitalism and ??? (open source?)
+
+  - capital needed for marketing
+
+    - challenged by
+
+      - internet
+      - open source
+      - search engines
+
+  - capital needed for equipment
+
+    - challenged by
+    
+      - computers now a consumer commodity
+
+  - capital needed for labor
+
+    - now challenged by
+
+      - Python
+
+        - 1 person can now do with Python what would have taken 5 to 10 people
+          in any other language
+
+- All of these factors lead away from central planning and towards more free
+  enterprise -- in a way, more chaos.
+
+  - So is it capital, or is it free enterprise that has been the key to our
+    success?
+  - Is capital the enabler, or an impediment (to those that lack it) of free
+    enterprise?
+
+- Finally, don't just think of Python as a toy "scripting" language.
+  Try *really* leaning on it to do some seriously heavy lifting.
+
+  - You will be pleasantly surprised!
+  - ... and empowered!
+
+
+===================
+Notes for Reviewers
+===================
+
+These ideas are being implemented in an open source project.  The talk is
+presented from the perspective of the developer of a library that wants to
+build a domain specific language to put more power into his user's hands.
+It does not discuss the internal compiler details necessary to provide these
+capabilities to the library writer.  Thus, I have labeled this as an
+intermediate talk.
+
+The project development is about half-way through, so we haven't quite gotten
+to the point of seeing how well these ideas work in practice.
+
+I expect to have a running prototype by the conference date, and that we will
+be just starting to get a feel for how well these ideas work by then.  This
+will affect the presentation somewhat.
+
+Finally, I will be paying my own way to the conference and asking for
+financial aid.

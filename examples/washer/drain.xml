@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>drain</name>
+    <label>drain</label>
+    <kind>output_pin</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="on_is" repeated="False" type="choice">
+            <options>
+                <option value="HIGH" />
+            </options>
+        </answer>
+        <answer name="pin_number" repeated="False" type="int" value="4" />
+    </answers>
+</word>

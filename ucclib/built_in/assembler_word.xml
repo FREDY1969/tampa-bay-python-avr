@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>assembler_word</name>
+    <label>assembler-word</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="asm" />
+    </answers>
+    <questions>
+        <question>
+            <name>address</name>
+            <label>address</label>
+            <min>0</min>
+            <max>1</max>
+            <type>int</type>
+        </question>
+    </questions>
+</word>

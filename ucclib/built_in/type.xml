@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>type</name>
+    <label>type</label>
+    <kind>question</kind>
+    <defining>False</defining>
+    <questions>
+        <question>
+            <name>type</name>
+            <label>type</label>
+            <type>choice</type>
+            <options>
+                <option name="int" value="int">
+                    <questions>
+                        <question>
+                            <name>min_value</name>
+                            <label>min value</label>
+                            <min>0</min>
+                            <max>1</max>
+                            <type>int</type>
+                        </question>
+                        <question>
+                            <name>max_value</name>
+                            <label>max value</label>
+                            <min>0</min>
+                            <max>1</max>
+                            <type>int</type>
+                        </question>
+                    </questions>
+                </option>
+                <option name="fixedpt" value="fixedpt">
+                    <questions>
+                        <question>
+                            <name>binary_pt</name>
+                            <label>binary point</label>
+                            <type>int</type>
+                        </question>
+                        <question>
+                            <name>precision</name>
+                            <label>precision</label>
+                            <type>int</type>
+                        </question>
+                        <question>
+                            <name>min_value</name>
+                            <label>min value</label>
+                            <min>0</min>
+                            <max>1</max>
+                            <type>int</type>
+                        </question>
+                        <question>
+                            <name>max_value</name>
+                            <label>max value</label>
+                            <min>0</min>
+                            <max>1</max>
+                            <type>int</type>
+                        </question>
+                    </questions>
+                </option>
+                <option name="array" value="array">
+                    <questions>
+                        <question>
+                            <name>min_value</name>
+                            <label>min size</label>
+                            <min>0</min>
+                            <max>1</max>
+                            <type>int</type>
+                        </question>
+                        <question>
+                            <name>max_value</name>
+                            <label>max size</label>
+                            <min>0</min>
+                            <max>1</max>
+                            <type>int</type>
+                        </question>
+                        <question>
+                            <name>element_type</name>
+                            <label>element type</label>
+                            <type>indirect</type>
+                            <use>type</use>
+                        </question>
+                    </questions>
+                </option>
+                <option name="pointer" value="pointer">
+                    <questions>
+                        <question>
+                            <name>memory</name>
+                            <label>memory</label>
+                            <type>indirect</type>
+                            <use>memory</use>
+                        </question>
+                        <question>
+                            <name>element_type</name>
+                            <label>element type</label>
+                            <type>indirect</type>
+                            <use>type</use>
+                        </question>
+                    </questions>
+                </option>
+                <option name="record" value="record">
+                    <questions>
+                        <questions>
+                            <name>memory</name>
+                            <label>memory</label>
+                            <min>1</min>
+                            <max>infinite</max>
+                            <orderable>True</orderable>
+                            <question>
+                                <name>name</name>
+                                <label>field name</label>
+                                <type>string</type>
+                            </question>
+                            <question>
+                                <name>element_type</name>
+                                <label>type</label>
+                                <type>indirect</type>
+                                <use>type</use>
+                            </question>
+                        </questions>
+                    </questions>
+                </option>
+            </options>
+        </question>
+    </questions>
+</word>

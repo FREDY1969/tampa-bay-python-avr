@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>buzz</name>
+    <label>buzz</label>
+    <kind>task</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="argument" repeated="True" type="string" value="how-long" />
+    </answers>
+</word>

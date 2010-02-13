@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>function</name>
+    <label>function</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="ucl" />
+    </answers>
+    <questions>
+        <question>
+            <name>argument</name>
+            <label>argument</label>
+            <min>0</min>
+            <max>infinite</max>
+            <orderable>True</orderable>
+            <type>string</type>
+        </question>
+    </questions>
+</word>
