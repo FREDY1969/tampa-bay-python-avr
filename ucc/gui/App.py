@@ -22,7 +22,9 @@ class App(wx.App):
 
     def OnInit(self):
         
+        print self.GetAppName()
         self.SetAppName('ucc') # used by wx.StandardPaths
+        print self.GetAppName()
         
         # load configuration
         

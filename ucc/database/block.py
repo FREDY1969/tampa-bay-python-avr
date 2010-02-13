@@ -346,12 +346,13 @@ def delete(symbol):
 
     This is used to delete the results from a prior compile run.
     '''
-    block_ids = crud.read_column('blocks', 'id', word_symbol_id=symbol.id)
-    crud.delete('gens', block_id=block_ids)
-    crud.delete('kills', block_id=block_ids)
-    crud.delete('ins', block_id=block_ids)
-    crud.delete('outs', block_id=block_ids)
-    triple.delete(block_ids)
-    crud.delete('block_successors', predecessor=block_ids)
-    crud.delete('block_successors', successor=block_ids)
-    crud.delete('blocks', id=block_ids)
+    block_ids = crud.read_column('blocks', 'id', word_symbol_id=symbol)
+    if block_ids:
+        crud.delete('gens', block_id=block_ids)
+        crud.delete('kills', block_id=block_ids)
+        crud.delete('ins', block_id=block_ids)
+        crud.delete('outs', block_id=block_ids)
+        triple.delete(block_ids)
+        crud.delete('block_successors', predecessor=block_ids)
+        crud.delete('block_successors', successor=block_ids)
+        crud.delete('blocks', id=block_ids)
