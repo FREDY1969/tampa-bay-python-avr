@@ -16,13 +16,15 @@ def usage():
                        os.path.basename(sys.argv[0]))
     sys.exit(2)
 
-if __name__ == '__main__':
-    if len(sys.argv) < 2: usage()
-    if sys.argv[1] == '-d':
+def do_compile(args, quiet = False):
+    if len(args) < 1: usage()
+    if args[0] == '-d':
         compile.Debug = 1
-        del sys.argv[1]
-    if len(sys.argv) != 2: usage()
+        del args[0]
+    if len(args) != 1: usage()
     compile.elapsed()
-    top = top_package.top(sys.argv[1])
-    compile.run(top, False)
+    top = top_package.top(args[0])
+    compile.run(top, False, quiet)
 
+if __name__ == '__main__':
+    do_compile(sys.argv[1:])
