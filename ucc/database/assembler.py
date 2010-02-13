@@ -146,6 +146,7 @@ def delete(symbol):
     Also deletes the blocks instructions.
     '''
     asm_block_ids = crud.read_column('assembler_blocks', 'id',
-                                     word_symbol_id=symbol.id)
-    crud.delete('assembler_code', block_id=asm_block_ids)
-    crud.delete('assembler_blocks', id=asm_block_ids)
+                                     word_symbol_id=symbol)
+    if asm_block_ids:
+        crud.delete('assembler_code', block_id=asm_block_ids)
+        crud.delete('assembler_blocks', id=asm_block_ids)
