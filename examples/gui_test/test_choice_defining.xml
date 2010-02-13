@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <word>
-    <name>test_defining_word</name>
-    <label>Test Defining Word</label>
+    <name>test_choice_defining</name>
+    <label>Test Choice Defining</label>
     <kind>declaration</kind>
     <defining>True</defining>
     <answers>

@@ -8,7 +8,7 @@ from ucc.gui import Registry
 
 class MainMenuBar(wx.MenuBar):
     def __init__(self, parent):
-        wx.MenuBar.__init__(self)
+        super(MainMenuBar, self).__init__()
         self.parent = parent
         
         # setup menu

@@ -10,10 +10,11 @@ from ucc.gui import Registry
 from ucc.gui.MainMenuBar import MainMenuBar
 from ucc.gui.LeftTreePanel import LeftTreePanel
 from ucc.gui.RightMainPanel import RightMainPanel
+from ucc.gui import debug
 
 class MainFrame(wx.Frame):
     def __init__(self, parent, id, title):
-        wx.Frame.__init__(self, parent, id, title,
+        super(MainFrame, self).__init__(parent, id, title,
             size = map(int,
                        Registry.config.get('gui', 'window-size').split('x')),
             style = wx.DEFAULT_FRAME_STYLE # | wx.NO_FULL_REPAINT_ON_RESIZE
@@ -90,7 +91,7 @@ class MainFrame(wx.Frame):
         self.Show(True)
     
     def paint(self):
-        print "painting mainFrame"
+        debug.trace("Painting mainFrame")
         Registry.leftTreePanel.paint()
         Registry.rightMainPanel.paint()
     

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_int</name>
+    <label>Test Integer</label>
+    <kind>test_int_defining</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="my_int" repeated="False" type="int" value="13" />
+    </answers>
+</word>

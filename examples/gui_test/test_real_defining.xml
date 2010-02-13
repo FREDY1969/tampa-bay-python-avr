@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_real_defining</name>
+    <label>Test Real Defining</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="py" />
+    </answers>
+    <questions>
+        <question>
+            <name>my_real</name>
+            <label>My Real</label>
+            <min>1</min>
+            <max>1</max>
+            <type>real</type>
+        </question>
+    </questions>
+</word>

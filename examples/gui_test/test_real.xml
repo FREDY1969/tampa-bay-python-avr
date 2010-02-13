@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_real</name>
+    <label>Test Real</label>
+    <kind>test_real_defining</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="my_real" repeated="False" type="real" value="" />
+    </answers>
+</word>

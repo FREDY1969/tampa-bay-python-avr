@@ -12,14 +12,17 @@ import wx
 from ucc.gui import Registry
 from ucc.gui.MainFrame import MainFrame
 from ucc.word import top_package, xml_access
+from ucc.gui import debug
 
 class App(wx.App):
-    def __init__(self):
+    def __init__(self, packagePath=None, *args, **kwargs):
         r'''init base class (which calls self.OnInit()...)
         '''
-
-        wx.App.__init__(self, False)
-
+        
+        debug.header('Application Started')
+        self.packagePath = packagePath
+        super(App, self).__init__(False, *args, **kwargs)
+    
     def OnInit(self):
         
         self.SetAppName('ucc') # used by wx.StandardPaths
@@ -36,7 +39,7 @@ class App(wx.App):
         else:
             configFile = '.ucc.ini'
         configPath = os.path.join(Registry.paths.GetUserConfigDir(), configFile)
-        print "configPath", configPath
+        debug.trace("configPath: %s" % configPath)
         if not os.path.exists(configPath):
             # This may need to be changed eventually to support zipped
             # installations of this compiler.
@@ -83,12 +86,10 @@ class App(wx.App):
         
         # process input arguments for package/mode, if not ask for package/mode
         
-        try:
-            packagePath = sys.argv[1]
-        except IndexError:
-            packagePath = self.pickMode()
+        if not self.packagePath:
+            self.packagePath = self.pickMode()
         
-        self.processPath(packagePath)
+        self.processPath(self.packagePath)
         self.initPackage()
         
         # setup the mainFrame to start the app
@@ -171,12 +172,12 @@ class App(wx.App):
         self.saveWord()
     
     def saveWord(self):
-        print "saving word"
         if Registry.currentWord and Registry.currentWord.top:
             Registry.currentWord.write_xml()
             source_filename = Registry.currentWord.get_filename()
             if source_filename:
                 Registry.rightMainPanel.bottomText.SaveFile(source_filename)
+            debug.success("Word %s saved" % Registry.currentWord.name)
     
     def onAbout(self, event):
         dialog = wx.MessageDialog(
@@ -208,10 +209,11 @@ class App(wx.App):
         load_path = Registry.currentPackage
         for memory_type in 'flash', 'eeprom':
             if os.path.exists(os.path.join(load_path, memory_type + '.hex')):
-                print "loading", memory_type + '.hex'
+                debug.trace("Loading " + memory_type + '.hex')
                 load.run(load_path=load_path, memory_type=memory_type,
                          **kw_args)
     
     def onExit(self, event):
+        self.saveWord()
         Registry.mainFrame.Close(True)
     

@@ -60,7 +60,6 @@ def read_word(word_name, package_dir):
     
     Use `word.write_xml` to write the xml file back out.
     '''
-    #print "read_word", word_name
     root = ElementTree.parse(os.path.join(package_dir, word_name + '.xml')) \
                       .getroot()
     return from_xml(root, package_dir)
@@ -173,6 +172,11 @@ class word(object):
             return default
         return self.answers[question_name]
 
+    def set_answer(self, question_name, answer):
+        if not self.answers or question_name not in self.answers:
+            raise KeyError("%s: no answer for %s" % (self.label, question_name))
+        self.answers[question_name] = answer
+
     def get_value(self, question_name, default = None):
         r'''Return the value of the answer to question_name.
 
@@ -200,7 +204,3 @@ class word(object):
         if suffix is None: return None
         return os.path.join(self.package_dir, self.name + suffix)
 
-    def set_answer(self, question_name, answer):
-        if not self.answers or question_name not in self.answers:
-            raise KeyError("%s: no answer for %s" % (self.label, question_name))
-        self.answers[question_name] = answer
