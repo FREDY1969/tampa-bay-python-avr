@@ -179,7 +179,8 @@ class high_level_word(word):
             p = block.Current_block.gen_triple('param', i,
                                                arg.compile(),
                                                syntax_position_info=
-                                                 arg.get_syntax_position_info())
+                                                 arg.get_syntax_position_info(),
+                                               call_triple=ans)
             ans.add_hard_predecessor(p)
         return ans
 
