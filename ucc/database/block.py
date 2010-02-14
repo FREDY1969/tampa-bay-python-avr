@@ -198,7 +198,7 @@ class block(object):
         self.write()
 
     def gen_triple(self, operator, int1=None, int2=None, string=None,
-                         syntax_position_info=None):
+                         syntax_position_info=None, call_triple=None):
         r'''Create a new triple for this block.
 
         This method is only called on Current_block.
@@ -206,7 +206,7 @@ class block(object):
         #print self.name, "gen_triple", operator, int1, int2, string
         if self.more():
             return Current_block.gen_triple(operator, int1, int2, string,
-                                            syntax_position_info)
+                                            syntax_position_info, call_triple)
         if operator in ('global', 'local'):
             if int1 in self.labels and int1 not in self.dirty_labels:
                 return self.labels[int1]
@@ -246,7 +246,8 @@ class block(object):
                 self.triples[key] = triple.triple(operator, int1, int2, string,
                                                   syntax_position_info)
             return self.triples[key]
-        ans = triple.triple(operator, int1, int2, string, syntax_position_info)
+        ans = triple.triple(operator, int1, int2, string,
+                            syntax_position_info, call_triple)
         if operator == 'global':
             self.uses_global[int1].append(ans)
             if int1 in self.sets_global:

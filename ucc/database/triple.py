@@ -9,15 +9,15 @@ class triple(object):
     r'''Represents one triple.
 
     These objects are created in memory first, then written as a block to the
-    database.  This allows them to be manipulated by `compile` process without
-    needed to update the database.
+    database.  This allows them to be manipulated by the `compile` process
+    without needing to update the database.
     '''
     id = None
     soft_predecessors_written = False
     writing = False
 
     def __init__(self, operator, int1=None, int2=None, string=None,
-                       syntax_position_info=None):
+                       syntax_position_info=None, call_triple=None):
         r'''Creates the object, but does not write it to the database (yet).
 
         Use `block.block.gen_triple` instead.
@@ -30,6 +30,7 @@ class triple(object):
         self.string = string
         self.line_start, self.column_start, self.line_end, self.column_end = \
           syntax_position_info or (None, None, None, None)
+        self.call_triple = call_triple
 
         # All the symbol_ids to store this value into.
         self.labels = {}        # {symbol_id: is_gen}
@@ -108,6 +109,8 @@ class triple(object):
                                   int1=int1,
                                   int2=int2,
                                   string=self.string,
+                                  call_triple_id=\
+                                    self.call_triple and self.call_triple.id,
                                   line_start=self.line_start,
                                   column_start=self.column_start,
                                   line_end=self.line_end,

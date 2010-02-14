@@ -10,7 +10,7 @@ import time
 
 from ucc.word import helpers
 from ucc.parser import genparser, hex_file
-from ucc.database import crud, fn_xref, symbol_table, types
+from ucc.database import crud, fn_xref, symbol_table, types, triple2
 from ucc.assembler import assemble
 from ucclib.built_in import declaration
 
@@ -145,7 +145,17 @@ def optimize():
     pass
 
 def gen_assembler():
-    pass
+    for block_id, name, word_symbol_id, next, next_conditional \
+     in crud.read_as_dicts('blocks', 'id', 'name', 'word_symbol_id', 'next',
+                                     'next_conditional'):
+        triples = triple2.read_triples(block_id)
+        #with crud.db_transaction():
+            #crud.Db_cur.execute('''
+            #    update triples set order_in_block = 1
+            #     where order_in_block is null
+            #       and id not in (select last_triple_id from blocks)
+            #''')
+            #sys.stderr.write("gen_assembler: rowcount = %d\n" % crud.Db_cur.rowcount)
 
 def assemble_program(package_dir):
     r'''Assemble all of the sections.
