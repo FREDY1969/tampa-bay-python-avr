@@ -2,10 +2,12 @@
 
 r'''Triple processing for gen_assembler.
 
-This reads the triples back in from the database, but into a new class (rather
-than `ucc.database.triple.triple` to support gen_assembler.  This ends up
-setting the order_in_block and reg_class columns for each triple.
+This reads the triples back in from the database, but into a new `triple` class
+(rather than `ucc.database.triple.triple`) to support gen_assembler.  This ends
+up setting the order_in_block and reg_class columns for each triple.
 '''
+
+import sys   # temp for debugging...
 
 from ucc.database import crud
 
@@ -64,10 +66,12 @@ class triple(object):
         self.children = [self]
 
     def connect_children(self, triple_id_map):
-        if self.kind not in int1_operator_exclusions and self.int1 is not None:
+        if self.operator not in int1_operator_exclusions and \
+           self.int1 is not None:
             self.int1 = triple_id_map[self.int1]
             self.int1.add_parent(self)
-        if self.kind not in int2_operator_exclusions and self.int2 is not None:
+        if self.operator not in int2_operator_exclusions and \
+           self.int2 is not None:
             self.int2 = triple_id_map[self.int2]
             self.int2.add_parent(self)
         if self.parent:
@@ -132,9 +136,13 @@ def del_node(node, lists):
     return filter(None, lists)
 
 def read_triples(block_id):
+    r'''Reads and returns list of all `triple` objects in block_id.
+    '''
+    #print >> sys.stderr, "read_triples", block_id
     triple_id_map = {}
     triples = [triple(row, triple_id_map)
                for row in crud.read_as_dicts('triples', block_id=block_id)]
+    #print >> sys.stderr, "read_triples: triples", triples
     for t in triples:
         t.connect_children(triple_id_map)
     for t in triples:

@@ -272,6 +272,9 @@ create table triple_order_constraints (
     primary key (predecessor, successor)
 );
 
+create index toc_successor_index
+          on triple_order_constraints(successor, predecessor);
+
 create table kills (
     block_id int not null references blocks(id),
     symbol_id int not null references symbol_table(id),
