@@ -146,16 +146,90 @@ def optimize():
 
 def gen_assembler():
     for block_id, name, word_symbol_id, next, next_conditional \
-     in crud.read_as_dicts('blocks', 'id', 'name', 'word_symbol_id', 'next',
-                                     'next_conditional'):
+     in crud.read_as_tuples('blocks', 'id', 'name', 'word_symbol_id', 'next',
+                                      'next_conditional'):
         triples = triple2.read_triples(block_id)
-        #with crud.db_transaction():
-            #crud.Db_cur.execute('''
-            #    update triples set order_in_block = 1
-            #     where order_in_block is null
-            #       and id not in (select last_triple_id from blocks)
-            #''')
-            #sys.stderr.write("gen_assembler: rowcount = %d\n" % crud.Db_cur.rowcount)
+        if Debug: print >> sys.stderr, "triples", triples
+        tops = filter(lambda t: len(t.parents) == 0, triples)
+        if Debug: print >> sys.stderr, "tops", tops
+        crud.Db_cur.execute('''
+            select predecessor, successor
+              from triple_order_constraints
+             where predecessor in (%(qmarks)s) or successor in (%(qmarks)s)
+        ''' % {'qmarks': ', '.join('?' * len(triples))},
+        [t.id for t in triples] * 2)
+        pred_succ = crud.Db_cur.fetchall()
+        if Debug: print >> sys.stderr, "pred_succ", pred_succ
+        shareds = filter(lambda s: len(s) > 1,
+                         (frozenset(tops(t.parents))
+                          for t in triples if len(t.parents) > 1))
+        if Debug: print >> sys.stderr, "shareds", shareds
+        for top in order_tops(tops, pred_succ, shareds):
+            print >> sys.stderr, \
+                  'gen_assembler for block', block_id, 'triple', top.id
+            #with crud.db_transaction():
+
+def tops(triples):
+    return itertools.chain.from_iterable(
+             (tops(t.parents) if t.parents else (t,)) for t in triples)
+
+def order_tops(tops, pred_succ, shareds):
+    tops = list(tops)
+    leftovers = set()
+
+    def process(t_set, shareds):
+        def remove(t):
+            assert t in tops
+            tops.remove(t)
+            if t in leftovers: leftovers.remove(t)
+            return filter(lambda ps: ps[0] != t and ps[1] != t, shareds)
+        for t_shared in pick(t_set, shareds):
+            found_one = False
+            try_again = True
+            while t_shared and try_again:
+                try_again = False
+                for t in t_shared.copy():
+                    if t not in succs:
+                        shareds = remove(t)
+                        t_shared.remove(t)
+                        try_again = True
+                        found_one = True
+                        yield t, shareds
+            assert found_one
+            for t in leftovers:
+                if t not in succs:
+                    shareds = remove(t)
+                    yield t, shareds
+            leftovers.update(t_shared)
+            break
+        else:
+            assert False, "pick failed"
+
+    while pred_succ:
+        if Debug: print >> sys.stderr, "pred_succ", pred_succ
+        if Debug: print >> sys.stderr, "tops", tops
+        preds = frozenset(ps[0] for ps in pred_succ)
+        succs = frozenset(ps[1] for ps in pred_succ)
+        available_preds = preds - succs
+        assert available_preds
+        for t, shareds in process(available_preds, shareds):
+            yield t
+    if Debug: print >> sys.stderr, "while done: tops", tops
+    if tops:
+        succs = frozenset(ps[1] for ps in pred_succ)
+        for t, shareds in process(frozenset(tops), shareds):
+            yield t
+
+def pick(t_set, shareds):
+    if Debug: print >> sys.stderr, "pick", t_set, shareds
+    t_yielded = set()
+    for t in t_set:
+        t_shared = set(s for s in shareds if t in s)
+        if t_shared:
+            t_yielded.add(t)
+            yield t_shared
+    for t in t_set - t_yielded:
+        yield set((t,))
 
 def assemble_program(package_dir):
     r'''Assemble all of the sections.
