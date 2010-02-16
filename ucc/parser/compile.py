@@ -10,7 +10,7 @@ import time
 
 from ucc.word import helpers
 from ucc.parser import genparser, hex_file
-from ucc.database import crud, fn_xref, symbol_table, types
+from ucc.database import crud, fn_xref, symbol_table, types, triple2
 from ucc.assembler import assemble
 from ucclib.built_in import declaration
 
@@ -113,7 +113,7 @@ def parse_word(ww, word_obj, parser):
         return False, None
     return True, needs
 
-def parse_needed_words(top, package_parsers):
+def parse_needed_words(top, package_parsers, quiet):
     r'''Parses all of the needed word files.
 
     Returns a set of the labels of the words parsed.
@@ -138,14 +138,98 @@ def parse_needed_words(top, package_parsers):
         sys.exit(1)
 
     with crud.db_transaction():
-        fn_xref.expand()
+        fn_xref.expand(quiet)
     return words_done
 
 def optimize():
     pass
 
 def gen_assembler():
-    pass
+    for block_id, name, word_symbol_id, next, next_conditional \
+     in crud.read_as_tuples('blocks', 'id', 'name', 'word_symbol_id', 'next',
+                                      'next_conditional'):
+        triples = triple2.read_triples(block_id)
+        if Debug: print >> sys.stderr, "triples", triples
+        tops = filter(lambda t: len(t.parents) == 0, triples)
+        if Debug: print >> sys.stderr, "tops", tops
+        crud.Db_cur.execute('''
+            select predecessor, successor
+              from triple_order_constraints
+             where predecessor in (%(qmarks)s) or successor in (%(qmarks)s)
+        ''' % {'qmarks': ', '.join('?' * len(triples))},
+        [t.id for t in triples] * 2)
+        pred_succ = crud.Db_cur.fetchall()
+        if Debug: print >> sys.stderr, "pred_succ", pred_succ
+        shareds = filter(lambda s: len(s) > 1,
+                         (frozenset(tops(t.parents))
+                          for t in triples if len(t.parents) > 1))
+        if Debug: print >> sys.stderr, "shareds", shareds
+        for top in order_tops(tops, pred_succ, shareds):
+            print >> sys.stderr, \
+                  'gen_assembler for block', block_id, 'triple', top.id
+            #with crud.db_transaction():
+
+def tops(triples):
+    return itertools.chain.from_iterable(
+             (tops(t.parents) if t.parents else (t,)) for t in triples)
+
+def order_tops(tops, pred_succ, shareds):
+    tops = list(tops)
+    leftovers = set()
+
+    def process(t_set, shareds):
+        def remove(t):
+            assert t in tops
+            tops.remove(t)
+            if t in leftovers: leftovers.remove(t)
+            return filter(lambda ps: ps[0] != t and ps[1] != t, shareds)
+        for t_shared in pick(t_set, shareds):
+            found_one = False
+            try_again = True
+            while t_shared and try_again:
+                try_again = False
+                for t in t_shared.copy():
+                    if t not in succs:
+                        shareds = remove(t)
+                        t_shared.remove(t)
+                        try_again = True
+                        found_one = True
+                        yield t, shareds
+            assert found_one
+            for t in leftovers:
+                if t not in succs:
+                    shareds = remove(t)
+                    yield t, shareds
+            leftovers.update(t_shared)
+            break
+        else:
+            assert False, "pick failed"
+
+    while pred_succ:
+        if Debug: print >> sys.stderr, "pred_succ", pred_succ
+        if Debug: print >> sys.stderr, "tops", tops
+        preds = frozenset(ps[0] for ps in pred_succ)
+        succs = frozenset(ps[1] for ps in pred_succ)
+        available_preds = preds - succs
+        assert available_preds
+        for t, shareds in process(available_preds, shareds):
+            yield t
+    if Debug: print >> sys.stderr, "while done: tops", tops
+    if tops:
+        succs = frozenset(ps[1] for ps in pred_succ)
+        for t, shareds in process(frozenset(tops), shareds):
+            yield t
+
+def pick(t_set, shareds):
+    if Debug: print >> sys.stderr, "pick", t_set, shareds
+    t_yielded = set()
+    for t in t_set:
+        t_shared = set(s for s in shareds if t in s)
+        if t_shared:
+            t_yielded.add(t)
+            yield t_shared
+    for t in t_set - t_yielded:
+        yield set((t,))
 
 def assemble_program(package_dir):
     r'''Assemble all of the sections.
@@ -194,7 +278,7 @@ def assemble_program(package_dir):
     # assemble eeprom:
     hex_file.write(assemble.assemble('eeprom', labels), package_dir, 'eeprom')
 
-def run(top, prime_start_time = True):
+def run(top, prime_start_time = True, quiet = False):
     # The following gets a little confusing because we have two kinds of word
     # objects:
     #
@@ -209,42 +293,42 @@ def run(top, prime_start_time = True):
         compile_start_time = Start_time
     else:
         compile_start_time = Start_time
-        print "top: %.2f" % elapsed()
+        if not quiet: print "top: %.2f" % elapsed()
 
     with crud.db_connection(top.packages[-1].package_dir):
-        print "crud.db_connection: %.2f" % elapsed()
+        if not quiet: print "crud.db_connection: %.2f" % elapsed()
 
         types.init()
-        print "types.init: %.2f" % elapsed()
+        if not quiet: print "types.init: %.2f" % elapsed()
 
         # Create symbols, word_objs and build the parsers for each package:
         #
         # {package_name: parser module}
         package_parsers = create_parsers(top)  # Also loads all of the word objs
-        print "create parsers: %.2f" % elapsed()
+        if not quiet: print "create parsers: %.2f" % elapsed()
 
         # word files => ast
-        words_done = parse_needed_words(top, package_parsers)
-        print "parse_needed_words: %.2f" % elapsed()
+        words_done = parse_needed_words(top, package_parsers, quiet)
+        if not quiet: print "parse_needed_words: %.2f" % elapsed()
 
         # ast => intermediate code
         for word_label in words_done:
             with crud.db_transaction():
                 symbol_table.get(word_label).word_obj.compile()
-        print "generate intermediate code: %.2f" % elapsed()
+        if not quiet: print "generate intermediate code: %.2f" % elapsed()
 
         # intermediate code => optimized intermediate code
         optimize()
-        print "optimize: %.2f" % elapsed()
+        if not quiet: print "optimize: %.2f" % elapsed()
 
         # intermediate code => assembler
         gen_assembler()
-        print "gen_assembler: %.2f" % elapsed()
+        if not quiet: print "gen_assembler: %.2f" % elapsed()
 
         # assembler => .hex files
         assemble_program(top.packages[-1].package_dir)
-        print "assemble_program: %.2f" % elapsed()
-    print "TOTAL: %.2f" % (Start_time - compile_start_time)
+        if not quiet: print "assemble_program: %.2f" % elapsed()
+    if not quiet: print "TOTAL: %.2f" % (Start_time - compile_start_time)
 
 Start_time = 0.0
 

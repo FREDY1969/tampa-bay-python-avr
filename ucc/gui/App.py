@@ -6,9 +6,9 @@ r'''The main IDE application.
 import sys
 import os.path
 import itertools
-import ConfigParser
 import wx
 
+import ucc.config
 from ucc.gui import Registry
 from ucc.gui.MainFrame import MainFrame
 from ucc.word import top_package, xml_access
@@ -24,31 +24,13 @@ class App(wx.App):
         super(App, self).__init__(False, *args, **kwargs)
     
     def OnInit(self):
-        
         self.SetAppName('ucc') # used by wx.StandardPaths
-        
-        # load StandardPaths
-        
-        Registry.paths = wx.StandardPaths.Get()
         
         # load configuration
         
-        if sys.platform.startswith('win') or \
-           sys.platform in ('os2', 'os2emx', 'riscos', 'atheos'):
-            configFile = 'ucc.ini'
-        else:
-            configFile = '.ucc.ini'
-        configPath = os.path.join(Registry.paths.GetUserConfigDir(), configFile)
-        debug.trace("configPath: %s" % configPath)
-        if not os.path.exists(configPath):
-            # This may need to be changed eventually to support zipped
-            # installations of this compiler.
-            defaultFile = os.path.join(sys.path[0], 'ucc', 'ucc-default.ini')
-            from distutils import file_util
-            file_util.copy_file(defaultFile, configPath)
-        Registry.config = ConfigParser.RawConfigParser()
-        Registry.config.read(configPath)
-        #Registry.config.get('gui', 'editor')
+        Registry.config = ucc.config.load()
+        debug.trace('Configration loaded')
+
         
         # setup registry
         

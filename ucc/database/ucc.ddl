@@ -126,6 +126,7 @@ create table ast (
           -- 'producer'
           -- 'start_stop'
 
+    expected_type int references type(id),      -- maybe not needed?
     type_id int references type(id),
 
     -- ast argument nodes are linked to their parent nodes:
@@ -192,7 +193,7 @@ create table blocks (
     name varchar(255) not null unique,               -- used as jump target
     word_symbol_id int not null references symbol_table(id),
 
-    last_triple_id int references triples(id),
+    last_triple_id int references triples(id),  -- doesn't seem to be used...
     next varchar(255) references blocks(name),
     next_conditional varchar(255) references blocks(name)
 );
@@ -223,7 +224,8 @@ create table triples (
        --   'int'              -- int1
        --   'ratio'            -- int1 is numerator, int2 is denominator
        --   'approx'           -- int1 * 2**int2
-       --   'param'            -- int1 is which param, int2 is triples id
+       --   'param'            -- int1 is which param, int2 is triples id,
+                               -- call_triple_id is function call triple
        --   'call_direct'      -- int1 is symbol_table id
        --   'call_indirect'    -- int1 is triples id
        --   'return'           -- int1 is optional triples id
@@ -232,6 +234,7 @@ create table triples (
        -- else operator applies to int1 and int2 as triples ids
     int1 int,
     int2 int,
+    call_triple_id int references triple(id),
     string varchar(32768),
     type_id int references type(id),
     reg_class int,
@@ -268,6 +271,9 @@ create table triple_order_constraints (
     successor int not null references triples(id),
     primary key (predecessor, successor)
 );
+
+create index toc_successor_index
+          on triple_order_constraints(successor, predecessor);
 
 create table kills (
     block_id int not null references blocks(id),

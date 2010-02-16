@@ -9,11 +9,15 @@ import optparse
 from doctest_tools import setpath
 setpath.setpath(__file__, remove_first = True)
 
+import wx
 from ucc.parser import load
+import ucc.config
+
+config = ucc.config.load()
 
 class options_dict(dict):
     def __setattr__(self, key, value):
-        if value is not None:
+        if value is not None:   
             self[key] = value
 
 def run():
@@ -38,8 +42,21 @@ def run():
     optparser.set_defaults()
 
     options, args = optparser.parse_args(values=options_dict())
-    load.run(*args, **options)
+
+    kw_args = dict((param, config.get('arduino', param))
+        for param in (
+            'install_dir',
+            'avrdude_port',
+            'mcu',
+            'avr_dude_path',
+            'avr_config_path',
+            'avrdude_programmer',
+            'upload_rate'
+        ) if config.has_option('arduino', param)
+    )
+       
+    kw_args.update(options)    
+    load.run(*args, **kw_args)
 
 if __name__ == '__main__':
     run()
-

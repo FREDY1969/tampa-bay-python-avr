@@ -23,31 +23,40 @@ class repeat(macro.macro):
         else:
             count = count[0]
             #print "count", count
+            if count.kind == 'int':
+                assert count.int1 >= 0, \
+                       "repeat must not have negative repeat count"
+                if count.int1 == 0:
+                    return ast_node.macro_expand(fn_symbol, words_needed, (),
+                                                 kind='no-op')
+                if count.int1 == 1:
+                    return ast_node.macro_expand(fn_symbol, words_needed, body,
+                                                 kind='series')
+                first_jmp = ()
+            else:
+                first_jmp = (
+                    ast.ast(kind='jump', label=test, expect='statement'),
+                )
+
             loop_var = crud.gensym('repeat_var')
-            symbol_id = symbol_table.symbol.create(loop_var, 'var', fn_symbol) \
-                                    .id
+            symbol_id = \
+              symbol_table.symbol.create(loop_var, 'var', fn_symbol).id
             test = crud.gensym('repeat_test')
             new_args = (
-              ast.ast(ast.ast(kind='word', label='set',
-                              symbol_id=symbol_table.get('set').id),
-                      (ast.ast(kind='word', label=loop_var,
-                               symbol_id=symbol_id),
+              ast.ast(ast.ast.word(symbol_table.get('set').id),
+                      (ast.ast.word(symbol_id),
                        count,
                       ),
                       kind='call',
                       expect='statement') \
                  .prepare(fn_symbol, words_needed),
-              ast.ast(kind='jump', label=test, expect='statement'),
+            ) + first_jmp + (
               ast.ast(kind='label', label=loop_label, expect='statement'),
             ) + body + (
-              ast.ast(ast.ast(kind='word', label='set',
-                              symbol_id=symbol_table.get('set').id),
-                      (ast.ast(kind='word', label=loop_var,
-                               symbol_id=symbol_id),
-                       ast.ast(ast.ast(kind='word', label='-',
-                                       symbol_id=symbol_table.get('-').id),
-                               ast.ast(kind='word', label=loop_var,
-                                       symbol_id=symbol_id),
+              ast.ast(ast.ast.word(symbol_table.get('set').id),
+                      (ast.ast.word(symbol_id),
+                       ast.ast(ast.ast.word(symbol_table.get('-').id),
+                               ast.ast.word(symbol_id),
                                ast.ast(kind='int', int1=1),
                                kind='call',
                               ) \
@@ -57,12 +66,12 @@ class repeat(macro.macro):
                       expect='statement') \
                  .prepare(fn_symbol, words_needed),
               ast.ast(kind='label', label=test, expect='statement'),
-              ast.ast(ast.ast(kind='word', label=loop_var,
-                              symbol_id=symbol_id, expect='condition'),
+              ast.ast(ast.ast.word(symbol_id, expect='condition'),
                       kind='if-true',
                       label=loop_label,
                       expect='statement'),
             )
+
         return ast_node.macro_expand(fn_symbol, words_needed, new_args,
                                      kind='series')
 

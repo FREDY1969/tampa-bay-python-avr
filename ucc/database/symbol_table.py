@@ -61,6 +61,7 @@ class symbol(object):
     int1 = None
     word_word = None
     word_obj = None
+    type_id = None
 
     def __init__(self, id, label, context = None, **attributes):
         r'''Not called directly.  Use `create` or `lookup` instead.

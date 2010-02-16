@@ -56,6 +56,10 @@ def run(
         if avr_config_path is None:
             avr_config_path = os.path.join('hardware', 'tools')
     
+    path = os.path.join(load_path, memory_type + '.hex')
+    if not os.path.exists(path):
+        raise IOError('%s: file not found.' % path)
+    
     # call it
     
     subprocess.check_call(
@@ -69,8 +73,7 @@ def run(
             '-P', avrdude_port,
             '-c', avrdude_programmer,
             '-b', upload_rate,
-            '-U', memory_type + ':w:' + os.path.join(load_path,
-                                                     memory_type + '.hex')+":i",
+            '-U', memory_type + ':w:' + path +":i",
         )
     )
 

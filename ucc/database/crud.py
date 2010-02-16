@@ -247,17 +247,36 @@ def doctor_test(item, values):
         return key + ' is null'
     if hasattr(value, '__iter__'):
         t = tuple(value)
-        assert t, "crud key tuples can't be empty"
+        assert t, "crud where key tuple values can't be empty"
         if len(t) == 1:
-            value = t[0]
+            value = doctor_value(t[0])
         else:
-            values.extend(t)
+            values.extend(doctor_value(t))
             if key.endswith('_'):
                 return '%s not in (%s)' % (key[:-1], ', '.join(('?',) * len(t)))
             return '%s in (%s)' % (key, ', '.join(('?',) * len(t)))
-    values.append(value)
+    values.append(doctor_value(value))
     if key.endswith('_'): return key[:-1] + ' <> ?'
     return key + ' = ?'
+
+def doctor_value(value):
+    r'''Returns value unless it's an object, then returns value.id.
+
+        >>> doctor_value(33)
+        33
+        >>> class dummy(object): pass
+        >>> obj = dummy()
+        >>> obj.id = 34
+        >>> doctor_value(obj)
+        34
+        >>> doctor_value((33, obj))
+        [33, 34]
+    '''
+    if hasattr(value, '__iter__'):
+        return map(doctor_value, value)
+    if value is None or isinstance(value, (int, long, float, str)):
+        return value
+    return value.id
 
 def create_where(keys):
     r'''Returns sql 'where' and 'order by' clauses and parameters.
@@ -481,7 +500,7 @@ def update(table, where, **set):
     if Debug:
         print "crud:", command
         print "  params:", set.values() + params
-    Db_cur.execute(command, set.values() + params)
+    Db_cur.execute(command, doctor_value(set.values()) + params)
 
 def delete(table, **keys):
     r'''Deletes rows in a table.
@@ -548,7 +567,7 @@ def insert(table, option = None, **cols):
     if Debug:
         print "crud:", command
         print "  params:", [cols[key] for key in keys]
-    Db_cur.execute(command, [cols[key] for key in keys])
+    Db_cur.execute(command, [doctor_value(cols[key]) for key in keys])
     if Debug:
         print "  id:", Db_cur.lastrowid
     return Db_cur.lastrowid

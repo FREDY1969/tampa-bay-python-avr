@@ -448,9 +448,11 @@ def set_name_value(t, name = None):
     else:
         syntax_info = t.lineno, scanner_init.get_col_line(t.lexpos)[0]
         name = name or t.value
+        symbol = symbol_table.lookup(name, Word_body_symbol)
         t.value = \
           ast.ast.from_parser(
             syntax_info + syntax_info, 
             kind='word',
             label=name,
-            symbol_id=symbol_table.lookup(name, Word_body_symbol).id)
+            type_id=symbol.type_id,
+            symbol_id=symbol.id)

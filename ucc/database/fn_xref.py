@@ -32,7 +32,7 @@ def sets(fn_id, var_id):
     crud.insert('fn_global_var_uses', 'ignore',
                 fn_id=fn_id, var_id=var_id, sets=True)
 
-def expand():
+def expand(quiet = False):
     r'''Expand the fn_global_var_uses and symbol_table.side_effects/suspends.
 
     To include all called functions, recursively.
@@ -49,8 +49,9 @@ def expand():
           """,
           (depth,))
         if not crud.Db_cur.rowcount:
-            print "fn_xref.expand: did", depth + 1, \
-                  "database calls for fn_global_var_uses"
+            if not quiet:
+                print "fn_xref.expand: did", depth + 1, \
+                      "database calls for fn_global_var_uses"
             break
 
     # Fill out symbol_table.side_effects:
@@ -67,8 +68,9 @@ def expand():
                             and called.side_effects = 1)
            """)
         if not crud.Db_cur.rowcount:
-            print "fn_xref.expand: did", depth + 1, \
-                  "database calls for symbol_table.side_effects"
+            if not quiet:
+                print "fn_xref.expand: did", depth + 1, \
+                      "database calls for symbol_table.side_effects"
             break
 
     # Fill out symbol_table.suspends:
@@ -84,8 +86,9 @@ def expand():
                             and called.suspends = 1)
            """)
         if not crud.Db_cur.rowcount:
-            print "fn_xref.expand: did", depth + 1, \
-                  "database calls for symbol_table.suspends"
+            if not quiet:
+                print "fn_xref.expand: did", depth + 1, \
+                      "database calls for symbol_table.suspends"
             break
 
     symbol_table.update()

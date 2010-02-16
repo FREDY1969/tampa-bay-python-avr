@@ -1,0 +1,71 @@
+'''
+'''
+
+from __future__ import with_statement
+
+import os.path
+
+import setpath
+setpath.setpath(__file__)
+
+import wx, wx.py
+
+from ucc.gui.Registry import Registry
+from ucc.gui.controls.IntegerCtrl import IntegerCtrl
+from ucc.gui.controls.BoolCtrl import BoolCtrl
+
+class RightMainPanel(wx.Panel):
+    def __init__(self, parent, id, style):
+        wx.Panel.__init__(self, parent, id, style=style)
+        
+        # setup panels
+        
+        topPanel = self.topPanel = wx.Panel(self, wx.ID_ANY)
+        topSizer = self.topSizer = wx.BoxSizer(wx.VERTICAL)
+        topPanel.SetSizer(topSizer)
+        self.bottomText = wx.py.editwindow.EditWindow(self, wx.ID_ANY,
+                                                      style=wx.TE_MULTILINE)
+        self.bottomText.setDisplayLineNumbers(True)
+        
+        # setup sizer
+        
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(topPanel, 1, wx.EXPAND)
+        sizer.Add(self.bottomText, 1, wx.EXPAND)
+        
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+        self.Fit()
+        
+    def paint(self):
+        print "painting rightMainPanel"
+        self.buildWord()
+        
+    def buildWord(self):
+        
+        # setup controls
+            
+#CheckBox  	__init__(self, parent, id, label, pos, size, style, validator, name)
+#Creates and shows a CheckBox control
+
+#Static Text    __init__(self, parent, id=-1, label=EmptyString, pos=DefaultPosition, size=DefaultSize, style=0, name=StaticTextNameStr)
+
+        
+        self.topSizer.Clear(True)
+        self.topSizer.Add(BoolCtrl(self.topPanel, 'answer object should go here', 'Test Custom Checkbox'))
+        self.topSizer.Layout()
+        
+        if Registry.currentWord:
+            kind_word = Registry.wordDict[Registry.currentWord.kind]
+            suffix = kind_word.get_answer('filename_suffix')
+            if suffix is not None:
+                if suffix:
+                    filename = Registry.currentWord.name + '.' + suffix.value
+                else:
+                    filename = Registry.currentWord.name
+                path = os.path.join(Registry.currentPackage, filename)
+                if not os.path.exists(path):
+                    print "creating", path
+                    with open(path, 'w'): pass
+                self.bottomText.LoadFile(path)
+        #self.bottomText.SaveFile(filename)
