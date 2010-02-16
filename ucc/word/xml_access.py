@@ -11,15 +11,15 @@ import os.path
 
 from xml.etree import ElementTree
 
-Packages_filename = 'packages.xml'
-Package_filename = 'package.xml'
+PACKAGES_FILENAME = 'packages.xml'
+PACKAGE_FILENAME = 'package.xml'
 
 def read_package_list(packages_dir):
     r'''Returns the list of `package` names read from the packages.xml file.
 
     Use `write_package_list` to write the xml file back out.
     '''
-    tree = ElementTree.parse(os.path.join(packages_dir, Packages_filename))
+    tree = ElementTree.parse(os.path.join(packages_dir, PACKAGES_FILENAME))
     return [e.get('name') for e in tree.getiterator('package')]
 
 def write_package_list(package_list, packages_dir):
@@ -30,7 +30,7 @@ def write_package_list(package_list, packages_dir):
     root = ElementTree.Element('packages')
     for name in sorted(package_list):
         ElementTree.SubElement(root, 'package', name = name)
-    write_element(root, os.path.join(packages_dir, Packages_filename))
+    write_element(root, os.path.join(packages_dir, PACKAGES_FILENAME))
 
 def read_word_list(package_dir):
     r'''Returns the package_name and list of `word` names in the `package`.
@@ -39,7 +39,7 @@ def read_word_list(package_dir):
 
     Use `write_word_list` to write the xml file back out.
     '''
-    tree = ElementTree.parse(os.path.join(package_dir, Package_filename))
+    tree = ElementTree.parse(os.path.join(package_dir, PACKAGE_FILENAME))
     return (tree.find('name').text,
             [e.get('name') for e in tree.getiterator('word')])
 
@@ -53,7 +53,7 @@ def write_word_list(package_name, word_list, package_dir):
     words = ElementTree.SubElement(root, 'words')
     for name in sorted(word_list):
         ElementTree.SubElement(words, 'word', name = name)
-    write_element(root, os.path.join(package_dir, Package_filename))
+    write_element(root, os.path.join(package_dir, PACKAGE_FILENAME))
 
 def write_element(root, filename):
     r'''Writes root ElementTree element to filename with pretty indenting.

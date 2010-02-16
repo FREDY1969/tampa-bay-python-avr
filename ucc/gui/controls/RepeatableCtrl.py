@@ -4,7 +4,7 @@ import wx
 from ucc.gui.controls.BaseCtrl import BaseCtrl
 
 class RepeatableCtrl(BaseCtrl):
-    def __init__(self, parent, question, answer_getter, answer_setter, subcls):
+    def __init__(self, subcls, parent, question, answer_getter, answer_setter):
         self.subcls = subcls
         super(RepeatableCtrl, self).__init__(parent, question, answer_getter,
                                              answer_setter)

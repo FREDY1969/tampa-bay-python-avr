@@ -10,11 +10,11 @@ import os.path
 import wx
 
 from ucc.gui import Registry
-
+from ucc.gui import debug
 class WordTreeCtrl(wx.TreeCtrl):
     gray = (170, 170, 170, 255)
     def __init__(self, parent, id, pos, size, style):
-        wx.TreeCtrl.__init__(self, parent, id, pos, size,
+        super(WordTreeCtrl, self).__init__(parent, id, pos, size,
                              style | wx.TR_HIDE_ROOT)
 
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.onActivate, self)
@@ -44,15 +44,13 @@ class WordTreeCtrl(wx.TreeCtrl):
             self.Expand(node)
 
     def onActivate(self, e):
-
+        
         # check state of word to see if it needs to be saved
-
+        
         Registry.app.saveWord()
-
+        
         # open/paint new word
-
+        
         Registry.currentWord = self.GetItemPyData(e.GetItem())
-        import pprint
-        pprint.pprint(Registry.currentWord)
-
+        debug.header("New word selected: %s" % Registry.currentWord.name)
         Registry.rightMainPanel.paint()

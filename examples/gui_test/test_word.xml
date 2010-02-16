@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<word>
-    <name>test_word</name>
-    <label>Test Word</label>
-    <kind>test_defining_word</kind>
-    <defining>False</defining>
-</word>

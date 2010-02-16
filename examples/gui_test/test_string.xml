@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_string</name>
+    <label>Test String</label>
+    <kind>test_string_defining</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="my_string" repeated="False" type="string" value="asdfsadfasdf3333" />
+    </answers>
+</word>

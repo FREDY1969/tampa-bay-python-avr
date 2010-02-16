@@ -167,10 +167,12 @@ class q_int(q_atomic):
 class q_rational(q_atomic):
     answer_cls = answers.ans_rational
     default_value = "0"
+    control = "RationalCtrl"
 
 class q_real(q_atomic):
     answer_cls = answers.ans_real
     default_value = "0.0"
+    control = "RealCtrl"
 
 class q_string(q_atomic):
     answer_cls = answers.ans_string

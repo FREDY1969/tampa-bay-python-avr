@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_basic_defining</name>
+    <label>Test Basic Defining</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="py" />
+    </answers>
+    <questions>
+        <question>
+            <name>my_string</name>
+            <label>My String</label>
+            <min>1</min>
+            <max>1</max>
+            <type>string</type>
+        </question>
+        <question>
+            <name>my_int</name>
+            <label>My Integer</label>
+            <min>1</min>
+            <max>1</max>
+            <type>int</type>
+        </question>
+        <question>
+            <name>my_string2</name>
+            <label>My String2</label>
+            <min>1</min>
+            <max>1</max>
+            <type>string</type>
+        </question>
+        <question>
+            <name>my_int2</name>
+            <label>My Integer2</label>
+            <min>1</min>
+            <max>1</max>
+            <type>int</type>
+        </question>
+        <question>
+            <name>my_bool</name>
+            <label>My Bool</label>
+            <min>1</min>
+            <max>1</max>
+            <type>bool</type>
+        </question>
+    </questions>
+</word>

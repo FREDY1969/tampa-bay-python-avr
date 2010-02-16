@@ -2,7 +2,21 @@
 <package>
     <name>gui_test</name>
     <words>
-        <word name="test_defining_word" />
-        <word name="test_word" />
+        <word name="test_basic_defining" />
+        <word name="test_basic" />
+        <word name="test_bool_defining" />
+        <word name="test_bool" />
+        <word name="test_int_defining" />
+        <word name="test_int" />
+        <word name="test_rational_defining" />
+        <word name="test_rational" />
+        <word name="test_real_defining" />
+        <word name="test_real" />
+        <word name="test_string_defining" />
+        <word name="test_string" />
+        <word name="test_optional_string_defining" />
+        <word name="test_optional_string" />
+        <word name="test_choice_defining" />
+        <word name="test_choice" />
     </words>
 </package>
