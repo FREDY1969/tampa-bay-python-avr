@@ -21,10 +21,9 @@ def legalize_name(name):
     return name
 
 def import_module(modulename):
-    ''' ``modulename`` is full package path (with dots).
-    '''
+    ''' ``modulename`` is full package path (with dots).'''
     mod = __import__(modulename)
     for comp in modulename.split('.')[1:]:
         mod = getattr(mod, comp)
     return mod
-
+    

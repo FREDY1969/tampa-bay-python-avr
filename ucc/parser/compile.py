@@ -14,8 +14,6 @@ from ucc.database import crud, fn_xref, symbol_table, types, triple2
 from ucc.assembler import assemble
 from ucclib.built_in import declaration
 
-Built_in = 'ucclib.built_in'
-
 Debug = 0
 
 def load_word(ww):

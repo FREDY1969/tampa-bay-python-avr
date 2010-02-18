@@ -7,7 +7,7 @@ The routines for reading an individual word are in `ucc.word`.
 
 from __future__ import with_statement
 
-import os.path
+import os
 
 from xml.etree import ElementTree
 
@@ -16,7 +16,7 @@ PACKAGE_FILENAME = 'package.xml'
 
 def read_package_list(packages_dir):
     r'''Returns the list of `package` names read from the packages.xml file.
-
+    
     Use `write_package_list` to write the xml file back out.
     '''
     tree = ElementTree.parse(os.path.join(packages_dir, PACKAGES_FILENAME))
@@ -24,7 +24,7 @@ def read_package_list(packages_dir):
 
 def write_package_list(package_list, packages_dir):
     r'''Writes a list of `package` names to the packages.xml file.
-
+    
     Sorts the names to reduce merge conflicts.
     '''
     root = ElementTree.Element('packages')
@@ -34,9 +34,9 @@ def write_package_list(package_list, packages_dir):
 
 def read_word_list(package_dir):
     r'''Returns the package_name and list of `word` names in the `package`.
-
+    
     Read from the 'package.xml' file.
-
+    
     Use `write_word_list` to write the xml file back out.
     '''
     tree = ElementTree.parse(os.path.join(package_dir, PACKAGE_FILENAME))
@@ -45,7 +45,7 @@ def read_word_list(package_dir):
 
 def write_word_list(package_name, word_list, package_dir):
     r'''Writes the package_name and list of `word` names to package.xml file.
-
+    
     Sorts the names to reduce merge conflicts.
     '''
     root = ElementTree.Element('package')
@@ -65,7 +65,7 @@ def write_element(root, filename):
 
 def indent(element, level = 0, amount = 4):
     r'''Adds pretty indenting to ElementTree element and all of its children.
-
+    
     It does this by adding a newline and spaces to the 'text' and 'tail'
     attributes of the elements.  The 'text' string is what is between the open
     tag and the first child tag.  The 'tail' string is what is between the

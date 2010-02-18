@@ -1,13 +1,12 @@
-'''Control for real word values'''
+# string_ctrl.py
+
+'''Control for string questions.'''
 
 import wx
-from ucc.gui.controls.BaseCtrl import BaseCtrl
+from ucc.gui.controls.base_ctrl import BaseCtrl
 from ucc.gui import debug
 
-class RealCtrl(BaseCtrl):
-    def __init__(self, *args, **kwargs):
-        super(RealCtrl, self).__init__(*args, **kwargs)
-    
+class StringCtrl(BaseCtrl):
     def setupControl(self):
         self.textCtrl = wx.TextCtrl(self, size=(250, -1))
         self.Bind(wx.EVT_TEXT, self.onChange, self.textCtrl)
@@ -16,10 +15,10 @@ class RealCtrl(BaseCtrl):
         debug.trace("%s.setInitialValue %s=%s" % 
                     (self.__class__.__name__,
                      self.question.name,
-                     self.answer_getter().get_value()))
-        self.textCtrl.ChangeValue(self.answer_getter().get_value())
+                     self.get_answer()))
+        self.textCtrl.ChangeValue(self.get_answer())
     
     def onChange(self, event):
         debug.notice("Text changed: %s" % event.GetString())
-        self.answer_getter().value = event.GetString()
+        self.get_answer().value = event.GetString()
     
