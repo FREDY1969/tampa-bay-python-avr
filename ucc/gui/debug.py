@@ -1,3 +1,5 @@
+# debug.py
+
 '''Print out debug messages.'''
 
 CSI="\x1b["

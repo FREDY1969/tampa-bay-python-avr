@@ -1,26 +1,22 @@
-# App.py
+# app.py
 
-r'''The main IDE application.
-'''
+r'''The main IDE application.'''
 
-import sys
-import os.path
+import sys, os
 import itertools
 import wx
 
 import ucc.config
-from ucc.gui import Registry
-from ucc.gui.MainFrame import MainFrame
+from ucc.gui import registry
+from ucc.gui.frames.main_frame import MainFrame
 from ucc.word import top_package, xml_access
 from ucc.gui import debug
 
 class App(wx.App):
     def __init__(self, packagePath=None, *args, **kwargs):
-        r'''init base class (which calls self.OnInit()...)
-        '''
-        
         debug.header('Application Started')
         self.packagePath = packagePath
+        # init base class which calls self.OnInit()
         super(App, self).__init__(False, *args, **kwargs)
     
     def OnInit(self):
@@ -28,43 +24,42 @@ class App(wx.App):
         
         # load configuration
         
-        Registry.config = ucc.config.load()
+        registry.config = ucc.config.load()
         debug.trace('Configration loaded')
-
         
         # setup registry
         
-        Registry.app = self
+        registry.app = self
         
         # IDs for events
         
-        Registry.ID_OPEN  = wx.NewId()
-        Registry.ID_SAVE_ALL = wx.NewId()
-        Registry.ID_SAVE_WORD = wx.NewId()
-        Registry.ID_COMPILE = wx.NewId()
-        Registry.ID_LOAD = wx.NewId()
-        Registry.ID_VERIFY = wx.NewId()
-        Registry.ID_COMPILE = wx.NewId()
-        Registry.ID_PUSH = wx.NewId()
-        Registry.ID_ABOUT = wx.NewId()
-        Registry.ID_EXIT  = wx.NewId()
+        registry.ID_OPEN  = wx.NewId()
+        registry.ID_SAVE_ALL = wx.NewId()
+        registry.ID_SAVE_WORD = wx.NewId()
+        registry.ID_COMPILE = wx.NewId()
+        registry.ID_LOAD = wx.NewId()
+        registry.ID_VERIFY = wx.NewId()
+        registry.ID_COMPILE = wx.NewId()
+        registry.ID_PUSH = wx.NewId()
+        registry.ID_ABOUT = wx.NewId()
+        registry.ID_EXIT  = wx.NewId()
         
         # standard app controls
         
-        Registry.mainFrame = None
-        Registry.mainMenuBar = None
-        Registry.mainToolbar = None
-        Registry.mainPanel = None
-        Registry.leftTreePanel = None
-        Registry.rightMainPanel = None
-        Registry.wordTreeCtrl = None
+        registry.mainFrame = None
+        registry.mainMenuBar = None
+        registry.mainToolbar = None
+        registry.mainPanel = None
+        registry.leftTreePanel = None
+        registry.rightMainPanel = None
+        registry.wordTreeCtrl = None
         
         # package information
         
-        Registry.mode = None           # current mode of operation
-        Registry.currentPackage = None # full absolute path to package directory
-        Registry.top_package = None    # ucc.word.top_package.top instance
-        Registry.currentWord = None    # current word loaded in rightMainPanel
+        registry.mode = None           # current mode of operation
+        registry.currentPackage = None # full absolute path to package directory
+        registry.top_package = None    # ucc.word.top_package.top instance
+        registry.currentWord = None    # current word loaded in rightMainPanel
         
         # process input arguments for package/mode, if not ask for package/mode
         
@@ -76,8 +71,8 @@ class App(wx.App):
         
         # setup the mainFrame to start the app
         
-        Registry.mainFrame = MainFrame(None, wx.ID_ANY, u"\xb5CC Package Editor")
-        self.SetTopWindow(Registry.mainFrame)
+        registry.mainFrame = MainFrame(None, -1, u"\xb5CC Package Editor")
+        self.SetTopWindow(registry.mainFrame)
         return True
     
     def pickMode(self):
@@ -94,7 +89,7 @@ class App(wx.App):
             'Edit Package'
         ])
         choiceDialog.ShowModal()
-        mode = Registry.mode = choiceDialog.GetStringSelection()
+        mode = registry.mode = choiceDialog.GetStringSelection()
         choiceDialog.Destroy()
         
         # ask for file location
@@ -131,22 +126,22 @@ class App(wx.App):
         
         dirname, basename = os.path.split(packagePath)
         if basename == 'packages.xml' or basename == 'package.xml':
-            Registry.currentPackage = dirname
+            registry.currentPackage = dirname
         else:
             raise Exception('Invalid package path.')
     
     def initPackage(self):
-        r'''Read in ucclib.built_in and Registry.currentPackage.
+        r'''Read in ucclib.built_in and registry.currentPackage.
         
         Setup top_package.
         '''
-        Registry.top_package = top_package.top(Registry.currentPackage)
+        registry.top_package = top_package.top(registry.currentPackage)
     
     def onOpen(self, event):
         try:
             self.processPath(self.pickMode())
             self.initPackage()
-            Registry.mainFrame.paint()
+            registry.mainFrame.paint()
         except:
             pass
     
@@ -154,16 +149,16 @@ class App(wx.App):
         self.saveWord()
     
     def saveWord(self):
-        if Registry.currentWord and Registry.currentWord.top:
-            Registry.currentWord.write_xml()
-            source_filename = Registry.currentWord.get_filename()
+        if registry.currentWord and registry.currentWord.top:
+            registry.currentWord.save()
+            source_filename = registry.currentWord.get_filename()
             if source_filename:
-                Registry.rightMainPanel.bottomText.SaveFile(source_filename)
-            debug.success("Word %s saved" % Registry.currentWord.name)
+                registry.rightMainPanel.bottomText.SaveFile(source_filename)
+            debug.success("Word %s saved" % registry.currentWord.name)
     
     def onAbout(self, event):
         dialog = wx.MessageDialog(
-            Registry.mainFrame,
+            registry.mainFrame,
             u"Package editing GUI for \xb5CC project.",
             "About",
             wx.OK
@@ -173,11 +168,11 @@ class App(wx.App):
     
     def onCompile(self, event):
         from ucc.parser import compile
-        compile.run(Registry.top_package)
+        compile.run(registry.top_package)
     
     def onLoad(self, event):
         from ucc.parser import load
-        kw_args = dict((param, Registry.config.get('arduino', param))
+        kw_args = dict((param, registry.config.get('arduino', param))
             for param in (
                 'install_dir',
                 'avrdude_port',
@@ -186,9 +181,9 @@ class App(wx.App):
                 'avr_config_path',
                 'avrdude_programmer',
                 'upload_rate'
-            ) if Registry.config.has_option('arduino', param)
+            ) if registry.config.has_option('arduino', param)
         )
-        load_path = Registry.currentPackage
+        load_path = registry.currentPackage
         for memory_type in 'flash', 'eeprom':
             if os.path.exists(os.path.join(load_path, memory_type + '.hex')):
                 debug.trace("Loading " + memory_type + '.hex')
@@ -197,5 +192,5 @@ class App(wx.App):
     
     def onExit(self, event):
         self.saveWord()
-        Registry.mainFrame.Close(True)
+        registry.mainFrame.Close(True)
     

@@ -1,7 +1,9 @@
-# OptionalCtrl.py
+# optional_ctrl.py
+
+'''Control for optional questions.'''
 
 import wx
-from ucc.gui.controls.BaseCtrl import BaseCtrl
+from ucc.gui.controls.base_ctrl import BaseCtrl
 from ucc.gui import debug
 
 class OptionalCtrl(BaseCtrl):
@@ -16,8 +18,7 @@ class OptionalCtrl(BaseCtrl):
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.onChange, cp)
         
         subpane = cp.GetPane()
-        self.subctrl = self.subcls(subpane, self.question,
-                                   self.answer_getter, self.answer_setter)
+        self.subctrl = self.subcls(subpane, self.question, self.word)
         
         pane_sizer = wx.BoxSizer()
         subpane.SetSizer(pane_sizer)
@@ -30,7 +31,7 @@ class OptionalCtrl(BaseCtrl):
     def setInitialValue(self):
         debug.trace("%s.setInitialValue" % self.__class__.__name__)
         
-        if self.answer_getter() is None:
+        if self.get_answer() is None:
             debug.trace("Answer is None")
             self.cp.Collapse(True)
         else:
@@ -41,16 +42,16 @@ class OptionalCtrl(BaseCtrl):
             self.subctrl.setInitialValue()
     
     def onChange(self, event):
-        # self.answer_getter().value = str(event.GetInt())
+        # self.get_answer().value = str(event.GetInt())
         
         debug.trace("Optional pane changed: %s" % self.cp.IsExpanded())
         if self.cp.IsExpanded():
-            if self.answer_getter() is None:
-                self.answer_setter(self.question.make_default_answer())
+            if self.get_answer() is None:
+                self.set_answer(self.question.make_default_answer())
             self.subctrl.setInitialValue()
             self.cp.SetLabel(self.label2)
         else:
-            self.answer_setter(None)
+            self.set_answer(None)
             self.cp.SetLabel(self.label1)
         self.parent.Layout()
     

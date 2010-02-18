@@ -1,13 +1,12 @@
-'''Control for rational word values'''
+# rational_ctrl.py
+
+'''Control for rational questions.'''
 
 import wx
-from ucc.gui.controls.BaseCtrl import BaseCtrl
+from ucc.gui.controls.base_ctrl import BaseCtrl
 from ucc.gui import debug
 
 class RationalCtrl(BaseCtrl):
-    def __init__(self, *args, **kwargs):
-        super(RationalCtrl, self).__init__(*args, **kwargs)
-    
     def setupControl(self):
         self.textCtrlNum = wx.TextCtrl(self, size=(250, -1))
         self.slash = wx.StaticText(self, label=" / ")
@@ -19,10 +18,10 @@ class RationalCtrl(BaseCtrl):
         debug.trace("%s.setInitialValue %s=%s" % 
                     (self.__class__.__name__,
                      self.question.name,
-                     self.answer_getter().get_value()))
-        # self.textCtrl.ChangeValue(self.answer_getter().get_value())
+                     self.get_answer()))
+        # self.textCtrl.ChangeValue(self.get_answer())
     
     def onChange(self, event):
         debug.notice("Text changed: %s" % event.GetString())
-        # self.answer_getter().value = event.GetString()
+        # self.get_answer().value = event.GetString()
     

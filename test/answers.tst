@@ -1,6 +1,5 @@
 # answers.tst
-# test from bc
-# encoding testing
+
 >>> from xml.etree import ElementTree
 >>> from ucc.word import answers, xml_access
 

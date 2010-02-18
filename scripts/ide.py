@@ -12,7 +12,7 @@ ide.py [packagePath]
 import sys
 from doctest_tools import setpath
 setpath.setpath(__file__, remove_first = True)
-from ucc.gui.App import App
+from ucc.gui.app import App
 
 if __name__ == '__main__':
     try: packagePath = sys.argv[1]
