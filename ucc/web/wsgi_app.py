@@ -23,8 +23,7 @@ import json
 
 Debug = 0
 
-Web_framework_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                 "web")
+Web_framework_dir = os.path.join(os.path.dirname(__file__), "media")
 
 Module_cache = {}
 
@@ -58,13 +57,18 @@ def wsgi_app(environ, start_response):
         if not path:
             path = 'index.html'
         full_path = os.path.join(Web_framework_dir, path)
-        if not os.path.exists(full_path):
+        suffix = path.rsplit('.', 1)[1]
+        try:
+            try:
+                data = __loader__.get_data(full_path)
+            except NameError:
+                with open(full_path, 'rb') as f:
+                    data = f.read()
+            start_response("200 OK", [('Content-Type', Content_types[suffix])])
+            return data
+        except IOError:
             start_response("404 Not Found", [])
             return ''
-        suffix = path.rsplit('.', 1)[1]
-        with open(full_path, 'rb') as f:
-            start_response("200 OK", [('Content-Type', Content_types[suffix])])
-            return f.read()
 
     modulepath, fn_name = components
 
