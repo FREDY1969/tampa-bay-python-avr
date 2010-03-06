@@ -144,7 +144,7 @@ class word(object):
                 registry.rightMainPanel.bottomText.SetText(self.source_text)
                 registry.rightMainPanel.bottomText.SaveFile(source_filename)
         self.set_save_state(True)
-        
+    
     def set_save_state(self, state):
         self.save_state = state
         if registry.wordTreeCtrl and self.tree_node:

@@ -13,17 +13,19 @@ class RepeatableCtrl(BaseCtrl):
                                              ans_setter)
     
     def setupControl(self):
-        self.answers = self.get_answer()
+        self.answers = self.ans_getter()
+        
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        for answer in self.answers:
+            sizer.Add(RepeatableElement(self, answer, self.subcls))
+        self.SetSizer(sizer)
         
         # import pdb
         # pdb.set_trace()
         
     
     def setInitialValue(self):
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        for answer in self.answers:
-            sizer.Add(RepeatableElement(self, answer, self.subcls))
-        self.SetSizer(sizer)
+        pass
     
 
 class RepeatableElement(wx.Panel):
@@ -35,9 +37,9 @@ class RepeatableElement(wx.Panel):
         # down_bitmap = art.GetBitmap(wx.ART_GO_DOWN, wx.ART_FRAME_ICON, (16, 16))
         # new_bitmap = art.GetBitmap(wx.ART_NEW, wx.ART_FRAME_ICON, (16, 16))
         
-        upBtn = wx.BitmapButton(self, -1, up_bitmap)
-        downBtn = wx.BitmapButton(self, -1, down_bitmap)
-        newBtn = wx.BitmapButton(self, -1, new_bitmap)
+        # upBtn = wx.BitmapButton(self, -1, up_bitmap)
+        # downBtn = wx.BitmapButton(self, -1, down_bitmap)
+        # newBtn = wx.BitmapButton(self, -1, new_bitmap)
         
         wx.StaticText(self, -1, answer.value)
     

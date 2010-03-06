@@ -22,7 +22,7 @@ class ChoiceCtrl(BaseCtrl):
                     (self.__class__.__name__,
                      self.question.name,
                      self.get_value()))
-        self.ch.SetLabel(self.get_value())
+        self.ch.SetLabel(self.ans_getter().value)
     
     def onChange(self, event):
         self.change(event.GetInt())
