@@ -45,6 +45,7 @@ class top(object):
         - Gather the root words into self.roots and sort this by label.
         
         '''
+        
         for w in self.word_dict.itervalues():
             w.subclasses = []
             w.instances = []

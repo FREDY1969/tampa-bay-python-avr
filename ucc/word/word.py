@@ -46,13 +46,12 @@ declaration classes and instances.
 
 '''
 
-from __future__ import with_statement
-
 import os.path
 import itertools
 from xml.etree import ElementTree
 
 from ucc.word import answers, questions, xml_access
+from ucc.gui import registry
 
 unique = object()
 
@@ -114,6 +113,8 @@ class word(object):
         self.questions = questions  # list of question objects or None.
         
         self.save_state = True
+        self.tree_node = None
+        self.source_text = None
     
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
@@ -137,7 +138,17 @@ class word(object):
         xml_access.write_element(self.to_xml(),
                                  os.path.join(package_dir or self.package_dir,
                                               self.name + '.xml'))
-        self.save_state = True
+        source_filename = self.get_filename()
+        if source_filename and registry.rightMainPanel:
+            if self.source_text:
+                registry.rightMainPanel.bottomText.SetText(self.source_text)
+                registry.rightMainPanel.bottomText.SaveFile(source_filename)
+        self.set_save_state(True)
+        
+    def set_save_state(self, state):
+        self.save_state = state
+        if registry.wordTreeCtrl and self.tree_node:
+            registry.wordTreeCtrl.SetItemBold(self.tree_node, not state)
     
     def to_xml(self):
         r'''This generates and returns the xml for the word.
@@ -196,7 +207,13 @@ class word(object):
                                  (self.label, question_name))
             return default
         return self.answers[question_name]
-        
+    
+    def set_answer(self, question_name, answer):
+        if not self.answers:
+            self.answers = {}
+        self.answers[question_name] = answer
+        self.set_save_state(False)
+    
     def get_value(self, question_name, default = None):
         r'''Return the value of the answer to question_name.
         
@@ -217,11 +234,9 @@ class word(object):
         if isinstance(ans, answers.answer): return ans.get_value()
         return tuple(itertools.imap(lambda x: x.get_value(), ans))
     
-    def set_answer(self, question_name, answer):
-        if not self.answers:
-            self.answers = {}
-        self.answers[question_name] = answer
-        self.save_state = False
+    def set_value(self, question_name, answer_value):
+        r'''Set the value of the answer to question_name.'''
+        self.get_answer(question_name).value = answer_value
     
     def get_filename(self):
         r'''Returns the complete path to the source file.

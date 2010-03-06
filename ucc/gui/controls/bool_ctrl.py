@@ -15,10 +15,10 @@ class BoolCtrl(BaseCtrl):
         debug.trace("%s.setInitialValue %s=%s" % 
                     (self.__class__.__name__,
                      self.question.name,
-                     self.get_answer()))
-        self.checkBox.SetValue(self.get_answer())
+                     self.get_value()))
+        self.checkBox.SetValue(self.get_value())
     
     def onChange(self, event):
         debug.notice("Checkbox clicked: %s" % event.IsChecked())
-        self.get_answer().value = repr(event.IsChecked())
+        self.set_value(str(event.IsChecked()))
     

@@ -3,7 +3,7 @@
 '''Base class for question controls.'''
 
 import wx
-from ucc.gui import debug
+from ucc.gui import registry, debug
 
 class BaseCtrl(wx.Panel):
     def __init__(self, parent, question, word):
@@ -13,8 +13,16 @@ class BaseCtrl(wx.Panel):
         self.parent = parent
         self.question = question
         self.word = word
-        self.get_answer = lambda: word.get_value(question.name)
+        
+        # answer/value getters/setters
+        
+        self.get_answer = lambda: word.get_answer(question.name)
         self.set_answer = lambda ans: word.set_answer(question.name, ans)
+        self.get_value = lambda: word.get_value(question.name)
+        def set_value(ans):
+            registry.currentWord.set_save_state(False)
+            word.set_value(question.name, ans)
+        self.set_value = set_value
         
         self.setupControl()
         self.setInitialValue()

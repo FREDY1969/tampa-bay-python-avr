@@ -4,7 +4,7 @@
 
 import wx
 from ucc.gui.controls.base_ctrl import BaseCtrl
-from ucc.gui import debug
+from ucc.gui import registry, debug
 
 class StringCtrl(BaseCtrl):
     def setupControl(self):
@@ -15,10 +15,10 @@ class StringCtrl(BaseCtrl):
         debug.trace("%s.setInitialValue %s=%s" % 
                     (self.__class__.__name__,
                      self.question.name,
-                     self.get_answer()))
-        self.textCtrl.ChangeValue(self.get_answer())
+                     self.get_value()))
+        self.textCtrl.ChangeValue(self.get_value())
     
     def onChange(self, event):
         debug.notice("Text changed: %s" % event.GetString())
-        self.get_answer().value = event.GetString()
+        self.set_value(str(event.GetString()))
     

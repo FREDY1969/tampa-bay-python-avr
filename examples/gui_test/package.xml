@@ -18,5 +18,7 @@
         <word name="test_optional_string" />
         <word name="test_choice_defining" />
         <word name="test_choice" />
+        <word name="test_repeatable_string_defining" />
+        <word name="test_repeatable_string" />
     </words>
 </package>

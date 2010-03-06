@@ -35,14 +35,13 @@ class App(wx.App):
         
         registry.ID_OPEN  = wx.NewId()
         registry.ID_SAVE_ALL = wx.NewId()
-        registry.ID_SAVE_WORD = wx.NewId()
+        registry.ID_SAVE_WORD = wx.ID_SAVE
         registry.ID_COMPILE = wx.NewId()
         registry.ID_LOAD = wx.NewId()
         registry.ID_VERIFY = wx.NewId()
-        registry.ID_COMPILE = wx.NewId()
         registry.ID_PUSH = wx.NewId()
-        registry.ID_ABOUT = wx.NewId()
-        registry.ID_EXIT  = wx.NewId()
+        registry.ID_ABOUT = wx.ID_ABOUT
+        registry.ID_EXIT  = wx.ID_EXIT
         
         # standard app controls
         
@@ -134,7 +133,9 @@ class App(wx.App):
         r'''Read in ucclib.built_in and registry.currentPackage.
         
         Setup top_package.
+        
         '''
+        
         registry.top_package = top_package.top(registry.currentPackage)
     
     def onOpen(self, event):
@@ -151,9 +152,6 @@ class App(wx.App):
     def saveWord(self):
         if registry.currentWord and registry.currentWord.top:
             registry.currentWord.save()
-            source_filename = registry.currentWord.get_filename()
-            if source_filename:
-                registry.rightMainPanel.bottomText.SaveFile(source_filename)
             debug.success("Word %s saved" % registry.currentWord.name)
     
     def onAbout(self, event):
@@ -191,6 +189,5 @@ class App(wx.App):
                          **kw_args)
     
     def onExit(self, event):
-        self.saveWord()
         registry.mainFrame.Close(True)
     

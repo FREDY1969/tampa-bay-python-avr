@@ -1,5 +1,6 @@
+# __init__.py
 
-# import control classes to make them easier to get at
+'''Import control classes to make them easier to get at.'''
 
 # atomic
 
