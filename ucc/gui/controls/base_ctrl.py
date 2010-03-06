@@ -16,8 +16,7 @@ class BaseCtrl(wx.Panel):
         self.ans_setter = ans_setter
         
         self.setupControl()
-        self.setInitialValue()
-        
+    
     def setupControl(self):
         raise NotImplementedError("Derived control class must implement " \
                                   "setupControl method.")
@@ -42,10 +41,15 @@ class BaseCtrl(wx.Panel):
         '''
         
         if question.is_optional():
-            return OptionalCtrl(cls, parent, question, ans_getter, ans_setter)
-        if question.is_repeatable():
-            return RepeatableCtrl(cls, parent, question, ans_getter, ans_setter)
-        return cls(parent, question, ans_getter, ans_setter)
+            ctrl = OptionalCtrl(cls, parent, question, ans_getter,
+                                ans_setter)
+        elif question.is_repeatable():
+            ctrl = RepeatableCtrl(cls, parent, question, ans_getter, 
+                                  ans_setter)
+        else:
+            ctrl = cls(parent, question, ans_getter, ans_setter)
+        ctrl.setInitialValue()
+        return ctrl
     
 
 from ucc.gui.controls.optional_ctrl import OptionalCtrl
