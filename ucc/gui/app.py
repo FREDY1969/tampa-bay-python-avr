@@ -41,7 +41,7 @@ class App(wx.App):
         registry.ID_VERIFY = wx.NewId()
         registry.ID_PUSH = wx.NewId()
         registry.ID_ABOUT = wx.ID_ABOUT
-        registry.ID_EXIT  = wx.ID_EXIT
+        registry.ID_EXIT = wx.ID_EXIT
         
         # standard app controls
         

@@ -15,10 +15,9 @@ class IntegerCtrl(BaseCtrl):
         debug.trace("%s.setInitialValue %s=%s" % 
                     (self.__class__.__name__,
                      self.question.name,
-                     self.get_value()))
-        self.spinCtrl.SetValue(self.get_value())
+                     self.ans_getter().get_value()))
+        self.spinCtrl.SetValue(self.ans_getter().get_value())
     
     def onChange(self, event):
-        debug.notice("Int changed: %s" % event.GetInt())
-        self.set_value(str(event.GetInt()))
+        self.change(event.GetInt())
     

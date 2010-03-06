@@ -25,6 +25,5 @@ class ChoiceCtrl(BaseCtrl):
         self.ch.SetLabel(self.get_value())
     
     def onChange(self, event):
-        debug.notice("Choice changed: %s" % self.choices['values'][event.GetSelection()])
-        self.set_value(str(event.GetInt()))
+        self.change(event.GetInt())
     

@@ -19,7 +19,8 @@ class OptionalCtrl(BaseCtrl):
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.onChange, cp)
         
         subpane = cp.GetPane()
-        self.subctrl = self.subcls(subpane, self.question, self.word)
+        self.subctrl = self.subcls(subpane, self.question, self.ans_getter, 
+                                   self.ans_setter)
         
         pane_sizer = wx.BoxSizer()
         subpane.SetSizer(pane_sizer)
