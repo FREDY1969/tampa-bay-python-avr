@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>pass_</name>
+    <label>pass</label>
+    <kind>macro</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="argument" repeated="True" />
+        <answer name="new_syntax_keyword" repeated="True" />
+        <answer name="syntax" repeated="True" />
+    </answers>
+</word>

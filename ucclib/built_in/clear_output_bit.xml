@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>clear_output_bit</name>
+    <label>clear-output-bit</label>
+    <kind>singleton</kind>
+    <defining>False</defining>
+</word>

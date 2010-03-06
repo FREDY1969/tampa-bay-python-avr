@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_bool_defining</name>
+    <label>Test Bool Defining</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="" />
+    </answers>
+    <questions>
+        <question>
+            <name>my_bool</name>
+            <label>My Bool</label>
+            <min>1</min>
+            <max>1</max>
+            <type>bool</type>
+        </question>
+    </questions>
+</word>

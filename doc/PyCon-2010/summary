@@ -1,0 +1,12 @@
+A programming language offers a higher level of abstraction than assembler.
+It's an abstraction for _how_ computation is done, which is different than
+an abstraction for _what_ a computation does (e.g., the 'sqrt' function).
+
+The first abstracts a computational model, the second a specific computation.
+
+Domain Specific Languages are a way for the library writer to offer his users
+abstractions of computational models unique to his domain.
+
+This talk shows how DSLs can be integrated into a programming language to make
+it easy to implement the DSL, integrate it into the compiler, and easy to use
+by others.
