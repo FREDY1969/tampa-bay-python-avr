@@ -93,12 +93,23 @@ class answer(object):
     def __init__(self, name, value):
         self.name = name
         self.value = value
+        self.valid = True
         assert isinstance(self.value, (str, unicode)), \
                "%s: null value for %s" % (self.__class__.__name__, self.name)
     
     @classmethod
     def from_element(cls, name, answer):
         return cls(name, get_value_string(name, answer))
+    
+    @classmethod
+    def from_value(cls, name, value):
+        try:
+            ans = cls(name, value)
+            ans.get_value()
+        except ValueError:
+            ans.value = ''
+            ans.valid = False
+        return ans
     
     def __repr__(self):
         return "<%s %s=%r>" % (self.__class__.__name__, self.name, self.value)

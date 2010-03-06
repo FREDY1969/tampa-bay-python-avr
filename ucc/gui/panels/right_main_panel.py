@@ -71,10 +71,16 @@ class RightMainPanel(wx.Panel):
                     cls = getattr(controls, question.control)
                     debug.trace('%s is being renderd as %s' % \
                                 (question.name, cls.__name__))
-                    self.topSizer.Add(cls.makeControl( \
-                                      self.topPanel, \
-                                      question, \
-                                      registry.currentWord))
+                    self.topSizer.Add(
+                      cls.makeControl(
+                        self.topPanel,
+                        question,
+                        lambda question=question:
+                            registry.currentWord.get_answer(question.name),
+                        lambda new_ans, question=question:
+                            registry.currentWord.set_answer(question.name,
+                                                            new_ans)))
+
             
             # setup bottom text
             

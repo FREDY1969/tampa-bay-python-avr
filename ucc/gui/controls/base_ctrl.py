@@ -6,37 +6,33 @@ import wx
 from ucc.gui import registry, debug
 
 class BaseCtrl(wx.Panel):
-    def __init__(self, parent, question, word):
+    def __init__(self, parent, question, ans_getter, ans_setter):
         super(BaseCtrl, self).__init__(parent)
         debug.trace("%s.__init__" % self.__class__.__name__)
         
         self.parent = parent
         self.question = question
-        self.word = word
-        
-        # answer/value getters/setters
-        
-        self.get_answer = lambda: word.get_answer(question.name)
-        self.set_answer = lambda ans: word.set_answer(question.name, ans)
-        self.get_value = lambda: word.get_value(question.name)
-        def set_value(ans):
-            registry.currentWord.set_save_state(False)
-            word.set_value(question.name, ans)
-        self.set_value = set_value
+        self.ans_getter = ans_getter
+        self.ans_setter = ans_setter
         
         self.setupControl()
         self.setInitialValue()
         
-    def setupControl():
+    def setupControl(self):
         raise NotImplementedError("Derived control class must implement " \
                                   "setupControl method.")
     
-    def setInitialValue():
+    def setInitialValue(self):
         raise NotImplementedError("Derived control class must implement " \
                                   "setInitialValue method.")
     
+    def change(self, value):
+        registry.currentWord.set_save_state(False)
+        self.ans_getter().value = str(value)
+        debug.notice("%s changed: %s" % (self.__class__.__name__, value))
+    
     @classmethod
-    def makeControl(cls, parent, question, word):
+    def makeControl(cls, parent, question, ans_getter, ans_setter):
         r'''Called when question might be optional or repeatable.
         
         The standard class constructor is only called when the question is not
@@ -46,10 +42,10 @@ class BaseCtrl(wx.Panel):
         '''
         
         if question.is_optional():
-            return OptionalCtrl(cls, parent, question, word)
+            return OptionalCtrl(cls, parent, question, ans_getter, ans_setter)
         if question.is_repeatable():
-            return RepeatableCtrl(cls, parent, question, word)
-        return cls(parent, question, word)
+            return RepeatableCtrl(cls, parent, question, ans_getter, ans_setter)
+        return cls(parent, question, ans_getter, ans_setter)
     
 
 from ucc.gui.controls.optional_ctrl import OptionalCtrl
