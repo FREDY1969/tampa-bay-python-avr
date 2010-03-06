@@ -12,10 +12,10 @@ class OptionalCtrl(BaseCtrl):
         super(OptionalCtrl, self).__init__(*args, **kwargs)
     
     def setupControl(self):
-        labelEnable = "Click to answer"
-        labelDisable = "Click to unanswer"
+        self.labelEnable = "Click to answer"
+        self.labelDisable = "Click to unanswer"
         
-        self.cp = cp = wx.CollapsiblePane(self, label=labelEnable)
+        self.cp = cp = wx.CollapsiblePane(self)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.onChange, cp)
         
         subpane = cp.GetPane()
@@ -24,7 +24,7 @@ class OptionalCtrl(BaseCtrl):
         
         pane_sizer = wx.BoxSizer()
         subpane.SetSizer(pane_sizer)
-        pane_sizer.Add(self.subctrl)
+        pane_sizer.Add(self.subctrl, 1, wx.ALL|wx.EXPAND, 0)
         
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(sizer)
@@ -33,27 +33,28 @@ class OptionalCtrl(BaseCtrl):
     def setInitialValue(self):
         debug.trace("%s.setInitialValue" % self.__class__.__name__)
         
-        if self.get_value() is None:
-            debug.trace("Answer value is None")
+        if self.ans_getter() is None:
+            debug.trace("Answer is None")
+            self.cp.SetLabel(self.labelEnable)
             self.cp.Collapse(True)
         else:
             debug.trace("Answer is not None")
+            self.cp.SetLabel(self.labelDisable)
             self.cp.Expand()
         
         if self.cp.IsExpanded():
             self.subctrl.setInitialValue()
     
     def onChange(self, event):
-        # self.set_value(str(event.GetInt()))
-        
         debug.trace("Optional pane changed: %s" % self.cp.IsExpanded())
+        
         if self.cp.IsExpanded():
-            if self.get_answer() is None:
-                self.set_answer(self.question.make_default_answer())
+            if self.ans_getter() is None:
+                self.ans_setter(self.question.make_default_answer())
             self.subctrl.setInitialValue()
-            self.cp.SetLabel(self.label2)
+            self.cp.SetLabel(self.labelDisable)
         else:
-            self.set_answer(None)
-            self.cp.SetLabel(self.label1)
+            self.ans_setter(None)
+            self.cp.SetLabel(self.labelEnable)
         self.parent.Layout()
     

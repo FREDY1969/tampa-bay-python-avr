@@ -5,6 +5,6 @@
     <kind>test_optional_string_defining</kind>
     <defining>False</defining>
     <answers>
-        <answer name="my_string" repeated="False" />
+        <answer name="my_string" repeated="False" type="string" value="test2" />
     </answers>
 </word>

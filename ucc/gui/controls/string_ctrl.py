@@ -15,8 +15,8 @@ class StringCtrl(BaseCtrl):
         debug.trace("%s.setInitialValue %s=%s" % 
                     (self.__class__.__name__,
                      self.question.name,
-                     self.ans_getter().get_value()))
-        self.textCtrl.ChangeValue(self.ans_getter().get_value())
+                     self.ans_getter().value))
+        self.textCtrl.ChangeValue(self.ans_getter().value)
     
     def onChange(self, event):
         self.change(event.GetString())
