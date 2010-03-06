@@ -18,14 +18,13 @@ class ChoiceCtrl(BaseCtrl):
         self.Bind(wx.EVT_CHOICE, self.onChange, self.ch)
     
     def setInitialValue(self):
-        pass
-        # debug.trace("%s.setInitialValue %s=%s" % 
-        #             (self.__class__.__name__,
-        #              self.question.name,
-        #              self.get_answer()))
-        # self.ch.SetLabel(self.get_answer())
+        debug.trace("%s.setInitialValue %s=%s" % 
+                    (self.__class__.__name__,
+                     self.question.name,
+                     self.get_value()))
+        self.ch.SetLabel(self.get_value())
     
     def onChange(self, event):
         debug.notice("Choice changed: %s" % self.choices['values'][event.GetSelection()])
-        # self.get_answer().value = event.GetInt()
+        self.set_value(str(event.GetInt()))
     

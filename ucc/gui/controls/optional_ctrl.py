@@ -12,9 +12,10 @@ class OptionalCtrl(BaseCtrl):
         super(OptionalCtrl, self).__init__(*args, **kwargs)
     
     def setupControl(self):
-        self.labelEnable = "Click to answer"
-        self.labelDisable = "Click to unanswer"
-        self.cp = cp = wx.CollapsiblePane(self, label=self.labelEnable)
+        labelEnable = "Click to answer"
+        labelDisable = "Click to unanswer"
+        
+        self.cp = cp = wx.CollapsiblePane(self, label=labelEnable)
         self.Bind(wx.EVT_COLLAPSIBLEPANE_CHANGED, self.onChange, cp)
         
         subpane = cp.GetPane()
@@ -31,8 +32,8 @@ class OptionalCtrl(BaseCtrl):
     def setInitialValue(self):
         debug.trace("%s.setInitialValue" % self.__class__.__name__)
         
-        if self.get_answer() is None:
-            debug.trace("Answer is None")
+        if self.get_value() is None:
+            debug.trace("Answer value is None")
             self.cp.Collapse(True)
         else:
             debug.trace("Answer is not None")
@@ -42,7 +43,7 @@ class OptionalCtrl(BaseCtrl):
             self.subctrl.setInitialValue()
     
     def onChange(self, event):
-        # self.get_answer().value = str(event.GetInt())
+        # self.set_value(str(event.GetInt()))
         
         debug.trace("Optional pane changed: %s" % self.cp.IsExpanded())
         if self.cp.IsExpanded():

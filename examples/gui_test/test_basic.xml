@@ -5,10 +5,10 @@
     <kind>test_basic_defining</kind>
     <defining>False</defining>
     <answers>
-        <answer name="my_bool" repeated="False" type="bool" value="True" />
-        <answer name="my_int" repeated="False" type="int" value="8" />
-        <answer name="my_int2" repeated="False" type="int" value="8" />
-        <answer name="my_string" repeated="False" type="string" value="asdfsadfasdf3333" />
+        <answer name="my_bool" repeated="False" type="bool" value="False" />
+        <answer name="my_int" repeated="False" type="int" value="10" />
+        <answer name="my_int2" repeated="False" type="int" value="9" />
+        <answer name="my_string" repeated="False" type="string" value="asdfsadfasdf3333asdf" />
         <answer name="my_string2" repeated="False" type="string" value="asdfsadfasdf3333" />
     </answers>
 </word>
