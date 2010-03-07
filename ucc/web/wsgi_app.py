@@ -40,7 +40,7 @@ Content_types = {
 def import_(modulename):
     ''' modulepath does not include .py
     '''
-    if debug: print >> sys.stderr, "import_:", modulename
+    if Debug: print >> sys.stderr, "import_:", modulename
     mod = __import__(modulename)
     for comp in modulename.split('.')[1:]:
         mod = getattr(mod, comp)
