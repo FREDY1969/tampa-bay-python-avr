@@ -73,7 +73,7 @@ def wsgi_app(environ, start_response):
     modulepath, fn_name = components
 
     if modulepath not in Module_cache:
-        Module_cache[modulepath] = import_(modulepath)
+        Module_cache[modulepath] = import_('ucc.web.' + modulepath)
 
     if environ["REQUEST_METHOD"] == "GET":
         data = urlparse.parse_qs(environ["QUERY_STRING"])['data'][0]
