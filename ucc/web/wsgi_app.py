@@ -84,8 +84,10 @@ def wsgi_app(environ, start_response):
                environ['CONTENT_LENGTH']))['data'][0]
 
     # "200 OK", [('header_field_name', 'header_field_value')...], data
+    data_dict = json.loads(data)
+    data_dict = dict((key.encode(), value) for key, value in data_dict.iteritems())
     status, headers, document = \
-      getattr(Module_cache[modulepath], fn_name)(**json.loads(data))
+      getattr(Module_cache[modulepath], fn_name)(**data_dict)
     headers.append(('Content-Type', 'application/json'))
     start_response(status, headers)
     return json.dumps(document)
