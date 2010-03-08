@@ -81,7 +81,7 @@ def wsgi_app(environ, start_response):
         data = \
            urlparse.parse_qs(
              environ['wsgi.input'].read(
-               environ['CONTENT_LENGTH']))['data'][0]
+               int(environ['CONTENT_LENGTH'])))['data'][0]
 
     # "200 OK", [('header_field_name', 'header_field_value')...], data
     data_dict = json.loads(data)
