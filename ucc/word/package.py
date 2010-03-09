@@ -27,7 +27,7 @@ class package(object):
     def __init__(self, package_dir):
         # Figure out package directories.
         self.package_dir = os.path.abspath(package_dir)
-        root_dir = setpath.setpath(self.package_dir, False)
+        root_dir = setpath.setpath(self.package_dir, False)[0]
         assert self.package_dir.startswith(root_dir), \
                "%s: setpath did not return a root of package_dir,\n" \
                "  got %s\n" \
