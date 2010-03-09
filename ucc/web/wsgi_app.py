@@ -65,10 +65,10 @@ def wsgi_app(environ, start_response):
                 with open(full_path, 'rb') as f:
                     data = f.read()
             start_response("200 OK", [('Content-Type', Content_types[suffix])])
-            return data
+            return [data]
         except IOError:
             start_response("404 Not Found", [])
-            return ''
+            return ['']
 
     modulepath, fn_name = components
 
@@ -90,5 +90,5 @@ def wsgi_app(environ, start_response):
       getattr(Module_cache[modulepath], fn_name)(**data_dict)
     headers.append(('Content-Type', 'application/json'))
     start_response(status, headers)
-    return json.dumps(document)
+    return [json.dumps(document)]
 
