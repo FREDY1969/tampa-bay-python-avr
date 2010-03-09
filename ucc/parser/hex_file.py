@@ -19,7 +19,7 @@ def write(words, package_dir, filetype):
                                      itertools.islice(bytes_iter, 16)))
                 if not data_hex: break
                 line = "%02x%04x00%s" % \
-                         (len(data_hex)/2, address + i * 16, data_hex)
+                         (len(data_hex)//2, address + i * 16, data_hex)
                 hex_file.write(":%s%02x\r\n" % (line, check_sum(line)))
                 generated_something = True
                 if len(data_hex) < 32: break 
