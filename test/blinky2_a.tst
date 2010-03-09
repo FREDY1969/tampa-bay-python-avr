@@ -2,7 +2,7 @@
 
 Test the blinky2 example:
 
->>> from test import examples
+>>> import examples
 
 >>> test1 = examples.test_compile('blinky2', True)
 Traceback (most recent call last):
