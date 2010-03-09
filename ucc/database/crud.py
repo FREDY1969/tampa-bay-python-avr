@@ -245,7 +245,7 @@ def doctor_test(item, values):
     if value is None:
         if key.endswith('_'): return key[:-1] + ' is not null'
         return key + ' is null'
-    if hasattr(value, '__iter__'):
+    if hasattr(value, '__iter__') and not isinstance(value, str):
         t = tuple(value)
         assert t, "crud where key tuple values can't be empty"
         if len(t) == 1:
@@ -272,10 +272,10 @@ def doctor_value(value):
         >>> doctor_value((33, obj))
         [33, 34]
     '''
-    if hasattr(value, '__iter__'):
-        return map(doctor_value, value)
     if value is None or isinstance(value, (int, long, float, str)):
         return value
+    if hasattr(value, '__iter__'):
+        return map(doctor_value, value)
     return value.id
 
 def create_where(keys):
