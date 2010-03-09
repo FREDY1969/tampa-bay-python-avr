@@ -7,10 +7,14 @@ from wsgiref.simple_server import make_server
 import webbrowser
 from ucc.web import wsgi_app
 
-httpd = make_server('', 8000, wsgi_app.wsgi_app)
-print "Serving HTTP on port 8000..."
+def run(port=8000):
+    httpd = make_server('', port, wsgi_app.wsgi_app)
+    print "Serving HTTP on port {}...".format(port)
 
-webbrowser.open('http://localhost:8000', 2)
+    webbrowser.open('http://localhost:{}'.format(port), 2)
 
-# Respond to requests until process is killed
-httpd.serve_forever()
+    # Respond to requests until process is killed
+    httpd.serve_forever()
+
+if __name__ == "__main__":
+    run()
