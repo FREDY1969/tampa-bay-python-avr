@@ -153,11 +153,11 @@ def gen_assembler():
         tops = filter(lambda t: len(t.parents) == 0, triples)
         if Debug: print >> sys.stderr, "tops", tops
         crud.Db_cur.execute('''
-            select predecessor, successor
-              from triple_order_constraints
-             where predecessor in (%(qmarks)s) or successor in (%(qmarks)s)
-        ''' % {'qmarks': ', '.join('?' * len(triples))},
-        [t.id for t in triples] * 2)
+                select predecessor, successor
+                  from triple_order_constraints
+                 where predecessor in (%(qmarks)s) or successor in (%(qmarks)s)
+            ''' % {'qmarks': ', '.join('?' * len(triples))},
+            [t.id for t in triples] * 2)
         pred_succ = crud.Db_cur.fetchall()
         if Debug: print >> sys.stderr, "pred_succ", pred_succ
         shareds = filter(lambda s: len(s) > 1,

@@ -4,7 +4,8 @@ r'''Triple processing for gen_assembler.
 
 This reads the triples back in from the database, but into a new `triple` class
 (rather than `ucc.database.triple.triple`) to support gen_assembler.  This ends
-up setting the order_in_block and reg_class columns for each triple.
+up setting the reverse_children, order_in_block and reg_class columns for each
+triple.
 '''
 
 import sys   # temp for debugging...
