@@ -68,7 +68,7 @@ def wsgi_app(environ, start_response):
             return [data]
         except IOError:
             start_response("404 Not Found", [])
-            return ['']
+            return []
 
     modulepath, fn_name = components
 
@@ -76,18 +76,15 @@ def wsgi_app(environ, start_response):
         Module_cache[modulepath] = import_('ucc.web.' + modulepath)
 
     if environ["REQUEST_METHOD"] == "GET":
-        data = urllib.parse.parse_qs(environ["QUERY_STRING"])['data'][0]
+        query_string = environ["QUERY_STRING"]
     else:
-        data = \
-           urllib.parse.parse_qs(
-             environ['wsgi.input'].read(
-               int(environ['CONTENT_LENGTH'])))['data'][0]
+        post_data = environ['wsgi.input'].read(int(environ['CONTENT_LENGTH']))
+        query_string = post_data.decode('utf-8')
+    data = urllib.parse.parse_qs(query_string)['data'][0]
 
     # "200 OK", [('header_field_name', 'header_field_value')...], data
-    data_dict = json.loads(data)
-    data_dict = dict((key.encode(), value) for key, value in data_dict.items())
     status, headers, document = \
-      getattr(Module_cache[modulepath], fn_name)(**data_dict)
+      getattr(Module_cache[modulepath], fn_name)(**json.loads(data))
     headers.append(('Content-Type', 'application/json'))
     start_response(status, headers)
     return [json.dumps(document)]
