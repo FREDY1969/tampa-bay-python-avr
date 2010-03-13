@@ -53,7 +53,7 @@ def wsgi_app(environ, start_response):
     path = environ["PATH_INFO"].lstrip('/')
     components = path.split('/')
 
-    if len(components) != 2:
+    if len(components) != 3 or components[0] != 'ajax':
         if not path:
             path = 'index.html'
         full_path = os.path.join(Web_framework_dir, path)
@@ -70,7 +70,7 @@ def wsgi_app(environ, start_response):
             start_response("404 Not Found", [])
             return []
 
-    modulepath, fn_name = components
+    modulepath, fn_name = components[1:]
 
     if modulepath not in Module_cache:
         Module_cache[modulepath] = import_('ucc.web.' + modulepath)
