@@ -3,7 +3,7 @@
 r'''The helper classes for the AST information in the database.
 '''
 
-from __future__ import with_statement
+
 
 import itertools
 
@@ -68,7 +68,7 @@ class ast(object):
         this node.
         '''
         self.args = args
-        for name, value in kws.iteritems():
+        for name, value in kws.items():
             if name not in self.attr_cols:
                 raise KeyError("ast: illegal attribute: %s" % name)
             setattr(self, name, value)
@@ -119,7 +119,7 @@ class ast(object):
         'kind' and the 'label' attributes.
         '''
         line_start, column_start, line_end, column_end = syntax_position_info
-        if isinstance(symbol_id, (str, unicode)):
+        if isinstance(symbol_id, str):
             symbol_id = symbol_table.get(symbol_id).id
         return cls(kind='word',
                    label=symbol_table.get_by_id(symbol_id).label,
@@ -144,7 +144,7 @@ class ast(object):
         the prepared node.
         '''
         self.args = args
-        for key, value in kws.iteritems():
+        for key, value in kws.items():
             setattr(self, key, value)
         for key in self.attr_cols_node:
             if key not in kws:
@@ -204,11 +204,10 @@ class ast(object):
         r'''Writes itself and its children (args) to the database.
         '''
         kws = dict(itertools.chain(
-                     map(lambda attr: (attr, getattr(self, attr)),
-                         self.attr_cols),
-                     zip(self.arg_cols,
+                     [(attr, getattr(self, attr)) for attr in self.attr_cols],
+                     list(zip(self.arg_cols,
                          (word_symbol.id, parent, parent_arg_num,
-                          arg_order))))
+                          arg_order)))))
         self.word_symbol = word_symbol
         self.id = crud.insert('ast', **kws)
         save_args(self.args, word_symbol, self.id)

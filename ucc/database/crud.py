@@ -13,7 +13,7 @@ Most of the crud routines use keyword arguments to specify the SQL 'where'
 clause.  See the `doctor_test` examples for how this works.
 '''
 
-from __future__ import with_statement
+
 
 import os.path
 import itertools
@@ -71,10 +71,10 @@ class db_connection(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None and exc_val is None and exc_tb is None:
-            if Debug: print "crud: commit"
+            if Debug: print("crud: commit")
             Db_conn.commit()
         else:
-            if Debug: print "crud: rollback"
+            if Debug: print("crud: rollback")
             Db_conn.rollback()
         fini()
         return False    # don't ignore exception (if any)
@@ -129,7 +129,7 @@ def save_gensym_indexes():
         db_cur.execute("delete from gensym_indexes")
         db_cur.executemany(
           "insert into gensym_indexes (prefix, last_used_index) values (?, ?)",
-          _Gensyms.iteritems())
+          iter(_Gensyms.items()))
 
 def gensym(root_name):
     r'''Generates a unique name that starts with root_name.
@@ -166,9 +166,9 @@ class db_cur_test(object):
         Db_cur = self
 
     def execute(self, query, parameters = None):
-        print "query:", query
+        print("query:", query)
         if parameters is not None:
-            print "parameters:", parameters
+            print("parameters:", parameters)
 
     def set_answers(self, *answers):
         r'''Sets the answers that the next `fetchall` will return.
@@ -272,10 +272,10 @@ def doctor_value(value):
         >>> doctor_value((33, obj))
         [33, 34]
     '''
-    if value is None or isinstance(value, (int, long, float, str)):
+    if value is None or isinstance(value, (int, float, str)):
         return value
     if hasattr(value, '__iter__'):
-        return map(doctor_value, value)
+        return list(map(doctor_value, value))
     return value.id
 
 def create_where(keys):
@@ -308,7 +308,7 @@ def create_where(keys):
         order_by_clause = ''
     if keys:
         values = []
-        tests = tuple(doctor_test(item, values) for item in keys.items())
+        tests = tuple(doctor_test(item, values) for item in list(keys.items()))
         return " where " + ' and '.join(tests) + order_by_clause, \
                values
     else:
@@ -334,8 +334,8 @@ def run_query(table, cols, keys):
                                table,
                                where))
     if Debug:
-        print "crud:", command
-        print "  params:", params
+        print("crud:", command)
+        print("  params:", params)
     Db_cur.execute(command, params)
 
 def read_as_tuples(table, *cols, **keys):
@@ -418,8 +418,8 @@ def read_as_dicts(table, *cols, **keys):
         [{'b': 1}, {'b': 3}]
     '''
     run_query(table, cols, keys)
-    col_names = map(lambda x: x[0], Db_cur.description)
-    return [dict(zip(col_names, row)) for row in Db_cur.fetchall()]
+    col_names = [x[0] for x in Db_cur.description]
+    return [dict(list(zip(col_names, row))) for row in Db_cur.fetchall()]
 
 def read1_as_dict(table, *cols, **keys):
     r'''Reads 1 row as a dict.
@@ -495,12 +495,12 @@ def update(table, where, **set):
     where_clause, params = create_where(where)
     command = string_lookup("update %s set %s%s" %
                               (table,
-                               ', '.join(c + ' = ?' for c in set.keys()),
+                               ', '.join(c + ' = ?' for c in list(set.keys())),
                                where_clause))
     if Debug:
-        print "crud:", command
-        print "  params:", set.values() + params
-    Db_cur.execute(command, doctor_value(set.values()) + params)
+        print("crud:", command)
+        print("  params:", list(set.values()) + params)
+    Db_cur.execute(command, doctor_value(list(set.values())) + params)
 
 def delete(table, **keys):
     r'''Deletes rows in a table.
@@ -519,8 +519,8 @@ def delete(table, **keys):
     where_clause, params = create_where(keys)
     command = string_lookup("delete from %s%s" % (table, where_clause))
     if Debug:
-        print "crud:", command
-        print "  params:", params
+        print("crud:", command)
+        print("  params:", params)
     Db_cur.execute(command, params)
 
 def insert(table, option = None, **cols):
@@ -565,11 +565,11 @@ def insert(table, option = None, **cols):
                                ', '.join(keys),
                                ', '.join('?' for c in keys)))
     if Debug:
-        print "crud:", command
-        print "  params:", [cols[key] for key in keys]
+        print("crud:", command)
+        print("  params:", [cols[key] for key in keys])
     Db_cur.execute(command, [doctor_value(cols[key]) for key in keys])
     if Debug:
-        print "  id:", Db_cur.lastrowid
+        print("  id:", Db_cur.lastrowid)
     return Db_cur.lastrowid
 
 def dummy_transaction():

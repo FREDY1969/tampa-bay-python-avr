@@ -1,8 +1,8 @@
 # number.py
 
-from __future__ import division
+
 import math
-import domain
+from . import domain
 
 def adj_binary_pt(i, old_pt, new_pt):
     r'''
@@ -88,7 +88,7 @@ class fixed_precision(object):
     def __neg__(self):
         return self.__class__(-self.i, self.binary_pt)
     def __add__(self, b):
-        if isinstance(b, (int, long)):
+        if isinstance(b, int):
             # we take these to be exact numbers
             return self.__class__(self.i + adj_binary_pt(b, 0, self.binary_pt),
                                   self.binary_pt)
@@ -109,7 +109,7 @@ class fixed_precision(object):
     def __radd__(self, b):
         return self + b
     def __sub__(self, b):
-        if isinstance(b, (int, long)):
+        if isinstance(b, int):
             # we take these to be exact numbers
             return self.__class__(self.i + adj_binary_pt(b, 0, self.binary_pt),
                                   self.binary_pt)
@@ -132,7 +132,7 @@ class fixed_precision(object):
 
     def __mul__(self, b):
         # d(a*x)/dx = a
-        if isinstance(b, (int, long)):
+        if isinstance(b, int):
             # we take these to be exact numbers
             binary_pt = -int(math.floor(math.log(b, 2) - self.binary_pt))
             return self.__class__(adj_binary_pt(self.i * b, self.binary_pt,
@@ -166,7 +166,7 @@ class fixed_precision(object):
     def __div__(self, b):
         # d(a/x)/dx = -a/x**2
         # d(x/a)/dx = 1/a
-        if isinstance(b, (int, long)):
+        if isinstance(b, int):
             # we take these to be exact numbers
             binary_pt = -int(math.floor(-math.log(b, 2) - self.binary_pt))
             return self.__class__(adj_binary_pt(self.i / b, self.binary_pt,
@@ -201,7 +201,7 @@ class fixed_precision(object):
         # d(a/x)/dx = -a/x**2
         # d(x/a)/dx = 1/a
         my_log = math.log(self.i, 2) / self.binary_pt
-        if isinstance(b, (int, long)):
+        if isinstance(b, int):
             # we take these to be exact numbers
             binary_pt = -int(math.floor(math.log(b, 2) - 2*my_log - 
                                           self.binary_pt))

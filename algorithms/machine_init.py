@@ -1,6 +1,6 @@
 # machine_init.py
 
-from __future__ import with_statement
+
 
 import itertools
 
@@ -32,29 +32,29 @@ def init():
         for C in reg_classes:
             regs_in_class[C] = \
               frozenset(crud.read_column('reg_in_class', 'reg', reg_class=C))
-        print 'reg_classes', reg_classes
+        print('reg_classes', reg_classes)
 
         for N in reg_classes:
-            print 'N', N
+            print('N', N)
             N_regs = regs_in_class[N]
             for C in reg_classes:
                 C_regs = regs_in_class[C]
-                print 'C', C, C_regs
+                print('C', C, C_regs)
 
                 # {set of S: set of registers}
                 worsts0 = {frozenset(): frozenset()}
 
                 for m in range(1, len(C_regs) + 1):
-                    print 'm', m
+                    print('m', m)
                     worsts1 = {}
                     for R in C_regs:
-                        for S0, regs in worsts0.iteritems():
+                        for S0, regs in worsts0.items():
                             if R not in S0:
                                 worsts1[S0.union((R,))] = \
                                     regs.union(aliases[R]).intersection(N_regs)
                     crud.insert('worst', N=N, C=C, m=m,
                                 value=max(len(regs)
-                                          for regs in worsts1.itervalues()))
+                                          for regs in worsts1.values()))
                     worsts0 = worsts1
             crud.Db_conn.commit()
         worst0 = worst1 = None
@@ -77,13 +77,13 @@ def class_compares():
 
         for C1, C2 in itertools.combinations(reg_classes, 2):
             if aliases[C1] == aliases[C2]:
-                print C1, 'alias-equivalent', C2
+                print(C1, 'alias-equivalent', C2)
             elif aliases[C1].issubset(aliases[C2]):
-                print C1, 'alias-contained in', C2
+                print(C1, 'alias-contained in', C2)
             elif aliases[C2].issubset(aliases[C1]):
-                print C2, 'alias-contained in', C1
+                print(C2, 'alias-contained in', C1)
             elif not aliases[C1].isdisjoint(aliases[C2]):
-                print C1, '*** UNKNOWN ***', C2
+                print(C1, '*** UNKNOWN ***', C2)
 
     finally:
         crud.Db_cur.close()

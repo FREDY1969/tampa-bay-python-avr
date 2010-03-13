@@ -50,8 +50,8 @@ def expand(quiet = False):
           (depth,))
         if not crud.Db_cur.rowcount:
             if not quiet:
-                print "fn_xref.expand: did", depth + 1, \
-                      "database calls for fn_global_var_uses"
+                print("fn_xref.expand: did", depth + 1, \
+                      "database calls for fn_global_var_uses")
             break
 
     # Fill out symbol_table.side_effects:
@@ -69,8 +69,8 @@ def expand(quiet = False):
            """)
         if not crud.Db_cur.rowcount:
             if not quiet:
-                print "fn_xref.expand: did", depth + 1, \
-                      "database calls for symbol_table.side_effects"
+                print("fn_xref.expand: did", depth + 1, \
+                      "database calls for symbol_table.side_effects")
             break
 
     # Fill out symbol_table.suspends:
@@ -87,8 +87,8 @@ def expand(quiet = False):
            """)
         if not crud.Db_cur.rowcount:
             if not quiet:
-                print "fn_xref.expand: did", depth + 1, \
-                      "database calls for symbol_table.suspends"
+                print("fn_xref.expand: did", depth + 1, \
+                      "database calls for symbol_table.suspends")
             break
 
     symbol_table.update()

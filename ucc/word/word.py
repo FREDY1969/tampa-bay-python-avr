@@ -232,7 +232,7 @@ class word(object):
         ans = self.get_answer(question_name)
         if ans is None: return default
         if isinstance(ans, answers.answer): return ans.get_value()
-        return tuple(itertools.imap(lambda x: x.get_value(), ans))
+        return tuple(map(lambda x: x.get_value(), ans))
     
     def set_value(self, question_name, answer_value):
         r'''Set the value of the answer to question_name.'''

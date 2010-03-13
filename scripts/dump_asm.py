@@ -8,7 +8,7 @@ id: label(section) @address for min_len-max_len, min_cycles-max_cycles ticks
   id: opcode operand1 operand2 for min_len-max_len, min_clocks-max_clocks ticks
 '''
 
-from __future__ import with_statement
+
 
 import itertools
 import os.path
@@ -37,14 +37,14 @@ def dump(db_cur):
                        order by id
     """)
     for info in db_cur.fetchall():
-        print
+        print()
         dump_block(info, db_cur)
 
 def dump_block(info, db_cur):
     if info[8] is None:
-        print "%d: %s(%s) @%s for %s-%s, %s-%s ticks" % info[:-1]
+        print("%d: %s(%s) @%s for %s-%s, %s-%s ticks" % info[:-1])
     else:
-        print "%d: %s(%s) @%s for %s-%s, %s-%s ticks, next %s" % info
+        print("%d: %s(%s) @%s for %s-%s, %s-%s ticks, next %s" % info)
     dump_insts(db_cur, info[0])
 
 def dump_insts(db_cur, id):
@@ -63,19 +63,19 @@ def dump_insts(db_cur, id):
         for_spaces = For_column - len(id_str) - len(opcode) - 3
         if operand1 is None:
             assert operand2 is None, "operand2 with no operand1"
-            print "  %s: %s%sfor %s-%s, %s-%s ticks" % \
+            print("  %s: %s%sfor %s-%s, %s-%s ticks" % \
                     (id_str, opcode, ' ' * for_spaces,
-                     min_length, max_length, min_clocks, max_clocks)
+                     min_length, max_length, min_clocks, max_clocks))
         elif operand2 is None:
-            print "  %s: %s %s%sfor %s-%s, %s-%s ticks" % \
+            print("  %s: %s %s%sfor %s-%s, %s-%s ticks" % \
                     (id_str, opcode, operand1,
                      ' ' * (for_spaces - len(operand1) - 1), 
-                     min_length, max_length, min_clocks, max_clocks)
+                     min_length, max_length, min_clocks, max_clocks))
         else:
-            print "  %s: %s %s, %s%sfor %s-%s, %s-%s ticks" % \
+            print("  %s: %s %s, %s%sfor %s-%s, %s-%s ticks" % \
                     (id_str, opcode, operand1, operand2,
                      ' ' * (for_spaces - len(operand1) - len(operand2) - 3),
-                     min_length, max_length, min_clocks, max_clocks)
+                     min_length, max_length, min_clocks, max_clocks))
 
 if __name__ == "__main__":
     import sys

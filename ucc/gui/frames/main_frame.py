@@ -14,8 +14,8 @@ from ucc.gui import debug
 class MainFrame(wx.Frame):
     def __init__(self, parent, id, title):
         super(MainFrame, self).__init__(parent, id, title,
-            size = map(int,
-                       registry.config.get('gui', 'window-size').split('x')),
+            size = list(map(int,
+                       registry.config.get('gui', 'window-size').split('x'))),
             style = wx.DEFAULT_FRAME_STYLE # | wx.NO_FULL_REPAINT_ON_RESIZE
         )
         self.SetMinSize((970,720))
@@ -100,7 +100,7 @@ class MainFrame(wx.Frame):
         # make sure all words are saved
         
         opened_words = [word for word in \
-                        registry.top_package.word_dict.values() \
+                        list(registry.top_package.word_dict.values()) \
                         if word.save_state == False]
         if len(opened_words):
             dlg = ConfirmSaveDialog(None, -1, "Do you want to save the " \

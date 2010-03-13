@@ -15,10 +15,10 @@
 #     wsgi.multithread: True
 #     wsgi.run_once: False
 
-from __future__ import with_statement
+
 
 import os
-import urlparse
+import urllib.parse
 import json
 
 Debug = 0
@@ -40,7 +40,7 @@ Content_types = {
 def import_(modulename):
     ''' modulepath does not include .py
     '''
-    if Debug: print >> sys.stderr, "import_:", modulename
+    if Debug: print("import_:", modulename, file=sys.stderr)
     mod = __import__(modulename)
     for comp in modulename.split('.')[1:]:
         mod = getattr(mod, comp)
@@ -76,16 +76,16 @@ def wsgi_app(environ, start_response):
         Module_cache[modulepath] = import_('ucc.web.' + modulepath)
 
     if environ["REQUEST_METHOD"] == "GET":
-        data = urlparse.parse_qs(environ["QUERY_STRING"])['data'][0]
+        data = urllib.parse.parse_qs(environ["QUERY_STRING"])['data'][0]
     else:
         data = \
-           urlparse.parse_qs(
+           urllib.parse.parse_qs(
              environ['wsgi.input'].read(
                int(environ['CONTENT_LENGTH'])))['data'][0]
 
     # "200 OK", [('header_field_name', 'header_field_value')...], data
     data_dict = json.loads(data)
-    data_dict = dict((key.encode(), value) for key, value in data_dict.iteritems())
+    data_dict = dict((key.encode(), value) for key, value in data_dict.items())
     status, headers, document = \
       getattr(Module_cache[modulepath], fn_name)(**data_dict)
     headers.append(('Content-Type', 'application/json'))

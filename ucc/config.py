@@ -1,7 +1,7 @@
 '''Load configuration.'''
 
 import sys, os
-import ConfigParser
+import configparser
 
 def load():
     paths = os.path.expanduser('~')
@@ -17,6 +17,6 @@ def load():
         defaultFile = os.path.join(sys.path[0], 'ucc', 'ucc-default.ini')
         from distutils import file_util
         file_util.copy_file(defaultFile, configPath)
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     config.read(configPath)
     return config

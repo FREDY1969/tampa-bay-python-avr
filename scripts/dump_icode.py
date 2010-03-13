@@ -11,7 +11,7 @@ fun_name.id: name [next id [/ id]] (predecessor ids)
 
 '''
 
-from __future__ import with_statement
+
 
 import itertools
 import os.path
@@ -39,7 +39,7 @@ def dump(db_cur):
                        order by b.id
                    """)
     for info in db_cur.fetchall():
-        print
+        print()
         dump_block(info, db_cur)
 
 def dump_block(info, db_cur):
@@ -49,12 +49,12 @@ def dump_block(info, db_cur):
                        where successor = ?
                    """,
                    (id,))
-    predecessors = ' '.join(map(lambda x: str(x[0]), db_cur))
-    print "%s.%d: %s%s%s%s" % \
+    predecessors = ' '.join([str(x[0]) for x in db_cur])
+    print("%s.%d: %s%s%s%s" % \
             (fun_name, id, name,
              ' next %s' % next if next else '',
              ' / %s' % next_cond if next_cond else '',
-             ' (%s)' % predecessors if predecessors else '')
+             ' (%s)' % predecessors if predecessors else ''))
     dump_triples(db_cur, id)
 
 def dump_triples(db_cur, block_id):
@@ -66,8 +66,8 @@ def dump_triples(db_cur, block_id):
          order by id""",
         (block_id,))
 
-    triple_list = map(lambda info: triple(*info), db_cur.fetchall())
-    triples = dict(map(lambda t: (t.id, t), triple_list))
+    triple_list = [triple(*info) for info in db_cur.fetchall()]
+    triples = dict([(t.id, t) for t in triple_list])
 
     for t in triple_list:
         t.tag(triples)
@@ -120,7 +120,7 @@ class triple(object):
 
     def write(self, db_cur, triples, indent = 2):
         if self.written:
-            print '%s%d.' % (' ' * indent, self.id)
+            print('%s%d.' % (' ' * indent, self.id))
         else:
             self.written = True
 
@@ -129,19 +129,17 @@ class triple(object):
                                where successor = ?
                            """,
                            (self.id,))
-            predecessors = ' '.join(map(lambda x: str(x[0]), db_cur))
+            predecessors = ' '.join([str(x[0]) for x in db_cur])
 
             db_cur.execute("""select symbol_id, is_gen
                                 from triple_labels
                                where triple_id = ?
                            """,
                            (self.id,))
-            labels = ' '.join(map(lambda x:
-                                    (' => %s' if x[1] else ' -> %s') %
-                                      get_symbol(db_cur, x[0]),
-                                  db_cur.fetchall()))
+            labels = ' '.join([(' => %s' if x[1] else ' -> %s') %
+                                      get_symbol(db_cur, x[0]) for x in db_cur.fetchall()])
 
-            print "%s%d: %s%s%s%s%s%s" % \
+            print("%s%d: %s%s%s%s%s%s" % \
                   (' ' * indent,
                    self.id,
                    self.operator,
@@ -149,7 +147,7 @@ class triple(object):
                    ' ' + self.op2 if self.op2 else '',
                    ' ' + self.string if self.string else '',
                    ' (%s)' % predecessors if predecessors else '',
-                   labels)
+                   labels))
             if self.triple1 is not None:
                 triples[self.triple1].write(db_cur, triples, indent + 2)
             if self.triple2 is not None:
@@ -197,7 +195,7 @@ if __name__ == "__main__":
                            """,
                            (file[:-4],))
             for info in db_cur.fetchall():
-                print
+                print()
                 dump_block(info, db_cur)
     else:
         with db_cursor(sys.argv[1]) as db_cur:

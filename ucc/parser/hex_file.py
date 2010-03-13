@@ -14,7 +14,7 @@ def write(words, package_dir, filetype):
         for address, bytes in words:
             bytes_iter = iter(bytes)
             for i in itertools.count():
-                data_hex = ''.join(itertools.imap(
+                data_hex = ''.join(map(
                                      lambda n: "%02x" % n,
                                      itertools.islice(bytes_iter, 16)))
                 if not data_hex: break

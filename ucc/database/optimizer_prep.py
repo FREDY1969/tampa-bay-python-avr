@@ -56,7 +56,7 @@ def reaching_definitions():
               on outs.block_id = bs.predecessor
         """)
         if not crud.Db_cur.rowcount:
-            print "reaching_definitions: did", 2 * depth + 1, "database calls"
+            print("reaching_definitions: did", 2 * depth + 1, "database calls")
             break
         crud.Db_cur.execute("""
           insert or ignore into outs (block_id, symbol_id, triple_id)
@@ -66,5 +66,5 @@ def reaching_definitions():
                                     where kills.block_id = ins.block_id)
         """)
         if not crud.Db_cur.rowcount:
-            print "reaching_definitions: did", 2 * depth + 2, "database calls"
+            print("reaching_definitions: did", 2 * depth + 2, "database calls")
             break

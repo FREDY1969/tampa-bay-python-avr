@@ -1,6 +1,6 @@
 # genparser.py
 
-from __future__ import with_statement
+
 
 import sys
 
@@ -43,9 +43,9 @@ def genparser(filename, rules, token_dict, output_file = sys.stdout):
         """,
         output_file = output_file)
 
-    for item in sorted(token_dict.iteritems()):
-        print >> output_file, "    %r: %r," % item
-    print >> output_file, "}\n"
+    for item in sorted(token_dict.items()):
+        print("    %r: %r," % item, file=output_file)
+    print("}\n", file=output_file)
 
     tokens = sorted(parser_init.parse(metaparser, metascanner, filename,
                                       extra_files = (('rules', rules),))
@@ -66,10 +66,10 @@ def genparser(filename, rules, token_dict, output_file = sys.stdout):
     s = "tokens = %r" % tokens
     i = s.rfind(',', 0, 79)
     while len(s) > 79 and i >= 0:
-        print >> output_file, s[:i + 1]
+        print(s[:i + 1], file=output_file)
         s = '          ' + s[i + 1:].lstrip()
         i = s.rfind(',', 0, 79)
-    print >> output_file, s
+    print(s, file=output_file)
 
     metaparser.output("""
 

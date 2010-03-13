@@ -246,7 +246,7 @@ def format(s, operands, notes, args, labels, next_address):
     values = dict((name, lookup(name, Convert, notes)
                            (args[name], num_bits, notes.get(name), labels,
                             next_address))
-                  for name, num_bits in operands.iteritems())
+                  for name, num_bits in operands.items())
     ans = 0
     for i, x in enumerate(s[::-1]):
         if x == '0': pass
@@ -267,9 +267,9 @@ def operand_order(operands, notes):
     (('d', 'D'),)
     '''
     return tuple(
-      itertools.imap(lambda x: tuple(itertools.imap(lambda x: x[1], x[1])),
+      map(lambda x: tuple(map(lambda x: x[1], x[1])),
                      itertools.groupby(
-                       sorted(itertools.imap(
+                       sorted(map(
                                 lambda x: (lookup(x, Order, notes), x),
                                 operands),
                               key = lambda x: x[0]),
@@ -285,7 +285,7 @@ class inst1(object):
         s.discard('0')
         s.discard('1')
         self.operands = dict((operand, opcode.count(operand)) for operand in s)
-        self.operand_codes = operand_order(self.operands.keys(), notes)
+        self.operand_codes = operand_order(list(self.operands.keys()), notes)
         self.cycles = cycles
         self.notes = notes
 
@@ -312,15 +312,15 @@ class inst1(object):
                    "%s instruction requires one operand" % self.name
             assert op2 is None, \
                    "%s instruction only takes one operand" % self.name
-            return dict(itertools.izip(self.operand_codes[0],
+            return dict(zip(self.operand_codes[0],
                                        itertools.repeat(op1)))
         assert len(self.operand_codes) == 2, \
                "internal error: %s illegal instruction format specification" % \
                self.name
         return dict(itertools.chain(
-                      itertools.izip(self.operand_codes[0],
+                      zip(self.operand_codes[0],
                                      itertools.repeat(op1)),
-                      itertools.izip(self.operand_codes[1],
+                      zip(self.operand_codes[1],
                                      itertools.repeat(op2))))
 
     def assemble(self, op1, op2, labels, address):

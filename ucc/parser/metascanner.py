@@ -2,7 +2,7 @@
 
 # See http://www.dabeaz.com/ply/ply.html for syntax of grammer definitions.
 
-from __future__ import with_statement, division
+
 from ucc.parser import scanner_init
 
 debug = 0

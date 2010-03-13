@@ -46,11 +46,11 @@ class top(object):
         
         '''
         
-        for w in self.word_dict.itervalues():
+        for w in self.word_dict.values():
             w.subclasses = []
             w.instances = []
         self.roots = []
-        for w in self.word_dict.itervalues():
+        for w in self.word_dict.values():
             w.kind_obj = self.get_word_by_name(w.kind)
             assert w.kind_obj.defining, \
                    "%s: derived from non-defining word %s" % \
@@ -63,7 +63,7 @@ class top(object):
                 else:
                     w.kind_obj.instances.append(w)
         self.roots.sort(key=lambda w: w.label.lower())
-        for w in self.word_dict.itervalues():
+        for w in self.word_dict.values():
             w.subclasses.sort(key=lambda w: w.label.lower())
             w.instances.sort(key=lambda w: w.label.lower())
             if w.defining:

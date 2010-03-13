@@ -94,7 +94,7 @@ class answer(object):
         self.name = name
         self.value = value
         self.valid = True
-        assert isinstance(self.value, (str, unicode)), \
+        assert isinstance(self.value, str), \
                "%s: null value for %s" % (self.__class__.__name__, self.name)
     
     @classmethod
@@ -166,7 +166,7 @@ class ans_series(answer):
     def __init__(self, name, subanswers = None):
         self.name = name
         self.attributes = subanswers if subanswers is not None else {}
-        for name, value in self.attributes.iteritems():
+        for name, value in self.attributes.items():
             setattr(self, name, value)
     
     @classmethod
@@ -204,7 +204,7 @@ class ans_choice(answer):
         d = parse_options(answer)
         assert len(d) == 1, \
                "%s: expected 1 option to choice, got %d" % (name, len(d))
-        return cls(name, *d.items()[0])
+        return cls(name, *list(d.items())[0])
     
     def __repr__(self):
         return "<%s %s=%s->%r>" % (self.__class__.__name__, self.name,

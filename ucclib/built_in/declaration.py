@@ -149,7 +149,7 @@ class high_level_word(word):
                                        int1=i)
         worked, ast_args = parse.parse_file(parser, self.ww, debug)
         if not worked:
-            raise AssertionError, "parse failed for " + filename
+            raise AssertionError("parse failed for " + filename)
         words_needed = set()
         with crud.db_transaction():
             self.ast_args = \

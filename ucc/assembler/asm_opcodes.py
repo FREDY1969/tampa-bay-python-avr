@@ -6,7 +6,7 @@ Each instruction is stored as a module variable name matching the opcode for
 that instruction.
 '''
 
-from asm_inst import inst1, inst2, bytes, int8, int16, int32, zeroes
+from .asm_inst import inst1, inst2, bytes, int8, int16, int32, zeroes
 
 # Arithmetic and logic instructions
 ADD = inst1('ADD', '0000 11rd dddd rrrr', 1)

@@ -116,7 +116,7 @@ class triple(object):
                                   line_end=self.line_end,
                                   column_end=self.column_end,
                                  )
-            for label, is_gen in self.labels.iteritems():
+            for label, is_gen in self.labels.items():
                 crud.insert('triple_labels',
                             triple_id=self.id,
                             symbol_id=label,

@@ -6,7 +6,7 @@ The routines for reading an individual word are in `ucc.word`.
 
 '''
 
-from __future__ import with_statement
+
 
 import os
 
