@@ -220,7 +220,7 @@ def format(s, operands, notes, args, labels, next_address):
         >>> hex(format('1111 1111 1111 1111 1111 1111 1111 1111'
         ...              .replace(' ',''),
         ...            {}, {}, {}, {}, 0))
-        '0xffffffffL'
+        '0xffffffff'
         >>> hex(format('0000 11rd dddd rrrr'.replace(' ',''),
         ...            {'r': 5, 'd': 5}, {}, {'r':'r12', 'd':'r4'},
         ...            {}, 0))
@@ -228,7 +228,7 @@ def format(s, operands, notes, args, labels, next_address):
         >>> hex(format('1111 1111 1111 1111 kkkk kkkk kkkk kkkk'
         ...              .replace(' ',''),
         ...            {'k': 16}, {}, {'k':'foo'}, {'foo': 0x1234}, 0x1000))
-        '0xffff011aL'
+        '0xffff011a'
         >>> hex(format('0000 1100 kkkk kkkk'.replace(' ',''),
         ...            {'k': 8}, {}, {'k':'foo'},
         ...            {'foo': 0x1234}, 0x1280))

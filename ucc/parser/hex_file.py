@@ -9,7 +9,7 @@ def write(words, package_dir, filetype):
     'words' is a sequence of (starting_address, byte sequence).
     '''
     filename = os.path.join(package_dir, filetype + '.hex')
-    with open(filename, 'w') as hex_file:
+    with open(filename, 'wt', encoding='ascii', newline='\r\n') as hex_file:
         generated_something = False
         for address, bytes in words:
             bytes_iter = iter(bytes)
@@ -20,10 +20,10 @@ def write(words, package_dir, filetype):
                 if not data_hex: break
                 line = "%02x%04x00%s" % \
                          (len(data_hex)//2, address + i * 16, data_hex)
-                hex_file.write(":%s%02x\r\n" % (line, check_sum(line)))
+                hex_file.write(":%s%02x\n" % (line, check_sum(line)))
                 generated_something = True
                 if len(data_hex) < 32: break 
-        hex_file.write(":00000001FF\r\n")
+        hex_file.write(":00000001FF\n")
     if not generated_something:
         os.remove(filename)
 

@@ -45,7 +45,7 @@ False
 >>> v_list[2].add_xml_subelement(root)
 >>> v_list[3].add_xml_subelement(root)
 >>> xml_access.indent(root)
->>> print ElementTree.tostring(root)
+>>> print(ElementTree.tostring(root))
 <validation>
     <validator type="regex" value="[0-9]+$" />
     <validator minvalue="2" type="range" />

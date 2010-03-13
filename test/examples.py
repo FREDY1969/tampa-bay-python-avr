@@ -45,6 +45,6 @@ def test_compile(directory, del_db = True):
     os.chdir(directory)
     del_files(del_db)
     compile.do_compile(('.',), True)
-    with open('flash.hex') as f:
+    with open('flash.hex', 'rt', encoding='ascii', newline='') as f:
         return f.read()
 
