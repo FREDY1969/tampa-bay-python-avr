@@ -52,7 +52,7 @@ True
 
 >>> root = w.to_xml()
 >>> xml_access.indent(root)
->>> print ElementTree.tostring(root)
+>>> print(ElementTree.tostring(root))
 <word>
     <name>output_pin</name>
     <label>Output pin</label>

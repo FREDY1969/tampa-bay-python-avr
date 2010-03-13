@@ -20,7 +20,7 @@
 >>> keys = sorted(a_dict.keys())
 >>> keys
 ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8']
->>> for k in keys: print a_dict[k]
+>>> for k in keys: print(a_dict[k])
 <ans_bool q1='True'>
 <ans_number q2='123'>
 [<ans_int q3='123'>, <ans_int q3='124'>]
@@ -33,7 +33,7 @@ None
 >>> root = ElementTree.Element('answers')
 >>> answers.add_xml_answers(root, a_dict)
 >>> xml_access.indent(root)
->>> print ElementTree.tostring(root)
+>>> print(ElementTree.tostring(root))
 <answers>
     <answer name="q1" repeated="False" type="bool" value="True" />
     <answer name="q2" repeated="False" type="number" value="123" />
@@ -78,7 +78,7 @@ None
 >>> keys = sorted(a_dict.keys())
 >>> keys
 ['q1', 'q2', 'q3']
->>> for k in keys: print a_dict[k]
+>>> for k in keys: print(a_dict[k])
 <ans_choice q1=foo->{'q6': <ans_string q6='Hi Mom!'>}>
 <ans_multichoice for q2>
 <ans_series for q3>
@@ -105,7 +105,7 @@ None
 >>> root = ElementTree.Element('answers')
 >>> answers.add_xml_answers(root, a_dict)
 >>> xml_access.indent(root)
->>> print ElementTree.tostring(root)
+>>> print(ElementTree.tostring(root))
 <answers>
     <answer name="q1" repeated="False" type="choice">
         <options>
@@ -177,7 +177,7 @@ None
 >>> keys = sorted(a_dict.keys())
 >>> keys
 ['q1', 'q2', 'q3']
->>> for k in keys: print a_dict[k]
+>>> for k in keys: print(a_dict[k])
 [<ans_choice q1=foo->{'q6': <ans_string q6='Hi Mom!'>}>, <ans_choice q1=bar->{'q7': <ans_string q7='Hi Dad!'>}>]
 [<ans_multichoice for q2>]
 [<ans_series for q3>, <ans_series for q3>]
@@ -212,7 +212,7 @@ None
 >>> root = ElementTree.Element('answers')
 >>> answers.add_xml_answers(root, a_dict)
 >>> xml_access.indent(root)
->>> print ElementTree.tostring(root)
+>>> print(ElementTree.tostring(root))
 <answers>
     <answer name="q1" repeated="True" type="choice">
         <options>
@@ -264,7 +264,7 @@ None
 >>> keys = sorted(a_dict.keys())
 >>> keys
 ['q1', 'q2', 'q3']
->>> for k in keys: print a_dict[k]
+>>> for k in keys: print(a_dict[k])
 []
 []
 []
@@ -272,7 +272,7 @@ None
 >>> root = ElementTree.Element('answers')
 >>> answers.add_xml_answers(root, a_dict)
 >>> xml_access.indent(root)
->>> print ElementTree.tostring(root)
+>>> print(ElementTree.tostring(root))
 <answers>
     <answer name="q1" repeated="True" />
     <answer name="q2" repeated="True" />

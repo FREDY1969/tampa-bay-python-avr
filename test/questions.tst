@@ -103,7 +103,7 @@ True
 >>> q_list[4].add_xml_subelement(root)
 >>> q_list[5].add_xml_subelement(root)
 >>> xml_access.indent(root)
->>> print ElementTree.tostring(root)
+>>> print(ElementTree.tostring(root))
 <questions>
     <question>
         <name>q1</name>
@@ -281,7 +281,7 @@ True
 >>> q_list[2].add_xml_subelement(root)
 >>> q_list[3].add_xml_subelement(root)
 >>> xml_access.indent(root)
->>> print ElementTree.tostring(root)
+>>> print(ElementTree.tostring(root))
 <questions>
     <question>
         <name>q1</name>

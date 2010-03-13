@@ -9,7 +9,6 @@ import optparse
 from doctest_tools import setpath
 setpath.setpath(__file__, remove_first = True)
 
-import wx
 from ucc.parser import load
 import ucc.config
 
