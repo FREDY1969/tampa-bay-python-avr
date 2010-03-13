@@ -27,7 +27,7 @@ class input_pin(declaration.word):
         pin_number = self.ww.get_value('pin_number')
         on_is = self.ww.get_answer('on_is').tag
         port_label, bit_number = output_pin.digital_pin_lookup[pin_number]
-        print "input_pin: port_label", port_label, ", bit_number", bit_number
+        print("input_pin: port_label", port_label, ", bit_number", bit_number)
 
         input_bit = block.Current_block.gen_triple(
                       'input-bit',
@@ -59,7 +59,7 @@ class input_pin(declaration.word):
         pin_number = self.ww.get_value('pin_number')
         on_is = self.ww.get_answer('on_is').tag
         port_label, bit_number = output_pin.digital_pin_lookup[pin_number]
-        print "input_pin: port_label", port_label, ", bit_number", bit_number
+        print("input_pin: port_label", port_label, ", bit_number", bit_number)
 
         input_bit = block.Current_block.gen_triple(
                       'input-bit',

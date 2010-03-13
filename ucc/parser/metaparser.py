@@ -8,7 +8,7 @@ See http://www.dabeaz.com/ply/ply.html for syntax of grammer definitions used
 here.
 """ 
 
-from __future__ import with_statement
+
 
 import string
 import sys
@@ -119,21 +119,21 @@ def gen_alternatives(rule_name, alternatives, wrapup_fn, param_list = None):
                     has_ellipsis = True
 
         if prep:
-            print >> Output_file, '\n'.join('    ' + p for p in prep)
+            print('\n'.join('    ' + p for p in prep), file=Output_file)
 
         wrapup_fn(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
                   has_ellipsis, lineno, lexpos)
-        print >> Output_file
+        print(file=Output_file)
 
 def normal_wrapup(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
                   has_ellipsis, lineno, lexpos):
-    print >> Output_file, "    args = []"
-    for arg in args: print >> Output_file, "    " + arg
+    print("    args = []", file=Output_file)
+    for arg in args: print("    " + arg, file=Output_file)
     if fn_word_params is None:
         if not has_ellipsis and len(args) == 1:
-            print >> Output_file, "    p[0] = args[0]"
+            print("    p[0] = args[0]", file=Output_file)
         else:
-            print >> Output_file, "    p[0] = tuple(args)"
+            print("    p[0] = tuple(args)", file=Output_file)
     else:
         if fn_word_params:
             output("""
@@ -163,8 +163,8 @@ def normal_wrapup(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
 def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
                  has_ellipsis, lineno, lexpos):
     if fn_word_params is not None:
-        print >> Output_file, "    args = []"
-        for arg in args: print >> Output_file, "    " + arg
+        print("    args = []", file=Output_file)
+        for arg in args: print("    " + arg, file=Output_file)
         if fn_word_params:
             output("""
               p[0] = (ast.ast.from_parser(
@@ -195,13 +195,13 @@ def wrapup_tuple(fn_word_params, fn_word_offset, args, last_arg, tuple_offset,
     elif tuple_offset is None:
         # Make a singleton tuple out of a single argument.
         if len(args) == 1:
-            print >> Output_file, "    args = []"
-            print >> Output_file, '    ' + args[0]
-            print >> Output_file, "    p[0] = tuple(args)"
+            print("    args = []", file=Output_file)
+            print('    ' + args[0], file=Output_file)
+            print("    p[0] = tuple(args)", file=Output_file)
         else:
             scanner_init.SyntaxError("no tuple in production")
     else:
-        print >> Output_file, "    p[0] = p[%d]" % (tuple_offset + 1)
+        print("    p[0] = p[%d]" % (tuple_offset + 1), file=Output_file)
 
 def p_rule2(p):
     ''' rule : TUPLE_NONTERMINAL ':' alternatives

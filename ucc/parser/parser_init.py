@@ -1,6 +1,6 @@
 # parser_init.py
 
-from __future__ import with_statement
+
 
 import os, os.path
 from ucc.parser.ply import yacc
@@ -58,7 +58,7 @@ def parse(parser_module, scanner_module, filename, check_tables = False,
         scanner_init.Lexer.input(text)
 
     def use_file(filename):
-        if isinstance(filename, (str, unicode)):
+        if isinstance(filename, str):
             with open(filename) as f:
                 use_text(filename, f.read())
         else:
@@ -78,7 +78,7 @@ def parse(parser_module, scanner_module, filename, check_tables = False,
                 #print "tokenfunc: returning " + tok.type
                 return tok
             try:
-                use_file(extra_files_iter.next())
+                use_file(next(extra_files_iter))
             except StopIteration:
                 #print "tokenfunc: returning None"
                 return None
@@ -99,7 +99,7 @@ def test(parser_module, scanner_module, text):
 
     '''
     import pprint
-    import StringIO
+    import io
     ans = parse(parser_module, scanner_module, 'test', True, 0, text)
     if isinstance(ans, set): ans = list(ans)
     pprint.pprint(ans)

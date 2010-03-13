@@ -9,7 +9,7 @@ from ucc.web import wsgi_app
 
 def run(port=8000):
     httpd = make_server('', port, wsgi_app.wsgi_app)
-    print "Serving HTTP on port {}...".format(port)
+    print("Serving HTTP on port {}...".format(port))
 
     webbrowser.open('http://localhost:{}'.format(port), 2)
 

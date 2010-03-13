@@ -1,6 +1,6 @@
 # number.py
 
-from __future__ import division
+
 
 import numbers
 import math
@@ -31,8 +31,7 @@ class fraction(object):
             base = 16
             s = s[2:]
         s2 = s.split('.')
-        self.numerator, self.denominator = map(lambda s: int(s, base),
-                                               s2[-1].split('/'))
+        self.numerator, self.denominator = [int(s, base) for s in s2[-1].split('/')]
         if len(s2) > 1: self.numerator += int(s2[0], base) * self.denominator
         self.numerator *= sign
     def __repr__(self):

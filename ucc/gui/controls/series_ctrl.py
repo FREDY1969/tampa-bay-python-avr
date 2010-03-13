@@ -23,7 +23,7 @@ class SeriesCtrl(BaseCtrl):
             if not hasattr(sub_question, 'control'):
                 msg = "<%s %s> has no 'control'" % \
                         (sub_question.__class__.__name__, sub_question.name)
-                print msg
+                print(msg)
                 self.gridsizer.Add(wx.StaticText(self, -1, msg))
             else:
                 cls = getattr(getattr(ucc.gui.controls, sub_question.control),

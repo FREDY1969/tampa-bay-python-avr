@@ -128,4 +128,4 @@ def tokenize(scanner_module, s, extra_arg = None):
     while True:
         t = Lexer.token()
         if not t: break
-        print t
+        print(t)

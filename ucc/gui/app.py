@@ -70,7 +70,7 @@ class App(wx.App):
         
         # setup the mainFrame to start the app
         
-        registry.mainFrame = MainFrame(None, -1, u"\xb5CC Package Editor")
+        registry.mainFrame = MainFrame(None, -1, "\xb5CC Package Editor")
         self.SetTopWindow(registry.mainFrame)
         return True
     
@@ -157,7 +157,7 @@ class App(wx.App):
     def onAbout(self, event):
         dialog = wx.MessageDialog(
             registry.mainFrame,
-            u"Package editing GUI for \xb5CC project.",
+            "Package editing GUI for \xb5CC project.",
             "About",
             wx.OK
         )

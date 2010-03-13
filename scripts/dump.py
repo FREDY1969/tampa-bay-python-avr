@@ -13,7 +13,7 @@ id: name(kind) from source_filename
 
 '''
 
-from __future__ import with_statement
+
 
 import itertools
 import os.path
@@ -38,11 +38,11 @@ def dump(db_cur):
                        where context is null
                        order by label""")
     for info in db_cur.fetchall():
-        print
+        print()
         dump_word(info, db_cur)
 
 def dump_word(info, db_cur):
-    print "%d: %s(%s) from %s" % info
+    print("%d: %s(%s) from %s" % info)
     dump_children(db_cur, info[0], indent = '  ')
 
 def dump_node(word_symbol_id, id, db_cur, indent = ''):
@@ -54,11 +54,10 @@ def dump_node(word_symbol_id, id, db_cur, indent = ''):
         (id,))
     row = db_cur.fetchone()
     label, symbol_id, kind, int1, int2, str1, str2, expect, type_id = row
-    print indent + str(id) + ":", \
-          ' '.join(itertools.imap(str, filter(lambda x: x is not None,
-                                              (label, symbol_id, kind,
+    print(indent + str(id) + ":", \
+          ' '.join(map(str, [x for x in (label, symbol_id, kind,
                                                int1, int2, str1, str2,
-                                               expect, type_id))))
+                                               expect, type_id) if x is not None])))
     dump_children(db_cur, word_symbol_id, id, indent)
 
 def dump_children(db_cur, word_symbol_id, parent_id = None, indent = ''):

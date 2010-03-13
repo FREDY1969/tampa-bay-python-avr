@@ -1,6 +1,6 @@
 # compile.py
 
-from __future__ import with_statement
+
 
 import sys
 import os.path
@@ -147,9 +147,9 @@ def gen_assembler():
      in crud.read_as_tuples('blocks', 'id', 'name', 'word_symbol_id', 'next',
                                       'next_conditional'):
         triples = triple2.read_triples(block_id)
-        if Debug: print >> sys.stderr, "triples", triples
-        tops = filter(lambda t: len(t.parents) == 0, triples)
-        if Debug: print >> sys.stderr, "tops", tops
+        if Debug: print("triples", triples, file=sys.stderr)
+        tops = [t for t in triples if len(t.parents) == 0]
+        if Debug: print("tops", tops, file=sys.stderr)
         crud.Db_cur.execute('''
                 select predecessor, successor
                   from triple_order_constraints
@@ -157,14 +157,12 @@ def gen_assembler():
             ''' % {'qmarks': ', '.join('?' * len(triples))},
             [t.id for t in triples] * 2)
         pred_succ = crud.Db_cur.fetchall()
-        if Debug: print >> sys.stderr, "pred_succ", pred_succ
-        shareds = filter(lambda s: len(s) > 1,
-                         (frozenset(tops(t.parents))
-                          for t in triples if len(t.parents) > 1))
-        if Debug: print >> sys.stderr, "shareds", shareds
+        if Debug: print("pred_succ", pred_succ, file=sys.stderr)
+        shareds = [s for s in (frozenset(tops(t.parents))
+                          for t in triples if len(t.parents) > 1) if len(s) > 1]
+        if Debug: print("shareds", shareds, file=sys.stderr)
         for top in order_tops(tops, pred_succ, shareds):
-            print >> sys.stderr, \
-                  'gen_assembler for block', block_id, 'triple', top.id
+            print('gen_assembler for block', block_id, 'triple', top.id, file=sys.stderr)
             #with crud.db_transaction():
 
 def tops(triples):
@@ -180,7 +178,7 @@ def order_tops(tops, pred_succ, shareds):
             assert t in tops
             tops.remove(t)
             if t in leftovers: leftovers.remove(t)
-            return filter(lambda ps: ps[0] != t and ps[1] != t, shareds)
+            return [ps for ps in shareds if ps[0] != t and ps[1] != t]
         for t_shared in pick(t_set, shareds):
             found_one = False
             try_again = True
@@ -204,22 +202,22 @@ def order_tops(tops, pred_succ, shareds):
             assert False, "pick failed"
 
     while pred_succ:
-        if Debug: print >> sys.stderr, "pred_succ", pred_succ
-        if Debug: print >> sys.stderr, "tops", tops
+        if Debug: print("pred_succ", pred_succ, file=sys.stderr)
+        if Debug: print("tops", tops, file=sys.stderr)
         preds = frozenset(ps[0] for ps in pred_succ)
         succs = frozenset(ps[1] for ps in pred_succ)
         available_preds = preds - succs
         assert available_preds
         for t, shareds in process(available_preds, shareds):
             yield t
-    if Debug: print >> sys.stderr, "while done: tops", tops
+    if Debug: print("while done: tops", tops, file=sys.stderr)
     if tops:
         succs = frozenset(ps[1] for ps in pred_succ)
         for t, shareds in process(frozenset(tops), shareds):
             yield t
 
 def pick(t_set, shareds):
-    if Debug: print >> sys.stderr, "pick", t_set, shareds
+    if Debug: print("pick", t_set, shareds, file=sys.stderr)
     t_yielded = set()
     for t in t_set:
         t_shared = set(s for s in shareds if t in s)
@@ -267,7 +265,7 @@ def assemble_program(package_dir):
 
     # check that bss is blank!
     try:
-        assemble.assemble('bss', labels).next()
+        next(assemble.assemble('bss', labels))
     except StopIteration:
         pass
     else:
@@ -291,42 +289,42 @@ def run(top, prime_start_time = True, quiet = False):
         compile_start_time = Start_time
     else:
         compile_start_time = Start_time
-        if not quiet: print "top: %.2f" % elapsed()
+        if not quiet: print("top: %.2f" % elapsed())
 
     with crud.db_connection(top.packages[-1].package_dir):
-        if not quiet: print "crud.db_connection: %.2f" % elapsed()
+        if not quiet: print("crud.db_connection: %.2f" % elapsed())
 
         types.init()
-        if not quiet: print "types.init: %.2f" % elapsed()
+        if not quiet: print("types.init: %.2f" % elapsed())
 
         # Create symbols, word_objs and build the parsers for each package:
         #
         # {package_name: parser module}
         package_parsers = create_parsers(top)  # Also loads all of the word objs
-        if not quiet: print "create parsers: %.2f" % elapsed()
+        if not quiet: print("create parsers: %.2f" % elapsed())
 
         # word files => ast
         words_done = parse_needed_words(top, package_parsers, quiet)
-        if not quiet: print "parse_needed_words: %.2f" % elapsed()
+        if not quiet: print("parse_needed_words: %.2f" % elapsed())
 
         # ast => intermediate code
         for word_label in words_done:
             with crud.db_transaction():
                 symbol_table.get(word_label).word_obj.compile()
-        if not quiet: print "generate intermediate code: %.2f" % elapsed()
+        if not quiet: print("generate intermediate code: %.2f" % elapsed())
 
         # intermediate code => optimized intermediate code
         optimize()
-        if not quiet: print "optimize: %.2f" % elapsed()
+        if not quiet: print("optimize: %.2f" % elapsed())
 
         # intermediate code => assembler
         gen_assembler()
-        if not quiet: print "gen_assembler: %.2f" % elapsed()
+        if not quiet: print("gen_assembler: %.2f" % elapsed())
 
         # assembler => .hex files
         assemble_program(top.packages[-1].package_dir)
-        if not quiet: print "assemble_program: %.2f" % elapsed()
-    if not quiet: print "TOTAL: %.2f" % (Start_time - compile_start_time)
+        if not quiet: print("assemble_program: %.2f" % elapsed())
+    if not quiet: print("TOTAL: %.2f" % (Start_time - compile_start_time))
 
 Start_time = 0.0
 

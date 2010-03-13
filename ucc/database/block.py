@@ -306,7 +306,7 @@ class block(object):
                          next_conditional=self.next_conditional)
 
         # add final labels to their associated triples:
-        for var_id, t in self.labels.iteritems():
+        for var_id, t in self.labels.items():
             t.add_label(var_id, True)
 
         # write out triples:
@@ -317,7 +317,7 @@ class block(object):
         if self.side_effects is not None:
             #print self.name, "adding", self.side_effects, "due to side_effects"
             forced_triples.add(self.side_effects)
-        forced_triples.update(self.sets_global.values())
+        forced_triples.update(list(self.sets_global.values()))
         if self.last_triple is not None:
             #print self.name, "adding", self.last_triple, "as last_triple"
             forced_triples.add(self.last_triple)

@@ -5,7 +5,7 @@ r'''The defining word for all assembler words.
 Use this to write functions in assembler.
 '''
 
-from __future__ import with_statement
+
 
 import itertools
 
@@ -39,11 +39,11 @@ class assembler_word(declaration.word):
 
     def labels_used(self, instructions):
         return frozenset(
-            itertools.imap(extract_label,
-              itertools.ifilter(is_legal_label,
-                itertools.chain(itertools.imap(lambda x: x.operand1,
+            map(extract_label,
+              filter(is_legal_label,
+                itertools.chain(map(lambda x: x.operand1,
                                                instructions),
-                                itertools.imap(lambda x: x.operand2,
+                                map(lambda x: x.operand2,
                                                instructions)))))
 
 def extract_label(operand):

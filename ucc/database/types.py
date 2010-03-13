@@ -48,7 +48,7 @@ class base_type(object):
         '''
         self.id = id
         Types_by_id[id] = self
-        for name, value in columns.iteritems():
+        for name, value in columns.items():
             setattr(self, name, value)
         if sub_elements is not None:
             self.sub_elements = sub_elements
@@ -164,7 +164,7 @@ class base_type(object):
 
         This may be overridden by base classes.
         '''
-        columns = dict(zip(cls.Columns, args))
+        columns = dict(list(zip(cls.Columns, args)))
         return cls.add(**columns)
 
     @classmethod

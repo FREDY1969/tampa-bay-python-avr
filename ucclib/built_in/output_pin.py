@@ -38,7 +38,7 @@ class output_pin(declaration.word):
         pin_number = self.ww.get_value('pin_number')
         on_is = self.ww.get_answer('on_is').tag
         port_label, bit_number = digital_pin_lookup[pin_number]
-        print "output_pin: port_label", port_label, ", bit_number", bit_number
+        print("output_pin: port_label", port_label, ", bit_number", bit_number)
         ioreg_bit = ast.ast(kind='ioreg-bit',
                             label='io.port' + port_label, int1=bit_number)
         if on_is == 'HIGH':

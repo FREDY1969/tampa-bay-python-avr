@@ -54,7 +54,7 @@ class triple(object):
     parent = None
 
     def __init__(self, row, triple_id_map):
-        for key, value in row.iteritems():
+        for key, value in row.items():
             setattr(self, key, value)
         self.labels = tuple(crud.read_column('triple_labels', 'symbol_id',
                                              triple_id=self.id))
@@ -134,7 +134,7 @@ def del_node(node, lists):
     s = frozenset((node,))
     for l in lists:
         l.difference_update(s)
-    return filter(None, lists)
+    return [_f for _f in lists if _f]
 
 def read_triples(block_id):
     r'''Reads and returns list of all `triple` objects in block_id.

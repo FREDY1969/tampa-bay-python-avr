@@ -11,7 +11,7 @@ class MainMenuBar(wx.MenuBar):
         # setup menu
         
         filemenu = wx.Menu()
-        filemenu.Append(registry.ID_OPEN, "&Open Package\tCtrl+O", u"Open a \xb5CC package")
+        filemenu.Append(registry.ID_OPEN, "&Open Package\tCtrl+O", "Open a \xb5CC package")
         filemenu.Append(registry.ID_SAVE_WORD, "&Save Word\tCtrl+S", "Save the Current Word")
         filemenu.AppendSeparator()
         filemenu.Append(registry.ID_COMPILE, "&Compile Program\tCtrl+C",
@@ -19,7 +19,7 @@ class MainMenuBar(wx.MenuBar):
         filemenu.Append(registry.ID_LOAD, "&Load Program\tCtrl+L",
                         "Load the compiled program onto the microcontroller")
         filemenu.AppendSeparator()
-        filemenu.Append(registry.ID_EXIT, "E&xit", u"Terminate \xb5CC Package Editor.")
+        filemenu.Append(registry.ID_EXIT, "E&xit", "Terminate \xb5CC Package Editor.")
         
         helpmenu = wx.Menu()
         helpmenu.Append(registry.ID_ABOUT, "&About")

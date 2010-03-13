@@ -41,7 +41,7 @@ def lookup(label, context = None):
 def write_symbols():
     r'''Write all symbols to the database.
     '''
-    for sym in Symbols.itervalues():
+    for sym in Symbols.values():
         sym.write()
 
 def update():
@@ -69,7 +69,7 @@ class symbol(object):
         self.id = id
         self.label = label
         self.context = context
-        for name, value in attributes.iteritems():
+        for name, value in attributes.items():
             setattr(self, name, value)
         self.updated_attrs = set()
         assert (self.label, self.context) not in Symbols, \

@@ -46,7 +46,7 @@ class package(object):
                              )
     
     def get_words(self):
-        return self.word_dict.values()
+        return list(self.word_dict.values())
     
     def read_word(self, name):
         ans = word.read_word(name, self.package_dir)
