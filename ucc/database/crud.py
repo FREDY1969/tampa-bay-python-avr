@@ -11,9 +11,9 @@ exception is generated.
 
 Most of the crud routines use keyword arguments to specify the SQL 'where'
 clause.  See the `doctor_test` examples for how this works.
+
+    >>> init(None)
 '''
-
-
 
 import os.path
 import itertools
@@ -22,8 +22,8 @@ import sqlite3 as db
 Debug = False           # the doctests will fail when this is True
 Db_conn = None          #: The sqlite3 database connection object.
 Db_filename = 'ucc.db'
-_Gensyms = {}
-In_transaction = False
+#_Gensyms = {}
+#In_transaction = False
 
 class db_transaction(object):
     r'''Python *Context Manager* for database transactions.
@@ -90,28 +90,35 @@ def init(directory):
 
     Also initializes the `gensym` function from the information stored in the
     database from the last run.
+
+    If directory is None, then no database connection is done, but other
+    global variables are initialized (for testing).
     '''
-    global Db_conn, Db_cur, Enums, _Gensyms
+    global Db_conn, Db_cur, _Gensyms, In_transaction
+    In_transaction = False
     if Db_conn is None:
-        db_path = os.path.join(directory, Db_filename)
-        if not os.path.exists(db_path):
-            Db_conn = db.connect(db_path)
-            Db_cur = Db_conn.cursor()
-            ddl_path = os.path.join(os.path.dirname(__file__), 'ucc.ddl')
-            try:
-                ddl = __loader__.get_data(ddl_path)
-            except NameError:
-                with open(ddl_path) as f:
-                    ddl = f.read()
-            commands = ddl.split(';')
-            with db_transaction() as db_cur:
-                for command in commands:
-                    db_cur.execute(command)
+        if directory is None:
+            _Gensyms = {}
         else:
-            Db_conn = db.connect(os.path.join(directory, Db_filename))
-            Db_cur = Db_conn.cursor()
-        Db_cur.execute("select prefix, last_used_index from gensym_indexes")
-        _Gensyms = dict(Db_cur)
+            db_path = os.path.join(directory, Db_filename)
+            if not os.path.exists(db_path):
+                Db_conn = db.connect(db_path)
+                Db_cur = Db_conn.cursor()
+                ddl_path = os.path.join(os.path.dirname(__file__), 'ucc.ddl')
+                try:
+                    ddl = __loader__.get_data(ddl_path)
+                except NameError:
+                    with open(ddl_path) as f:
+                        ddl = f.read()
+                commands = ddl.split(';')
+                with db_transaction() as db_cur:
+                    for command in commands:
+                        db_cur.execute(command)
+            else:
+                Db_conn = db.connect(os.path.join(directory, Db_filename))
+                Db_cur = Db_conn.cursor()
+            Db_cur.execute("select prefix, last_used_index from gensym_indexes")
+            _Gensyms = dict(Db_cur)
 
 def fini():
     r'''Saves the `gensym` info in the database and closes the connection.

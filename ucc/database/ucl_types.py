@@ -1,4 +1,6 @@
-# types.py (not type.py since type is a Python builtin function).
+# ucl_types.py
+# (not type.py since type is a Python builtin function).
+# (not types.py since types is a standard Python library module).
 
 r'''Classes for accessing types.
 
@@ -11,8 +13,13 @@ Prepare a couple of types for the rest of the doctests:
 
         >>> cur = crud.db_cur_test()
 
-        >>> cur.lastrowid = 1
         >>> crud.dummy_transaction()
+        >>> cur.description = (('kind',),)
+        >>> cur.answers = []
+        >>> init()
+        query: select * from type
+        parameters: []
+        >>> cur.lastrowid = 1
         >>> int.lookup(-100, 400)
         query: insert into type (kind, max_value, min_value) values (?, ?, ?)
         parameters: ['int', 400, -100]
@@ -29,7 +36,7 @@ Prepare a couple of types for the rest of the doctests:
 import itertools
 from ucc.database import crud
 
-Types_by_id = {}        #: {id: type object}
+#Types_by_id = {}        #: {id: type object}
 
 def init():
     r'''Reads the types in from database.
@@ -37,6 +44,8 @@ def init():
     This ensures that references to the same type will have the same type id
     as prior runs of the compiler.
     '''
+    global Types_by_id
+    Types_by_id = {}        #: {id: type object}
     for row in crud.read_as_dicts('type'):
         getattr(globals(), row['kind']).from_db(row)
 

@@ -18,8 +18,8 @@ from ucc.database import ast, crud
 
 tokens = metascanner.tokens
 
-Tokens_used = set()
-Output_file = sys.stdout
+#Tokens_used = set()
+#Output_file = sys.stdout
 
 def p_file(p):
     ''' file : file2
@@ -208,7 +208,7 @@ def p_rule2(p):
     '''
     gen_alternatives(p[1], p[3], wrapup_tuple)
 
-Optional_rules = {}
+#Optional_rules = {}
 
 def p_opt_word(p):
     ''' word : sub_rule '?'
@@ -242,7 +242,7 @@ def p_opt_word(p):
             offset = offset + 1)
     p[0] = rule_name, type, 0, None, None
 
-One_or_more_rules = {}
+#One_or_more_rules = {}
 
 def p_one_or_more_word(p):
     ''' word : sub_rule '+'
@@ -285,7 +285,7 @@ def p_one_or_more_word(p):
             offset = offset + 2)
     p[0] = rule_name, 'tuple', 0, None, None
 
-Zero_or_more_rules = {}
+#Zero_or_more_rules = {}
 
 def p_zero_or_more_word(p):
     ''' word : sub_rule '*'
@@ -319,7 +319,7 @@ def p_zero_or_more_word(p):
             offset = offset + 2)
     p[0] = rule_name, 'tuple', 0, None, None
 
-Ellipsis_rules = {}
+#Ellipsis_rules = {}
 
 def p_word_ellipsis(p):
     ''' word : sub_rule ELLIPSIS
@@ -478,7 +478,9 @@ def strip_indent(str, target_indent = 0):
 
 def init():
     global Tokens_used, One_or_more_rules, Zero_or_more_rules, Ellipsis_rules
+    global Optional_rules
     Tokens_used = set()
     One_or_more_rules = {}
     Zero_or_more_rules = {}
     Ellipsis_rules = {}
+    Optional_rules = {}
