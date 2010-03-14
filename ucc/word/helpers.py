@@ -2,7 +2,7 @@
 
 import re
 
-Reserved_words = set((
+Reserved_words = frozenset((
     #: Python's reserved word list (for python 2.6).
     'and', 'del', 'from', 'not', 'while',
     'as', 'elif', 'global', 'or', 'with',
