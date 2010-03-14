@@ -165,11 +165,11 @@ class App(wx.App):
         dialog.Destroy()
     
     def onCompile(self, event):
-        from ucc.parser import compile
+        from ucc.compiler import compile
         compile.run(registry.top_package)
     
     def onLoad(self, event):
-        from ucc.parser import load
+        from ucc.codegen import load
         kw_args = dict((param, registry.config.get('arduino', param))
             for param in (
                 'install_dir',

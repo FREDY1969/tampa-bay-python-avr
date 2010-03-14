@@ -8,7 +8,7 @@ import sys
 from doctest_tools import setpath
 setpath.setpath(__file__, remove_first = True)
 
-from ucc.parser import compile
+from ucc.compiler import compile
 from ucc.word import top_package
 
 def usage():

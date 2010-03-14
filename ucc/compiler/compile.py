@@ -9,7 +9,8 @@ import traceback
 import time
 
 from ucc.word import helpers
-from ucc.parser import genparser, hex_file
+from ucc.parser import genparser
+from ucc.codegen import hex_file
 from ucc.database import crud, fn_xref, symbol_table, types, triple2
 from ucc.assembler import assemble
 from ucclib.built_in import declaration
@@ -68,7 +69,7 @@ def create_parsers(top):
     Token_dict = {}
     package_parsers = {}
 
-    syntax_file = os.path.join(os.path.dirname(__file__), 'SYNTAX')
+    syntax_file = os.path.join(os.path.dirname(genparser.__file__), 'SYNTAX')
     with crud.db_transaction():
         for p in top.packages:
             for ww in p.get_words():
