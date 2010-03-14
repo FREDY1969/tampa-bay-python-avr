@@ -1,6 +1,13 @@
 # metaparser.tst
 
+>>> from ucc.database import crud
+>>> crud.init(None)
+
 >>> from ucc.parser import metaparser, parser_init, metascanner
+>>> metaparser.init()
+
+>>> import sys
+>>> metaparser.Output_file = sys.stdout
 
 >>> parser_init.test(metaparser, metascanner, "hi: mom() DAD_TOK")
 def p_hi_0001(p):

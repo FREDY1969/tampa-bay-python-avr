@@ -11,15 +11,22 @@ are `triple` objects.  This places the least constraints on the order that the
 triples must be evaluated in to maximize the ability of the optimizer and code
 generator to play games with instruction ordering.  The final assembler code
 generation process decides on the final ordering for the triples.
+
+    >>> init()
 '''
 
 import collections
 from ucc.database import crud, fn_xref, symbol_table, triple
 
-Current_block = None \
+#Current_block = None \
   #: Only used during the `compile` process (e.g., Current_block.gen_triple(...)).
 
-Block_ids = {}         #: {block_name: block_id}
+#Block_ids = {}         #: {block_name: block_id}
+
+def init():
+    global Current_block, Block_ids
+    Current_block = None
+    Block_ids = {}
 
 def new_label(name, word_symbol_id):
     r'''Terminate the Current_block and create a new block.

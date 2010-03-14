@@ -60,7 +60,7 @@ def t_START_SERIES_TOK(t):
     t.lexer.skip(-1)                    # push back the final '\n'
     return t
 
-Last_colonindent = 0
+#Last_colonindent = 0
 
 t_colonindent_ignore = ''
 

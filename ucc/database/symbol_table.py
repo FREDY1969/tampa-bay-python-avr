@@ -1,13 +1,20 @@
 # symbol_table.py
 
 r'''Helpers for accessing the symbol_table table.
+
+    >>> init()
 '''
 
 from ucc.database import crud
 
-Symbols = {}  #: {(label, context): `symbol`}, context is None or a `symbol`
+#Symbols = {}  #: {(label, context): `symbol`}, context is None or a `symbol`
 
-Symbols_by_id = {}  #: {id: `symbol`}
+#Symbols_by_id = {}  #: {id: `symbol`}
+
+def init():
+    global Symbols, Symbols_by_id
+    Symbols = {}  #: {(label, context): `symbol`}, context is None or a `symbol`
+    Symbols_by_id = {}  #: {id: `symbol`}
 
 unique = object()
 
