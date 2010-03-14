@@ -21,11 +21,11 @@ import os
 import urllib.parse
 import json
 
+from ucc.web import session
+
 Debug = 0
 
 Web_framework_dir = os.path.join(os.path.dirname(__file__), "media")
-
-Module_cache = {}
 
 Content_types = {
     'html': 'text/html',
@@ -36,6 +36,10 @@ Content_types = {
     'jpeg': 'image/jpeg',
     'jpg': 'image/jpeg',
 }
+
+Module_cache = {}
+
+Session = session.session()
 
 def import_(modulename):
     ''' modulepath does not include .py
@@ -70,6 +74,8 @@ def wsgi_app(environ, start_response):
             start_response("404 Not Found", [])
             return []
 
+    # else AJAX call...
+
     modulepath, fn_name = components[1:]
 
     if modulepath not in Module_cache:
@@ -84,7 +90,7 @@ def wsgi_app(environ, start_response):
 
     # "200 OK", [('header_field_name', 'header_field_value')...], data
     status, headers, document = \
-      getattr(Module_cache[modulepath], fn_name)(**json.loads(data))
+      getattr(Module_cache[modulepath], fn_name)(Session, **json.loads(data))
     headers.append(('Content-Type', 'application/json'))
     start_response(status, headers)
     return [json.dumps(document)]
