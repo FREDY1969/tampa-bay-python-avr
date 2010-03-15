@@ -5,6 +5,6 @@
     <kind>test_choice_defining</kind>
     <defining>False</defining>
     <answers>
-        <answer name="my_choice" repeated="False" />
+        <answer name="my_choice" null="True" repeated="False" type="choice" />
     </answers>
 </word>

@@ -5,6 +5,6 @@
     <kind>assembler_word</kind>
     <defining>False</defining>
     <answers>
-        <answer name="address" repeated="False" />
+        <answer name="address" null="True" repeated="False" type="int" />
     </answers>
 </word>

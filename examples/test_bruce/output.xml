@@ -5,6 +5,6 @@
     <kind>var</kind>
     <defining>False</defining>
     <answers>
-        <answer name="initial_value" repeated="False" />
+        <answer name="initial_value" null="True" repeated="False" type="string" />
     </answers>
 </word>

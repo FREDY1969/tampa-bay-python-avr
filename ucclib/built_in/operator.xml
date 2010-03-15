@@ -5,6 +5,6 @@
     <kind>declaration</kind>
     <defining>True</defining>
     <answers>
-        <answer name="filename_suffix" repeated="False" />
+        <answer name="filename_suffix" null="True" repeated="False" type="string" />
     </answers>
 </word>

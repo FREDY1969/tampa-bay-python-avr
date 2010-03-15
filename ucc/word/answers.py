@@ -6,6 +6,27 @@ These are designed to preserve the text that the user typed in to answer the
 `questions.question`.  Thus, they are special answer objects, rather than
 simple python types.
 
+They are stored in xml format to be able to track and merge in source code
+control systems.
+
+Answer series use an "answers" tag, all other answers use an "answer" tag.
+
+All answers (including series) have 'name' and 'repeated' attributes.
+Repeated answers are represented as multiple xml elements with the same name.
+If a repeating answer has zero answers, a single xml element with null="True"
+is used as a placeholder for the empty list.  In this case, there is no type
+attribute.
+
+Optional answers that are left unanswered also have the null="True" attribute
+and have no 'value' attribute.  But they have repeated="False" (since repeating
+answers can't be optional since you can just have zero repetitions).
+
+All answers, except series, also have a 'type' attribute, which matches one of
+the ans_X classes defined in this module.
+
+Both series and choices have subordinate answers as nested (child) xml
+elements.  All other answers have a 'value' attribute with the answer to the
+question (unless the null="True" attribute is set).
 '''
 
 from xml.etree import ElementTree
@@ -15,13 +36,11 @@ def from_xml(answers_element):
     
     The dictionary keys are the answer names, and the values are either:
     
-        None
-          for an optional answer that wasn't answered
-        A (possibly empty) list of `answer` objects
-          for a repeating answer
         An `answer` object
           for a single answer
-    
+        A (possibly empty) list of `answer` objects
+          for a repeating answer
+
     This will accept None for answers_element
     
     '''
@@ -33,9 +52,11 @@ def from_xml(answers_element):
             name = answer.get('name')
             repeated = answer.get('repeated', 'false').lower() == 'true'
             type = answer.get('type', None)
-            if type is None:
-                if repeated: ans[name] = []
-                else: ans[name] = None
+            if answer.get('null', 'false').lower() == 'true': 
+                if repeated: 
+                    ans[name] = []
+                else:
+                    ans[name] = globals()['ans_' + type].create_unanswered(name)
             else:
                 value = globals()['ans_' + type].from_element(name, answer)
                 if repeated: ans.setdefault(name, []).append(value)
@@ -43,9 +64,15 @@ def from_xml(answers_element):
         elif answer.tag == 'answers':
             name = answer.get('name')
             repeated = answer.get('repeated', 'false').lower() == 'true'
-            value = ans_series.from_element(name, answer)
-            if repeated: ans.setdefault(name, []).append(value)
-            else: ans[name] = value
+            if answer.get('null', 'false').lower() == 'true': 
+                if repeated: 
+                    ans[name] = []
+                else:
+                    ans[name] = ans_series.create_unanswered(name)
+            else:
+                value = ans_series.from_element(name, answer)
+                if repeated: ans.setdefault(name, []).append(value)
+                else: ans[name] = value
         else:
             raise SyntaxError("unknown xml tag in <answers>: " + answer.tag)
     return ans
@@ -70,37 +97,45 @@ def add_xml_answers(answers_element, answers):
     for name in sorted(answers.keys()):
         value = answers[name]
         if isinstance(value, answer):
+            # This takes care of the unanswered case too.
             value.add_subelement(answers_element)
         elif not value:
-            # value is either None or an empty list.
+            # value is an empty list.
             ElementTree.SubElement(answers_element, 'answer', name = name,
-                                   repeated = str(value is not None))
+                                   repeated = 'True', null = 'True')
         else:
             # value is a non-empty list.
             for v in value: v.add_subelement(answers_element, True)
 
 class answer(object):
     r'''Base answer class.
-    
+
     All answers except omitted answers and lists are (indirect) instances of
     this class.
-    
+
     The names of all answer subclasses start with ``ans_``, for example:
     `ans_bool`.
-    
+
     '''
-    
-    def __init__(self, name, value):
+
+    def __init__(self, name, value = None, answered = True):
         self.name = name
         self.value = value
         self.valid = True
-        assert isinstance(self.value, str), \
-               "%s: null value for %s" % (self.__class__.__name__, self.name)
-    
+        self.answered = answered
+        assert not self.answered or isinstance(self.value, str), \
+               "%s: %s value for %s" % (self.__class__.__name__,
+                                        type(self.value),
+                                        self.name)
+
     @classmethod
     def from_element(cls, name, answer):
-        return cls(name, get_value_string(name, answer))
-    
+        return cls(name, answer.get('value'))
+
+    @classmethod
+    def create_unanswered(cls, name):
+        return cls(name, answered = False)
+
     @classmethod
     def from_value(cls, name, value):
         try:
@@ -110,18 +145,43 @@ class answer(object):
             ans.value = ''
             ans.valid = False
         return ans
-    
+
     def __repr__(self):
-        return "<%s %s=%r>" % (self.__class__.__name__, self.name, self.value)
-    
+        if self.is_answered():
+            return "<%s %s=%r>" % (self.__class__.__name__, self.name,
+                                   self.value)
+        return "<%s %s unanswered>" % (self.__class__.__name__, self.name)
+
+    def is_answered(self):
+        return self.answered
+
+    def unanswer(self):
+        self.answered = False
+
+    def set_answer(self, value):
+        self.answered = True
+        self.value = value
+        try:
+            self.get_value()
+        except ValueError:
+            self.value = ''
+            self.valid = False
+
     def add_subelement(self, answers_element, repeated = False):
-        ElementTree.SubElement(answers_element, 'answer', name = self.name,
-                               type = self.__class__.__name__[4:],
-                               value = self.value, repeated = str(repeated))
-    
+        if self.is_answered():
+            ElementTree.SubElement(answers_element, 'answer', name = self.name,
+                                   type = self.__class__.__name__[4:],
+                                   value = self.value, repeated = str(repeated))
+        else:
+            ElementTree.SubElement(answers_element, 'answer', name = self.name,
+                                   type = self.__class__.__name__[4:],
+                                   null = 'True', repeated = str(repeated))
+
     def get_value(self):
+        if not self.is_answered():
+            raise AttributeError("answer %s: unanswered" % (self.name,))
         return self.convert(self.value)
-    
+
 
 # These might later convert the answer from a string to the appropriate python
 # type.
@@ -163,25 +223,33 @@ class ans_series(answer):
     
     '''
     
-    def __init__(self, name, subanswers = None):
+    def __init__(self, name, subanswers = None, answered = True):
         self.name = name
+        self.answered = answered
         self.attributes = subanswers if subanswers is not None else {}
         for name, value in self.attributes.items():
             setattr(self, name, value)
-    
+
     @classmethod
     def from_element(cls, name, answers):
         return cls(name, from_xml(answers))
-    
+
     def __repr__(self):
         return "<%s for %s>" % (self.__class__.__name__, self.name)
-    
+
     def add_subelement(self, answers_element, repeated = False):
-        my_answers_element = ElementTree.SubElement(answers_element, 'answers',
-                                                    name = self.name,
-                                                    repeated = str(repeated))
-        add_xml_answers(my_answers_element, self.attributes)
-    
+        if self.is_answered():
+            my_answers_element = \
+              ElementTree.SubElement(answers_element, 'answers',
+                                     name = self.name, repeated = str(repeated))
+            add_xml_answers(my_answers_element, self.attributes)
+        else:
+            my_answers_element = \
+              ElementTree.SubElement(answers_element, 'answers',
+                                     name = self.name,
+                                     repeated = str(repeated),
+                                     null = 'True')
+
 
 class ans_choice(answer):
     r'''This represents the `answer` to a `question` with a list of choices.
@@ -194,31 +262,43 @@ class ans_choice(answer):
     
     '''
     
-    def __init__(self, name, tag, subanswers = None):
+    def __init__(self, name, tag = None, subanswers = None, answered = True):
         self.name = name
-        self.tag = tag
-        self.subanswers = subanswers
-    
+        self.answered = answered
+        if self.answered:
+            self.tag = tag
+            self.subanswers = subanswers
+
     @classmethod
     def from_element(cls, name, answer):
         d = parse_options(answer)
         assert len(d) == 1, \
                "%s: expected 1 option to choice, got %d" % (name, len(d))
         return cls(name, *list(d.items())[0])
-    
+
     def __repr__(self):
-        return "<%s %s=%s->%r>" % (self.__class__.__name__, self.name,
-                                   self.tag, self.subanswers)
-    
+        if self.is_answered():
+            return "<%s %s=%s->%r>" % (self.__class__.__name__, self.name,
+                                       self.tag, self.subanswers)
+        return "<%s %s unanswered>" % (self.__class__.__name__, self.name)
+
     def add_subelement(self, answers_element, repeated = False):
-        answer_element = ElementTree.SubElement(answers_element, 'answer',
-                                                name = self.name,
-                                                type =
-                                                  self.__class__.__name__[4:],
-                                                repeated = str(repeated))
-        options_element = ElementTree.SubElement(answer_element, 'options')
-        self.add_options(options_element)
-    
+        if self.is_answered():
+            answer_element = \
+              ElementTree.SubElement(answers_element, 'answer',
+                                     name = self.name,
+                                     type = self.__class__.__name__[4:],
+                                     repeated = str(repeated))
+            options_element = ElementTree.SubElement(answer_element, 'options')
+            self.add_options(options_element)
+        else:
+            answer_element = \
+              ElementTree.SubElement(answers_element, 'answer',
+                                     name = self.name,
+                                     type = self.__class__.__name__[4:],
+                                     repeated = str(repeated),
+                                     null = 'True')
+
     def add_options(self, options_element):
         self.add_option(options_element, self.tag, self.subanswers)
     
@@ -246,37 +326,27 @@ class ans_multichoice(ans_choice):
     
     This class is used for questions that may have multiple choices (multi-
     selection).  Compare to `ans_choice`.
-    
+
     The options chosen are in a dictionary accessed through
     some_ans_multichoice.answers.  The keys are the tags, and the values are
     the subordinate answer dictionaries (if any, None otherwise).
-    
+
     '''
-    
-    def __init__(self, name, answers):
+
+    def __init__(self, name, answers = None, answered = True):
         self.name = name
-        self.answers = answers
-    
+        self.answered = answered
+        if self.answered:
+            self.answers = answers
+
     @classmethod
     def from_element(cls, name, answer):
         return cls(name, parse_options(answer))
     
     def __repr__(self):
         return "<%s for %s>" % (self.__class__.__name__, self.name)
-    
+
     def add_options(self, options_element):
         for tag in sorted(self.answers.keys()):
             self.add_option(options_element, tag, self.answers[tag])
-    
 
-def get_value_string(name, answer):
-    r'''Looks up the 'value' attribute on the answer tag.
-    
-    Raises an exception if the answer tag does not have a 'value' attribute.
-    
-    '''
-    
-    value_str = answer.get('value')
-    if value_str is None:
-        raise SyntaxError("%s: missing value for answer" % (name,))
-    return value_str

@@ -12,8 +12,8 @@
 ...     <answer name="q4" type="rational" value="1.3/4" />
 ...     <answer name="q5" type="real" value="1.23" />
 ...     <answer name="q6" type="string" value="Hi Mom!" />
-...     <answer name="q7" repeated="False" />
-...     <answer name="q8" repeated="True" />
+...     <answer name="q7" null="True" repeated="False" type="string" />
+...     <answer name="q8" null="True" repeated="True" />
 ... </answers>
 ... ''')
 >>> a_dict = answers.from_xml(root)
@@ -27,7 +27,7 @@
 <ans_rational q4='1.3/4'>
 <ans_real q5='1.23'>
 <ans_string q6='Hi Mom!'>
-None
+<ans_string q7 unanswered>
 []
 
 >>> root = ElementTree.Element('answers')
@@ -42,8 +42,8 @@ None
     <answer name="q4" repeated="False" type="rational" value="1.3/4" />
     <answer name="q5" repeated="False" type="real" value="1.23" />
     <answer name="q6" repeated="False" type="string" value="Hi Mom!" />
-    <answer name="q7" repeated="False" />
-    <answer name="q8" repeated="True" />
+    <answer name="q7" null="True" repeated="False" type="string" />
+    <answer name="q8" null="True" repeated="True" />
 </answers>
 <BLANKLINE>
 
@@ -255,9 +255,9 @@ None
 
 >>> root = ElementTree.fromstring('''
 ... <answers>
-...     <answer name="q1" repeated="True" />
-...     <answer name="q2" repeated="True" />
-...     <answer name="q3" repeated="True" />
+...     <answer name="q1" null="True" repeated="True" />
+...     <answer name="q2" null="True" repeated="True" />
+...     <answer name="q3" null="True" repeated="True" />
 ... </answers>
 ... ''')
 >>> a_dict = answers.from_xml(root)
@@ -274,9 +274,9 @@ None
 >>> xml_access.indent(root)
 >>> print(ElementTree.tostring(root))
 <answers>
-    <answer name="q1" repeated="True" />
-    <answer name="q2" repeated="True" />
-    <answer name="q3" repeated="True" />
+    <answer name="q1" null="True" repeated="True" />
+    <answer name="q2" null="True" repeated="True" />
+    <answer name="q3" null="True" repeated="True" />
 </answers>
 <BLANKLINE>
 
