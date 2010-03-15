@@ -312,14 +312,25 @@ def parse_options(answer):
     r'''Returns dict mapping tag to dict of subanswers (or None).'''
     ans = {}
     for option in answer.findall('options/option'):
-        value = option.get('value')
-        try:
-            value = int(value)
-        except ValueError:
-            pass
+        tag = convert_tag(option.get('value'))
         subanswers = from_xml(option.find('answers'))
-        ans[value] = subanswers or None
+        ans[tag] = subanswers or None
     return ans
+
+def convert_tag(value):
+    r'''Attempts to convert value to an int.
+    
+    If the conversion fails, value is returned unmolested.
+
+        >>> convert_tag('44')
+        44
+        >>> convert_tag('44g')
+        '44g'
+    '''
+    try:
+        return int(value)
+    except ValueError:
+        return value
 
 class ans_multichoice(ans_choice):
     r'''This represents the `answer` to a `question` with a list of choices.

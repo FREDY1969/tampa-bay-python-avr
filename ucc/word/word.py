@@ -55,7 +55,7 @@ from ucc.gui import registry
 
 unique = object()
 
-def read_word(word_name, package_dir):
+def read_word(word_name, package_dir, top_package):
     r'''Return a single `word` object read in from the word's xml file.
     
     Use `word.save` to write the xml file back out.
@@ -63,9 +63,9 @@ def read_word(word_name, package_dir):
     '''
     root = ElementTree.parse(os.path.join(package_dir, word_name + '.xml')) \
                       .getroot()
-    return from_xml(root, package_dir)
+    return from_xml(root, package_dir, top_package)
 
-def from_xml(root, package_dir):
+def from_xml(root, package_dir, top_package):
     name = root.find('name').text
     label = root.find('label').text
     kind = root.find('kind').text
@@ -79,7 +79,7 @@ def from_xml(root, package_dir):
     if not questions_element:
         my_questions = None
     else:
-        my_questions = questions.from_xml(questions_element)
+        my_questions = questions.from_xml(questions_element, top_package)
     return word(package_dir, name, label, defining, kind, my_answers,
                 my_questions)
 
@@ -118,7 +118,7 @@ class word(object):
     
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
-    
+
     def is_root(self):
         r'''Is this word a root word?
         
@@ -235,7 +235,7 @@ class word(object):
 
     def set_value(self, question_name, answer_value):
         r'''Set the value of the answer to question_name.'''
-        self.get_answer(question_name).value = answer_value
+        self.get_answer(question_name).set_value(answer_value)
     
     def get_filename(self):
         r'''Returns the complete path to the source file.

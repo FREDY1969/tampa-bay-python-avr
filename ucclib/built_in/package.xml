@@ -32,6 +32,7 @@
         <word name="Port-C" />
         <word name="Port-D" />
         <word name="pwm" />
+        <word name="question" />
         <word name="repeat" />
         <word name="set" />
         <word name="set_output_bit" />
@@ -43,6 +44,7 @@
         <word name="times" />
         <word name="toggle" />
         <word name="translate" />
+        <word name="type" />
         <word name="var" />
     </words>
 </package>

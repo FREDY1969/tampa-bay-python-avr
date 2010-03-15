@@ -24,7 +24,7 @@ class package(object):
     
     '''
     
-    def __init__(self, package_dir):
+    def __init__(self, top_package, package_dir):
         # Figure out package directories.
         self.package_dir = os.path.abspath(package_dir)
         root_dir = setpath.setpath(self.package_dir, False)[0]
@@ -37,31 +37,31 @@ class package(object):
         self.package_name = self.package_dir[len(root_dir) + 1:] \
                                 .replace(os.sep, '.') \
                                 .replace('/', '.')
-        self.load_words()
-    
-    def load_words(self):
-        self.word_dict = dict((name, self.read_word(name))
+        self.load_words(top_package)
+
+    def load_words(self, top_package):
+        self.word_dict = dict((name, self.read_word(name, top_package))
                               for name
                                in xml_access.read_word_list(self.package_dir)[1]
                              )
-    
+
     def get_words(self):
         return list(self.word_dict.values())
     
-    def read_word(self, name):
-        ans = word.read_word(name, self.package_dir)
+    def read_word(self, name, top_package):
+        ans = word.read_word(name, self.package_dir, top_package)
         ans.package_name = self.package_name
         return ans
-    
+
 
 class built_in(package):
     r'''Represents the `ucclib.built_in` package.
     
     The built_in package is automatically available to all other packages.
     '''
-    def __init__(self):
+    def __init__(self, top_package):
         self.package_name = BUILT_IN
         self.package_dir = \
           os.path.split(helpers.import_module(self.package_name).__file__)[0]
-        self.load_words()
-    
+        self.load_words(top_package)
+
