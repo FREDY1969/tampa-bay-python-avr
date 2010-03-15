@@ -15,14 +15,14 @@ class top(object):
         self.word_dict = {}
         self.translation_dict = {}
         self.packages = []              # top package last!
-        self.packages.append(package.built_in())
+        self.packages.append(package.built_in(self))
         if package_dir is not None:
-            self.packages.append(package.package(package_dir))
+            self.packages.append(package.package(self, package_dir))
         for p in self.packages[:-1]:
             self.add_package(p, False)
         self.add_package(self.packages[-1], True)
         self.connect_the_dots()
-    
+
     def add_package(self, package, top):
         r'''Get `package` words and assign them to `word_dict`'''
         for w in package.get_words():

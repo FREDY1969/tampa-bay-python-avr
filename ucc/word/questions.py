@@ -10,7 +10,7 @@ from xml.etree import ElementTree
 
 from ucc.word import validators, answers
 
-def from_xml(questions_element, allow_unknown_tags = False):
+def from_xml(questions_element, top_package, allow_unknown_tags = False):
     r'''Return a list of `question` objects from a questions etree node.
     
     This will accept None for the ``questions_element``.
@@ -20,12 +20,12 @@ def from_xml(questions_element, allow_unknown_tags = False):
     ans = []
     for e in questions_element.getchildren():
         if e.tag == 'questions':
-            ans.append(q_series.from_element(e))
+            ans.append(q_series.from_element(e, top_package))
         elif e.tag == 'question':
             type = e.find('type').text
             cls = globals().get('q_' + type, None)
             if cls is None: raise SyntaxError("unknown question type: " + type)
-            ans.append(cls.from_element(e))
+            ans.append(cls.from_element(e, top_package))
         elif not allow_unknown_tags:
             raise SyntaxError("unknown xml tag in <questions>: " + e.tag)
     return ans
@@ -54,9 +54,9 @@ class question(object):
         self.orderable = orderable
         assert self.is_repeatable() or not self.orderable, \
                "%s: orderable specified on non-repeatable question" % (name,)
-    
+
     @classmethod
-    def from_element(cls, element):
+    def from_element(cls, element, top_package):
         name = element.find('name').text
         label = element.find('label').text
         min_tag = element.find('min')
@@ -73,17 +73,17 @@ class question(object):
             else:
                 raise SyntaxError("question %s: illegal orderable value, %r" %
                                     (name, orderable_tag.text))
-        rest_args = cls.additional_args_from_element(element)
+        rest_args = cls.additional_args_from_element(element, top_package)
         return cls(name = name, label = label,
                    min = min, max = max, orderable = orderable, **rest_args)
-    
+
     @classmethod
-    def additional_args_from_element(cls, element):
+    def additional_args_from_element(cls, element, top_package):
         return {}
-    
+
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.name)
-    
+
     def is_optional(self):
         r'''Returns True or False.'''
         return self.min == 0 and self.max == 1
@@ -141,7 +141,7 @@ class q_atomic(question):
         self.validation = validation
     
     @classmethod
-    def additional_args_from_element(cls, element):
+    def additional_args_from_element(cls, element, top_package):
         validation_tag = element.find('validation')
         if validation_tag is None: return {}
         return {'validation': validators.from_xml(validation_tag)}
@@ -189,7 +189,7 @@ class q_series(question):
     r'''A named series of questions.
     
     The order of the subquestions is the order that the user will see them.
-    
+
     '''
     
     tag = 'questions'
@@ -201,8 +201,9 @@ class q_series(question):
         self.subquestions = [] if subquestions is None else list(subquestions)
     
     @classmethod
-    def additional_args_from_element(cls, element):
-        return {'subquestions': from_xml(element, allow_unknown_tags = True)}
+    def additional_args_from_element(cls, element, top_package):
+        return {'subquestions': from_xml(element, top_package,
+                                         allow_unknown_tags = True)}
     
     def add_type(self, question):
         pass
@@ -222,7 +223,7 @@ class q_choice(question):
     This class covers the single selection choice.  Compare to `q_multichoice`.
     
     '''
-    
+
     answer_cls = answers.ans_string
     default_value = ""
     control = 'ChoiceCtrl'
@@ -230,20 +231,22 @@ class q_choice(question):
     def __init__(self, name, label, options = None, default = None,
                        min = None, max = None, orderable = None):
         super(q_choice, self).__init__(name, label, min, max, orderable)
-        
+
         self.options = [] if options is None else list(options) \
           #: list of (name, value, list_of_questions)
-        
+
         self.default = default
-    
+
     @classmethod
-    def additional_args_from_element(cls, element):
+    def additional_args_from_element(cls, element, top_package):
         default_tag = element.find('default')
-        default = None if default_tag is None else int(default_tag.text)
+        default = None if default_tag is None \
+                       else answers.convert_tag(default_tag.text)
         options = []
         for option in element.findall('options/option'):
-            options.append((option.get('name'), int(option.get('value')),
-                            from_xml(option.find('questions'))))
+            options.append((option.get('name'),
+                            answers.convert_tag(option.get('value')),
+                            from_xml(option.find('questions'), top_package)))
         return {'options': options, 'default': default}
     
     def add_subelements(self, question):
@@ -254,7 +257,7 @@ class q_choice(question):
             option = ElementTree.SubElement(options, 'option',
                                             name = name, value = str(value))
             add_xml_subelement(option, questions)
-    
+
     def make_default_answer(self):
         for name, value, subquestions in self.options:
             if value == self.default:
@@ -264,7 +267,7 @@ class q_choice(question):
                                                for q in subquestions))
         raise AssertionError("q_choice(%s): default, %r, not found in options" %
                                (self.name, self.default))
-    
+
 
 class q_multichoice(q_choice):
     r'''A question where the user selects from a set of choices.
@@ -277,4 +280,36 @@ class q_multichoice(q_choice):
     
     def make_default_answer(self):
         return answers.ans_multichoice(self.name, {})
-    
+
+
+class q_indirect(question):
+    r'''This is an indirect reference to a question defined as a word.
+    '''
+
+    def __init__(self, name, label, use, top_package,
+                       min = None, max = None, orderable = None):
+        super(q_indirect, self).__init__(name, label, min, max, orderable)
+        assert use, "Indirect question %s: missing 'use' argument" % (name,)
+        self.use = use
+        self.real_question = None
+        self.top_package = top_package
+
+    @classmethod
+    def additional_args_from_element(cls, element, top_package):
+        use = element.find('use').text
+        return {'use': use, 'top_package': top_package}
+
+    def add_subelements(self, question):
+        ElementTree.SubElement(question, 'use').text = self.use
+
+    def __getattr__(self, name):
+        return getattr(self.get_real_question(), name)
+
+    def get_real_question(self):
+        if self.real_question is None:
+            use_word = self.top_package.get_word_by_label(self.use)
+            assert len(use_word.questions) >= 1, \
+                   "%s: Using word with no questions" % (self.label,)
+            self.real_question = use_word.questions[0]
+        return self.real_question
+

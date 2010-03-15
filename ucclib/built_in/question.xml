@@ -5,94 +5,98 @@
     <kind>declaration</kind>
     <defining>True</defining>
     <questions>
-        <question>
-            <name>name</name>
-            <label>name</label>
-            <type>string</type>
-        </question>
-        <question>
-            <name>label</name>
-            <label>label</label>
-            <type>string</type>
-        </question>
-        <question>
-            <name>modifier</name>
-            <label>modifier</label>
-            <type>choice</type>
-            <options>
-                <option name="required" value="required" />
-                <option name="optional" value="optional" />
-                <option name="repeated" value="repeated">
-                    <questions>
-                        <question>
-                            <name>min</name>
-                            <label>min</label>
-                            <min>0</min>
-                            <max>1</max>
-                            <type>int</type>
-                        </question>
-                        <question>
-                            <name>max</name>
-                            <label>max</label>
-                            <min>0</min>
-                            <max>1</max>
-                            <type>int</type>
-                        </question>
-                        <question>
-                            <name>orderable</name>
-                            <label>orderable</label>
-                            <type>bool</type>
-                        </question>
-                    </questions>
-                </option>
-            </options>
-        </question>
-        <question>
-            <name>type</name>
-            <label>type</label>
-            <type>choice</type>
-            <options>
-                <option name="integer" value="int" />
-                <option name="boolean" value="bool" />
-                <option name="rational" value="rational" />
-                <option name="floating point" value="real" />
-                <option name="string" value="string" />
-                <option name="choice" value="choice">
-                    <questions>
-                        <question>
-                            <name>multiple</name>
-                            <label>multiple selection</label>
-                            <type>bool</type>
-                        </question>
+        <questions>
+            <name>question</name>
+            <label>question</label>
+            <question>
+                <name>name</name>
+                <label>name</label>
+                <type>string</type>
+            </question>
+            <question>
+                <name>label</name>
+                <label>label</label>
+                <type>string</type>
+            </question>
+            <question>
+                <name>modifier</name>
+                <label>modifier</label>
+                <type>choice</type>
+                <options>
+                    <option name="required" value="required" />
+                    <option name="optional" value="optional" />
+                    <option name="repeated" value="repeated">
                         <questions>
-                            <name>options</name>
-                            <label>options</label>
-                            <min>2</min>
-                            <max>infinite</max>
-                            <orderable>True</orderable>
                             <question>
-                                <name>name</name>
-                                <label>label</label>
-                                <type>string</type>
-                            </question>
-                            <question>
-                                <name>value</name>
-                                <label>value</label>
-                                <type>string</type>
-                            </question>
-                            <question>
-                                <name>value</name>
-                                <label>value</label>
+                                <name>min</name>
+                                <label>min</label>
                                 <min>0</min>
-                                <max>infinite</max>
-                                <orderable>True</orderable>
-                                <type>indirect</type>
-                                <use>question</use>
+                                <max>1</max>
+                                <type>int</type>
+                            </question>
+                            <question>
+                                <name>max</name>
+                                <label>max</label>
+                                <min>0</min>
+                                <max>1</max>
+                                <type>int</type>
+                            </question>
+                            <question>
+                                <name>orderable</name>
+                                <label>orderable</label>
+                                <type>bool</type>
                             </question>
                         </questions>
-                    </questions>
-                </option>
-            </options>
-        </question>
+                    </option>
+                </options>
+            </question>
+            <question>
+                <name>type</name>
+                <label>type</label>
+                <type>choice</type>
+                <options>
+                    <option name="integer" value="int" />
+                    <option name="boolean" value="bool" />
+                    <option name="rational" value="rational" />
+                    <option name="floating point" value="real" />
+                    <option name="string" value="string" />
+                    <option name="choice" value="choice">
+                        <questions>
+                            <question>
+                                <name>multiple</name>
+                                <label>multiple selection</label>
+                                <type>bool</type>
+                            </question>
+                            <questions>
+                                <name>options</name>
+                                <label>options</label>
+                                <min>2</min>
+                                <max>infinite</max>
+                                <orderable>True</orderable>
+                                <question>
+                                    <name>name</name>
+                                    <label>label</label>
+                                    <type>string</type>
+                                </question>
+                                <question>
+                                    <name>value</name>
+                                    <label>value</label>
+                                    <type>string</type>
+                                </question>
+                                <question>
+                                    <name>value</name>
+                                    <label>value</label>
+                                    <min>0</min>
+                                    <max>infinite</max>
+                                    <orderable>True</orderable>
+                                    <type>indirect</type>
+                                    <use>question</use>
+                                </question>
+                            </questions>
+                        </questions>
+                    </option>
+                </options>
+            </question>
+        </questions>
     </questions>
 </word>

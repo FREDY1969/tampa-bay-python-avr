@@ -49,7 +49,7 @@
 ...     </question>
 ... </questions>
 ... ''')
->>> q_list = questions.from_xml(root)
+>>> q_list = questions.from_xml(root, None)
 >>> q_list
 [<q_bool q1>, <q_number q2>, <q_int q3>, <q_rational q4>, <q_real q5>, <q_string q6>]
 
@@ -243,7 +243,7 @@ True
 ...     </question>
 ... </questions>
 ... ''')
->>> q_list = questions.from_xml(root)
+>>> q_list = questions.from_xml(root, None)
 >>> q_list
 [<q_choice q1>, <q_choice q2>, <q_multichoice q3>, <q_multichoice q4>]
 
