@@ -4,8 +4,8 @@ r'''The generic `word` class, along with xml read/write routines for it.
 
 This is one of several representations for a word.  This `word` object is
 created by the IDE when a `package` is opened and lives for as long as the
-package stays open.  This may encompass several `ucc.parser.compile` and
-`ucc.parser.load` steps.
+package stays open.  This may encompass several `ucc.compiler.compile` and
+`ucc.codegen.load` steps.
 
 This `word` object knows the name (internal name), label (user name), kind
 (name of the word that this is a kind of), defining (bool, True if subclass of
@@ -176,24 +176,22 @@ class word(object):
     
     def get_answer(self, question_name, default = unique):
         r'''Return the answer to question_name.
-        
+
         If this is a defining word, it will check the word's kind for the
         answer if this word doesn't have it.
-        
+
         If no default parameter is passed, this will raise a KeyError if the
         answer is not found.  Otherwise it will return default.
-        
-        An answer can be one of three things:
-        
-            None
-              for an optional answer that was left unanswered
+
+        An answer can be one of two things:
+
             An `answer` object
               See `ucc.word.answers` for the possibilities here.
             A list of 0 or more `answer` objects
               for a repeating question
-        
+
         See also, `get_value`.
-        
+
         '''
         
         if not self.answers or question_name not in self.answers:
@@ -230,10 +228,11 @@ class word(object):
         '''
         
         ans = self.get_answer(question_name)
-        if ans is None: return default
-        if isinstance(ans, answers.answer): return ans.get_value()
-        return tuple(map(lambda x: x.get_value(), ans))
-    
+        if isinstance(ans, answers.answer):
+            if not ans.is_answered(): return default
+            return ans.get_value()
+        return tuple(x.get_value() for x in ans)
+
     def set_value(self, question_name, answer_value):
         r'''Set the value of the answer to question_name.'''
         self.get_answer(question_name).value = answer_value
@@ -248,4 +247,4 @@ class word(object):
         suffix = self.kind_obj.filename_suffix
         if suffix is None: return None
         return os.path.join(self.package_dir, self.name + suffix)
-    
+

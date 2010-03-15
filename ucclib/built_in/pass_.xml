@@ -5,8 +5,8 @@
     <kind>macro</kind>
     <defining>False</defining>
     <answers>
-        <answer name="argument" repeated="True" />
-        <answer name="new_syntax_keyword" repeated="True" />
-        <answer name="syntax" repeated="True" />
+        <answer name="argument" null="True" repeated="True" />
+        <answer name="new_syntax_keyword" null="True" repeated="True" />
+        <answer name="syntax" null="True" repeated="True" />
     </answers>
 </word>

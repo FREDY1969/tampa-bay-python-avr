@@ -5,6 +5,6 @@
     <kind>task</kind>
     <defining>False</defining>
     <answers>
-        <answer name="argument" repeated="True" />
+        <answer name="argument" null="True" repeated="True" />
     </answers>
 </word>
