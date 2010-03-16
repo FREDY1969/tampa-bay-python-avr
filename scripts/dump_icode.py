@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/bin/python3.1
 
 # dump_icode.py (package_dir | file.ucl)\n")
 
