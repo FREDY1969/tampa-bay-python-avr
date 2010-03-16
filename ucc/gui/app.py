@@ -169,7 +169,7 @@ class App(wx.App):
         compile.run(registry.top_package)
     
     def onLoad(self, event):
-        from ucc.codegen import load
+        from ucc.assembler import load
         kw_args = dict((param, registry.config.get('arduino', param))
             for param in (
                 'install_dir',

@@ -3,8 +3,10 @@
 r'''The AVR assembler.
 '''
 
-from ucc.database import assembler
-from ucc.assembler import asm_opcodes
+import itertools
+
+from ucc.database import assembler, crud
+from ucc.assembler import asm_opcodes, hex_file
 
 def assign_labels(section, labels, starting_address = 0):
     r'''Assign addresses to all labels in 'section'.
@@ -58,3 +60,51 @@ def assemble_word(block_id, block_address, labels):
                 yield n
                 address += 1
             #address += getattr(asm_opcodes, opcode.upper()).length(op1, op2)[1]
+
+def assemble_program(package_dir):
+    r'''Assemble all of the sections.
+
+    Generates .hex files in package_dir.
+    '''
+
+    # Assign addresses to all labels in all sections:
+    labels = {}         # {label: address}
+
+    with crud.db_transaction():
+        # flash
+        start_data = assign_labels('flash', labels)
+
+        # data
+        assert 'start_data' not in labels, \
+               "duplicate assembler label: start_data"
+        labels['start_data'] = start_data
+        data_len = assign_labels('data', labels)
+        assert 'data_len' not in labels, \
+               "duplicate assembler label: data_len"
+        labels['data_len'] = data_len
+
+        # bss
+        bss_end = assign_labels('bss', labels, data_len)
+        assert 'bss_len' not in labels, \
+               "duplicate assembler label: bss_len"
+        labels['bss_len'] = bss_end - data_len
+
+        # eeprom
+        assign_labels('eeprom', labels)
+
+    # assemble flash and data:
+    hex_file.write(itertools.chain(assemble('flash', labels),
+                                   assemble('data', labels)),
+                   package_dir, 'flash')
+
+    # check that bss is blank!
+    try:
+        next(assemble('bss', labels))
+    except StopIteration:
+        pass
+    else:
+        raise AssertionError("bss is not blank!")
+
+    # assemble eeprom:
+    hex_file.write(assemble('eeprom', labels), package_dir, 'eeprom')
+

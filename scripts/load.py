@@ -9,7 +9,7 @@ import optparse
 from doctest_tools import setpath
 setpath.setpath(__file__, remove_first = True)
 
-from ucc.codegen import load
+from ucc.assembler import load
 import ucc.config
 
 config = ucc.config.load()
