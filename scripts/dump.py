@@ -1,10 +1,10 @@
-#!/usr/bin/python
+#!/usr/local/bin/python3.1
 
 # dump.py (package_dir | file.ucl)\n")
 
 r'''Dumps the ast database in a simple ascii format.
 
-id: name(kind) from source_filename
+id: label(kind) [side_effects] [suspends] from source_filename
   id: label symbol_id kind int1 int2 str1 str2 expect type_id
     - child1
     / child2.1
@@ -16,33 +16,49 @@ id: name(kind) from source_filename
 
 
 import itertools
-import os.path
+import os
 import sqlite3 as db
 
 Db_filename = "ucc.db"
 
+Cwd = os.getcwd()
+
 class db_cursor(object):
     def __init__(self, package_dir):
         self.package_dir = package_dir
+
     def __enter__(self):
         self.db_conn = db.connect(os.path.join(self.package_dir, Db_filename))
         self.db_cur = self.db_conn.cursor()
         return self.db_cur
+
     def __exit__(self, exc_type, exc_value, exc_tb):
         #print "closing db connection"
         self.db_cur.close()
         self.db_conn.close()
 
 def dump(db_cur):
-    db_cur.execute("""select id, label, kind, source_filename from symbol_table
-                       where context is null
-                       order by label""")
+    db_cur.execute("""
+        select id, label, kind, side_effects, suspends, source_filename
+          from symbol_table
+         where context is null
+         order by label""")
     for info in db_cur.fetchall():
         print()
         dump_word(info, db_cur)
 
 def dump_word(info, db_cur):
-    print("%d: %s(%s) from %s" % info)
+    info2 = dict(zip(('id', 'label', 'kind', 'side_effects', 'suspends',
+                      'source_filename'),
+                     info))
+    info2['side_effects'] = ' side_effects' if info2['side_effects'] else ''
+    info2['suspends'] = ' suspends' if info2['suspends'] else ''
+    if info2['source_filename'] is not None and \
+       info2['source_filename'].startswith(Cwd) and \
+       info2['source_filename'][len(Cwd)] in ('/', os.path.sep):
+        info2['source_filename'] = info2['source_filename'][len(Cwd)+1:]
+    print("{id}: {label}({kind}){side_effects}{suspends} "
+          "from {source_filename!r}".format(**info2))
     dump_children(db_cur, info[0], indent = '  ')
 
 def dump_node(word_symbol_id, id, db_cur, indent = ''):
@@ -120,11 +136,12 @@ if __name__ == "__main__":
     if sys.argv[1].lower().endswith('.ucl'):
         package_dir, file = os.path.split(sys.argv[1])
         with db_cursor(package_dir) as db_cur:
-            db_cur.execute("""select id, label, kind, source_filename
-                                from symbol_table
-                               where context is null and label = ?
-                           """,
-                           (file[:-4],))
+            db_cur.execute("""
+                select id, label, kind, side_effects, suspends, source_filename
+                  from symbol_table
+                 where context is null and label = ?
+              """,
+              (file[:-4],))
             dump_word(db_cur.fetchone(), db_cur)
     else:
         with db_cursor(sys.argv[1]) as db_cur:

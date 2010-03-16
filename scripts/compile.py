@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/bin/python3.1
 
 # compile.py package_dir
 

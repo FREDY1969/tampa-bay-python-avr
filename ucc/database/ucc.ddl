@@ -157,6 +157,7 @@ create table fn_calls (
     -- who calls who
     caller_id int not null references symbol_table(id),
     called_id int not null references symbol_table(id),
+    depth int not null default 1,
     primary key (caller_id, called_id)
 );
 
