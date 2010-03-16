@@ -25,8 +25,8 @@ def gen_fun(fun_id, fun_label, fun_kind):
         if fun_kind == 'task':
             sym.ram_size = 2
         if kind == 'parameter':
-            prolog.append_inst('push', 'r%d' % (2 * param_num + 1))
-            prolog.append_inst('push', 'r%d' % (2 * param_num))
+            prolog.append_inst('push', 'r{}'.format(2 * param_num + 1))
+            prolog.append_inst('push', 'r{}'.format(2 * param_num))
     for id, name, next, next_conditional \
      in crud.read_as_tuples('blocks', 'id', 'name', 'next',
                             'next_conditional',

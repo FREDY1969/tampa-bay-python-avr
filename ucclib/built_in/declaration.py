@@ -78,7 +78,7 @@ class declaration(object):
         return None
 
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.name)
+        return "<{} {}>".format(self.__class__.__name__, self.name)
 
     def parse_file(self, parser, debug = 0):
         r'''Returns a frozenset of the labels of the words needed.
@@ -137,7 +137,7 @@ class word(declaration):
         return self.macro_expand(fn_symbol, ast_node, words_needed)
 
     def compile_generic(self, ast_node):
-        raise ValueError("%s used as a %s" % (self.label, ast_node.expect))
+        raise ValueError("{} used as a {}".format(self.label, ast_node.expect))
 
 class high_level_word(word):
     r'''Base class for all words with high-level code as their text.
@@ -159,8 +159,8 @@ class high_level_word(word):
 
     def compile(self):
         assert not block.Current_block, \
-               "%s.compile: previous block(%s) not written" % \
-                 (self.label, block.Current_block.name)
+               "{}.compile: previous block({}) not written" \
+                 .format(self.label, block.Current_block.name)
         block.delete(self.ww.symbol)
         block.block(self.label, self.ww.symbol.id)
         ast.compile_args(self.ast_args)
@@ -172,8 +172,8 @@ class high_level_word(word):
         assert len(ast_node.args) == 2
         fn_args = self.ww.get_value('argument')
         assert len(ast_node.args[1]) == len(fn_args), \
-               "%s: incorrect number of arguments, expected %s, got %s" % \
-                 (self.label, len(fn_args), len(ast_node.args[1]))
+               "{}: incorrect number of arguments, expected {}, got {}" \
+                 .format(self.label, len(fn_args), len(ast_node.args[1]))
         ans = block.Current_block.gen_triple('call_direct', self.ww.symbol)
         for i, arg in enumerate(ast_node.args[1]):
             p = block.Current_block.gen_triple('param', i,
@@ -191,7 +191,7 @@ class high_level_word(word):
 def load_class(ww):
     r'''Imports and initializes the Python class for a defining word.
     '''
-    mod = helpers.import_module("%s.%s" % (ww.package_name, ww.name))
+    mod = helpers.import_module("{}.{}".format(ww.package_name, ww.name))
     new_subclass = getattr(mod, ww.name)
     new_subclass.init_class(ww)
     return new_subclass

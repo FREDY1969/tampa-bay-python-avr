@@ -21,8 +21,8 @@ class options_dict(dict):
 
 def run():
     optparser = optparse.OptionParser(
-                  usage="usage: %s [options] [load_dir [memory_type]]" % 
-                          os.path.basename(sys.argv[0]))
+                  usage="usage: {} [options] [load_dir [memory_type]]"
+                          .format(os.path.basename(sys.argv[0])))
 
     optparser.add_option('--install_dir',
       help='the location of the arduino-xxxx directory downloaded from arduino.cc')

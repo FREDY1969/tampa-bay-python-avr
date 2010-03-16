@@ -112,9 +112,9 @@ class inst(object):
         inst_obj = getattr(asm_opcodes, opcode.upper(), None)
         if inst_obj is None:
             if syntax_error_info:
-                raise SyntaxError("unknown opcode: %s" % opcode,
+                raise SyntaxError("unknown opcode: {}".format(opcode),
                                   syntax_error_info)
-            raise AssertionError("unknown opcode: %s" % opcode)
+            raise AssertionError("unknown opcode: {}".format(opcode))
         self.min_length, self.max_length = inst_obj.length(operand1, operand2)
         self.min_clocks, self.max_clocks = inst_obj.clock_cycles()
         self.end = inst_obj.end()

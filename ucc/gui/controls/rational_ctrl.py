@@ -18,13 +18,13 @@ class RationalCtrl(NumberCtrl):
 #         self.Bind(wx.EVT_TEXT, self.onChange, self.textCtrlDen)
 #     
 #     def setInitialValue(self):
-#         debug.trace("%s.setInitialValue %s=%s" % 
-#                     (self.__class__.__name__,
-#                      self.question.name,
-#                      self.get_answer()))
+#         debug.trace("{}.setInitialValue {}={}"
+#                       .format(self.__class__.__name__,
+#                               self.question.name,
+#                               self.get_answer()))
 #         # self.textCtrl.ChangeValue(self.get_answer())
 #     
 #     def onChange(self, event):
-#         debug.notice("Text changed: %s" % event.GetString())
+#         debug.notice("Text changed: {}".format(event.GetString()))
 #         # self.get_answer().value = event.GetString()
 #     

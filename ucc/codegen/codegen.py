@@ -18,8 +18,8 @@ def gen_assembler():
         crud.Db_cur.execute('''
                 select predecessor, successor
                   from triple_order_constraints
-                 where predecessor in (%(qmarks)s) or successor in (%(qmarks)s)
-            ''' % {'qmarks': ', '.join('?' * len(triples))},
+                 where predecessor in ({qmarks}) or successor in ({qmarks})
+            '''.format(qmarks = ', '.join('?' * len(triples))),
             [t.id for t in triples] * 2)
         pred_succ = crud.Db_cur.fetchall()
         if Debug: print("pred_succ", pred_succ, file=sys.stderr)

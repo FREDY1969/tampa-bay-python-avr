@@ -53,7 +53,7 @@ class question(object):
         self.max = max  # max of None means infinite if min is not None
         self.orderable = orderable
         assert self.is_repeatable() or not self.orderable, \
-               "%s: orderable specified on non-repeatable question" % (name,)
+               "{}: orderable specified on non-repeatable question".format(name)
 
     @classmethod
     def from_element(cls, element, top_package):
@@ -71,8 +71,8 @@ class question(object):
             if orderable_tag.text.lower() == 'false': orderable = False
             elif orderable_tag.text.lower() == 'true': orderable = True
             else:
-                raise SyntaxError("question %s: illegal orderable value, %r" %
-                                    (name, orderable_tag.text))
+                raise SyntaxError("question {}: illegal orderable value, {!r}"
+                                    .format(name, orderable_tag.text))
         rest_args = cls.additional_args_from_element(element, top_package)
         return cls(name = name, label = label,
                    min = min, max = max, orderable = orderable, **rest_args)
@@ -82,7 +82,7 @@ class question(object):
         return {}
 
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.name)
+        return "<{} {}>".format(self.__class__.__name__, self.name)
 
     def is_optional(self):
         r'''Returns True or False.'''
@@ -265,8 +265,8 @@ class q_choice(question):
                                           self.default,
                                           dict((q.name, q.make_default_answer())
                                                for q in subquestions))
-        raise AssertionError("q_choice(%s): default, %r, not found in options" %
-                               (self.name, self.default))
+        raise AssertionError("q_choice({}): default, {!r}, not found in options"
+                               .format(self.name, self.default))
 
 
 class q_multichoice(q_choice):
@@ -289,7 +289,7 @@ class q_indirect(question):
     def __init__(self, name, label, use, top_package,
                        min = None, max = None, orderable = None):
         super(q_indirect, self).__init__(name, label, min, max, orderable)
-        assert use, "Indirect question %s: missing 'use' argument" % (name,)
+        assert use, "Indirect question {}: missing 'use' argument".format(name)
         self.use = use
         self.real_question = None
         self.top_package = top_package
@@ -309,7 +309,7 @@ class q_indirect(question):
         if self.real_question is None:
             use_word = self.top_package.get_word_by_label(self.use)
             assert len(use_word.questions) >= 1, \
-                   "%s: Using word with no questions" % (self.label,)
+                   "{}: Using word with no questions".format(self.label)
             self.real_question = use_word.questions[0]
         return self.real_question
 

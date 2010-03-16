@@ -50,11 +50,11 @@ def dump_block(info, db_cur):
                    """,
                    (id,))
     predecessors = ' '.join([str(x[0]) for x in db_cur])
-    print("%s.%d: %s%s%s%s" % \
-            (fun_name, id, name,
-             ' next %s' % next if next else '',
-             ' / %s' % next_cond if next_cond else '',
-             ' (%s)' % predecessors if predecessors else ''))
+    print("{}.{}: {}{}{}{}"
+            .format(fun_name, id, name,
+                    ' next {}'.format(next) if next else '',
+                    ' / {}'.format(next_cond) if next_cond else '',
+                    ' ({})'.format(predecessors) if predecessors else ''))
     dump_triples(db_cur, id)
 
 def dump_triples(db_cur, block_id):
@@ -120,7 +120,7 @@ class triple(object):
 
     def write(self, db_cur, triples, indent = 2):
         if self.written:
-            print('%s%d.' % (' ' * indent, self.id))
+            print('{}{}.'.format(' ' * indent, self.id))
         else:
             self.written = True
 
@@ -136,18 +136,20 @@ class triple(object):
                                where triple_id = ?
                            """,
                            (self.id,))
-            labels = ' '.join([(' => %s' if x[1] else ' -> %s') %
-                                      get_symbol(db_cur, x[0]) for x in db_cur.fetchall()])
+            labels = ' '.join([(' => {}' if x[1] else ' -> {}')
+                                 .format(get_symbol(db_cur, x[0]))
+                               for x in db_cur.fetchall()])
 
-            print("%s%d: %s%s%s%s%s%s" % \
-                  (' ' * indent,
-                   self.id,
-                   self.operator,
-                   ' ' + self.op1 if self.op1 else '',
-                   ' ' + self.op2 if self.op2 else '',
-                   ' ' + self.string if self.string else '',
-                   ' (%s)' % predecessors if predecessors else '',
-                   labels))
+            print("{}{}: {}{}{}{}{}{}"
+                    .format(' ' * indent,
+                            self.id,
+                            self.operator,
+                            ' ' + self.op1 if self.op1 else '',
+                            ' ' + self.op2 if self.op2 else '',
+                            ' ' + self.string if self.string else '',
+                            ' ({})'.format(predecessors) if predecessors
+                                                         else '',
+                            labels))
             if self.triple1 is not None:
                 triples[self.triple1].write(db_cur, triples, indent + 2)
             if self.triple2 is not None:
@@ -168,10 +170,11 @@ def get_symbol(db_cur, id):
                        (context,))
         label2, context = db_cur.fetchone()
         label = '.'.join((label2, label))
-    return '%s[%s%s]%s%s' % \
-             (label, kind, '-%d' % int1 if int1 is not None else '',
-              'side_effects' if side_effects else '',
-              'suspends' if suspends else '')
+    return '{}[{}{}]{}{}' \
+             .format(label, kind, '-{}'.format(int1) if int1 is not None
+                                                     else '',
+                     'side_effects' if side_effects else '',
+                     'suspends' if suspends else '')
 
 
 if __name__ == "__main__":

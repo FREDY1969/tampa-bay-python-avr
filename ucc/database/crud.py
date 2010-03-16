@@ -151,7 +151,7 @@ def gensym(root_name):
     lower_root_name = root_name.lower()
     if lower_root_name not in _Gensyms: _Gensyms[lower_root_name] = 0
     _Gensyms[lower_root_name] += 1
-    return "%s_%04d" % (root_name, _Gensyms[lower_root_name])
+    return "{}_{:04d}".format(root_name, _Gensyms[lower_root_name])
 
 class db_cur_test(object):
     r'''Proxy database cursor for doctests...
@@ -260,8 +260,8 @@ def doctor_test(item, values):
         else:
             values.extend(doctor_value(t))
             if key.endswith('_'):
-                return '%s not in (%s)' % (key[:-1], ', '.join(('?',) * len(t)))
-            return '%s in (%s)' % (key, ', '.join(('?',) * len(t)))
+                return '{} not in ({})'.format(key[:-1], ', '.join(('?',) * len(t)))
+            return '{} in ({})'.format(key, ', '.join(('?',) * len(t)))
     values.append(doctor_value(value))
     if key.endswith('_'): return key[:-1] + ' <> ?'
     return key + ' = ?'
@@ -336,10 +336,10 @@ def run_query(table, cols, keys):
         parameters: []
     '''
     where, params = create_where(keys)
-    command = string_lookup("select %s from %s%s" % 
-                              (', '.join(cols) if cols else '*',
-                               table,
-                               where))
+    command = string_lookup("select {} from {}{}"
+                              .format(', '.join(cols) if cols else '*',
+                                      table,
+                                      where))
     if Debug:
         print("crud:", command)
         print("  params:", params)
@@ -383,10 +383,10 @@ def return1(rows, zero_ok = False):
     '''
     if zero_ok:
         assert len(rows) <= 1, \
-               "query returned %d rows, expected 0 or 1 row" % len(rows)
+               "query returned {} rows, expected 0 or 1 row".format(len(rows))
     else:
         assert len(rows) == 1, \
-               "query returned %d rows, expected 1 row" % len(rows)
+               "query returned {} rows, expected 1 row".format(len(rows))
     if rows: return rows[0]
     return None
 
@@ -500,10 +500,11 @@ def update(table, where, **set):
     '''
     assert In_transaction, "crud.update done outside of transaction"
     where_clause, params = create_where(where)
-    command = string_lookup("update %s set %s%s" %
-                              (table,
-                               ', '.join(c + ' = ?' for c in list(set.keys())),
-                               where_clause))
+    command = string_lookup("update {} set {}{}"
+                              .format(table,
+                                      ', '.join(c + ' = ?'
+                                                for c in list(set.keys())),
+                                      where_clause))
     if Debug:
         print("crud:", command)
         print("  params:", list(set.values()) + params)
@@ -524,7 +525,7 @@ def delete(table, **keys):
     '''
     assert In_transaction, "crud.delete done outside of transaction"
     where_clause, params = create_where(keys)
-    command = string_lookup("delete from %s%s" % (table, where_clause))
+    command = string_lookup("delete from {}{}".format(table, where_clause))
     if Debug:
         print("crud:", command)
         print("  params:", params)
@@ -566,11 +567,11 @@ def insert(table, option = None, **cols):
     '''
     assert In_transaction, "crud.insert done outside of transaction"
     keys = sorted(cols.keys())
-    command = string_lookup("insert %sinto %s (%s) values (%s)" %
-                              ("or %s " % option if option else '',
-                               table,
-                               ', '.join(keys),
-                               ', '.join('?' for c in keys)))
+    command = string_lookup("insert {}into {} ({}) values ({})"
+                              .format("or {} ".format(option) if option else '',
+                                      table,
+                                      ', '.join(keys),
+                                      ', '.join('?' for c in keys)))
     if Debug:
         print("crud:", command)
         print("  params:", [cols[key] for key in keys])

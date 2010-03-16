@@ -76,15 +76,15 @@ class fixed_precision(object):
         if self.binary_pt == 1 and (self.i & 1) == 0:
             return repr(self.i >> 1)
         if self.binary_pt < 0:
-            return "%r~%r" % (self.i, 2**-(self.binary_pt - 1))
+            return "{!r}~{!r}".format(self.i, 2**-(self.binary_pt - 1))
         if self.binary_pt == 0:
-            return "%r" % (self.i,)
+            return "{!r}".format(self.i)
         # 2**self.binary_pt = 10**decimal_pt / precision
         decimal_pt = int(math.ceil(self.binary_pt / math.log(10, 2)))
         n = self.i * 2**-self.binary_pt
         n1 = round(n, decimal_pt)
         precision = int(round(10.0**decimal_pt / 2**self.binary_pt))
-        return "%s~%r" % (n1, precision)
+        return "{}~{!r}".format(n1, precision)
     def __neg__(self):
         return self.__class__(-self.i, self.binary_pt)
     def __add__(self, b):
@@ -104,8 +104,9 @@ class fixed_precision(object):
             b_i = adj_binary_pt(b.i, b.binary_pt, self.binary_pt)
             return self.__class__(self.i + b_i, self.binary_pt)
         else:
-            raise TypeError("can not add %s and %s" %
-                              (self.__class__.__name__, b.__class__.__name__))
+            raise TypeError("can not add {} and {}"
+                              .format(self.__class__.__name__,
+                                      b.__class__.__name__))
     def __radd__(self, b):
         return self + b
     def __sub__(self, b):
@@ -125,8 +126,9 @@ class fixed_precision(object):
             b_i = adj_binary_pt(b.i, b.binary_pt, self.binary_pt)
             return self.__class__(self.i + b_i, self.binary_pt)
         else:
-            raise TypeError("can not add %s and %s" %
-                              (self.__class__.__name__, b.__class__.__name__))
+            raise TypeError("can not add {} and {}"
+                              .format(self.__class__.__name__,
+                                      b.__class__.__name__))
     def __rsub__(self, b):
         return -(self - b)
 
@@ -158,8 +160,9 @@ class fixed_precision(object):
                                                 binary_pt),
                                   binary_pt)
         else:
-            raise TypeError("can not multiply %s from %s" %
-                              (self.__class__.__name__, b.__class__.__name__))
+            raise TypeError("can not multiply {} from {}"
+                              .format(self.__class__.__name__,
+                                      b.__class__.__name__))
     def __rmul__(self, b):
         return self * b
 
@@ -194,8 +197,9 @@ class fixed_precision(object):
                                                 binary_pt),
                                   binary_pt)
         else:
-            raise TypeError("can not divide %s by %s" %
-                              (self.__class__.__name__, b.__class__.__name__))
+            raise TypeError("can not divide {} by {}"
+                              .format(self.__class__.__name__,
+                                      b.__class__.__name__))
 
     def __rdiv__(self, b):
         # d(a/x)/dx = -a/x**2
@@ -228,8 +232,9 @@ class fixed_precision(object):
                                                 binary_pt),
                                   binary_pt)
         else:
-            raise TypeError("can not divide %s by %s" %
-                              (b.__class__.__name__, self.__class__.__name__))
+            raise TypeError("can not divide {} by {}"
+                              .format(b.__class__.__name__,
+                                      self.__class__.__name__))
 
     def to_domain(self):
         return domain.constant(self,
@@ -276,15 +281,15 @@ class any_precision(object):
         i = self.numerator // self.denominator
         if i == 0:
             if self.numerator == 0: return "0/"
-            return "%r/%r" % (self.numerator, self.denominator)
+            return "{!r}/{!r}".format(self.numerator, self.denominator)
         r = self.numerator - self.denominator * i
         if r == 0:
-            return "%r/" % (i,)
+            return "{!r}/".format(i)
         l = math.log10(self.denominator)
         if abs(l - round(l)) < 1e-9:
-            rs = "%r" % r
-            return "%r.%s%s/" % (i, '0' * (int(round(l)) - len(rs)), rs)
-        return "%r.%r/%r" % (i, r, self.denominator)
+            rs = "{!r}".format(r)
+            return "{!r}.{}{}/".format(i, '0' * (int(round(l)) - len(rs)), rs)
+        return "{!r}.{!r}/{!r}".format(i, r, self.denominator)
     def __float__(self):
         return float(self.numerator) / float(self.denominator)
     def to_domain(self):

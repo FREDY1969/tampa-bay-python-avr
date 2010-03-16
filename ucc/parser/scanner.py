@@ -418,8 +418,8 @@ def t_minus(t):
     return t
 
 def t_ANY_error(t):
-    raise SyntaxError("Scanner error: possible illegal character %r" %
-                        t.value[0],
+    raise SyntaxError("Scanner error: possible illegal character {!r}"
+                        .format(t.value[0]),
                       scanner_init.syntaxerror_params())
 
 

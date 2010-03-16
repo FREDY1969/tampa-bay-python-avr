@@ -67,8 +67,8 @@ class RepeatableElement(wx.Panel):
 #         self.sizer.Add(self.bsizer, 1, wx.EXPAND | wx.TOP, -8)
 #         self.SetSizer(self.sizer)
 # 
-#         #msg = "<%s %s>: can't do repeatable questions yet" % \
-#         #  (self.question.__class__.__name__, self.question.name)
+#         #msg = "<{} {}>: can't do repeatable questions yet" \
+#         #  .format(self.question.__class__.__name__, self.question.name)
 #         #if self.is_orderable:
 #         #    pass
 #         #print msg

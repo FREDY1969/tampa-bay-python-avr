@@ -14,13 +14,12 @@ def write(words, package_dir, filetype):
         for address, bytes in words:
             bytes_iter = iter(bytes)
             for i in itertools.count():
-                data_hex = ''.join(map(
-                                     lambda n: "%02x" % n,
-                                     itertools.islice(bytes_iter, 16)))
+                data_hex = ''.join("{:02x}".format(n)
+                                   for n in itertools.islice(bytes_iter, 16))
                 if not data_hex: break
-                line = "%02x%04x00%s" % \
-                         (len(data_hex)//2, address + i * 16, data_hex)
-                hex_file.write(":%s%02x\n" % (line, check_sum(line)))
+                line = "{:02x}{:04x}00{}" \
+                         .format(len(data_hex)//2, address + i * 16, data_hex)
+                hex_file.write(":{}{:02x}\n".format(line, check_sum(line)))
                 generated_something = True
                 if len(data_hex) < 32: break 
         hex_file.write(":00000001FF\n")

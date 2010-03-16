@@ -53,7 +53,7 @@ class WordTreeCtrl(wx.TreeCtrl):
             self.SetItemBackgroundColour(registry.currentWord.tree_node, ALPHA)
         registry.currentWord = self.GetItemPyData(e.GetItem())
         self.SetItemBackgroundColour(registry.currentWord.tree_node, LIGHT_BLUE)
-        debug.header("New word selected: %s" % registry.currentWord.name)
+        debug.header("New word selected: {}".format(registry.currentWord.name))
         registry.rightMainPanel.paint()
     
 

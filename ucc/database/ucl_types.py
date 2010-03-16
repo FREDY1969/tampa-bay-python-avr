@@ -232,7 +232,7 @@ class int(base_type):
     Columns = ('min_value', 'max_value')
 
     def __repr__(self):
-        return "<int:%d %d-%d>" % (self.id, self.min_value, self.max_value)
+        return "<int:{} {}-{}>".format(self.id, self.min_value, self.max_value)
 
 class fixedpt(base_type):
     r'''The class for 'fixept' types.
@@ -282,8 +282,9 @@ class fixedpt(base_type):
     Columns = ('min_value', 'max_value', 'binary_pt')
 
     def __repr__(self):
-        return "<fixedpt:%d %d-%d.%d>" % \
-                 (self.id, self.min_value, self.max_value, self.binary_pt)
+        return "<fixedpt:{} {}-{}.{}>" \
+                 .format(self.id, self.min_value, self.max_value,
+                         self.binary_pt)
 
 class array(base_type):
     r'''The class for 'array' types.
@@ -340,9 +341,9 @@ class array(base_type):
         assert min >= 0
 
     def __repr__(self):
-        return "<array:%d %d-%d of %s>" % \
-                 (self.id, self.min_value, self.max_value,
-                  repr(self.element_type))
+        return "<array:{} {}-{} of {}>" \
+                 .format(self.id, self.min_value, self.max_value,
+                         repr(self.element_type))
 
 class pointer(base_type):
     r'''The class for 'pointer' types.
@@ -395,8 +396,8 @@ class pointer(base_type):
     Columns = ('element_type', 'memory')
 
     def __repr__(self):
-        return "<pointer:%d %s to %s>" % \
-                 (self.id, self.memory, repr(self.element_type))
+        return "<pointer:{} {} to {}>" \
+                 .format(self.id, self.memory, repr(self.element_type))
 
 class record(base_type):
     r'''The class for 'record' types.
@@ -475,7 +476,7 @@ class record(base_type):
         return key
 
     def __repr__(self):
-        return "<record:%d>" % (self.id,)
+        return "<record:{}>".format(self.id)
 
 class function(base_type):
     r'''The class for 'function' types.
@@ -592,5 +593,5 @@ class function(base_type):
         return req_args + opt_args
 
     def __repr__(self):
-        return "<function:%d returning %s>" % (self.id, self.element_type)
+        return "<function:{} returning {}>".format(self.id, self.element_type)
 

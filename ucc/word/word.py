@@ -117,7 +117,7 @@ class word(object):
         self.source_text = None
     
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.name)
+        return "<{} {}>".format(self.__class__.__name__, self.name)
 
     def is_root(self):
         r'''Is this word a root word?
@@ -201,8 +201,8 @@ class word(object):
                 except KeyError:
                     pass
             if default is unique:
-                raise KeyError("%s: no answer for %s" %
-                                 (self.label, question_name))
+                raise KeyError("{}: no answer for {}"
+                                 .format(self.label, question_name))
             return default
         return self.answers[question_name]
     

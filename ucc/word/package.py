@@ -29,11 +29,11 @@ class package(object):
         self.package_dir = os.path.abspath(package_dir)
         root_dir = setpath.setpath(self.package_dir, False)[0]
         assert self.package_dir.startswith(root_dir), \
-               "%s: setpath did not return a root of package_dir,\n" \
-               "  got %s\n" \
-               "  for %s" % (os.path.basename(__file__), 
-                             root_dir, 
-                             self.package_dir)
+               "{}: setpath did not return a root of package_dir,\n" \
+               "  got {}\n" \
+               "  for {}".format(os.path.basename(__file__), 
+                                 root_dir, 
+                                 self.package_dir)
         self.package_name = self.package_dir[len(root_dir) + 1:] \
                                 .replace(os.sep, '.') \
                                 .replace('/', '.')

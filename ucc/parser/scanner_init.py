@@ -5,9 +5,9 @@ import os.path
 import re
 from ucc.parser.ply import lex
 
-#sys.stderr.write("scanner_init: lex.__file__ is %r\n" % (lex.__file__,))
-#sys.stderr.write("scanner_init: sys.path[0] is %r\n" % (sys.path[0],))
-#sys.stderr.write("scanner_init: sys.path[1] is %r\n" % (sys.path[1],))
+#sys.stderr.write("scanner_init: lex.__file__ is {!r}\n".format(lex.__file__))
+#sys.stderr.write("scanner_init: sys.path[0] is {!r}\n".format(sys.path[0]))
+#sys.stderr.write("scanner_init: sys.path[1] is {!r}\n".format(sys.path[1]))
 
 Lexer = None
 Scanner_module = None
@@ -59,10 +59,10 @@ def syntaxerror_params(t = None, lineno = None, lexpos = None):
 def syntaxerror(msg, t = None, lineno = None, lexpos = None):
     r'''Prints out syntax error info to stderr, then raises SyntaxError.'''
     filename, lineno, column, line = syntaxerror_params(t, lineno, lexpos)
-    sys.stderr.write("SyntaxError in file %r at line %d:\n" % 
-                       (filename, lineno))
-    sys.stderr.write("    %s\n" % line)
-    sys.stderr.write("    %s^\n" % (' ' * (column - 1)))
+    sys.stderr.write("SyntaxError in file {!r} at line {}:\n"
+                       .format(filename, lineno))
+    sys.stderr.write("    {}\n".format(line))
+    sys.stderr.write("    {}^\n".format(' ' * (column - 1)))
     sys.stderr.write(msg + '\n')
     raise SyntaxError
 
@@ -78,17 +78,17 @@ def init(scanner_module, debug_param, check_tables = False, extra_arg = None):
         else:
             tables_name = scanner_module.__name__ + "_tables"
             #module_name = scanner_module.__name__.split('.')[-1]
-            #tables_name = "%s_tables" % module_name
+            #tables_name = "{}_tables".format(module_name)
             if check_tables:
                 scanner_mtime = os.path.getmtime(scanner_module.__file__)
                 tables_path = \
                     os.path.join(os.path.dirname(scanner_module.__file__),
                                  tables_name.split('.')[-1] + '.py')
-                #sys.stderr.write("tables_path: %r\n" % tables_path)
+                #sys.stderr.write("tables_path: {!r}\n".format(tables_path))
                 try:
                     ok = os.path.getmtime(tables_path) >= scanner_mtime
-                    #sys.stderr.write("********tables_path exists: ok is %r\n"
-                    #                   % ok)
+                    #sys.stderr.write("********tables_path exists: ok is {!r}\n"
+                    #                   .format(ok))
                 except OSError:
                     #sys.stderr.write("********tables_path does not exist\n")
                     ok = False

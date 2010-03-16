@@ -21,8 +21,9 @@ class SeriesCtrl(BaseCtrl):
             labelText = wx.StaticText(self, -1, sub_question.label)
             self.gridsizer.Add(labelText, flag=wx.TOP, border=6)
             if not hasattr(sub_question, 'control'):
-                msg = "<%s %s> has no 'control'" % \
-                        (sub_question.__class__.__name__, sub_question.name)
+                msg = "<{} {}> has no 'control'" \
+                        .format(sub_question.__class__.__name__,
+                                sub_question.name)
                 print(msg)
                 self.gridsizer.Add(wx.StaticText(self, -1, msg))
             else:
@@ -43,8 +44,8 @@ class SeriesCtrl(BaseCtrl):
 
     def error_setter(self, new_ans):
         raise AssertionError(
-                "%s.SeriesCtrl: set_answer used by subordinate" %
-                  self.question.name)
+                "{}.SeriesCtrl: set_answer used by subordinate"
+                  .format(self.question.name))
 
     def setInitialValue(self):
         for child in self.children:

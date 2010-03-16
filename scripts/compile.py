@@ -12,8 +12,8 @@ from ucc.compiler import compile
 from ucc.word import top_package
 
 def usage():
-    sys.stderr.write("usage: %s [-d] package_dir\n" %
-                       os.path.basename(sys.argv[0]))
+    sys.stderr.write("usage: {} [-d] package_dir\n"
+                       .format(os.path.basename(sys.argv[0])))
     sys.exit(2)
 
 def do_compile(args, quiet = False):

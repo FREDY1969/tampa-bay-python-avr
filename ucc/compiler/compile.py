@@ -24,45 +24,46 @@ def run(top, prime_start_time = True, quiet = False):
         compile_start_time = Start_time
     else:
         compile_start_time = Start_time
-        if not quiet: print("top: %.2f" % elapsed())
+        if not quiet: print("top: {:.2f}".format(elapsed()))
 
     with crud.db_connection(top.packages[-1].package_dir):
-        if not quiet: print("crud.db_connection: %.2f" % elapsed())
+        if not quiet: print("crud.db_connection: {:.2f}".format(elapsed()))
 
         symbol_table.init()
         ucl_types.init()
         block.init()
-        if not quiet: print("*.init: %.2f" % elapsed())
+        if not quiet: print("*.init: {:.2f}".format(elapsed()))
 
         # Load word_objs, create symbols, and build the parsers for each
         # package:
         #
         # {package_name: parser module}
         package_parsers = parse.create_parsers(top)
-        if not quiet: print("create parsers: %.2f" % elapsed())
+        if not quiet: print("create parsers: {:.2f}".format(elapsed()))
 
         # word files => ast
         words_done = parse.parse_needed_words(top, package_parsers, quiet)
-        if not quiet: print("parse_needed_words: %.2f" % elapsed())
+        if not quiet: print("parse_needed_words: {:.2f}".format(elapsed()))
 
         # ast => intermediate code
         for word_label in words_done:
             with crud.db_transaction():
                 symbol_table.get(word_label).word_obj.compile()
-        if not quiet: print("generate intermediate code: %.2f" % elapsed())
+        if not quiet:
+            print("generate intermediate code: {:.2f}".format(elapsed()))
 
         # intermediate code => optimized intermediate code
         optimize.optimize()
-        if not quiet: print("optimize: %.2f" % elapsed())
+        if not quiet: print("optimize: {:.2f}".format(elapsed()))
 
         # intermediate code => assembler
         codegen.gen_assembler()
-        if not quiet: print("gen_assembler: %.2f" % elapsed())
+        if not quiet: print("gen_assembler: {:.2f}".format(elapsed()))
 
         # assembler => .hex files
         assemble.assemble_program(top.packages[-1].package_dir)
-        if not quiet: print("assemble_program: %.2f" % elapsed())
-    if not quiet: print("TOTAL: %.2f" % (Start_time - compile_start_time))
+        if not quiet: print("assemble_program: {:.2f}".format(elapsed()))
+    if not quiet: print("TOTAL: {:.2f}".format(Start_time - compile_start_time))
 
 Start_time = 0.0
 

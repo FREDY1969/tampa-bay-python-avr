@@ -21,7 +21,7 @@ def notice(string):
     print(colorize('  '+string, BLUE))
 
 def header(string=None, color=None):
-    if string: string = ' %s ' % string
+    if string: string = ' {} '.format(string)
     string = '\n'+string.upper().center(78, '=')
     if color:
         print(colorize(string, color))

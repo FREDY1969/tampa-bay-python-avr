@@ -16,8 +16,8 @@ class set_output_bit(singleton.singleton):
         assert len(ast_node.args) == 2
         assert len(ast_node.args[1]) == 1, \
                "incorrect number of arguments to 'set_output_bit', " \
-               "expected 1, got %d" % \
-                 len(ast_node.args[1])
+               "expected 1, got {}" \
+                 .format(len(ast_node.args[1]))
 
         ioreg_bit = ast_node.args[1][0]
 
