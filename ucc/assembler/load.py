@@ -58,7 +58,7 @@ def run(
     
     path = os.path.join(load_path, memory_type + '.hex')
     if not os.path.exists(path):
-        raise IOError('%s: file not found.' % path)
+        raise IOError('{}: file not found.'.format(path))
     
     # call it
     

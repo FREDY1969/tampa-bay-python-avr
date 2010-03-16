@@ -8,7 +8,7 @@ from ucc.gui import registry, debug
 class BaseCtrl(wx.Panel):
     def __init__(self, parent, question, ans_getter, ans_setter):
         super(BaseCtrl, self).__init__(parent)
-        debug.trace("%s.__init__" % self.__class__.__name__)
+        debug.trace("{}.__init__".format(self.__class__.__name__))
         
         self.parent = parent
         self.question = question
@@ -28,7 +28,7 @@ class BaseCtrl(wx.Panel):
     def change(self, value):
         registry.currentWord.set_save_state(False)
         self.ans_getter().value = str(value)
-        debug.notice("%s changed: %s" % (self.__class__.__name__, value))
+        debug.notice("{} changed: {}".format(self.__class__.__name__, value))
     
     @classmethod
     def makeControl(cls, parent, question, ans_getter, ans_setter):

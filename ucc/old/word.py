@@ -149,9 +149,9 @@ class non_deferrable_word(object):
              At run time, returns a value in this domain.
         '''
         if prev_domain:
-            raise SyntaxError("word %r acts like unary operator, "
-                              "but no compile_value declared on it for that" %
-                                self.name,
+            raise SyntaxError("word {!r} acts like unary operator, "
+                              "but no compile_value declared on it for that"
+                                .format(self.name),
                               compiler.syntaxerror_params())
         compiler.compile_params(self)
         compiler.push(self.word_index)
@@ -161,7 +161,7 @@ class non_deferrable_word(object):
              At run time, returns a pointer to a value in this domain.
              This pointer always points into the Data (SRAM) area.
         '''
-        raise SyntaxError("illegal lvalue: %r" % self.name,
+        raise SyntaxError("illegal lvalue: {!r}".format(self.name),
                           compiler.syntaxerror_params())
     def compile_cond(self, compiler, fall_through_true = True):
         r''' Returns a tuple of two sequences.
@@ -179,7 +179,7 @@ class non_deferrable_word(object):
             return (compiler.addr(),), ()
     def compile_decl(self, compiler):
         r''' Doesn't return anything. '''
-        raise SyntaxError("illegal declaration: %s" % self.name,
+        raise SyntaxError("illegal declaration: {}".format(self.name),
                           compiler.syntaxerror_params())
     def run(self):
         if (self.max_args_len > self.min_args_len):

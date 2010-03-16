@@ -35,7 +35,7 @@ class fraction(object):
         if len(s2) > 1: self.numerator += int(s2[0], base) * self.denominator
         self.numerator *= sign
     def __repr__(self):
-        return "fraction(%d, %d)" % (self.numerator, self.denominator)
+        return "fraction({}, {})".format(self.numerator, self.denominator)
     def at_precision(self, n):
         return int(round(self * 2**n))
 
@@ -63,7 +63,7 @@ class approx(object):
         self.int, self.exp = parse_approx(s, base)
         self.int *= sign
     def __repr__(self):
-        return "approx(%d, %d)" % (self.int, self.exp)
+        return "approx({}, {})".format(self.int, self.exp)
     def at_precision(self, n):
         if n == self.exp: return self.int
         if n < self.exp:

@@ -20,10 +20,10 @@ def dump(graph, root):
     '''
     def dump_branch(n, indent = 0):
         if n in seen:
-            print("%s%s*" % (' ' * indent, n))
+            print("{}{}*".format(' ' * indent, n))
         else:
             seen.add(n)
-            print("%s%s" % (' ' * indent, n))
+            print("{}{}".format(' ' * indent, n))
             for x in graph.get(n, ()): dump_branch(x, indent + 2)
     seen = set()
     dump_branch(root)

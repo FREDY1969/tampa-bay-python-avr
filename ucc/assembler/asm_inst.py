@@ -78,22 +78,23 @@ def convert_reg(arg, num_bits, note, labels, address):
         ...
     AssertionError: r25: illegal register
     '''
-    assert arg[0].lower() == 'r', "%s: illegal register" % arg
+    assert arg[0].lower() == 'r', "{}: illegal register".format(arg)
     max = 2**num_bits
     n = int(arg[1:])
     if note is None or note == 'd':
-        assert n < max, "%s: illegal register" % arg
+        assert n < max, "{}: illegal register".format(arg)
         return n
     low, high = note
-    assert low <= n <= high, "%s: illegal register" % arg
+    assert low <= n <= high, "{}: illegal register".format(arg)
     if (high - low + 1) == max:
         return n - low
     if (high - low + 2) == 2*max:
-        assert low <= n <= high, "%s: illegal register" % arg
-        assert n % 2 == 0, "%s: illegal register" % arg
+        assert low <= n <= high, "{}: illegal register".format(arg)
+        assert n % 2 == 0, "{}: illegal register".format(arg)
         return (n - low) // 2
-    raise AssertionError("internal error: convert_reg: bad args: %r, %r, %r" %
-                         (arg, num_bits, note))
+    raise AssertionError("internal error: convert_reg: "
+                         "bad args: {!r}, {!r}, {!r}"
+                           .format(arg, num_bits, note))
 
 Convert = {
     #: Maps operand type code to parsing function.
@@ -207,7 +208,7 @@ Order = {
 }
 
 def invalid_operand(arg, expected):
-    raise SyntaxError("expected %s, got %s" % (expected, arg))
+    raise SyntaxError("expected {}, got {}".format(expected, arg))
 
 def format(s, operands, notes, args, labels, next_address):
     r'''
@@ -305,18 +306,18 @@ class inst1(object):
     def make_args(self, op1, op2):
         if len(self.operand_codes) == 0:
             assert op1 is None and op2 is None, \
-                   "%s instruction does not take operands" % self.name
+                   "{} instruction does not take operands".format(self.name)
             return {}
         if len(self.operand_codes) == 1:
             assert op1 is not None, \
-                   "%s instruction requires one operand" % self.name
+                   "{} instruction requires one operand".format(self.name)
             assert op2 is None, \
-                   "%s instruction only takes one operand" % self.name
+                   "{} instruction only takes one operand".format(self.name)
             return dict(zip(self.operand_codes[0],
                                        itertools.repeat(op1)))
         assert len(self.operand_codes) == 2, \
-               "internal error: %s illegal instruction format specification" % \
-               self.name
+               "internal error: {} illegal instruction format specification" \
+                 .format(self.name)
         return dict(itertools.chain(
                       zip(self.operand_codes[0],
                                      itertools.repeat(op1)),

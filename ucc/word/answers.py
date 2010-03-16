@@ -124,9 +124,9 @@ class answer(object):
         self.valid = True
         self.answered = answered
         assert not self.answered or isinstance(self.value, str), \
-               "%s: %s value for %s" % (self.__class__.__name__,
-                                        type(self.value),
-                                        self.name)
+               "{}: {} value for {}".format(self.__class__.__name__,
+                                            type(self.value),
+                                            self.name)
 
     @classmethod
     def from_element(cls, name, answer):
@@ -148,9 +148,9 @@ class answer(object):
 
     def __repr__(self):
         if self.is_answered():
-            return "<%s %s=%r>" % (self.__class__.__name__, self.name,
-                                   self.value)
-        return "<%s %s unanswered>" % (self.__class__.__name__, self.name)
+            return "<{} {}={!r}>".format(self.__class__.__name__, self.name,
+                                         self.value)
+        return "<{} {} unanswered>".format(self.__class__.__name__, self.name)
 
     def is_answered(self):
         return self.answered
@@ -179,7 +179,7 @@ class answer(object):
 
     def get_value(self):
         if not self.is_answered():
-            raise AttributeError("answer %s: unanswered" % (self.name,))
+            raise AttributeError("answer {}: unanswered".format(self.name))
         return self.convert(self.value)
 
 
@@ -189,8 +189,8 @@ class ans_bool(answer):
     def convert(self, str):
         if str.lower() == 'true': return True
         if str.lower() == 'false': return False
-        raise ValueError("ans_bool %s has invalid value: %s" % (self.name, 
-                                                                str))
+        raise ValueError("ans_bool {} has invalid value: {}".format(self.name, 
+                                                                    str))
 
 class ans_number(answer):
     def convert(self, str):
@@ -235,7 +235,7 @@ class ans_series(answer):
         return cls(name, from_xml(answers))
 
     def __repr__(self):
-        return "<%s for %s>" % (self.__class__.__name__, self.name)
+        return "<{} for {}>".format(self.__class__.__name__, self.name)
 
     def add_subelement(self, answers_element, repeated = False):
         if self.is_answered():
@@ -273,14 +273,14 @@ class ans_choice(answer):
     def from_element(cls, name, answer):
         d = parse_options(answer)
         assert len(d) == 1, \
-               "%s: expected 1 option to choice, got %d" % (name, len(d))
+               "{}: expected 1 option to choice, got {}".format(name, len(d))
         return cls(name, *list(d.items())[0])
 
     def __repr__(self):
         if self.is_answered():
-            return "<%s %s=%s->%r>" % (self.__class__.__name__, self.name,
-                                       self.tag, self.subanswers)
-        return "<%s %s unanswered>" % (self.__class__.__name__, self.name)
+            return "<{} {}={}->{!r}>".format(self.__class__.__name__, self.name,
+                                             self.tag, self.subanswers)
+        return "<{} {} unanswered>".format(self.__class__.__name__, self.name)
 
     def add_subelement(self, answers_element, repeated = False):
         if self.is_answered():
@@ -355,7 +355,7 @@ class ans_multichoice(ans_choice):
         return cls(name, parse_options(answer))
     
     def __repr__(self):
-        return "<%s for %s>" % (self.__class__.__name__, self.name)
+        return "<{} for {}>".format(self.__class__.__name__, self.name)
 
     def add_options(self, options_element):
         for tag in sorted(self.answers.keys()):

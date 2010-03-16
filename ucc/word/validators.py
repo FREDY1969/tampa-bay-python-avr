@@ -47,7 +47,7 @@ class regex(validator):
         return cls(element.get('value'), flags and int(flags))
     
     def __repr__(self):
-        return "<%s %r>" % (self.__class__.__name__, self.expr)
+        return "<{} {!r}>".format(self.__class__.__name__, self.expr)
     
     def validate(self, string):
         match = self.re.match(string)
@@ -67,7 +67,7 @@ class range(validator):
         return cls(element.get('minvalue'), element.get('maxvalue'))
     
     def __repr__(self):
-        return "<%s %s-%s>" % (self.__class__.__name__, self.min, self.max)
+        return "<{} {}-{}>".format(self.__class__.__name__, self.min, self.max)
     
     def validate(self, string):
         n = to_number(string)

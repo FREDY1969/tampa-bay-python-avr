@@ -37,7 +37,7 @@ class RightMainPanel(wx.Panel):
         splitter.SetMinimumPaneSize(200)
         splitter.SetSashGravity(0.0)
         splitter.SplitHorizontally(self.topPanel, self.bottomText, topHeight)
-        debug.trace("Height configuration value: %s" % topHeight)
+        debug.trace("Height configuration value: {}".format(topHeight))
         
         sizer.Add(splitter, 1, wx.EXPAND)
         
@@ -45,8 +45,8 @@ class RightMainPanel(wx.Panel):
         sizer.Fit(self)
         self.Fit()
         
-        debug.trace("RightMainPanel height: %s" % \
-                    self.GetClientSize().GetHeight())
+        debug.trace("RightMainPanel height: {}" \
+                      .format(self.GetClientSize().GetHeight()))
     
     def paint(self):
         self.topSizer.Clear(True)
@@ -61,16 +61,16 @@ class RightMainPanel(wx.Panel):
         if registry.currentWord:
             for question in registry.currentWord.kind_obj.questions or ():
                 self.topSizer.Add(wx.StaticText(self.topPanel, -1, \
-                                                "%s: " % question.label))
+                                                "{}: ".format(question.label))
                 if not hasattr(question, 'control'):
-                    msg = "<%s %s> has no control" % \
-                            (question.__class__.__name__, question.name)
+                    msg = "<{} {}> has no control" \
+                            .format(question.__class__.__name__, question.name)
                     debug.warn(msg)
                     self.topSizer.Add(wx.StaticText(self.topPanel, -1, msg))
                 else:
                     cls = getattr(controls, question.control)
-                    debug.trace('%s is being renderd as %s' % \
-                                (question.name, cls.__name__))
+                    debug.trace('{} is being renderd as {}'
+                                  .format(question.name, cls.__name__))
                     self.topSizer.Add(
                       cls.makeControl(
                         self.topPanel,

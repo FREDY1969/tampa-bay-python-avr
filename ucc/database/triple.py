@@ -39,8 +39,8 @@ class triple(object):
         self.hard_predecessors = []     # [triple]
 
     def __repr__(self):
-        return "<triple %s:%s(%s,%s)>" % \
-                 (self.id, self.operator, self.int1, self.int2)
+        return "<triple {}:{}({},{})>" \
+                 .format(self.id, self.operator, self.int1, self.int2)
 
     def add_label(self, symbol_id, is_gen):
         r'''Adds a label to this triple.

@@ -28,11 +28,11 @@ class top(object):
         for w in package.get_words():
             w.top = top
             if w.label in self.word_dict or w.label in self.translation_dict:
-                raise NameError("%s: duplicate label in package %s" %
-                                (w.label, package.package_name))
+                raise NameError("{}: duplicate label in package {}"
+                                  .format(w.label, package.package_name))
             if w.name in self.word_dict:
-                raise NameError("%s: duplicate name in package %s" %
-                                (w.name, package.package_name))
+                raise NameError("{}: duplicate name in package {}"
+                                  .format(w.name, package.package_name))
             self.word_dict[w.name] = w
             if w.label != w.name:
                 self.translation_dict[w.label] = w.name
@@ -53,8 +53,8 @@ class top(object):
         for w in self.word_dict.values():
             w.kind_obj = self.get_word_by_name(w.kind)
             assert w.kind_obj.defining, \
-                   "%s: derived from non-defining word %s" % \
-                     (w.label, w.kind_obj.label)
+                   "{}: derived from non-defining word {}" \
+                     .format(w.label, w.kind_obj.label)
             if w.is_root():
                 self.roots.append(w)
             else:

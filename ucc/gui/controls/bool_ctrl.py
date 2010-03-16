@@ -12,10 +12,10 @@ class BoolCtrl(BaseCtrl):
         self.Bind(wx.EVT_CHECKBOX, self.onChange, self.checkBox)
     
     def setInitialValue(self):
-        debug.trace("%s.setInitialValue %s=%s" % 
-                    (self.__class__.__name__,
-                     self.question.name,
-                     self.ans_getter().get_value()))
+        debug.trace("{}.setInitialValue {}={}"
+                      .format(self.__class__.__name__,
+                              self.question.name,
+                              self.ans_getter().get_value()))
         self.checkBox.SetValue(self.ans_getter().get_value())
     
     def onChange(self, event):

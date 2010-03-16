@@ -29,7 +29,7 @@ def load_word(ww):
         # load new_word
         if ww.is_root():
             assert ww.defining, \
-                   "%s: root word that is not a defining word" % ww.label
+                   "{}: root word that is not a defining word".format(ww.label)
             new_word = declaration.load_class(ww)
             new_syntax = None
         elif ww.defining:
@@ -127,7 +127,7 @@ def parse_needed_words(top, package_parsers, quiet):
             num_errors += 1
 
     if num_errors:
-        sys.stderr.write("%s files had syntax errors\n" % num_errors)
+        sys.stderr.write("{} files had syntax errors\n".format(num_errors))
         sys.exit(1)
 
     with crud.db_transaction():

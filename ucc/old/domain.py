@@ -13,7 +13,7 @@ class number(type):
 
 class any_precision(number):
     def __repr__(self):
-        return "<precise %r-%r>" % (self.min, self.max)
+        return "<precise {!r}-{!r}>".format(self.min, self.max)
 
 class fixed_precision(number):
     def __init__(self, max, min, binary_pt, precision):
@@ -21,8 +21,8 @@ class fixed_precision(number):
         self.binary_pt = binary_pt
         self.precision = precision
     def __repr__(self):
-        return "<approx %r-%r .%r ~%r>" % \
-                 (self.min, self.max, self.binary_pt, self.precision)
+        return "<approx {!r}-{!r} .{!r} ~{!r}>" \
+                 .format(self.min, self.max, self.binary_pt, self.precision)
 
 class array(type):
     r''' Max, min refer to the length of the array. '''
@@ -30,9 +30,9 @@ class array(type):
         super(array, self).__init__(max, min)
         self.element_type = element_type
     def __repr__(self):
-        return "<%s %r-%r of %r>" % \
-                 (self.__class__.__name__, self.min, self.max,
-                  self.element_type)
+        return "<{} {!r}-{!r} of {!r}>" \
+                 .format(self.__class__.__name__, self.min, self.max,
+                         self.element_type)
 
 class Parray(array):
     pass
@@ -42,7 +42,8 @@ class string(array):
     def __init__(self, max, min):
         super(string, self).__init__(max, min, byte)
     def __repr__(self):
-        return "<%s %r-%r>" % (self.__class__.__name__, self.min, self.max)
+        return "<{} {!r}-{!r}>".format(self.__class__.__name__, self.min,
+                                       self.max)
 
 class Pstring(string, Parray):
     pass
@@ -56,7 +57,7 @@ class constant(domain):
         elif isinstance(type, (string, array)):
             type.max = type.min = len(value)
     def __repr__(self):
-        return "<constant %r: %r>" % (self.value, self.type)
+        return "<constant {!r}: {!r}>".format(self.value, self.type)
 
 int1 = any_precision(2**7 - 1, -(2**7))
 uint1 = byte = any_precision(2**8 - 1)

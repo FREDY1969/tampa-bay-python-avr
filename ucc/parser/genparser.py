@@ -43,8 +43,8 @@ def genparser(filename, rules, token_dict, output_file = sys.stdout):
         """,
         output_file = output_file)
 
-    for item in sorted(token_dict.items()):
-        print("    %r: %r," % item, file=output_file)
+    for key, value in sorted(token_dict.items()):
+        print("    {!r}: {!r},".format(key, value), file=output_file)
     print("}\n", file=output_file)
 
     tokens = sorted(parser_init.parse(metaparser, metascanner, filename,
@@ -63,7 +63,7 @@ def genparser(filename, rules, token_dict, output_file = sys.stdout):
         """,
         output_file = output_file)
 
-    s = "tokens = %r" % tokens
+    s = "tokens = {!r}".format(tokens)
     i = s.rfind(',', 0, 79)
     while len(s) > 79 and i >= 0:
         print(s[:i + 1], file=output_file)

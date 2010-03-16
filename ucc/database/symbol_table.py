@@ -80,9 +80,9 @@ class symbol(object):
             setattr(self, name, value)
         self.updated_attrs = set()
         assert (self.label, self.context) not in Symbols, \
-               "symbol %s%s created twice" % \
-                 (self.context.label + '.' if self.context else '',
-                  self.label)
+               "symbol {}{} created twice" \
+                 .format(self.context.label + '.' if self.context else '',
+                         self.label)
         Symbols[label, context] = self
         Symbols_by_id[self.id] = self
         self.doing_init = False
@@ -115,7 +115,7 @@ class symbol(object):
         return cls(id, label, context, kind=kind, **attributes)
 
     def __repr__(self):
-        return "<symbol %s:%s>" % (self.id, self.label)
+        return "<symbol {}:{}>".format(self.id, self.label)
 
     def __setattr__(self, attr, value):
         r'''Gathers attributes that have changed for `write`.

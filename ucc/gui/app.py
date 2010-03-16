@@ -152,7 +152,7 @@ class App(wx.App):
     def saveWord(self):
         if registry.currentWord and registry.currentWord.top:
             registry.currentWord.save()
-            debug.success("Word %s saved" % registry.currentWord.name)
+            debug.success("Word {} saved".format(registry.currentWord.name))
     
     def onAbout(self, event):
         dialog = wx.MessageDialog(

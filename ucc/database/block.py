@@ -64,7 +64,8 @@ class block(object):
         global Current_block
 
         assert not Current_block, \
-               "%s: previous block(%s) not written" % (name, Current_block.name)
+               "{}: previous block({}) not written" \
+                 .format(name, Current_block.name)
 
         self.name = name
         self.word_symbol_id = word_symbol_id
@@ -141,12 +142,12 @@ class block(object):
         Current_block = self
 
     def __repr__(self):
-        return "<block %s>" % self.name
+        return "<block {}>".format(self.name)
 
     def more(self):
         global Current_block
         assert self.state != 'end_absolute', \
-               "%s: block missing label after jump" % self.name
+               "{}: block missing label after jump".format(self.name)
         if self.state == 'end_fall_through':
             name = crud.gensym('block')
             self.write(name)
@@ -199,7 +200,7 @@ class block(object):
         This method is only called on Current_block.
         '''
         assert self.state == 'not_ended', \
-               "%s: double block end" % self.name
+               "{}: double block end".format(self.name)
         self.state = 'end_absolute'
         self.last_triple = last_triple
         self.write()

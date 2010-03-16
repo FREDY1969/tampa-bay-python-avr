@@ -31,7 +31,7 @@ class OptionalCtrl(BaseCtrl):
         sizer.Add(cp, 1, wx.ALL|wx.EXPAND, 0)
     
     def setInitialValue(self):
-        debug.trace("%s.setInitialValue" % self.__class__.__name__)
+        debug.trace("{}.setInitialValue".format(self.__class__.__name__))
         
         if self.ans_getter() is None:
             debug.trace("Answer is None")
@@ -46,7 +46,7 @@ class OptionalCtrl(BaseCtrl):
             self.subctrl.setInitialValue()
     
     def onChange(self, event):
-        debug.trace("Optional pane changed: %s" % self.cp.IsExpanded())
+        debug.trace("Optional pane changed: {}".format(self.cp.IsExpanded()))
         
         if self.cp.IsExpanded():
             if self.ans_getter() is None:

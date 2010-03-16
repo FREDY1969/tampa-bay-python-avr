@@ -32,8 +32,8 @@ class output_pin(declaration.word):
         '''
         assert len(ast_node.args) == 2
         assert len(ast_node.args[1]) == 1, \
-               "%s: incorrect number of arguments, expected 1, got %s" % \
-                 (self.label, len(ast_node.args[1]))
+               "{}: incorrect number of arguments, expected 1, got {}" \
+                 .format(self.label, len(ast_node.args[1]))
         fn_symbol.side_effects = 1
         pin_number = self.ww.get_value('pin_number')
         on_is = self.ww.get_answer('on_is').tag

@@ -13,8 +13,8 @@ class set(singleton.singleton):
     def compile_statement(self, ast_node):
         assert len(ast_node.args) == 2
         assert len(ast_node.args[1]) == 2, \
-               "incorrect number of arguments to 'set', expected 2, got %d" % \
-                 len(ast_node.args[1])
+               "incorrect number of arguments to 'set', expected 2, got {}" \
+                 .format(len(ast_node.args[1]))
 
         lvalue, rvalue = ast_node.args[1]
 

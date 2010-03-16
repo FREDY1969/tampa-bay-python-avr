@@ -70,7 +70,7 @@ class ast(object):
         self.args = args
         for name, value in kws.items():
             if name not in self.attr_cols:
-                raise KeyError("ast: illegal attribute: %s" % name)
+                raise KeyError("ast: illegal attribute: {}".format(name))
             setattr(self, name, value)
 
     @classmethod
@@ -153,13 +153,13 @@ class ast(object):
 
     def __repr__(self):
         if self.kind == 'word':
-            return "<ast word:%s>" % self.symbol_id
-        return "<ast %s%s%s>" % \
-                 (self.kind,
-                  ''.join(" %s:%r" % (attr, getattr(self, attr))
-                          for attr in ('int1', 'int2', 'str1', 'str2')
-                          if getattr(self, attr) is not None),
-                  ' ' + repr(self.args) if self.args else '')
+            return "<ast word:{}>".format(self.symbol_id)
+        return "<ast {}{}{}>" \
+                 .format(self.kind,
+                         ''.join(" {}:{!r}".format(attr, getattr(self, attr))
+                                 for attr in ('int1', 'int2', 'str1', 'str2')
+                                 if getattr(self, attr) is not None),
+                         ' ' + repr(self.args) if self.args else '')
 
     def prepare(self, fn_symbol, words_needed):
         r'''Called immediately after parsing, before writing to the database.
@@ -250,7 +250,8 @@ class ast(object):
             if sym.kind in ('parameter', 'var'):
                 return block.Current_block.gen_triple('local', sym,
                          syntax_position_info=self.get_syntax_position_info())
-            raise ValueError("%s.compile: unknown symbol.kind %r" % sym.kind)
+            raise ValueError("{}.compile: unknown symbol.kind {!r}"
+                               .format(sym.kind))
 
         if self.kind in ('no-op', 'None'):
             return None
@@ -284,12 +285,12 @@ class ast(object):
                          string=self.label, int1=self.int1,
                          syntax_position_info=self.get_syntax_position_info())
             else:
-                raise AssertionError("ast node[%s]: expect %s not supported "
-                                     "for %s" %
-                                       (self.id, self.expect, self.kind))
+                raise AssertionError("ast node[{}]: expect {} not supported "
+                                     "for {}"
+                                       .format(self.id, self.expect, self.kind))
 
-        raise AssertionError("ast node[%s]: unknown ast kind -- %s" %
-                               (self.id, self.kind))
+        raise AssertionError("ast node[{}]: unknown ast kind -- {}"
+                               .format(self.id, self.kind))
 
     def compile_args(self):
         r'''Returns a tuple of triples by compiling each arg.
