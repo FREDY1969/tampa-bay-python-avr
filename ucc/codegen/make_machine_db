@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# make_machine_db machine.sql
+# make_machine_db architecture
 
 usage() {
-    echo make_machine_db machine.sql >&2
+    echo make_machine_db architecture >&2
     exit 2
 }
 
@@ -11,13 +11,13 @@ usage() {
 
 set -e
 
-db_name=`basename "$1" .sql`.db
+db_name=`basename "$1"`.db
 
 rm -f "$db_name"
 
 echo Creating "$db_name"
 
-for f in machine.ddl "$1" init.sql
+for f in machine.ddl "$1/registers.sql" init.sql
 do
     #echo reading "$f"
     sqlite3 -batch -init "$f" "$db_name" < /dev/null
