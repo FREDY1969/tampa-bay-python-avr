@@ -8,6 +8,20 @@ from ucc.database import crud, triple2
 Debug = 0
 
 def gen_assembler():
+    # Update use_counts of all triples:
+    crud.Db_cur.execute('''
+        update triples
+           set use_count = (select count(*) from triples p1
+                             where p1.operator not in ({qmarks1})
+                               and p1.int1 = triples.id)
+                         + (select count(*) from triples p2
+                             where p2.operator not in ({qmarks2})
+                               and p2.int2 = triples.id)
+      '''.format(
+            qmarks1=', '.join(['?'] * len(triple2.int1_operator_exclusions)),
+            qmarks2=', '.join(['?'] * len(triple2.int2_operator_exclusions))),
+      triple2.int1_operator_exclusions + triple2.int2_operator_exclusions)
+
     for block_id, name, word_symbol_id, next, next_conditional \
      in crud.read_as_tuples('blocks', 'id', 'name', 'word_symbol_id', 'next',
                                       'next_conditional'):

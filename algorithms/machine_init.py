@@ -1,7 +1,6 @@
 # machine_init.py
 
 
-
 import itertools
 
 from doctest_tools import setpath

@@ -5,7 +5,7 @@
 r'''Dumps the icode database in a simple ascii format.
 
 fun_name.id: name [next id [/ id]] (predecessor ids)
-  id: operator int1 int2 string (predecessor ids)
+  id: [use_count] operator int1 int2 string (predecessor ids)
     child1
     child2
 
@@ -60,7 +60,7 @@ def dump_block(info, db_cur):
 def dump_triples(db_cur, block_id):
     # Do triples for block:
     db_cur.execute("""
-        select id, operator, int1, int2, string
+        select id, use_count, operator, int1, int2, string
           from triples
          where block_id = ?
          order by id""",
@@ -84,8 +84,9 @@ class triple(object):
     triple2 = None
     tagged = False
 
-    def __init__(self, id, operator, int1, int2, string):
+    def __init__(self, id, use_count, operator, int1, int2, string):
         self.id = id
+        self.use_count = use_count
         self.operator = operator
 
         if operator in ('int', 'ratio', 'approx', 'param'):
@@ -140,9 +141,10 @@ class triple(object):
                                  .format(get_symbol(db_cur, x[0]))
                                for x in db_cur.fetchall()])
 
-            print("{}{}: {}{}{}{}{}{}"
+            print("{}{}: [{}] {}{}{}{}{}{}"
                     .format(' ' * indent,
                             self.id,
+                            self.use_count,
                             self.operator,
                             ' ' + self.op1 if self.op1 else '',
                             ' ' + self.op2 if self.op2 else '',
