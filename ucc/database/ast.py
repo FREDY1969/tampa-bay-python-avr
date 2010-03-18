@@ -217,8 +217,8 @@ class ast(object):
         '''
         if self.kind in ('approx', 'int', 'ratio'):
             return block.Current_block.gen_triple(
-                     self.kind, self.int1, self.int2,
-                     syntax_position_info= self.get_syntax_position_info())
+                     self.kind, int1=self.int1, int2=self.int2,
+                     syntax_position_info=self.get_syntax_position_info())
 
         if self.kind == 'string':
             name = crud.gensym('strlit')
@@ -228,7 +228,7 @@ class ast(object):
             asm_block.append_inst('bytes', repr(self.str1))
             asm_block.write()
             return block.Current_block.gen_triple(
-                     'global', sym.id,
+                     'global', symbol=sym,
                      syntax_position_info=self.get_syntax_position_info())
 
         if self.kind == 'call':
@@ -248,7 +248,7 @@ class ast(object):
                 ans = compile_method(self)
                 return ans
             if sym.kind in ('parameter', 'var'):
-                return block.Current_block.gen_triple('local', sym,
+                return block.Current_block.gen_triple('local', symbol=sym,
                          syntax_position_info=self.get_syntax_position_info())
             raise ValueError("{}.compile: unknown symbol.kind {!r}"
                                .format(sym.kind))

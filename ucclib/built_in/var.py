@@ -20,5 +20,5 @@ class var(declaration.word):
             block.write()
 
     def compile_value(self, ast_node):
-        return block.Current_block.gen_triple('global', self.ww.symbol)
+        return block.Current_block.gen_triple('global', symbol=self.ww.symbol)
 

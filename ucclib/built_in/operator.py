@@ -21,13 +21,12 @@ class operator(declaration.word):
                  .format(self.label, len(ast_node.args) - 1)
 
         arg1 = ast_node.args[1].compile()
-        arg2 = None
         if len(ast_node.args) == 3:
-            arg2 = ast_node.args[2].compile()
+            args = (arg1, ast_node.args[2].compile())
+        else:
+            args = (arg1,)
 
         return block.Current_block.gen_triple(
-                 self.label,
-                 arg1,
-                 arg2,
+                 self.label, args,
                  syntax_position_info=ast_node.get_syntax_position_info())
 

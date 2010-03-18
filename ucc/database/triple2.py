@@ -12,83 +12,39 @@ import sys   # temp for debugging...
 
 from ucc.database import crud
 
-int1_operator_exclusions = (
-    #: These are the operators that don't have a triple id in int1.
-    'input',
-    'input-bit',
-    'output-bit-set',
-    'output-bit-clear',
-    'global_addr',
-    'global',
-    'local_addr',
-    'local',
-    'int',
-    'ratio',
-    'approx',
-    'param',
-    'call_direct',
-)
-
-int2_operator_exclusions = (
-    #: These are the operators that don't have a triple id in int2.
-    'input',
-    'input-bit',
-    'output',
-    'output-bit-set',
-    'output-bit-clear',
-    'global_addr',
-    'global',
-    'local_addr',
-    'local',
-    'int',
-    'ratio',
-    'approx',
-    'call_direct',
-    'call_indirect',
-    'return',
-    'if_false',
-    'if_true',
-)
-
 class triple(object):
-    parent = None
-
     def __init__(self, row, triple_id_map):
         for key, value in row.items():
             setattr(self, key, value)
         self.labels = tuple(crud.read_column('triple_labels', 'symbol_id',
                                              triple_id=self.id))
+
+        # FIX: Is this used anywhere?
         self.predecessors = tuple(crud.read_column('triple_order_constraints',
                                                    'predecessor',
                                                    successor=self.id))
+
         triple_id_map[self.id] = self
         self.parents = []
         self.updated_attributes = []
-        self.children = [self]
+        self.deep_children = set([self])
 
     def connect_children(self, triple_id_map):
-        if self.operator not in int1_operator_exclusions and \
-           self.int1 is not None:
-            self.int1 = triple_id_map[self.int1]
-            self.int1.add_parent(self)
-        if self.operator not in int2_operator_exclusions and \
-           self.int2 is not None:
-            self.int2 = triple_id_map[self.int2]
-            self.int2.add_parent(self)
-        if self.parent:
-            self.parent.children.append(self)
-            self.add_parent(self.parent)
+        self.children = \
+          [triple_id_map[id]
+           for id in crud.read_column('triple_parameters', 'parameter_id',
+                                      parent_id=self.id,
+                                      order_by='parameter_num')]
+        for child in self.children:
+            child.add_parent(self)
 
     def add_parent(self, parent):
         self.parents.append(parent)
 
     def get_children(self):
-        if isinstance(self.int1, triple):
-            self.children.extend(self.int1.get_children())
-        if isinstance(self.int2, triple):
-            self.children.extend(self.int2.get_children())
-        self.children = frozenset(self.children)
-        return self.children
+        self.deep_children.update(*(child.get_children()
+                                    for child in self.children))
+        return self.deep_children
 
     def order_children(self, predecessors):
         r'''Figures out the order to evaluate the child nodes.
@@ -106,6 +62,10 @@ class triple(object):
 
         The nodes seen are all of this node's children and itself.
         '''
+
+        # FIX: This needs to be re-examined after adding triple_parameters
+        #      table.
+
         nodes_seen = set((self,))
         if not isinstance(self.int1, triple):
             left_temp_est, left_saves = 0, []
@@ -131,9 +91,7 @@ class triple(object):
         return max(left_temp_set, right_temp_set)
 
 def del_node(node, lists):
-    s = frozenset((node,))
-    for l in lists:
-        l.difference_update(s)
+    for l in lists: l.discard(node)
     return [_f for _f in lists if _f]
 
 def read_triples(block_id):

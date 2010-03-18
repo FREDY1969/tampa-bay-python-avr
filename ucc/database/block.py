@@ -85,9 +85,9 @@ class block(object):
         # store to the global variable, even if a later triple also stores
         # to that global variable.  Also a "hard" dependency is established.
         #
-        # When a triple is associated with a global variable that is set
+        # When a triple is associated with a global variable that may be set
         # indirectly by a subsequent triple, a "soft" dependency is
-        # established.  But the labels entry remains here, but is entered as a
+        # established.  The labels entry remains here, but is also entered as a
         # dirty_label to prevent gen_triple from using it.
         #
         # When a gen_triple is called for the rvalue of this global variable,
@@ -104,7 +104,7 @@ class block(object):
         self.triples = {}            # {(operator, int1, int2, string): triple}
 
         # This stores the last triple that has side effects.  When a new
-        # triple comes along that also has side effects, a dependency is
+        # triple comes along that also has side effects, a hard dependency is
         # established between them to guarantee that the side effects happen
         # in the proper sequence.  The last triple here is always included in
         # the final block write to the database.
@@ -121,7 +121,8 @@ class block(object):
         # the database when the final block write is done.
         #
         # Each time a new triple is created that may set a global variable,
-        # this entry is cleared (after creating the above dependencies).
+        # this entry is cleared (after creating the above dependencies).  (The
+        # new triple will also be entered in sets_global, below).
         #
         # Triples in this dict may not be written to the database when the
         # block write is done.
@@ -155,29 +156,29 @@ class block(object):
             return True
         return False
 
-    def true_to(self, cond_id, name_t):
-        r'''Branch to 'name_t' if `triple` 'cond_id' is true.
+    def true_to(self, cond, name_t):
+        r'''Branch to 'name_t' if `triple` 'cond' is true.
 
         False falls through.
 
         This method is only called on Current_block.
         '''
-        if self.more(): Current_block.true_to(cond_id, name_t)
+        if self.more(): Current_block.true_to(cond, name_t)
         else:
-            self.last_triple = triple.triple('if-true', cond_id, string=name_t)
+            self.last_triple = triple.triple('if-true', (cond,), string=name_t)
             self.next_conditional = name_t
             self.state = 'end_fall_through'
 
-    def false_to(self, cond_id, name_f):
-        r'''Branch to 'name_f' if `triple` 'cond_id' is false.
+    def false_to(self, cond, name_f):
+        r'''Branch to 'name_f' if `triple` 'cond' is false.
 
         True falls through.
 
         This method is only called on Current_block.
         '''
-        if self.more(): Current_block.false_to(cond_id, name_f)
+        if self.more(): Current_block.false_to(cond, name_f)
         else:
-            self.last_triple = triple.triple('if-false', cond_id, string=name_f)
+            self.last_triple = triple.triple('if-false', (cond,), string=name_f)
             self.next_conditional = name_f
             self.state = 'end_fall_through'
 
@@ -205,24 +206,25 @@ class block(object):
         self.last_triple = last_triple
         self.write()
 
-    def gen_triple(self, operator, int1=None, int2=None, string=None,
-                         syntax_position_info=None, call_triple=None):
+    def gen_triple(self, operator, parameters=None, int1=None, int2=None,
+                         symbol=None, string=None, syntax_position_info=None):
         r'''Create a new triple for this block.
 
         This method is only called on Current_block.
         '''
         #print self.name, "gen_triple", operator, int1, int2, string
         if self.more():
-            return Current_block.gen_triple(operator, int1, int2, string,
-                                            syntax_position_info, call_triple)
+            return Current_block.gen_triple(operator, parameters, int1, int2,
+                                            symbol, string,
+                                            syntax_position_info)
         if operator in ('global', 'local'):
-            if int1 in self.labels and int1 not in self.dirty_labels:
-                return self.labels[int1]
+            if symbol.id in self.labels and symbol.id not in self.dirty_labels:
+                return self.labels[symbol.id]
         if operator == 'call_direct':
-            assert isinstance(int1, symbol_table.symbol)
-            fn_symbol = int1
-            ans = triple.triple(operator, fn_symbol, int2, string,
-                                syntax_position_info)
+            assert isinstance(symbol, symbol_table.symbol)
+            fn_symbol = symbol
+            ans = triple.triple(operator, parameters, symbol=fn_symbol,
+                                syntax_position_info=syntax_position_info)
             uses_vars, sets_vars = fn_xref.get_var_uses(fn_symbol.id)
             uses_or_sets_vars = uses_vars.union(sets_vars)
             for var_id in uses_vars.intersection(self.labels):
@@ -245,23 +247,22 @@ class block(object):
             return ans
         if operator == 'call_indirect':
             raise AssertionError("call_indirect not yet implemented")
-        if operator not in ('param', 'input', 'input-bit',
-                            'output', 'output-bit-set', 'output-bit-clear',
-                            'var_data', 'const_data', 'bss', 'ioreg_init',
-                            'eeprom'):
-            key = operator, int1, int2, string
+        if operator not in ('input', 'input-bit',
+                            'output', 'output-bit-set', 'output-bit-clear'):
+            key = operator, parameters, int1, int2, symbol, string
             if key not in self.triples:
-                self.triples[key] = triple.triple(operator, int1, int2, string,
-                                                  syntax_position_info)
+                self.triples[key] = \
+                  triple.triple(operator, parameters, int1, int2,
+                                symbol, string, syntax_position_info)
             return self.triples[key]
-        ans = triple.triple(operator, int1, int2, string,
-                            syntax_position_info, call_triple)
+        ans = triple.triple(operator, parameters, int1, int2, symbol, string,
+                            syntax_position_info)
         if operator == 'global':
-            self.uses_global[int1].append(ans)
-            if int1 in self.sets_global:
-                ans.add_hard_predecessor(self.sets_global[int1])
-            if int1 in self.labels:
-                self.labels[int1].add_label(int1, False)
+            self.uses_global[symbol.id].append(ans)
+            if symbol.id in self.sets_global:
+                ans.add_hard_predecessor(self.sets_global[symbol.id])
+            if symbol.id in self.labels:
+                self.labels[symbol.id].add_label(symbol.id, False)
         if operator in ('input', 'input-bit',
                         'output', 'output-bit-set', 'output-bit-clear'):
             #print self.name, "got", operator, "storing in side_effects"

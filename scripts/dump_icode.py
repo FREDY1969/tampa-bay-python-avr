@@ -5,7 +5,7 @@
 r'''Dumps the icode database in a simple ascii format.
 
 fun_name.id: name [next id [/ id]] (predecessor ids)
-  id: [use_count] operator int1 int2 string (predecessor ids)
+  id: [use_count] operator int1 int2 symbol string (predecessor ids) => sym
     child1
     child2
 
@@ -18,6 +18,8 @@ import os.path
 import sqlite3 as db
 
 Db_filename = "ucc.db"
+
+Debug = False
 
 class db_cursor(object):
     def __init__(self, package_dir):
@@ -32,41 +34,47 @@ class db_cursor(object):
         self.db_conn.close()
 
 def dump(db_cur):
-    db_cur.execute("""select b.id, b.name, st.label,
-                             b.last_triple_id, b.next, b.next_conditional
-                        from blocks b inner join symbol_table st
-                          on b.word_symbol_id = st.id
-                       order by b.id
+    db_cur.execute("""select id, name, word_symbol_id, last_triple_id, next,
+                             next_conditional
+                        from blocks
+                       order by id
                    """)
     for info in db_cur.fetchall():
         print()
         dump_block(info, db_cur)
 
 def dump_block(info, db_cur):
-    id, name, fun_name, last_triple_id, next, next_cond = info
+    id, name, word_symbol_id, last_triple_id, next, next_cond = info
+    if Debug: print("dump_block: ", id)
     db_cur.execute("""select predecessor
                         from block_successors
                        where successor = ?
                    """,
                    (id,))
     predecessors = ' '.join([str(x[0]) for x in db_cur])
-    print("{}.{}: {}{}{}{}"
-            .format(fun_name, id, name,
-                    ' next {}'.format(next) if next else '',
-                    ' / {}'.format(next_cond) if next_cond else '',
-                    ' ({})'.format(predecessors) if predecessors else ''))
+    fun_name, kind, flags = get_symbol(db_cur, word_symbol_id)
+    print("{fun_name}{kind}.{id}: {block_name}{next}{next_cond}{pred}{flags}"
+            .format(fun_name=fun_name,
+                    kind=kind,
+                    flags=flags,
+                    id=id,
+                    block_name=name,
+                    next=' next {}'.format(next) if next else '',
+                    next_cond=' / {}'.format(next_cond) if next_cond else '',
+                    pred=' ({})'.format(predecessors) if predecessors else ''))
     dump_triples(db_cur, id)
 
 def dump_triples(db_cur, block_id):
+    if Debug: print("dump_triples: ", block_id)
     # Do triples for block:
     db_cur.execute("""
-        select id, use_count, operator, int1, int2, string
+        select id, use_count, operator, int1, int2, symbol_id, string
           from triples
          where block_id = ?
          order by id""",
         (block_id,))
 
-    triple_list = [triple(*info) for info in db_cur.fetchall()]
+    triple_list = [triple(db_cur, *info) for info in db_cur.fetchall()]
     triples = dict([(t.id, t) for t in triple_list])
 
     for t in triple_list:
@@ -84,40 +92,30 @@ class triple(object):
     triple2 = None
     tagged = False
 
-    def __init__(self, id, use_count, operator, int1, int2, string):
+    def __init__(self, db_cur, id, use_count, operator, int1, int2, symbol_id,
+                       string):
         self.id = id
         self.use_count = use_count
         self.operator = operator
-
-        if operator in ('int', 'ratio', 'approx', 'param'):
-            self.op1 = str(int1)
-        elif operator in ('global_addr', 'global', 'local_addr', 'local',
-                          'call_direct'):
-            self.op1 = get_symbol(db_cur, int1)
-        elif operator in ('input', 'input-bit',
-                          'output', 'output-bit-set', 'output-bit-clear'):
-            self.op1 = string
-            string = None
-        elif int1 is not None:
-            self.triple1 = int1
-
-        if operator in ('ratio', 'approx'):
-            self.op2 = str(int2)
-        elif operator in ('input-bit', 'output-bit-set', 'output-bit-clear'):
-            self.op2 = str(int1)
-        elif operator == 'output':
-            self.triple2 = int1
-        elif int2 is not None:
-            self.triple2 = int2
-
+        self.int1 = int1
+        self.int2 = int2
+        if symbol_id is None:
+            self.symbol = None
+        else:
+            self.symbol = get_symbol(db_cur, symbol_id)[0]
         self.string = string
+        db_cur.execute("""select parameter_id
+                            from triple_parameters
+                           where parent_id = ?
+                           order by parameter_num
+                       """,
+                       (self.id,))
+        self.parameter_ids = tuple(x[0] for x in db_cur)
         self.written = False
 
     def tag(self, triples):
-        if self.triple1 is not None:
-            triples[self.triple1].tagged = True
-        if self.triple2 is not None:
-            triples[self.triple2].tagged = True
+        self.parameters = tuple(triples[id] for id in self.parameter_ids)
+        for t in self.parameters: t.tagged = True
 
     def write(self, db_cur, triples, indent = 2):
         if self.written:
@@ -137,27 +135,27 @@ class triple(object):
                                where triple_id = ?
                            """,
                            (self.id,))
-            labels = ' '.join([(' => {}' if x[1] else ' -> {}')
-                                 .format(get_symbol(db_cur, x[0]))
-                               for x in db_cur.fetchall()])
+            labels = ''.join([(' => {}' if x[1] else ' -> {}')
+                                .format(get_symbol(db_cur, x[0])[0])
+                              for x in db_cur.fetchall()])
 
-            print("{}{}: [{}] {}{}{}{}{}{}"
-                    .format(' ' * indent,
-                            self.id,
-                            self.use_count,
-                            self.operator,
-                            ' ' + self.op1 if self.op1 else '',
-                            ' ' + self.op2 if self.op2 else '',
-                            ' ' + self.string if self.string else '',
-                            ' ({})'.format(predecessors) if predecessors
-                                                         else '',
-                            labels))
-            if self.triple1 is not None:
-                triples[self.triple1].write(db_cur, triples, indent + 2)
-            if self.triple2 is not None:
-                triples[self.triple2].write(db_cur, triples, indent + 2)
+            print("{indent}{id}: [{uses}] {op}{int1}{int2}{sym}{st}{pred}{lbls}"
+                    .format(indent=' ' * indent,
+                            id=self.id,
+                            uses=self.use_count,
+                            op=self.operator,
+                            int1=' ' + str(self.int1) if self.int1 else '',
+                            int2=' ' + str(self.int2) if self.int2 else '',
+                            sym=' ' + self.symbol if self.symbol else '',
+                            st=' ' + repr(self.string) if self.string else '',
+                            pred=' ({})'.format(predecessors) if predecessors
+                                                              else '',
+                            lbls=labels))
+            for param in self.parameters:
+                param.write(db_cur, triples, indent + 2)
 
 def get_symbol(db_cur, id):
+    if Debug: print("get_symbol: ", id)
     db_cur.execute("""select label, context, kind, int1, side_effects, suspends
                         from symbol_table
                        where id = ?
@@ -172,18 +170,20 @@ def get_symbol(db_cur, id):
                        (context,))
         label2, context = db_cur.fetchone()
         label = '.'.join((label2, label))
-    return '{}[{}{}]{}{}' \
-             .format(label, kind, '-{}'.format(int1) if int1 is not None
-                                                     else '',
-                     'side_effects' if side_effects else '',
-                     'suspends' if suspends else '')
+    if Debug: print("get_symbol => ", label)
+    return label, \
+           '[{kind}{int1}]'.format(kind=kind,
+                                   int1='-{}'.format(int1) if int1 is not None
+                                                           else ''), \
+           (' side_effects' if side_effects else '') + \
+             (' suspends' if suspends else '')
 
 
 if __name__ == "__main__":
     import sys
 
     def usage():
-        sys.stderr.write("usage: dump.py (package_dir | file.ucl)\n")
+        sys.stderr.write("usage: dump_icode.py (package_dir | file.ucl)\n")
         sys.exit(2)
 
     len(sys.argv) == 2 or usage()
