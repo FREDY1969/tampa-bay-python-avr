@@ -1,4 +1,4 @@
--- avr.sql
+-- registers.sql
 
 insert into register (name) values ('r0');
 insert into register (name) values ('r1');

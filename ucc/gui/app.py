@@ -166,7 +166,7 @@ class App(wx.App):
     
     def onCompile(self, event):
         from ucc.compiler import compile
-        compile.run(registry.top_package)
+        compile.run(registry.top_package, 'atmega328p')
     
     def onLoad(self, event):
         from ucc.assembler import load

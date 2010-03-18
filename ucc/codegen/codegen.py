@@ -7,7 +7,7 @@ from ucc.database import crud, triple2
 
 Debug = 0
 
-def gen_assembler():
+def gen_assembler(processor):
     # Update use_counts of all triples:
     crud.Db_cur.execute('''
         update triples
@@ -21,6 +21,49 @@ def gen_assembler():
             qmarks1=', '.join(['?'] * len(triple2.int1_operator_exclusions)),
             qmarks2=', '.join(['?'] * len(triple2.int2_operator_exclusions))),
       triple2.int1_operator_exclusions + triple2.int2_operator_exclusions)
+
+    """ Sort this out later...
+    crud.Db_cur.execute('''
+        update triples
+           set code_seq_id = (
+              select p.code_seq_id
+                from pattern p
+                       inner join pattern_by_processor pp
+                         on p.id = pp.pattern_id
+               where pp.processor = ?
+
+                 and (left_const is null and left_multi_use is null or
+                      (select (left_const isnull or
+                               left_const and left.operator = 'int' or
+                               not left_const and left.operator != 'int') and
+                              (left_const_min isnull or
+                               left_const_min <= left.int1) and
+                              (left_const_max isnull or
+                               left_const_max >= left.int1) and
+                              (left_multi_use isnull or
+                               left_multi_use and left.use_count > 1 or
+                               not left_multi_use and left.use_count <= 1)
+                         from triples left
+                        where left.id = triples.int1))
+
+                 and (right_const is null and right_multi_use is null or
+                      (select (right_const isnull or
+                               right_const and right.operator = 'int' or
+                               not right_const and right.operator != 'int') and
+                              (right_const_min isnull or
+                               right_const_min <= right.int1) and
+                              (right_const_max isnull or
+                               right_const_max >= right.int1) and
+                              (right_multi_use isnull or
+                               right_multi_use and right.use_count > 1 or
+                               not right_multi_use and right.use_count <= 1)
+                         from triples right
+                        where right.id = triples.int2))
+
+               order by preference
+               limit 1)
+    ''', (processor,))
+    """
 
     for block_id, name, word_symbol_id, next, next_conditional \
      in crud.read_as_tuples('blocks', 'id', 'name', 'word_symbol_id', 'next',
@@ -38,7 +81,9 @@ def gen_assembler():
         pred_succ = crud.Db_cur.fetchall()
         if Debug: print("pred_succ", pred_succ, file=sys.stderr)
         shareds = [s for s in (frozenset(tops(t.parents))
-                          for t in triples if len(t.parents) > 1) if len(s) > 1]
+                               for t in triples
+                               if len(t.parents) > 1)
+                     if len(s) > 1]
         if Debug: print("shareds", shareds, file=sys.stderr)
         for top in order_tops(tops, pred_succ, shareds):
             print('gen_assembler for block', block_id, 'triple', top.id, file=sys.stderr)
@@ -46,7 +91,8 @@ def gen_assembler():
 
 def tops(triples):
     return itertools.chain.from_iterable(
-             (tops(t.parents) if t.parents else (t,)) for t in triples)
+             (tops(t.parents) if t.parents else (t,))
+             for t in triples)
 
 def order_tops(tops, pred_succ, shareds):
     tops = list(tops)
