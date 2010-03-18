@@ -1,5 +1,6 @@
 # compile.py
 
+import os
 import time
 
 from ucc.compiler import parse, optimize
@@ -9,7 +10,7 @@ from ucc.database import crud, block, symbol_table, ucl_types
 
 Debug = 0
 
-def run(top, prime_start_time = True, quiet = False):
+def run(top, processor, prime_start_time = True, quiet = False):
     # The following gets a little confusing because we have two kinds of word
     # objects:
     #
@@ -27,6 +28,10 @@ def run(top, prime_start_time = True, quiet = False):
         if not quiet: print("top: {:.2f}".format(elapsed()))
 
     with crud.db_connection(top.packages[-1].package_dir):
+        crud.Db_cur.execute(
+          'attach database {!r} as architecture'
+            .format(os.path.join(os.path.dirname(codegen.__file__), 'avr.db')))
+
         if not quiet: print("crud.db_connection: {:.2f}".format(elapsed()))
 
         symbol_table.init()
@@ -57,7 +62,7 @@ def run(top, prime_start_time = True, quiet = False):
         if not quiet: print("optimize: {:.2f}".format(elapsed()))
 
         # intermediate code => assembler
-        codegen.gen_assembler()
+        codegen.gen_assembler(processor)
         if not quiet: print("gen_assembler: {:.2f}".format(elapsed()))
 
         # assembler => .hex files

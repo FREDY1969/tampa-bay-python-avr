@@ -1,0 +1,44 @@
+-- patterns.msql
+
+p(+, const(0, 63), data,
+     delink, reg(immed_word, 2, trashes),
+     requires(),
+     inst(ADIW, {right}, {left_const})
+)
+
+p(+, data, const(0, 63),
+     reg(immed_word, 2, trashes), delink,
+     requires(),
+     inst(ADIW, {left}, {right_const})
+)
+
+p(+, const, data,
+     delink, reg(immed, 2, trashes), requires(),
+     inst(SUBI, lo_reg({right}), lo(-{left_const})),
+     inst(SBCI, hi_reg({right}), hi(-{left_const}))
+)
+
+p(+, data, const,
+     reg(immed, 2, trashes), delink, requires(),
+     inst(SUBI, lo_reg({left}), lo(-{right_const})),
+     inst(SBCI, hi_reg({left}), hi(-{right_const}))
+)
+
+p(+, single_use, data,
+     reg(single, 2, trashes), reg(single, 2), requires(),
+     inst(ADD, lo_reg({left}), lo_reg({right})),
+     inst(ADC, hi_reg({left}), hi_reg({right}))
+)
+
+p(+, multi_use, single_use,
+     reg(single, 2), reg(single, 2, trashes), requires(),
+     inst(ADD, lo_reg({right}), lo_reg({left})),
+     inst(ADC, hi_reg({right}), hi_reg({left}))
+)
+
+p(+, multi_use, multi_use,
+     reg(single, 2), reg(single, 2), requires(),
+     inst(ADD, lo_reg({right}), lo_reg({left})),
+     inst(ADC, hi_reg({right}), hi_reg({left}))
+)
+

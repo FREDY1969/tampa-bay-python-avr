@@ -239,6 +239,7 @@ create table triples (
     string varchar(32768),
     type_id int references type(id),
     use_count int,
+    code_seq_id int,
     reg_class int,
     register_est int,          -- Estimate of number of registers needed by
                                -- this node and all of it's decendants.
