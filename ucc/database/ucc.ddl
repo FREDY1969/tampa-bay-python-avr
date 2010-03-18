@@ -215,30 +215,28 @@ create table triples (
        -- special values:
        --   'input'            -- string is port name
        --   'input-bit'        -- string is port name, int1 is bit#
-       --   'output'           -- string is port name, int1 is triples id
+       --   'output'           -- string is port name, param 1 is data to output
        --   'output-bit-set'   -- string is port name, int1 is bit#
        --   'output-bit-clear' -- string is port name, int1 is bit#
-       --   'global_addr'      -- int1 is symbol_table id
-       --   'global'           -- int1 is symbol_table id
-       --   'local_addr'       -- int1 is symbol_table id
-       --   'local'            -- int1 is symbol_table id
+       --   'global_addr'      -- symbol_id is symbol
+       --   'global'           -- symbol_id is symbol
+       --   'local_addr'       -- symbol_id is symbol
+       --   'local'            -- symbol_id is symbol
        --   'int'              -- int1
        --   'ratio'            -- int1 is numerator, int2 is denominator
        --   'approx'           -- int1 * 2**int2
-       --   'param'            -- int1 is which param, int2 is triples id,
-                               -- call_triple_id is function call triple
-       --   'call_direct'      -- int1 is symbol_table id
-       --   'call_indirect'    -- int1 is triples id
-       --   'return'           -- int1 is optional triples id
-       --   'if_false'         -- int1 is triples id to cond, string is label
-       --   'if_true'          -- int1 is triples id to cond, string is label
-       -- else operator applies to int1 and int2 as triples ids
+       --   'call_direct'      -- symbol_id is fn
+       --   'call_indirect'    -- param 1 is fn
+       --   'return'           -- param 1 is optional return data
+       --   'if_false'         -- param 1 is cond, string is label
+       --   'if_true'          -- param 1 is cond, string is label
+       -- else operator applies to param triples
     int1 int,
     int2 int,
-    call_triple_id int references triple(id),
+    symbol_id int references symbol_table(id),
     string varchar(32768),
     type_id int references type(id),
-    use_count int,
+    use_count int,             -- count times used as a parameter
     code_seq_id int,
     reg_class int,
     register_est int,          -- Estimate of number of registers needed by
@@ -249,6 +247,12 @@ create table triples (
     column_start int,
     line_end int,
     column_end int
+);
+
+create table triple_parameters (
+    parent_id int not null references triples(id),
+    parameter_id int not null references triples(id),
+    parameter_num int not null
 );
 
 create table triple_labels (

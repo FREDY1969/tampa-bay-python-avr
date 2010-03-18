@@ -11,16 +11,9 @@ def gen_assembler(processor):
     # Update use_counts of all triples:
     crud.Db_cur.execute('''
         update triples
-           set use_count = (select count(*) from triples p1
-                             where p1.operator not in ({qmarks1})
-                               and p1.int1 = triples.id)
-                         + (select count(*) from triples p2
-                             where p2.operator not in ({qmarks2})
-                               and p2.int2 = triples.id)
-      '''.format(
-            qmarks1=', '.join(['?'] * len(triple2.int1_operator_exclusions)),
-            qmarks2=', '.join(['?'] * len(triple2.int2_operator_exclusions))),
-      triple2.int1_operator_exclusions + triple2.int2_operator_exclusions)
+           set use_count = (select count(*) from triple_parameters tp
+                             where tp.parameter_id = triples.id)
+      ''')
 
     """ Sort this out later...
     crud.Db_cur.execute('''
@@ -43,8 +36,10 @@ def gen_assembler(processor):
                               (left_multi_use isnull or
                                left_multi_use and left.use_count > 1 or
                                not left_multi_use and left.use_count <= 1)
-                         from triples left
-                        where left.id = triples.int1))
+                         from triples_parameters tp inner join triples left
+                           on tp.parameter_id = left.id
+                        where tp.parent_id = triples.id
+                          and tp.parameter_num = 1))
 
                  and (right_const is null and right_multi_use is null or
                       (select (right_const isnull or
@@ -57,8 +52,10 @@ def gen_assembler(processor):
                               (right_multi_use isnull or
                                right_multi_use and right.use_count > 1 or
                                not right_multi_use and right.use_count <= 1)
-                         from triples right
-                        where right.id = triples.int2))
+                         from triples_parameters tp2 inner join triples right
+                           on tp2.parameter_id = right.id
+                        where tp2.parent_id = triples.id
+                          and tp2.parameter_num = 2))
 
                order by preference
                limit 1)
@@ -80,47 +77,75 @@ def gen_assembler(processor):
             [t.id for t in triples] * 2)
         pred_succ = crud.Db_cur.fetchall()
         if Debug: print("pred_succ", pred_succ, file=sys.stderr)
-        shareds = [s for s in (frozenset(tops(t.parents))
-                               for t in triples
-                               if len(t.parents) > 1)
-                     if len(s) > 1]
+        shareds_with_dups = frozenset(s for s in (frozenset(tops_of(t.parents))
+                                                  for t in triples
+                                                  if len(t.parents) > 1)
+                                        if len(s) > 1)
+        
+        shareds = {
+          s for s in shareds_with_dups
+            if not any(x.issubset(s)
+                       for x in shareds_with_dups
+                       if x != s)
+        }
+
         if Debug: print("shareds", shareds, file=sys.stderr)
         for top in order_tops(tops, pred_succ, shareds):
             print('gen_assembler for block', block_id, 'triple', top.id, file=sys.stderr)
             #with crud.db_transaction():
 
-def tops(triples):
+def tops_of(triples):
     return itertools.chain.from_iterable(
-             (tops(t.parents) if t.parents else (t,))
+             (tops_of(t.parents) if t.parents else (t,))
              for t in triples)
 
 def order_tops(tops, pred_succ, shareds):
-    tops = list(tops)
+    r'''Yields triples from tops in their desired order.
+
+    tops is a list of top-level triples.
+    pred_succ is a list of (pred triple, succ triple).
+    shareds is a set of frozenset(shared top-level triples).
+
+    All three parameters are altered (destroyed).
+    '''
     leftovers = set()
 
-    def process(t_set, shareds):
+    def process(t_set):
+        r'''Yields triples from t_set and triples shared with these.
+
+        All triples in yielded in their proper order.
+
+        t_set is a frozenset of triples to generate.
+
+        Triples that can not be generated due to pred/succ constraints are
+        placed in leftovers and will eventually get generated when the
+        contraints are satisfied.
+        '''
         def remove(t):
             assert t in tops
             tops.remove(t)
             if t in leftovers: leftovers.remove(t)
-            return [ps for ps in shareds if ps[0] != t and ps[1] != t]
-        for t_shared in pick(t_set, shareds):
+            for i, (pred, succ) in enumerate(pred_succ[:]):
+                if pred == t or succ == t:
+                    del pred_succ[i]
+        for t in leftovers:
+            if t not in succs:
+                remove(t)
+                yield t
+        for t_shared in pick_shareds(t_set, shareds):
+            t_shared = set(t_shared)
             found_one = False
             try_again = True
             while t_shared and try_again:
                 try_again = False
                 for t in t_shared.copy():
                     if t not in succs:
-                        shareds = remove(t)
+                        remove(t)
                         t_shared.remove(t)
                         try_again = True
                         found_one = True
-                        yield t, shareds
+                        yield t
             assert found_one
-            for t in leftovers:
-                if t not in succs:
-                    shareds = remove(t)
-                    yield t, shareds
             leftovers.update(t_shared)
             break
         else:
@@ -132,23 +157,36 @@ def order_tops(tops, pred_succ, shareds):
         preds = frozenset(ps[0] for ps in pred_succ)
         succs = frozenset(ps[1] for ps in pred_succ)
         available_preds = preds - succs
-        assert available_preds
-        for t, shareds in process(available_preds, shareds):
+        assert available_preds, "circular pred/succ dependency!"
+        for t in process(available_preds):
             yield t
     if Debug: print("while done: tops", tops, file=sys.stderr)
-    if tops:
-        succs = frozenset(ps[1] for ps in pred_succ)
-        for t, shareds in process(frozenset(tops), shareds):
+    succs = frozenset()
+    while tops:
+        for t in process(frozenset(tops)):
             yield t
 
-def pick(t_set, shareds):
+def pick_shareds(t_set, shareds):
+    r'''Yields all shared triples that contain something in t_set.
+
+    t_set is a frozenset of triples to generate.
+    shareds is a set of frozenset(shared top-level triples).
+
+    shareds is altered to delete the sets generated.
+
+    yields frozensets of triples.
+
+    All triples in t_set are yielded in a shared frozenset.  Sometimes that
+    means that the yielded frozenset has only one member.
+    '''
+
     if Debug: print("pick", t_set, shareds, file=sys.stderr)
     t_yielded = set()
-    for t in t_set:
-        t_shared = set(s for s in shareds if t in s)
-        if t_shared:
-            t_yielded.add(t)
-            yield t_shared
+    for s in shareds.copy():
+        if s.intersection(t_set):
+            t_yielded.update(s)
+            shareds.remove(s)
+            yield s
     for t in t_set - t_yielded:
         yield set((t,))
 

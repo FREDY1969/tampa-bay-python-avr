@@ -45,8 +45,7 @@ class input_pin(declaration.word):
 
         return block.Current_block.gen_triple(
                      'bit-xor',
-                     input_bit,
-                     bit_mask,
+                     (input_bit, bit_mask),
                      syntax_position_info=ast_node.get_syntax_position_info())
 
     def compile_condition(self, ast_node):
@@ -72,6 +71,6 @@ class input_pin(declaration.word):
 
         return block.Current_block.gen_triple(
                      'not',
-                     input_bit,
+                     (input_bit,),
                      syntax_position_info=ast_node.get_syntax_position_info())
 

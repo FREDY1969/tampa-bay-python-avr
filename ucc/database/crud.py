@@ -303,14 +303,20 @@ def create_where(keys):
         (' where a is null', [])
         >>> create_where({})
         ('', [])
+        >>> create_where({'order_by': 'a'})
+        (' order by a', [])
         >>> create_where({'order_by': ('a', 'b')})
         (' order by a, b', [])
         >>> create_where({'a': 44, 'order_by': ('a', 'b')})
         (' where a = ? order by a, b', [44])
     '''
     if 'order_by' in keys:
-        order_by_clause = " order by " + ', '.join(keys['order_by'])
+        value = keys['order_by']
         del keys['order_by']
+        if isinstance(value, str):
+            order_by_clause = " order by " + value
+        else:
+            order_by_clause = " order by " + ', '.join(value)
     else:
         order_by_clause = ''
     if keys:

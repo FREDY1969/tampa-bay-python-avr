@@ -3,6 +3,8 @@
 r'''Helper class for the triples table.
 '''
 
+import itertools
+
 from ucc.database import crud, symbol_table
 
 class triple(object):
@@ -12,25 +14,26 @@ class triple(object):
     database.  This allows them to be manipulated by the `compile` process
     without needing to update the database.
     '''
+
     id = None
     soft_predecessors_written = False
     writing = False
 
-    def __init__(self, operator, int1=None, int2=None, string=None,
-                       syntax_position_info=None, call_triple=None):
+    def __init__(self, operator, parameters=None,
+                       int1=None, int2=None, symbol=None, string=None,
+                       syntax_position_info=None):
         r'''Creates the object, but does not write it to the database (yet).
 
         Use `block.block.gen_triple` instead.
-
-        int1 and int2 may be integers, other triples, or symbol_table.symbols
         '''
         self.operator = operator
+        self.parameters = parameters
         self.int1 = int1
         self.int2 = int2
+        self.symbol = symbol
         self.string = string
         self.line_start, self.column_start, self.line_end, self.column_end = \
           syntax_position_info or (None, None, None, None)
-        self.call_triple = call_triple
 
         # All the symbol_ids to store this value into.
         self.labels = {}        # {symbol_id: is_gen}
@@ -39,8 +42,36 @@ class triple(object):
         self.hard_predecessors = []     # [triple]
 
     def __repr__(self):
-        return "<triple {}:{}({},{})>" \
-                 .format(self.id, self.operator, self.int1, self.int2)
+        r'''
+
+            >>> from ucc.database import symbol_table
+            >>> symbol_table.init()
+            >>> sym_A = symbol_table.symbol(1, 'A')
+
+            >>> triple('foo')
+            <triple(None) foo()>
+
+            >>> triple('foo', int1=1, int2=2, symbol=sym_A, string="mom")
+            <triple(None) foo(1,2,A,'mom')>
+
+            >>> bar = triple('bar')
+            >>> bar.id = 10
+            >>> baz = triple('baz')
+            >>> baz.id = 11
+            >>> foo = triple('foo', int1=1, parameters=(bar, baz))
+            >>> foo.id = 27
+            >>> foo
+            <triple(27) foo(1,10,11)>
+        '''
+        return "<triple({}) {}({})>" \
+                 .format(self.id, self.operator,
+                         ','.join(itertools.chain.from_iterable(
+                             ((str(x)
+                               for x in (self.int1, self.int2,
+                                         self.symbol and self.symbol.label,
+                                         self.string and repr(self.string))
+                               if x),
+                              (str(p.id) for p in self.parameters or ())))))
 
     def add_label(self, symbol_id, is_gen):
         r'''Adds a label to this triple.
@@ -91,31 +122,23 @@ class triple(object):
         if self.id is None:
             assert not self.writing
             self.writing = True
-            if isinstance(self.int1, triple):
-                int1 = self.int1.write(block_id)
-            elif isinstance(self.int1, symbol_table.symbol):
-                int1 = self.int1.id
-            else:
-                int1 = self.int1
-            if isinstance(self.int2, triple):
-                int2 = self.int2.write(block_id)
-            elif isinstance(self.int2, symbol_table.symbol):
-                int2 = self.int2.id
-            else:
-                int2 = self.int2
             self.id = crud.insert('triples',
                                   block_id=block_id,
                                   operator=self.operator,
-                                  int1=int1,
-                                  int2=int2,
+                                  int1=self.int1,
+                                  int2=self.int2,
+                                  symbol_id=self.symbol and self.symbol.id,
                                   string=self.string,
-                                  call_triple_id=\
-                                    self.call_triple and self.call_triple.id,
                                   line_start=self.line_start,
                                   column_start=self.column_start,
                                   line_end=self.line_end,
                                   column_end=self.column_end,
                                  )
+            for i, param in enumerate(self.parameters or ()):
+                crud.insert('triple_parameters',
+                            parent_id=self.id,
+                            parameter_id=param.write(block_id),
+                            parameter_num=i + 1)
             for label, is_gen in self.labels.items():
                 crud.insert('triple_labels',
                             triple_id=self.id,
@@ -159,6 +182,7 @@ def delete(block_ids):
     '''
     triple_ids = crud.read_column('triples', 'id', block_id=block_ids)
     if triple_ids:
+        crud.delete('triple_parameters', parent_id=triple_ids)
         crud.delete('triple_order_constraints', predecessor=triple_ids)
         crud.delete('triple_order_constraints', successor=triple_ids)
         crud.delete('triple_labels', triple_id=triple_ids)

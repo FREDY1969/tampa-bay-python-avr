@@ -26,6 +26,6 @@ class set(singleton.singleton):
         if lvalue.kind == 'word':
             block.Current_block.label(lvalue.symbol_id, ans)
             return ans
-        return block.Current_block.gen_triple('output',
-                                              string=lvalue.label, int1=ans)
+        return block.Current_block.gen_triple('output', (ans,),
+                                              string=lvalue.label)
 
