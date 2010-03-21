@@ -59,7 +59,7 @@ def update():
     for id in crud.read_column('symbol_table', 'id', suspends=1):
         Symbols_by_id[id].suspends = True
 
-class symbol(object):
+class symbol:
     r'''The class representing symbols in the compiler.
     '''
     doing_init = True   #: kludge for __setattr__

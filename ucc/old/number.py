@@ -20,7 +20,7 @@ def adj_binary_pt(i, old_pt, new_pt):
     delta_pt = -delta_pt
     return int(round(i / 2**delta_pt))
 
-class fixed_precision(object):
+class fixed_precision:
     r'''
         >>> fixed_precision.from_str('0')
         0
@@ -242,7 +242,7 @@ class fixed_precision(object):
                                                       self.binary_pt,
                                                       self.binary_pt))
 
-class any_precision(object):
+class any_precision:
     r'''
         >>> any_precision.from_str('0/')
         0/

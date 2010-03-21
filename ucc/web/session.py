@@ -9,6 +9,6 @@ the attributes are stored on an object instead of this module to allow for
 multiple sessions in the future.
 '''
 
-class session(object):
+class session:
     def __init__(self):
         pass

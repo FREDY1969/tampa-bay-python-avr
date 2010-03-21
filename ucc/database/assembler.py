@@ -38,7 +38,7 @@ def gen_insts(block_id):
 def update_block_address(block_id, address):
     crud.update('assembler_blocks', {'id': block_id}, address=address)
 
-class block(object):
+class block:
     r'''This represents a block of assembler instructions.
 
     Assembler instructions are grouped into blocks to allow the assembler to
@@ -99,7 +99,7 @@ class block(object):
         for i, instruction in enumerate(self.instructions):
             instruction.write(self.id, i)
 
-class inst(object):
+class inst:
     r'''Represents a single assembler instruction.
     '''
     def __init__(self, opcode, operand1 = None, operand2 = None,

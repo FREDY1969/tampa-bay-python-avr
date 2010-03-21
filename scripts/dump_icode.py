@@ -21,7 +21,7 @@ Db_filename = "ucc.db"
 
 Debug = False
 
-class db_cursor(object):
+class db_cursor:
     def __init__(self, package_dir):
         self.package_dir = package_dir
     def __enter__(self):
@@ -85,7 +85,7 @@ def dump_triples(db_cur, block_id):
             t.write(db_cur, triples)
 
 
-class triple(object):
+class triple:
     op1 = ''
     triple1 = None
     op2 = ''

@@ -5,7 +5,7 @@
 import numbers
 import math
 
-class fraction(object):
+class fraction:
     r'''
         >>> fraction('-1.3/4')
         fraction(-7, 4)
@@ -39,7 +39,7 @@ class fraction(object):
     def at_precision(self, n):
         return int(round(self * 2**n))
 
-class approx(object):
+class approx:
     r'''
         >>> approx('123.5')
         approx(1976, -4)

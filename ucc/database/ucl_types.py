@@ -49,7 +49,7 @@ def init():
     for row in crud.read_as_dicts('type'):
         getattr(globals(), row['kind']).from_db(row)
 
-class base_type(object):
+class base_type:
     r'''Base class for all types.
     '''
     def __init__(self, id, columns, sub_elements = None):

@@ -56,7 +56,7 @@ def new_label(name, word_symbol_id):
             Current_block.unconditional_to(name)
     block(name, word_symbol_id)
 
-class block(object):
+class block:
     last_triple = None
     next_conditional = None
 

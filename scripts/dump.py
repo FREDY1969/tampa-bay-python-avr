@@ -23,7 +23,7 @@ Db_filename = "ucc.db"
 
 Cwd = os.getcwd()
 
-class db_cursor(object):
+class db_cursor:
     def __init__(self, package_dir):
         self.package_dir = package_dir
 

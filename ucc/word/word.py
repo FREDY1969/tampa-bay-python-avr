@@ -83,7 +83,7 @@ def from_xml(root, package_dir, top_package):
     return word(package_dir, name, label, defining, kind, my_answers,
                 my_questions)
 
-class word(object):
+class word:
     
     r'''This represents a single generic word.
     

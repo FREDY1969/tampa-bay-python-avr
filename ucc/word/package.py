@@ -6,7 +6,7 @@ from ucc.word import helpers, xml_access, word
 
 BUILT_IN = 'ucclib.built_in'
 
-class package(object):
+class package:
     r'''Object representing a single package.
     
     Creating the object adds the proper path info to sys.path for the compiler

@@ -276,7 +276,7 @@ def operand_order(operands, notes):
                               key = lambda x: x[0]),
                        key = lambda x: x[0])))
 
-class inst1(object):
+class inst1:
     r'''Single word instructions.
     '''
     def __init__(self, name, opcode, cycles, **notes):
