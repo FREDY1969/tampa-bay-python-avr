@@ -10,7 +10,7 @@ from ucc.word import helpers, word as word_module
 
 Empty_set = frozenset()
 
-class declaration(object):
+class declaration:
     r'''All words are subclasses of declaration.
 
     Defining words are classes, while non-defining words are instances of

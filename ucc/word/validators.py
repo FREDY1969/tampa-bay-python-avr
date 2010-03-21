@@ -23,7 +23,7 @@ def from_xml(root_element):
         ans.append(cls.from_element(e))
     return ans
 
-class validator(object):
+class validator:
     r'''Base class of all validators.'''
     def add_xml_subelement(self, root_element):
         ElementTree.SubElement(root_element, VALIDATOR_TAG,

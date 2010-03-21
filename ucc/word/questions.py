@@ -41,7 +41,7 @@ def add_xml_subelement(root_element, questions):
         for q in questions:
             q.add_xml_subelement(questions_element)
 
-class question(object):
+class question:
     r'''The base class of all questions.'''
     
     tag = 'question'    #: XML tag for this type of question.

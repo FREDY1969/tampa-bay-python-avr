@@ -12,7 +12,7 @@ import sys   # temp for debugging...
 
 from ucc.database import crud
 
-class triple(object):
+class triple:
     def __init__(self, row, triple_id_map):
         for key, value in row.items():
             setattr(self, key, value)

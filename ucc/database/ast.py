@@ -23,7 +23,7 @@ def delete_word_by_id(id):
     '''
     crud.delete('ast', word_symbol_id=id)
 
-class ast(object):
+class ast:
     r'''Internal AST representation (prior to going to database).
 
     This is the AST representation created by the parser.  At the end of the

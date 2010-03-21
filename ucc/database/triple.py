@@ -7,7 +7,7 @@ import itertools
 
 from ucc.database import crud, symbol_table
 
-class triple(object):
+class triple:
     r'''Represents one triple.
 
     These objects are created in memory first, then written as a block to the

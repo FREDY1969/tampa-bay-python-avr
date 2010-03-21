@@ -25,7 +25,7 @@ Db_filename = 'ucc.db'
 #_Gensyms = {}
 #In_transaction = False
 
-class db_transaction(object):
+class db_transaction:
     r'''Python *Context Manager* for database transactions.
 
     Use this in a Python 'with' statement to bracket the code that makes up a
@@ -53,7 +53,7 @@ class db_transaction(object):
         In_transaction = False
         return False    # don't ignore exception (if any)
 
-class db_connection(object):
+class db_connection:
     r'''Python *Context Manager* for database connections.
 
     This calls init and returns the Db_conn (which is assigned to the 'as'
@@ -153,7 +153,7 @@ def gensym(root_name):
     _Gensyms[lower_root_name] += 1
     return "{}_{:04d}".format(root_name, _Gensyms[lower_root_name])
 
-class db_cur_test(object):
+class db_cur_test:
     r'''Proxy database cursor for doctests...
 
     Use `set_answers` to set what `fetchall` should return.
@@ -271,7 +271,7 @@ def doctor_value(value):
 
         >>> doctor_value(33)
         33
-        >>> class dummy(object): pass
+        >>> class dummy: pass
         >>> obj = dummy()
         >>> obj.id = 34
         >>> doctor_value(obj)

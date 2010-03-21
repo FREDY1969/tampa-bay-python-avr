@@ -17,7 +17,7 @@ import sqlite3 as db
 Db_filename = "ucc.db"
 For_column = 40
 
-class db_cursor(object):
+class db_cursor:
     def __init__(self, package_dir):
         self.package_dir = package_dir
     def __enter__(self):

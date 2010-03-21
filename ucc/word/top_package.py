@@ -9,7 +9,7 @@ packages used by the top package.
 
 from ucc.word import package
 
-class top(object):
+class top:
     def __init__(self, package_dir = None):
         r'''Omit package_dir to treat built_in as the top-level package.'''
         self.word_dict = {}

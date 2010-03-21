@@ -125,7 +125,7 @@ Left_negate, Right_negate = 0, 30               # unary
 
 class DupWord(Exception): pass
 
-class non_deferrable_word(object):
+class non_deferrable_word:
     def __init__(self, name):
         self.name = name
         self.min_args_len = 0
@@ -216,7 +216,7 @@ class deferrable_word(non_deferrable_word):
         PC = self.code_addr
 
 # mixin
-class lvalue(object):
+class lvalue:
     def compile_value(self, compiler, prev_domain = None):
         self.compile_lvalue(compiler)
         compiler.push

@@ -7,7 +7,7 @@ Registers = {}
 Trivial_nodes = collections.deque()
 Reg_classes = {}
 
-class register(object):
+class register:
     def __init__(self, name):
         self.name = name
         self.aliases = set((self,))
@@ -34,7 +34,7 @@ class reg_class(frozenset):
         '''
         return self.alias().intersection(b) or self.intersection(b.alias())
 
-class candidate(object):
+class candidate:
     def __init__(self, reg_cls):
         self.reg_cls = reg_cls
         self.degree = 0

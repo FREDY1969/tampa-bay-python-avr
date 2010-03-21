@@ -1,6 +1,6 @@
 # domain.py
 
-class domain(object):
+class domain:
     def type(self): return self.__class__.__name__
 
 class type(domain):

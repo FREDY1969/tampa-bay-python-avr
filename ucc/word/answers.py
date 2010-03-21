@@ -107,7 +107,7 @@ def add_xml_answers(answers_element, answers):
             # value is a non-empty list.
             for v in value: v.add_subelement(answers_element, True)
 
-class answer(object):
+class answer:
     r'''Base answer class.
 
     All answers except omitted answers and lists are (indirect) instances of
