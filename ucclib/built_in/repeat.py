@@ -33,9 +33,13 @@ class repeat(macro.macro):
                     return ast_node.macro_expand(fn_symbol, words_needed, body,
                                                  kind='series')
                 first_jmp = ()
+                test_label = ()
             else:
                 first_jmp = (
                     ast.ast(kind='jump', label=test, expect='statement'),
+                )
+                test_label = (
+                  ast.ast(kind='label', label=test, expect='statement'),
                 )
 
             loop_var = crud.gensym('repeat_var')
@@ -65,7 +69,7 @@ class repeat(macro.macro):
                       kind='call',
                       expect='statement') \
                  .prepare(fn_symbol, words_needed),
-              ast.ast(kind='label', label=test, expect='statement'),
+            ) + test_label + (
               ast.ast(ast.ast.word(symbol_id, expect='condition'),
                       kind='if-true',
                       label=loop_label,
