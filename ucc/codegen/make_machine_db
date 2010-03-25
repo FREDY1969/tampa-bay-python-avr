@@ -23,3 +23,4 @@ do
     sqlite3 -batch -init "$f" "$db_name" < /dev/null
 done
 
+python3.1 load_patterns.py "$db_name" "$1/patterns"
