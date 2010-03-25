@@ -15,7 +15,7 @@ def gen_assembler(processor):
                              where tp.parameter_id = triples.id)
       ''')
 
-    """ Sort this out later...
+    # assign code_seq_id's to triples.
     crud.Db_cur.execute('''
         update triples
            set code_seq_id = (
@@ -25,42 +25,41 @@ def gen_assembler(processor):
                          on p.id = pp.pattern_id
                where pp.processor = ?
 
-                 and (left_const is null and left_multi_use is null or
-                      (select (left_const isnull or
-                               left_const and left.operator = 'int' or
-                               not left_const and left.operator != 'int') and
-                              (left_const_min isnull or
-                               left_const_min <= left.int1) and
-                              (left_const_max isnull or
-                               left_const_max >= left.int1) and
-                              (left_multi_use isnull or
-                               left_multi_use and left.use_count > 1 or
-                               not left_multi_use and left.use_count <= 1)
-                         from triples_parameters tp inner join triples left
-                           on tp.parameter_id = left.id
+                 and (p.left_opcode is null and p.left_multi_use is null or
+                      exists (select null
+                         from triple_parameters tp inner join triples p1
+                           on tp.parameter_id = p1.id
                         where tp.parent_id = triples.id
-                          and tp.parameter_num = 1))
+                          and tp.parameter_num = 1
+                          and (p.left_opcode isnull or
+                               p.left_opcode = p1.operator)
+                          and (p.left_const_min isnull or
+                               p.left_const_min <= p1.int1)
+                          and (p.left_const_max isnull or
+                               p.left_const_max >= p1.int1)
+                          and (p.left_multi_use isnull or
+                               p.left_multi_use and p1.use_count > 1 or
+                               not p.left_multi_use and p1.use_count <= 1)))
 
-                 and (right_const is null and right_multi_use is null or
-                      (select (right_const isnull or
-                               right_const and right.operator = 'int' or
-                               not right_const and right.operator != 'int') and
-                              (right_const_min isnull or
-                               right_const_min <= right.int1) and
-                              (right_const_max isnull or
-                               right_const_max >= right.int1) and
-                              (right_multi_use isnull or
-                               right_multi_use and right.use_count > 1 or
-                               not right_multi_use and right.use_count <= 1)
-                         from triples_parameters tp2 inner join triples right
-                           on tp2.parameter_id = right.id
+                 and (p.right_opcode is null and p.right_multi_use is null or
+                      exists (select null
+                         from triple_parameters tp2 inner join triples p2
+                           on tp2.parameter_id = p2.id
                         where tp2.parent_id = triples.id
-                          and tp2.parameter_num = 2))
+                          and tp2.parameter_num = 2
+                          and (p.right_opcode isnull or
+                               p.right_opcode = p2.operator)
+                          and (p.right_const_min isnull or
+                               p.right_const_min <= p2.int1)
+                          and (p.right_const_max isnull or
+                               p.right_const_max >= p2.int1)
+                          and (p.right_multi_use isnull or
+                               p.right_multi_use and p2.use_count > 1 or
+                               not p.right_multi_use and p2.use_count <= 1)))
 
-               order by preference
+               order by p.preference
                limit 1)
     ''', (processor,))
-    """
 
     for block_id, name, word_symbol_id, next, next_conditional \
      in crud.read_as_tuples('blocks', 'id', 'name', 'word_symbol_id', 'next',

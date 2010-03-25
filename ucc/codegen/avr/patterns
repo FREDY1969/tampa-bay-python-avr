@@ -1,0 +1,58 @@
+# patterns
+
++, int 0-63=delink, any=2*immed_word trashed
+    ADIW  {right}, {left_int}
+
++, any=2*immed_word trashed, int 0-63=delink
+    ADIW  {left}, {right_int}
+
++, int=delink, any=2*immed trashed
+    SUBI  lo_reg({right}), lo(-{left_int})
+    SBCI  hi_reg({right}), hi(-{left_int})
+
++, any=2*immed trashed, int=delink
+    SUBI  lo_reg({left}), lo(-{right_int})
+    SBCI  hi_reg({left}), hi(-{right_int})
+
++, single_use=2*single trashed, any=2*single
+    ADD  lo_reg({left}), lo_reg({right})
+    ADC  hi_reg({left}), hi_reg({right})
+
++, multi_use=2*single, single_use=2*single trashed
+    ADD  lo_reg({right}), lo_reg({left})
+    ADC  hi_reg({right}), hi_reg({left})
+
++, multi_use=2*single, multi_use=2*single
+    ADD  lo_reg({right}), lo_reg({left})
+    ADC  hi_reg({right}), hi_reg({left})
+
+-, any=2*immed_word trashed, int 0-63=delink
+    SBIW  {left}, {right_int}
+
+-, any=2*immed trashed, int=delink
+    SUBI  lo_reg({left}), lo({right_int})
+    SBCI  hi_reg({left}), hi({right_int})
+
+-, any=2*single trashed, any=2*single
+    SUB  lo_reg({left}), lo_reg({right})
+    SBC  hi_reg({left}), hi_reg({right})
+
+int
+    LDI  lo_reg({ans}), lo({int1})
+    LDI  hi_reg({ans}), hi({int1})
+
+local
+    get_local
+
+output-bit-set
+    SBI  io({string}), {int1}
+
+if-true, single_use
+    OR   lo_reg({left}), hi_reg({left})
+    jeq  {true_label}
+
+if-true, multi_use
+    MOV  {r_single_1}, lo_reg({left})
+    OR   {r_single_1}, hi_reg({left})
+    jeq  {true_label}
+

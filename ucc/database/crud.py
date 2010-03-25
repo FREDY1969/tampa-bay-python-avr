@@ -63,8 +63,9 @@ class db_connection:
     then calls `fini`.
     '''
 
-    def __init__(self, directory):
-        init(directory)
+    def __init__(self, directory, create = True, load_gensym = True):
+        self.load_gensym = load_gensym
+        init(directory, create, load_gensym)
 
     def __enter__(self):
         return Db_conn
@@ -76,10 +77,10 @@ class db_connection:
         else:
             if Debug: print("crud: rollback")
             Db_conn.rollback()
-        fini()
+        fini(self.load_gensym)
         return False    # don't ignore exception (if any)
 
-def init(directory):
+def init(directory, create = True, load_gensym = True):
     r'''Initialize the module.
 
     Opens a database connection to the 'ucc.db' file in 'directory' and sets
@@ -94,14 +95,20 @@ def init(directory):
     If directory is None, then no database connection is done, but other
     global variables are initialized (for testing).
     '''
+
     global Db_conn, Db_cur, _Gensyms, In_transaction
+
     In_transaction = False
     if Db_conn is None:
         if directory is None:
             _Gensyms = {}
         else:
-            db_path = os.path.join(directory, Db_filename)
+            if directory.endswith('.db'):
+                db_path = directory
+            else:
+                db_path = os.path.join(directory, Db_filename)
             if not os.path.exists(db_path):
+                assert create, "Database {} does not exist".format(db_path)
                 Db_conn = db.connect(db_path)
                 Db_cur = Db_conn.cursor()
                 ddl_path = os.path.join(os.path.dirname(__file__), 'ucc.ddl')
@@ -115,16 +122,20 @@ def init(directory):
                     for command in commands:
                         db_cur.execute(command)
             else:
-                Db_conn = db.connect(os.path.join(directory, Db_filename))
+                Db_conn = db.connect(db_path)
                 Db_cur = Db_conn.cursor()
-            Db_cur.execute("select prefix, last_used_index from gensym_indexes")
-            _Gensyms = dict(Db_cur)
+            if load_gensym:
+                Db_cur.execute('''select prefix, last_used_index 
+                                    from gensym_indexes''')
+                _Gensyms = dict(Db_cur)
+            else:
+                _Gensyms = {}
 
-def fini():
+def fini(load_gensym = True):
     r'''Saves the `gensym` info in the database and closes the connection.
     '''
     global Db_conn
-    save_gensym_indexes()
+    if load_gensym: save_gensym_indexes()
     Db_cur.close()
     Db_conn.close()
     Db_conn = None

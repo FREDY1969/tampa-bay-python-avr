@@ -118,11 +118,11 @@ create table pattern (
     operator varchar(255) not null,
 
     -- pattern conditions:
-    left_const bool,
+    left_opcode varchar(255),
     left_const_min int,
     left_const_max int,
     left_multi_use bool,
-    right_const bool,
+    right_opcode varchar(255),
     right_const_min int,
     right_const_max int,
     right_multi_use bool
@@ -146,7 +146,7 @@ create table code_seq (
 create table reg_requirements (
     code_seq_id int not null references code_seq(id),
     reg_class varchar(20) not null references reg_class(name),
-    need int not null,
+    num_needed int not null,
     primary key (code_seq_id, reg_class)
 );
 

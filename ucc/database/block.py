@@ -279,7 +279,7 @@ class block:
         meaning that the result must be stored into multiple places.
         '''
         self.labels[symbol_id] = triple
-        if symbol_id in self.dirty_labels: self.dirty_labels.remove(symbol_id)
+        self.dirty_labels.discard(symbol_id)
         if symbol_table.get_by_id(symbol_id).context is None:
             # This is a global variable!
             if symbol_id in self.sets_global:
