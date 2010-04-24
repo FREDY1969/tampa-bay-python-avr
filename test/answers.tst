@@ -79,7 +79,7 @@
 >>> keys
 ['q1', 'q2', 'q3']
 >>> for k in keys: print(a_dict[k])
-<ans_choice q1=foo->{'q6': <ans_string q6='Hi Mom!'>}>
+<ans_choice q1=foo->defaultdict(<class 'list'>, {'q6': <ans_string q6='Hi Mom!'>})>
 <ans_multichoice for q2>
 <ans_series for q3>
 
@@ -87,14 +87,14 @@
 >>> q1.tag
 'foo'
 >>> q1.subanswers
-{'q6': <ans_string q6='Hi Mom!'>}
+defaultdict(<class 'list'>, {'q6': <ans_string q6='Hi Mom!'>})
 
 >>> q2 = a_dict['q2']
 >>> sorted(q2.answers.keys())
 [1, 3]
 >>> q2.answers[1]
 >>> q2.answers[3]
-{'q6': <ans_string q6='Hi Mom!'>}
+defaultdict(<class 'list'>, {'q6': <ans_string q6='Hi Mom!'>})
 
 >>> q3 = a_dict['q3']
 >>> q3.q4
@@ -178,7 +178,7 @@
 >>> keys
 ['q1', 'q2', 'q3']
 >>> for k in keys: print(a_dict[k])
-[<ans_choice q1=foo->{'q6': <ans_string q6='Hi Mom!'>}>, <ans_choice q1=bar->{'q7': <ans_string q7='Hi Dad!'>}>]
+[<ans_choice q1=foo->defaultdict(<class 'list'>, {'q6': <ans_string q6='Hi Mom!'>})>, <ans_choice q1=bar->defaultdict(<class 'list'>, {'q7': <ans_string q7='Hi Dad!'>})>]
 [<ans_multichoice for q2>]
 [<ans_series for q3>, <ans_series for q3>]
 
@@ -186,18 +186,18 @@
 >>> q1[0].tag
 'foo'
 >>> q1[0].subanswers
-{'q6': <ans_string q6='Hi Mom!'>}
+defaultdict(<class 'list'>, {'q6': <ans_string q6='Hi Mom!'>})
 >>> q1[1].tag
 'bar'
 >>> q1[1].subanswers
-{'q7': <ans_string q7='Hi Dad!'>}
+defaultdict(<class 'list'>, {'q7': <ans_string q7='Hi Dad!'>})
 
 >>> q2 = a_dict['q2']
 >>> sorted(q2[0].answers.keys())
 [1, 3]
 >>> q2[0].answers[1]
 >>> q2[0].answers[3]
-{'q6': <ans_string q6='Hi Mom!'>}
+defaultdict(<class 'list'>, {'q6': <ans_string q6='Hi Mom!'>})
 
 >>> q3 = a_dict['q3']
 >>> q3[0].q4
