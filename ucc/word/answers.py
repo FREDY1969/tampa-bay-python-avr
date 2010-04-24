@@ -29,6 +29,8 @@ elements.  All other answers have a 'value' attribute with the answer to the
 question (unless the null="True" attribute is set).
 '''
 
+import collections
+
 from xml.etree import ElementTree
 
 def from_xml(answers_element):
@@ -46,7 +48,7 @@ def from_xml(answers_element):
     '''
     
     if answers_element is None: return {}
-    ans = {}
+    ans = collections.defaultdict(list)
     for answer in answers_element.getchildren():
         if answer.tag == 'answer':
             name = answer.get('name')
@@ -59,7 +61,7 @@ def from_xml(answers_element):
                     ans[name] = globals()['ans_' + type].create_unanswered(name)
             else:
                 value = globals()['ans_' + type].from_element(name, answer)
-                if repeated: ans.setdefault(name, []).append(value)
+                if repeated: ans[name].append(value)
                 else: ans[name] = value
         elif answer.tag == 'answers':
             name = answer.get('name')
@@ -71,7 +73,7 @@ def from_xml(answers_element):
                     ans[name] = ans_series.create_unanswered(name)
             else:
                 value = ans_series.from_element(name, answer)
-                if repeated: ans.setdefault(name, []).append(value)
+                if repeated: ans[name].append(value)
                 else: ans[name] = value
         else:
             raise SyntaxError("unknown xml tag in <answers>: " + answer.tag)
