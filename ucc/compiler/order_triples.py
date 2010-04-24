@@ -1,8 +1,19 @@
 # order_triples.py
 
-Best_score = None
+r'''Order triples and register allocation code.
 
-def best_seq(nodes, graph, accum_score):
+node is expected to have the following attributes:
+  parents is seq of node
+  reg_classes is list of reg_class for all registers used by node.
+                 output registers are always first.
+  num_outputs is number of initial registers (starting at 0) that are output.
+  children is seq of (child, list of node_reg_num)
+  trashes_children(triple_seq) returns seq of True/False for each child
+'''
+
+import itertools
+
+def best_seq(nodes, graph, accum_score, best_score = None):
     r'''Returns sequence of nodes requiring the least registers.
 
     Nodes is a set of triples.
@@ -11,187 +22,132 @@ def best_seq(nodes, graph, accum_score):
         constraints of this graph.
     Accum_score is a score object.
 
-    Returns None if it can't beat a previous Best_score.
+    Returns None if it can't beat a previous best_score.
     '''
-    global Best_score
     if not nodes:
-        Best_score = accum_score
-        return ()
+        return accum_score
     constrained = set()
     for succ_set in graph.values():
         constrained += succ_set
-    best_seq = None
     for next in sorted(nodes - constrained,
-                       key=lambda node: len(node.reg_classes),
+                       key=lambda node:
+                             max(len(p.reg_classes) for p in parents(node)),
                        reverse=True):
         graph = graph.copy()
         del graph[next]
         nodes = nodes.difference((next,))
         next_score = accum_score.add(next)
-        if Best_score and next_score < Best_score:
-            for rest in topo(nodes, graph, next_score):
-                if rest is not None:
-                    best_seq = (next,) + rest
-    return best_seq
+        if not best_score or next_score < best_score:
+            best_score = best_seq(nodes, graph, next_score, best_score)
+    return best_score
 
-class score:
-    r'''Tracks register usage after executing a sequence of triples.
+def parents(node, ignore = None):
+    r'''Recursively generates all parents of node.
 
-    This object can be used more than once, trying to add different nodes
-    (triples) to the sequence.  So the object must be immutable.
+        Set up:
+            node_X
+                node_Y
+                    node_Z
+                node_Z
+
+        >>> from doctest_tools import mock
+        >>> node_Z = mock.obj("node Z")
+        >>> node_Y = mock.obj("node Y")
+        >>> node_X = mock.obj("node X")
+        >>> node_Z.parents = [node_Y, node_X]
+        >>> node_Y.parents = [node_X]
+        >>> node_X.parents = []
+
+        >>> tuple(parents(node_Z))
+        (<mock.obj node Z>, <mock.obj node Y>, <mock.obj node X>)
+
+    '''
+    if ignore is None: ignore = set()
+    if node not in ignore:
+        ignore.add(node)
+        yield node
+        for p in node.parents:
+            for pp in parents(p, ignore): yield pp
+
+class triple_seq:
+    def __init__(self, prior_seq, next_triple):
+        self.prior_seq = prior_seq
+        self.next_triple = next_triple
+        self.reg_allocation = self.prior_seq.reg_allocation.copy_for(self)
+        self.index = self.prior_seq.index + 1
+
+    def add(self, next_triple):
+        return triple_seq(self, next_triple,
+                          self.reg_allocation.add(next_triple))
+
+class reg_allocation:
+    r'''
+
+        Set up:
+            -
+                X
+                1
+
+        >>> from doctest_tools import mock
+        >>> node_minus = mock.obj("minus")
+        >>> node_X = mock.obj("X")
+        >>> node_X.parents = [node_minus]
+        >>> node_X.reg_classes = ['single']
+        >>> node_X.num_outputs = 2
+        >>> node_X.children = ()
+        >>> node_X.trashes_children = mock.const((False, False))
+        >>> node_minus.parents = []
+        >>> node_minus.reg_classes = ['immed-word']
+        >>> node_minus.num_outputs = 2
+        >>> node_minus.children = ((node_X, [0, 1]),)
+        >>> node_minus.trashes_children = mock.const((True, True))
+
+        >>> ts = mock.obj("triple_seq")
+        >>> ra = reg_allocation(ts)
+        >>> ra.add(node_minus)
     '''
 
-    def __init__(self, class_map, discarded, map, dup_map, moves, use_counts):
-        r'''
+    def __init__(self, triple_seq, prior_allocation = None):
+        self.triple_seq = triple_seq
 
-        registers are just numbers starting at 0.
+    def copy_for(self, triple_seq):
+        return reg_allocation(triple_seq, self)
 
-        class_map is list of reg_class (class_map[reg] is reg_class for reg)
-        discarded is set of reg
-        map is {(node, node_reg): my_reg}
-        dup_map is {(node, node_reg): [num]}
+    def add(self, next_triple):
+        # Map the child output registers:
+        regs_seen = set()
+        next_index = self.triple_seq.get_index(next_triple)
+        trashes_flags = next_triple.trashes_children(self.triple_seq)
+        for param_num, ((child_triple, child_regs), trashes) \
+         in enumerate(itertools.zip_longest(next_triple.children,
+                                            trashes_flags,
+                                            fillvalue=False)):
+            child_index = self.triple_seq.get_index(child_triple)
+            for child_reg_num, node_reg_num in enumerate(child_regs):
+                assert child_reg_num < child_triple.num_outputs, \
+                       "{}[{}]: expects too many outputs from param {}" \
+                       .format(next_triple.operator, next_triple.id,
+                               param_num + 1)
+                regs_seen.add(node_reg_num)
+                self.triple_seq.map_output(child_index, child_reg_num,
+                                           next_index, node_reg_num, trashes)
+            self.triple_seq.dec_use_count(child_index)
+
+        # Map the other remaining registers:
+        for i, node_reg_class \
+         in enumerate(next_triple.reg_classes[next_triple.num_outputs:]):
+            node_reg_num = next_triple.num_outputs + i
+            if node_reg_num not in regs_seen:
+                self.map(next_triple, node_reg_num,
+                         None, self.allocate(node_reg_class))
+
+    def allocate(self, reg_class, first_index = None):
+        r'''Allocates a register over the interval first_index to the end of
+        the sequence.
+
+        Returns the block_reg_num.
         '''
-        self.class_map = class_map
-        self.discarded = discarded
-        self.map = map
-        self.dup_map = dup_map
-        self.moves = moves
-        self.use_counts = use_counts
 
-    def __lt__(self, b):
-        return self.min_needed < b.min_needed
-
-    def add(self, node):
-        r'''Add node to this sequence of triples.
-
-        Returns a new score representing the new sequence.  Self is unmodified.
-
-        node is expected to have the following attributes:
-          reg_classes is list of reg_class for all registers used by node.
-                         output registers are always first.
-          num_outputs is number of initial registers (starting at 0) that are
-                         output.
-          children is seq of (child, list of (reg_num, trashes_flag))
-        '''
-        return merge_node(node, self.class_map[:], self.discarded.copy(),
-                          self.map.copy(), self.dup_map.copy(),
-                          self.use_counts.copy())
-
-def merge_node(node, new_class_map, new_discarded, new_map, new_dup_map,
-               new_use_counts):
-    r'''Merge node into new_* data structures and return new score object.
-    '''
-
-    new_moves = []      # list of (src_reg, dest_reg)
-
-    # (node, node_reg_num, node_reg_class, [from_reg_num, [dup_regs]])
-    get_regs = []
-
-    # Merge node.children into the picture
-    node_regs_seen = merge_children(node, new_class_map, new_discarded,
-                                    new_map, new_dup_map, new_use_counts)
-
-    # Map other node registers needed as discarded registers:
-    for node_reg_num, node_reg_class in enumerate(node.reg_classes):
-        if node_reg_num not in node_regs_seen:
-            get_regs.append((node, node_reg_num, node_reg_class))
-            #reg = get_reg(node_reg_class)
-            #new_map[node, node_reg_num] = reg
-
-    # Make sure node's outputs are not discarded!
-    for node_reg_num in range(node.num_outputs):
-        new_discarded.discard(new_map[node, node_reg_num])
-
-    allocate_regs(get_regs, new_discarded, new_class_map, new_map, new_moves)
-
-    return score(new_class_map, new_discarded, new_map, new_dup_map,
-                 new_moves, new_use_counts)
-
-def merge_children(node, new_class_map, new_discarded, new_map, new_dup_map,
-                   new_use_counts):
-    node_regs_seen = set()
-    for child, child_output_regs in node.children:
-        new_use_counts[child] -= 1
-        last_use_of_child = new_use_counts[child] == 0
-        for child_reg_num, (node_reg_num, trashes) \
-         in enumerate(child_output_regs):
-            node_regs_seen.add(node_reg_num)
-            my_reg_num = new_map[child, child_reg_num]
-            my_reg_class = new_class_map[my_reg_num]
-            node_reg_class = node.reg_classes[node_reg_num]
-            if trashes and not last_use_of_child:
-                get_regs.append((node, node_reg_num, node_reg_class,
-                                 my_reg_num))
-                #dup_reg = get_reg(node_reg_class)
-                #new_map[node, node_reg_num] = dup_reg
-                #new_moves.append((my_reg_num, dup_reg))
-            elif my_reg_class <= node_reg_class:
-                new_map[node, node_reg_num] = my_reg_num
-            elif node_reg_class <= my_reg_class:
-                new_map[node, node_reg_num] = my_reg_num
-                new_class_map[my_reg_num] = node_reg_class
-            else:
-                # We need a copy of the child's output in node_reg_class.
-                found = False
-                if (child, child_reg_num) in new_dup_map:
-                    dup_regs = new_dup_map[child, child_reg_num]
-                    for dup_reg in dup_regs:
-                        dup_reg_class = new_class_map[dup_reg]
-                        if dup_reg_class <= node_reg_class:
-                            new_map[node, node_reg_num] = dup_reg
-                            found = True
-                            break
-                        elif node_reg_class <= dup_reg_class:
-                            new_map[node, node_reg_num] = dup_reg
-                            new_class_map[dup_reg] = node_reg_class
-                            found = True
-                            break
-                    if not found:
-                        dup_regs = dup_regs[:]
-                else:
-                    dup_regs = []
-                    new_dup_map[child, child_reg_num] = dup_regs
-                if not found:
-                    get_regs.append((node, node_reg_num, node_reg_class,
-                                     my_reg_num, dup_regs))
-                    #dup_reg = get_reg(node_reg_class)
-                    #new_map[node, node_reg_num] = dup_reg
-                    #dup_regs.append(dup_reg)
-                    #new_moves.append((my_reg_num, dup_reg))
-        if last_use_of_child:
-            # Discard child output registers (and dups)
-            for i in range(child.num_outputs):
-                new_discarded.add(new_map[child, i])
-                if (child, i) in new_dup_map:
-                    for dup_reg in new_dup_map[child, i]:
-                        new_discarded.add(dup_reg)
-    return node_regs_seen
-
-def allocate_regs(get_reg_list, new_discarded, new_class_map, new_map,
-                  new_moves):
-    r'''Get_reg_list is a list of registers needed.
-    
-    Process get_regs_list and merge results into other arguments.
-    '''
-    get_regs_list.sort(key=lambda t: t[2].tsort_index)
-    for node, node_reg_num, node_reg_class, *rest in get_regs_list:
-        ans = None
-        ans_class = None
-        for reg in new_discarded:
-            reg_class = new_class_map[reg]
-            if reg_class <= node_reg_class and \
-               (not ans_class or reg_class > ans_class):
-                ans = reg
-                ans_class = reg_class
-        if not ans_class:
-            # Allocate new register
-            # FIX: check register overflow!
-            ans = len(new_class_map)
-            new_discarded.add(ans)
-            new_class_map.append(node_reg_class)
-        new_map[node, node_reg_num] = ans
-        if rest: 
-            new_moves.append((rest[0], ans))
-            if len(rest) > 1:
-                rest[1].append(ans)
+    def map(self, from_triple, from_reg_num, to_triple, to_reg_num):
+        pass
 

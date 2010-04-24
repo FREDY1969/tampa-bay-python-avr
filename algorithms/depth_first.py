@@ -1,4 +1,5 @@
 
+import collections
 
 example1 = {
  'a': ('b', 'e'),
@@ -45,11 +46,11 @@ def dragon_version(G, root):
         visited.add(n)
         for s in G.get(n, ()):
             if s not in visited:
-                T.setdefault(n, []).append(s)
+                T[n].append(s)
                 i = search(s, i)
         DFN[n] = i
         return i - 1
-    T = {}
+    T = collections.defaultdict(list)
     visited = set()
     DFN = {}
     search(root, len(G))
