@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>multi_position_switch</name>
+    <label>multi-position-switch</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" null="True" repeated="False" type="string" />
+    </answers>
+    <questions>
+        <question>
+            <name>use_pullups_</name>
+            <label>use-pullups?</label>
+            <type>bool</type>
+        </question>
+        <question>
+            <name>selected_pin_is</name>
+            <label>selected-pin-is</label>
+            <type>choice</type>
+            <default>0</default>
+            <options>
+                <option name="LOW" value="0" />
+                <option name="HIGH" value="1" />
+            </options>
+        </question>
+        <questions>
+            <name>pin_mapping</name>
+            <label>pin mapping</label>
+            <min>0</min>
+            <max>infinite</max>
+            <orderable>False</orderable>
+            <question>
+                <name>pin_number</name>
+                <label>pin-number</label>
+                <type>int</type>
+            </question>
+            <question>
+                <name>value</name>
+                <label>value</label>
+                <type>string</type>
+            </question>
+        </questions>
+    </questions>
+</word>

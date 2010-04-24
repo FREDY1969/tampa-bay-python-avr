@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+
+<script type="text/javascript" charset="utf-8">
+$(function () {
+	$('#submit').click(function (e) {
+		e.preventDefault();
+		$.ajax({
+			url: $('#requestUrl').val(),
+			type: $('#requestType').val(),
+			data: {data: $('#data').val()},
+			// dataType: 'json',
+			success: function (data) {
+				$('#responseData').val(data);
+			}
+		});
+	});
+});
+</script>
+
+</head>
+<body>
+
+<h2></h2>
+
+request url: <input type="text" value="/ajax/test/bar" id="requestUrl"><br>
+request type: <select id="requestType">
+	<option value="get">GET</option>
+	<option value="post">POST</option>
+</select><br>
+data: <input type="text" value="{&#34;foo&#34;:&#34;bar&#34;}" id="data"><br>
+<br>
+<input type="button" value="submit" id="submit"><br>
+<br>
+response data:<br>
+<textarea id="responseData" rows="6" cols="40"></textarea>
+
+</body>
+</html>

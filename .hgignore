@@ -1,0 +1,19 @@
+syntax: glob
+
+build/
+.pyhist
+.*.swp
+*.pyc
+*.pyo
+*.db
+*~
+*.kpf
+*.hex
+parser.py
+parser_tables.py
+scanner_tables.py
+metaparser_tables.py
+metascanner_tables.py
+
+.DS_Store
+._*
