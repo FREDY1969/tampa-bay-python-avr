@@ -27,12 +27,16 @@ def get(session, **kwarg):
                 'name': word.name,
                 # 'label': word.label,
                 'data': word.label,
-                'children': [],
-                'state': 'open' if type(parent) is list else 'closed'
+                'state': 'open' if type(parent) is list else None
             }
             children.append(serialized);
             buildSerializedTree(word.subclasses, serialized)
             buildSerializedTree(word.instances, serialized)
+        
+        # remove empty children list
+        
+        if type(parent) is dict and parent['children'] == []:
+            del(parent['children'])
         
         return parent
     
