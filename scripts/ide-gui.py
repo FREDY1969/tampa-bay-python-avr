@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3.1
 
-# ide.py
+# ide-gui.py
 
 r'''Package editing GUI for uCC project.
 
