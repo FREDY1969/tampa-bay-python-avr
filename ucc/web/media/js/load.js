@@ -7,7 +7,7 @@ $(function () {
 			type: "json",
 			opts: {
 				method: "GET",
-				url: 'http://localhost:8005/ajax/words/get?data={}'
+				url: '/ajax/words/get?data={}'
 			}
 		},
 		opened: ['declaration']
