@@ -1,3 +1,9 @@
+# test.py
+
+'''An example module for handling ajax requests'''
+
+from doctest_tools import setpath
+setpath.setpath(__file__, remove_first = True)
 
 def bar(session, **kwarg):
     if 'foo' in kwarg:

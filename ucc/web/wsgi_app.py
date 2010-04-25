@@ -15,8 +15,6 @@
 #     wsgi.multithread: True
 #     wsgi.run_once: False
 
-
-
 import os
 import urllib.parse
 import json
