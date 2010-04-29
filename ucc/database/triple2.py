@@ -5,10 +5,12 @@ r'''Triple processing for gen_assembler.
 This reads the triples back in from the database, but into a new `triple` class
 (rather than `ucc.database.triple.triple`) to support gen_assembler.  This ends
 up setting the reverse_children, order_in_block and reg_class columns for each
-triple.
+triple. (FIX: Check previous statement when done).
 '''
 
 import sys   # temp for debugging...
+import collections
+import itertools
 
 from ucc.database import crud
 
@@ -19,7 +21,6 @@ class triple:
         self.labels = tuple(crud.read_column('triple_labels', 'symbol_id',
                                              triple_id=self.id))
 
-        # FIX: Is this used anywhere?
         self.predecessors = tuple(crud.read_column('triple_order_constraints',
                                                    'predecessor',
                                                    successor=self.id))
@@ -28,6 +29,7 @@ class triple:
         self.parents = []
         self.updated_attributes = []
         self.deep_children = set([self])
+        self.deep_predecessors = set(self.predecessors)
 
     def connect_children(self, triple_id_map):
         self.children = \
@@ -41,10 +43,116 @@ class triple:
     def add_parent(self, parent):
         self.parents.append(parent)
 
-    def get_children(self):
-        self.deep_children.update(*(child.get_children()
+    def get_deep_children(self):
+        self.deep_children.update(*(child.get_deep_children()
                                     for child in self.children))
         return self.deep_children
+
+    def get_deep_predecessors(self):
+        self.deep_predecessors.update(*(child.get_deep_predecessors()
+                                        for child in self.children))
+
+        # While we're at it, generate all legal orders of self.children
+        # considering the predecessor constraints:
+        self.child_orders = []
+        for child_order \
+         in itertools.permutations(self.children, len(self.children)):
+            if all(map(lambda a, b:
+                         a.deep_predecessors.disjoint(b.deep_children),
+                   # itertools.combinations produces a, b pairs with a and b 
+                   # in the same order as they are in child_order.
+                   itertools.combinations(child_order, 2))):
+                self.child_orders.append(child_order)
+        assert not self.children or self.child_orders
+
+        return self.deep_predecessors
+
+    def get_shared_triples(self):
+        r'''Returns a dict mapping shared_triples to internal_use_counts.
+
+        Only triples whose internal_use_count is less than their total
+        use_count are included.
+
+        Also sets self.shared_triples to the answer for later use.
+        '''
+        ans = collections.defaultdict(lambda: 0)
+        ans.update(zip(self.children, itertools.repeat(1)))
+        child_shares = collections.defaultdict(list) # {shared_triple: [child]}
+        for child in self.children:
+            for shared_triple, count in child.get_shared_triples():
+                child_shares[shared_triples].append(child)
+                ans[shared_triple] += count
+
+        # {(child1, child2): [shared_triple]}
+        self.child_shares = collections.defaultdict(list)
+        for shared_triple, children in child_shares.items():
+            for key in itertools.permutations(children, 2):
+                self.child_shares[key].append(shared_triple)
+
+        for shared_triple, count in tuple(ans.items()):
+            if shared_triple.use_count == count:
+                del ans[shared_triple]
+        self.shared_triples = ans
+        return ans
+
+    def get_reg_usage(self, shared_left, shared_right):
+        r'''Returns {reg_class: number_used}, child_order.
+
+        Child_order is a list of (child, child_order) tuples.
+
+        Shared_left and shared_right are iterables.
+        '''
+        shared_left = frozenset(shared_left)
+        starting_child_shared_left = dict((shared, self.shared_triples[shared])
+                                          for shared in shared_left)
+        starting_child_shared_right = {}
+        for shared_both in shared_left.union(shared_right):
+            # don't want either of these to ever hit 0:
+            child_shared_left[shared_both] += 1
+            child_shared_right[shared_both] = \
+              self.shared_triples[shared_both] + 1
+
+        starting_max_counts = collections.defaultdict(lambda: 0)
+        Now what?
+
+        best_counts = None
+        for child_order in self.child_orders:
+            child_shared_left = starting_child_shared_left.copy()
+            child_shared_right = starting_child_shared_right.copy()
+            max_counts = starting_max_counts.copy()
+            order = []
+            for child in child_order:
+                # FIX: Accumulate prior sibling's outputs
+                for shared_triple, count in child.shared_triples.items():
+                    accounted_for = False
+                    if shared_triple in child_shared_left:
+                        child_shared_left[shared_triple] -= count
+                        accounted_for = True
+                    if shared_triple in child_shared_right:
+                        child_shared_right[shared_triple] -= count
+                        if child_shared_right[shared_triple] == 0:
+                            del child_shared_right[shared_triple]
+                        accounted_for = True
+                    new_shared_left = {}
+                    if not accounted_for:
+                        new_shared_left[shared_triple] = \
+                          child_shared_right[shared_triple] = \
+                            shared_triple.use_count - count
+                reg_counts, child_order = \
+                  child.get_reg_usage(child_shared_left.keys(),
+                                      child_shared_right.keys())
+                max_counts = max_regs(max_counts, reg_counts)
+                order.append((child, child_order))
+                for shared_triple \
+                 in tuple(filter(lambda key: child_shared_left[k] == 0,
+                                 child_shared_left.keys())):
+                    del child_shared_left[shared_triple]
+                for shared_triple, count in new_shared_left.items():
+                    child_shared_left[shared_triple] = count
+            if reg_less(max_counts, best_counts):
+                best_counts = max_counts
+                best_order = order
+        FIX: Add my outputs
 
     def order_children(self, predecessors):
         r'''Figures out the order to evaluate the child nodes.
@@ -104,7 +212,9 @@ def read_triples(block_id):
     #print >> sys.stderr, "read_triples: triples", triples
     for t in triples:
         t.connect_children(triple_id_map)
-    for t in triples:
-        t.get_children()
+    for root in filter(lambda t: not t.parents, triples):
+        root.get_deep_children()
+        root.get_shared_triples()
+        root.get_deep_predecessors()
     return triples
 

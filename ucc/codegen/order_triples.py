@@ -5,7 +5,7 @@ r'''Order triples and register allocation code.
 node is expected to have the following attributes:
   parents is seq of node
   reg_classes is list of reg_class for all registers used by node.
-                 output registers are always first.
+    (output registers are always first).
   num_outputs is number of initial registers (starting at 0) that are output.
   children is seq of (child, list of node_reg_num)
   trashes_children(triple_seq) returns seq of True/False for each child
@@ -13,8 +13,9 @@ node is expected to have the following attributes:
 
 import itertools
 
+# This looks messed up.  Is this something I started and changed my mind on???
 def best_seq(nodes, graph, accum_score, best_score = None):
-    r'''Returns sequence of nodes requiring the least registers.
+    r'''Determines the sequence of nodes requiring the least registers.
 
     Nodes is a set of triples.
     Graph is {predecessor node: set of successors}
@@ -22,7 +23,8 @@ def best_seq(nodes, graph, accum_score, best_score = None):
         constraints of this graph.
     Accum_score is a score object.
 
-    Returns None if it can't beat a previous best_score.
+    Returns the accum_score for the best sequence of nodes, or None if it
+    can't beat a previous best_score.
     '''
     if not nodes:
         return accum_score
@@ -92,17 +94,32 @@ class reg_allocation:
         >>> node_minus = mock.obj("minus")
         >>> node_X = mock.obj("X")
         >>> node_X.parents = [node_minus]
-        >>> node_X.reg_classes = ['single']
+        >>> node_X.reg_classes = ['single', 'single']
         >>> node_X.num_outputs = 2
         >>> node_X.children = ()
         >>> node_X.trashes_children = mock.const((False, False))
+        >>> node_1 = mock.obj("1")
+        >>> node_1.parents = [node_minus]
+        >>> node_1.reg_classes = ['single', 'single']
+        >>> node_1.num_outputs = 2
+        >>> node_1.children = ()
         >>> node_minus.parents = []
-        >>> node_minus.reg_classes = ['immed-word']
+        >>> node_minus.reg_classes = \
+        ...   ['immed-word', 'immed-word', 'single', 'single']
         >>> node_minus.num_outputs = 2
-        >>> node_minus.children = ((node_X, [0, 1]),)
+        >>> node_minus.children = ((node_X, [0, 1]), (node_1, [2, 3]))
         >>> node_minus.trashes_children = mock.const((True, True))
 
         >>> ts = mock.obj("triple_seq")
+        >>> ts.get_index.response(1, node_minus)
+        >>> ts.get_index.response(2, node_X)
+        >>> ts.get_index.response(3, node_1)
+        >>> ts.map_output.response(None, 2, 0, 1, 0, True)
+        >>> ts.map_output.response(None, 2, 1, 1, 1, True)
+        >>> ts.map_output.response(None, 3, 0, 1, 2, True)
+        >>> ts.map_output.response(None, 3, 1, 1, 3, True)
+        >>> ts.dec_use_count.response(None, 2)
+        >>> ts.dec_use_count.response(None, 3)
         >>> ra = reg_allocation(ts)
         >>> ra.add(node_minus)
     '''

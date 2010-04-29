@@ -237,7 +237,7 @@ create table triples (
     string varchar(32768),
     type_id int references type(id),
     use_count int,             -- count times used as a parameter
-    code_seq_id int,
+    code_seq_id int,           -- references code_seq table in machine db
     reg_class int,
     register_est int,          -- Estimate of number of registers needed by
                                -- this node and all of it's decendants.
@@ -252,7 +252,8 @@ create table triples (
 create table triple_parameters (
     parent_id int not null references triples(id),
     parameter_id int not null references triples(id),
-    parameter_num int not null
+    parameter_num int not null,
+    reg_class_required int     -- references reg_class table in machine db
 );
 
 create table triple_labels (

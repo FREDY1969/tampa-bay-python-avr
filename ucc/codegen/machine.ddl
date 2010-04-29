@@ -78,7 +78,8 @@ create table vertex (
     -- Otherwise, if the aliases for reg_class X are a subset of the aliases
     -- for reg_class Y, then X is assigned to a child of the node Y is
     -- assigned to.  So the tree represents the subset relationship amoung
-    -- reg_classes.
+    -- reg_classes.  (There is an assumption that no two register classes
+    -- intersect without one of them being a subset of the other).
     --
     -- Referred to by reg_class.
 
