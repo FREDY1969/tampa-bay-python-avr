@@ -118,7 +118,7 @@ class triple:
               self.shared_triples[shared_both] + 1
 
         starting_max_counts = collections.defaultdict(lambda: 0)
-        Now what?
+        # FIX: Now what?
 
         best_counts = None
         for child_order in self.child_orders:
@@ -157,7 +157,7 @@ class triple:
             if reg_less(max_counts, best_counts):
                 best_counts = max_counts
                 best_order = order
-        FIX: Add my outputs
+        # FIX: Add my outputs
 
     def order_children(self, predecessors):
         r'''Figures out the order to evaluate the child nodes.

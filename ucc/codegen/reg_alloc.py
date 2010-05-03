@@ -1,4 +1,4 @@
-# order_triples.py
+# reg_alloc.py
 
 r'''Order triples and register allocation code.
 
