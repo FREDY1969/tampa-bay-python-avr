@@ -49,6 +49,8 @@ class triple:
         return self.deep_children
 
     def get_deep_predecessors(self):
+        print("self.deep_predecessors", self.deep_predecessors, file=sys.stderr)
+        print("self.children", self.children, file=sys.stderr)
         self.deep_predecessors.update(*(child.get_deep_predecessors()
                                         for child in self.children))
 
@@ -57,14 +59,16 @@ class triple:
         self.child_orders = []
         for child_order \
          in itertools.permutations(self.children, len(self.children)):
-            if all(map(lambda a, b:
-                         a.deep_predecessors.disjoint(b.deep_children),
+            if all(map(lambda pair:
+                         pair[0].deep_predecessors
+                                .isdisjoint(pair[1].deep_children),
                    # itertools.combinations produces a, b pairs with a and b 
                    # in the same order as they are in child_order.
                    itertools.combinations(child_order, 2))):
                 self.child_orders.append(child_order)
         assert not self.children or self.child_orders
 
+        print("get_deep_predecessor ->", self.deep_predecessors, file=sys.stderr)
         return self.deep_predecessors
 
     def get_shared_triples(self):
