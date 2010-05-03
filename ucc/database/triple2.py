@@ -100,12 +100,17 @@ class triple:
 
         Child_order is a list of (child, child_order) tuples.
 
-        Shared_left and shared_right are iterables.
+        Shared_left and shared_right are iterables yielding triples.
         '''
         shared_left = frozenset(shared_left)
+
+        # {triple: num_internal_links_remaining}
         starting_child_shared_left = dict((shared, self.shared_triples[shared])
                                           for shared in shared_left)
+
+        # {triple: num_internal_links_remaining}
         starting_child_shared_right = {}
+
         for shared_both in shared_left.union(shared_right):
             # don't want either of these to ever hit 0:
             child_shared_left[shared_both] += 1

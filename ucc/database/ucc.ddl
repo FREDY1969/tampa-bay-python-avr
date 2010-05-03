@@ -27,6 +27,8 @@ create table symbol_table (
     address int,
     reg_class int,
     register varchar(255),
+    register_est int,          -- Estimate of number of registers needed by
+                               -- this function.
     flash_size int,
     ram_size int,
     far_size int,
@@ -194,10 +196,15 @@ create table blocks (
     name varchar(255) not null unique,               -- used as jump target
     word_symbol_id int not null references symbol_table(id),
 
-    last_triple_id int references triples(id),  -- doesn't seem to be used...
+    last_triple_id int references triples(id), --FIX: doesn't seem to be used...
     next varchar(255) references blocks(name),
-    next_conditional varchar(255) references blocks(name)
+    next_conditional varchar(255) references blocks(name),
+    register_est int           -- Estimate of number of registers needed by
+                               -- this block.
 );
+
+create unique index blocks_word_symbol_id_index
+          on blocks (word_symbol_id, name);
 
 create table block_successors (
     predecessor int not null references blocks(id),
@@ -249,12 +256,22 @@ create table triples (
     column_end int
 );
 
+create index triple_block_id_index
+          on triples(block_id, use_count);
+
 create table triple_parameters (
     parent_id int not null references triples(id),
     parameter_id int not null references triples(id),
     parameter_num int not null,
+    evaluation_order int,      -- starts with 1
     reg_class_required int     -- references reg_class table in machine db
 );
+
+create index tp_parameter_index
+          on triple_parameters(parameter_id, parent_id);
+
+create index tp_parent_index
+          on triple_parameters(parent_id, parameter_num);
 
 create table triple_labels (
     -- The symbols (if any) that each triple's result must be stored in.
@@ -277,7 +294,10 @@ create table gens (
 create table triple_order_constraints (
     predecessor int not null references triples(id),
     successor int not null references triples(id),
-    primary key (predecessor, successor)
+    depth int not null default 1,
+    orig_pred int references triples(id),
+    orig_succ int references triples(id),
+    primary key (predecessor, successor, orig_pred, orig_succ)
 );
 
 create index toc_successor_index

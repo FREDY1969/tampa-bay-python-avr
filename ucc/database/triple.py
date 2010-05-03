@@ -145,9 +145,12 @@ class triple:
                             symbol_id=label,
                             is_gen=is_gen)
             for t0 in self.hard_predecessors:
+                pred=t0.write(block_id)
                 crud.insert('triple_order_constraints',
-                            predecessor=t0.write(block_id),
-                            successor=self.id)
+                            predecessor=pred,
+                            successor=self.id,
+                            orig_pred=pred,
+                            orig_succ=self.id)
             self.writing = False
         return self.id
 
@@ -172,7 +175,9 @@ class triple:
                 if t2.id is not None:
                     crud.insert('triple_order_constraints',
                                 predecessor=t2.id,
-                                successor=self.id)
+                                successor=self.id,
+                                orig_pred=t2.id,
+                                orig_succ=self.id)
             self.soft_predecessors_written = True
 
 def delete(block_ids):
