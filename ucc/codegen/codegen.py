@@ -5,11 +5,10 @@ import itertools
 
 from ucc.database import crud, triple2
 
-Debug = 0
+Debug = True
 
 def gen_assembler(processor):
     update_use_counts()
-    update_order_constraints()
     order_children()
 
     # assign code_seq_id's to triples.
@@ -108,7 +107,7 @@ def update_order_constraints():
             insert or ignore into triple_order_constraints
               (predecessor, successor, orig_pred, orig_succ)
               select tp.parent_id, tos.successor, tos.orig_pred, tos.orig_succ
-                from triple_order_constraint tos
+                from triple_order_constraints tos
                        inner join triple_parameters tp
                          on tos.predecessor = tp.parameter_id
           ''')
@@ -118,11 +117,11 @@ def update_order_constraints():
             insert or ignore into triple_order_constraints
               (predecessor, successor, orig_pred, orig_succ)
               select tos.predecessor, tp.parent_id, tos.orig_pred, tos.orig_succ
-                from triple_order_constraint tos
+                from triple_order_constraints tos
                        inner join triple_parameters tp
                          on tos.successor = tp.parameter_id
           ''')
-        total += first + crud.Db_cur.rowcount
+        total += crud.Db_cur.rowcount
 
     # When node A has both the predecessor and successor of a constraint as
     # (deep) children, we don't need predecessor constraints from an outside
@@ -190,8 +189,8 @@ def update_order_constraints():
             insert or replace into triple_order_constraints
               (predecessor, successor, depth)
               select tos_p.predecessor, tos_s.successor, tos_p.depth + 1
-                from triple_order_constraint tos_p
-                       inner join triple_order_constraint tos_s
+                from triple_order_constraints tos_p
+                       inner join triple_order_constraints tos_s
                          on tos_p.successor = tos_s.predecessor
                        inner join triple_parameters ptp
                          on ptp.parameter_id = tos_p.predecessor
@@ -205,6 +204,7 @@ def update_order_constraints():
             break
 
 def order_children():
+    update_order_constraints()
     total = 1   # force first run through the loop
     while total:
         # calc register_est for all triples who have an evaluation_order
@@ -212,31 +212,34 @@ def order_children():
         crud.Db_cur.execute('''
             update triples
                set register_est = max(
-                 (select count(*)
-                    from triples_parameters tp
+                 (select max(1, count(*))
+                    from triple_parameters tp
                    where tp.parent_id = id)
-                 + (select extras
-                      from operator_info io
-                     where io.operator = triples.operator),
-                 (select max(child.register_est + tp2.evaluation_order - 1)
-                    from triples_parameters tp2
+                 + ifnull((select num_extra_regs
+                             from operator_info io
+                            where io.operator = triples.operator), 0),
+                 (select
+                      ifnull(max(child.register_est + tp2.evaluation_order - 1),
+                             0)
+                    from triple_parameters tp2
                            inner join triples child
                              on tp2.parameter_id = child.id
                    where tp2.parent_id = triples.id))
              where triples.register_est isnull
                and not exists (select null
-                                 from triples_parameters tp
+                                 from triple_parameters tp
                                 where tp.parent_id = id
                                   and tp.evaluation_order isnull)
           ''')
         total = crud.Db_cur.rowcount
+        if Debug: print("update triples total", total, file=sys.stderr)
 
         # calc register_est for all blocks who have a register_est for all of
         # their top-level triples.
         crud.Db_cur.execute('''
             update blocks
                set register_est = 
-                 (select max(t.register_est)
+                 (select ifnull(max(t.register_est), 0)
                     from triples t
                    where t.block_id = blocks.id
                      and t.use_count = 0)
@@ -248,6 +251,7 @@ def order_children():
                                   and t.register_est isnull)
           ''')
         total += crud.Db_cur.rowcount
+        if Debug: print("update blocks total", total, file=sys.stderr)
 
         # calc register_est for all functions who have a register_est for all
         # of their blocks.
@@ -259,18 +263,22 @@ def order_children():
                    where b.word_symbol_id = symbol_table.id)
              where symbol_table.kind in ('function', 'task')
                and symbol_table.register_est isnull
+               and exists (select null
+                             from blocks b
+                            where b.word_symbol_id = symbol_table.id)
                and not exists (select null
                                  from blocks b
                                 where b.word_symbol_id = symbol_table.id
                                   and b.register_est isnull)
           ''')
         total += crud.Db_cur.rowcount
+        if Debug: print("update symbol_table total", total, file=sys.stderr)
 
         # Create table to assign sequential evaluation_order numbers to
         # sorted triple_parameters.
         crud.Db_cur.execute('''
             create temp table param_order (
-                order integer not null primary key,    -- assigned seq number
+                seq_num integer not null primary key,  -- assigned seq number
                 parent_id int not null,                -- parent triple id
                 parameter_id int not null
             )
@@ -287,7 +295,7 @@ def order_children():
                           from triples t
                          where t.register_est isnull
                            and not exists (select null
-                                             from triple_parameter ctp
+                                             from triple_parameters ctp
                                                     inner join triples c
                                                       on ctp.parameter_id = c.id
                                             where ctp.parent_id = t.id
@@ -307,13 +315,14 @@ def order_children():
                             )) desc
           ''')
         total += crud.Db_cur.rowcount
+        if Debug: print("insert param_order total", total, file=sys.stderr)
 
-        # Copy the assigned order numbers from param_order to triple_parameters.
+        # Copy the assigned seq_nums from param_order to triple_parameters.
         crud.Db_cur.execute('''
             update triple_parameters
                set evaluation_order =
-                     (select 1 + po.order
-                               - (select min(parent_po.order)
+                     (select 1 + po.seq_num
+                               - (select min(parent_po.seq_num)
                                     from param_order parent_po
                                    where parent_po.parent_id =
                                            triple_parameters.parent_id)
@@ -327,7 +336,9 @@ def order_children():
                               and po.parameter_id = 
                                     triple_parameters.parameter_id)
           ''')
-        total += first + crud.Db_cur.rowcount
+        total += crud.Db_cur.rowcount
+        if Debug:
+            print("update triple_parameters total", total, file=sys.stderr)
 
         # We're done with the param_order table.
         crud.Db_cur.execute('''
@@ -338,7 +349,7 @@ def order_children():
         # sorted top-level triples.
         crud.Db_cur.execute('''
             create temp table param_order (
-                order integer not null primary key,    -- assigned seq number
+                seq_num integer not null primary key,    -- assigned seq number
                 block_id int not null,
                 triple_id int not null
             )
@@ -370,20 +381,22 @@ def order_children():
                                )) desc
           ''')
         total += crud.Db_cur.rowcount
+        if Debug: print("insert param_order total", total, file=sys.stderr)
 
-        # Copy the assigned order numbers from param_order to triples.
+        # Copy the assigned seq_nums from param_order to triples.
         crud.Db_cur.execute('''
             update triples
                set order_in_block =
-                     (select 1 + po.order
-                               - (select min(block_po.order)
+                     (select 1 + po.seq_num
+                               - (select min(block_po.seq_num)
                                     from param_order block_po
                                    where block_po.block_id = triples.block_id)
                         from param_order po
                        where po.triple_id = triples.id)
-             where id in (select triples_id from param_order po)
+             where id in (select triple_id from param_order po)
           ''')
-        total += first + crud.Db_cur.rowcount
+        total += crud.Db_cur.rowcount
+        if Debug: print("update triples total", total, file=sys.stderr)
 
         # We're done with the param_order table.
         crud.Db_cur.execute('''

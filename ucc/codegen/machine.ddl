@@ -107,6 +107,11 @@ create table bound (
     unique (N, v)
 );
 
+create table operator_info (
+    operator varchar(255) not null primary key,
+    num_extra_regs int not null
+);
+
 create table pattern_by_processor (
     processor varchar(255) not null,
     pattern_id int not null references pattern(id)

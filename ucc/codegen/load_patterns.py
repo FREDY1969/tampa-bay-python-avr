@@ -29,6 +29,7 @@ def load(database_filename, pattern_filename):
                     Line = Line[:Line.index('#')]
                 Line = Line.strip()
                 if not Line:
+                    Lineno += 1
                     Line = f.readline()
                 else:
                     with crud.db_transaction():
