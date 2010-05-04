@@ -5,7 +5,7 @@ import itertools
 
 from ucc.database import crud
 
-Debug = True
+Debug = False
 
 def update_order_constraints():
     # Propogate both sides of every constraint up through all of the parents
@@ -102,11 +102,6 @@ def update_order_constraints():
                 from triple_order_constraints tos_p
                        inner join triple_order_constraints tos_s
                          on tos_p.successor = tos_s.predecessor
-                       inner join triple_parameters ptp
-                         on ptp.parameter_id = tos_p.predecessor
-                       inner join triple_parameters stp
-                         on stp.parameter_id = tos_s.successor
-                            and stp.parent_id = ptp.parent_id
                where tos_p.depth = ? and tos_s.depth = 1
           ''',
           (depth,))
@@ -222,7 +217,8 @@ def order_children():
                                       inner join triples t
                                         on tos.successor = t.id
                               where tos.predecessor = tp.parameter_id
-                            )) desc
+                            )) desc,
+                        tp.parameter_num
           ''')
         total += crud.Db_cur.rowcount
         if Debug: print("insert param_order total", total, file=sys.stderr)
@@ -288,7 +284,8 @@ def order_children():
                                (select ifnull(max(tos.depth) + 1, 1)
                                   from triple_order_constraints tos
                                  where tos.predecessor = t.id
-                               )) desc
+                               )) desc,
+                        t.id
           ''')
         total += crud.Db_cur.rowcount
         if Debug: print("insert param_order total", total, file=sys.stderr)
