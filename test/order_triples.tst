@@ -113,7 +113,7 @@ Check these results:
 
 And now it's show time!
 
-    >>> order_triples.order_children()
+    >>> _ = order_triples.order_children()
     >>> crud.Db_conn.commit()
 
 Check the results:
