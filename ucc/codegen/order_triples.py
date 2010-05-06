@@ -177,6 +177,12 @@ def calc_reg_est_for_triples():
              + ifnull((select num_extra_regs
                          from operator_info io
                         where io.operator = triples.operator), 0),
+             case when triples.operator = 'call_direct'
+                  then (select sym.register_est
+                          from symbol_table sym
+                         where triples.symbol_id = sym.id)
+                  else 0
+             end,
              (select
                   ifnull(max(child.register_est + tp2.evaluation_order - 1),
                          0)
@@ -189,6 +195,10 @@ def calc_reg_est_for_triples():
                              from triple_parameters tp
                             where tp.parent_id = id
                               and tp.evaluation_order isnull)
+           and (triples.operator != 'call_direct'
+                or (select sym.register_est notnull
+                      from symbol_table sym
+                     where triples.symbol_id = sym.id))
       ''')
     total = crud.Db_cur.rowcount
     if Debug: print("update triples total", total, file=sys.stderr)
