@@ -248,8 +248,12 @@ create table triples (
     reg_class int,
     register_est int,          -- Estimate of number of registers needed by
                                -- this node and all of it's decendants.
-    reverse_children int,      -- If true, evaluate int2 operand first.
-    order_in_block int,        -- order within block
+    order_in_block int,        -- order within block amoung top-level triples
+    tree_size int,             -- number of triples in tree rooted at this node
+    abs_offset int,            -- abs offset for this tree
+                               -- (only set in top-level triples)
+    abs_order_in_block int,    -- abs order for all triples in block
+                               -- (only set in top-level triples)
     line_start int,
     column_start int,
     line_end int,
@@ -264,6 +268,9 @@ create table triple_parameters (
     parameter_id int not null references triples(id),
     parameter_num int not null,
     evaluation_order int,      -- starts with 1
+    abs_offset int,            -- abs offset for this tree
+    ghost bool default 0,      -- set to 1 if child already evaluated
+    abs_order_in_block int,    -- abs order for all triples in block
     reg_class_required int     -- references reg_class table in machine db
 );
 

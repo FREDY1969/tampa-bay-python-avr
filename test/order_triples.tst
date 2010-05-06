@@ -168,6 +168,16 @@ Assigned orders:
     ...                  parent_id_=(1, 2, 7, 10))
     [1, 1, 1, 1]
 
+    # Absolute order of triples in block 1:
+    >>> crud.read_column('triples', 'id',
+    ...                  block_id=1, order_by='abs_order_in_block')
+    [6, 5, 8, 7, 9, 2, 4, 3, 1, 15, 14, 13]
+
+    # Absolute order of triples in block 2:
+    >>> crud.read_column('triples', 'id',
+    ...                  block_id=2, order_by='abs_order_in_block')
+    [11, 12, 10]
+
 All done!
 
     >>> crud.fini(False)

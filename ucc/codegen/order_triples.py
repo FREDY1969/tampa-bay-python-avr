@@ -159,6 +159,7 @@ def order_children():
             tp_order_count = 0
         iterations += 1
     update_top_level_triple_orders()
+    calc_master_order()
     return iterations
 
 def calc_reg_est_for_triples():
@@ -238,6 +239,9 @@ def calc_reg_est_for_functions():
     all of their blocks.
 
     Returns the number of symbols updated.
+
+    FIX: Need to account for parameters and locals.  Do they get mapped into
+    registers?  Or least do a max on the number of parameters...
     '''
     crud.Db_cur.execute('''
         update symbol_table
@@ -415,4 +419,128 @@ def update_top_level_triple_orders():
       ''')
 
     return total
+
+def calc_master_order():
+    calc_tree_sizes()
+    calc_abs_offsets()
+    mark_ghost_links()
+    calc_abs_order_in_block()
+
+def calc_tree_sizes():
+    r'''Calculate all triples.tree_size figures.
+    
+    Tree_size is the number of triples in the tree rooted at that triple
+    (counting the triple itself).
+    '''
+    total = 1
+    while total:
+        crud.Db_cur.execute('''
+            update triples
+               set tree_size = (select ifnull(sum(child.tree_size), 0) + 1
+                                  from triple_parameters tp
+                                         inner join triples child
+                                           on tp.parameter_id = child.id
+                                 where tp.parent_id = triples.id)
+             where tree_size isnull
+               and not exists (select null
+                                 from triple_parameters tp
+                                        inner join triples child
+                                          on tp.parameter_id = child.id
+                                where tp.parent_id = triples.id
+                                  and child.tree_size isnull)
+          ''')
+        total = crud.Db_cur.rowcount
+
+def calc_abs_offsets():
+    r'''Calculate abs_offsets for top-level triples and triple_parameters.
+    '''
+
+    # first for top-level triples:
+    crud.Db_cur.execute('''
+        update triples
+           set abs_offset =
+                 (select ifnull(sum(prior.tree_size), 0)
+                    from triples prior
+                   where prior.block_id = triples.block_id
+                     and prior.use_count = 0
+                     and prior.order_in_block < triples.order_in_block)
+         where use_count = 0
+      ''')
+
+    # then for triple_parameters:
+    total = 1
+    while total:
+        crud.Db_cur.execute('''
+            update triple_parameters
+               set abs_offset =
+                     (select ifnull(min(parent.abs_offset),
+                                    (select t.abs_offset
+                                       from triples t
+                                      where triple_parameters.parent_id = t.id))
+                        from triple_parameters parent
+                       where parent.parameter_id = triple_parameters.parent_id)
+                   + (select ifnull(sum(prior.tree_size), 0)
+                        from triple_parameters tp
+                               inner join triples prior
+                                 on tp.parameter_id = prior.id
+                       where tp.parent_id = triple_parameters.parent_id
+                         and tp.evaluation_order <
+                               triple_parameters.evaluation_order)
+             where abs_offset isnull
+               and not exists
+                     (select null
+                        from triple_parameters parent
+                       where parent.parameter_id = triple_parameters.parent_id
+                         and parent.abs_offset isnull)
+          ''')
+        total = crud.Db_cur.rowcount
+
+def mark_ghost_links():
+    r'''Set triple_parameter.ghost for links to ghost triples.
+
+    Ghost triples have already been evaluated by the time this
+    triple_parameter is needed.  So the triple is a ghost, and code is not
+    generated for it here.
+    '''
+    crud.Db_cur.execute('''
+        update triple_parameters
+           set ghost = 1
+         where triple_parameters.abs_offset >
+                 (select min(tp.abs_offset)
+                    from triple_parameters tp
+                   where triple_parameters.parameter_id = tp.parameter_id)
+      ''')
+
+def calc_abs_order_in_block():
+    r'''Calc abs_order_in_block for triples and triple_parameters.
+    '''
+    # first for top-level triples:
+    crud.Db_cur.execute('''
+        update triples
+           set abs_order_in_block = abs_offset + tree_size
+         where use_count = 0
+      ''')
+
+    # then for triple_parameters:
+    crud.Db_cur.execute('''
+        update triple_parameters
+           set abs_order_in_block = abs_offset +
+                 case when ghost
+                      then 1
+                      else (select tree_size
+                              from triples child
+                             where triple_parameters.parameter_id = child.id)
+                 end
+      ''')
+
+    # finally, copy the triple_parameters.abs_order_in_block down to its
+    # child.
+    crud.Db_cur.execute('''
+        update triples
+           set abs_order_in_block = (select abs_order_in_block
+                                       from triple_parameters tp
+                                      where triples.id = tp.parameter_id
+                                        and tp.ghost = 0)
+         where use_count != 0
+      ''')
 
