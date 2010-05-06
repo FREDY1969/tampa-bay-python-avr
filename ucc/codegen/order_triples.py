@@ -131,14 +131,34 @@ def add_transitive_links():
 def order_children():
     update_order_constraints()
     iterations = 0
+    re_triple_count = re_block_count = re_fun_count = 0
+    tp_order_count = 1  # force calc_reg_est_for_triples first time through
+    tl_triple_order_count = 0
     total = 1   # force first run through the loop
     while total:
-        total = calc_reg_est_for_triples()
-        total += calc_reg_est_for_blocks()
-        total += calc_reg_est_for_functions()
-        total += update_triple_parameter_orders()
-        total += update_top_level_triple_orders()
+        total = 0
+        if tp_order_count or re_fun_count:
+            re_triple_count = calc_reg_est_for_triples()
+            total += re_triple_count
+        else:
+            re_triple_count = 0
+        if re_triple_count:
+            re_block_count = calc_reg_est_for_blocks()
+            total += re_block_count
+        else:
+            re_block_count = 0
+        if re_block_count:
+            re_fun_count = calc_reg_est_for_functions()
+            total += re_fun_count
+        else:
+            re_fun_count = 0
+        if re_triple_count:
+            tp_order_count = update_triple_parameter_orders()
+            total += tp_order_count
+        else:
+            tp_order_count = 0
         iterations += 1
+    update_top_level_triple_orders()
     return iterations
 
 def calc_reg_est_for_triples():
