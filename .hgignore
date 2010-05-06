@@ -3,6 +3,7 @@ syntax: glob
 build/
 .pyhist
 .*.swp
+.*.swo
 *.pyc
 *.pyo
 *.db
