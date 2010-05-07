@@ -27,6 +27,8 @@ def gen_assembler(processor):
                              on p.id = pp.pattern_id
                    where pp.processor = ?
 
+                     and p.operator = triples.operator
+
                      and (p.left_opcode isnull and p.left_last_use isnull or
                           (select (p.left_opcode isnull or
                                    p.left_opcode = p1.operator)
