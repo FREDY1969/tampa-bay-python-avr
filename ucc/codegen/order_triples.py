@@ -8,9 +8,10 @@ from ucc.database import crud
 Debug = False
 
 def update_order_constraints():
-    propogate_links()
-    delete_extranious_links()
-    add_transitive_links()
+    with crud.db_transaction():
+        propogate_links()
+        delete_extranious_links()
+        add_transitive_links()
 
 def propogate_links():
     r'''Propogate links upward through the heirarchy.
@@ -130,35 +131,37 @@ def add_transitive_links():
 
 def order_children():
     update_order_constraints()
-    iterations = 0
-    re_triple_count = re_block_count = re_fun_count = 0
-    tp_order_count = 1  # force calc_reg_est_for_triples first time through
-    tl_triple_order_count = 0
-    total = 1   # force first run through the loop
-    while total:
-        total = 0
-        if tp_order_count or re_fun_count:
-            re_triple_count = calc_reg_est_for_triples()
-            total += re_triple_count
-        else:
-            re_triple_count = 0
-        if re_triple_count:
-            re_block_count = calc_reg_est_for_blocks()
-            total += re_block_count
-        else:
-            re_block_count = 0
-        if re_block_count:
-            re_fun_count = calc_reg_est_for_functions()
-            total += re_fun_count
-        else:
-            re_fun_count = 0
-        if re_triple_count:
-            tp_order_count = update_triple_parameter_orders()
-            total += tp_order_count
-        else:
-            tp_order_count = 0
-        iterations += 1
-    update_top_level_triple_orders()
+
+    with crud.db_transaction():
+        iterations = 0
+        re_triple_count = re_block_count = re_fun_count = 0
+        tp_order_count = 1  # force calc_reg_est_for_triples first time through
+        tl_triple_order_count = 0
+        total = 1   # force first run through the loop
+        while total:
+            total = 0
+            if tp_order_count or re_fun_count:
+                re_triple_count = calc_reg_est_for_triples()
+                total += re_triple_count
+            else:
+                re_triple_count = 0
+            if re_triple_count:
+                re_block_count = calc_reg_est_for_blocks()
+                total += re_block_count
+            else:
+                re_block_count = 0
+            if re_block_count:
+                re_fun_count = calc_reg_est_for_functions()
+                total += re_fun_count
+            else:
+                re_fun_count = 0
+            if re_triple_count:
+                tp_order_count = update_triple_parameter_orders()
+                total += tp_order_count
+            else:
+                tp_order_count = 0
+            iterations += 1
+        update_top_level_triple_orders()
     calc_master_order()
     return iterations
 
@@ -421,11 +424,12 @@ def update_top_level_triple_orders():
     return total
 
 def calc_master_order():
-    calc_tree_sizes()
-    calc_abs_offsets()
-    mark_ghost_links()
-    calc_abs_order_in_block()
-    calc_parent_seq_num()
+    with crud.db_transaction():
+        calc_tree_sizes()
+        calc_abs_offsets()
+        mark_ghost_links()
+        calc_abs_order_in_block()
+        calc_parent_seq_num()
 
 def calc_tree_sizes():
     r'''Calculate all triples.tree_size figures.
