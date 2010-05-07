@@ -123,15 +123,15 @@ create table pattern (
     code_seq_id int not null references code_seq(id),
     operator varchar(255) not null,
 
-    -- pattern conditions:
+    -- pattern conditions (these all default to null == "don't care"):
     left_opcode varchar(255),
     left_const_min int,
     left_const_max int,
-    left_multi_use bool,
+    left_last_use bool,
     right_opcode varchar(255),
     right_const_min int,
     right_const_max int,
-    right_multi_use bool
+    right_last_use bool
 );
 
 create unique index pattern_idx on
