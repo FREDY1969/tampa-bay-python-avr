@@ -271,6 +271,10 @@ create table triple_parameters (
     abs_offset int,            -- abs offset for this tree
     ghost bool default 0,      -- set to 1 if child already evaluated
     abs_order_in_block int,    -- abs order for all triples in block
+    parent_seq_num int,        -- seq_num for multiple parents of same triple
+                               -- (in abs_order_in_block order).
+                               -- (these do not re-start at 1 for each set of
+                               --  parents).
     reg_class_required int     -- references reg_class table in machine db
 );
 

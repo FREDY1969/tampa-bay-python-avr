@@ -425,6 +425,7 @@ def calc_master_order():
     calc_abs_offsets()
     mark_ghost_links()
     calc_abs_order_in_block()
+    calc_parent_seq_num()
 
 def calc_tree_sizes():
     r'''Calculate all triples.tree_size figures.
@@ -544,3 +545,46 @@ def calc_abs_order_in_block():
          where use_count != 0
       ''')
 
+def calc_parent_seq_num():
+    r'''Calculate triple_parameters.parent_seq_num.
+
+    The parent_seq_num gives sequential numbers to all parents of the same
+    triple.  The numbers are in the order that the parameters will be used in
+    the code generation.  But the numbers do not start from 1 for each set of
+    parents...
+    '''
+
+    # Create table to assign sequential numbers to sorted triple_parameters.
+    crud.Db_cur.execute('''
+        create temp table param_order (
+            seq_num integer not null primary key,    -- assigned seq number
+            parent_id int not null,
+            parameter_id int not null
+        )
+      ''')
+
+    # Load temp param_order table with all triple_parameters.
+    crud.Db_cur.execute('''
+        insert into param_order (parent_id, parameter_id)
+          select parent_id, parameter_id
+            from triple_parameters
+           order by parameter_id, abs_order_in_block
+      ''')
+    total = crud.Db_cur.rowcount
+    if Debug: print("insert param_order total", total, file=sys.stderr)
+
+    if total:
+        # Copy the assigned seq_nums from param_order to triple_parameters.
+        crud.Db_cur.execute('''
+            update triple_parameters
+               set parent_seq_num =
+                     (select seq_num
+                        from param_order po
+                       where triple_parameters.parent_id = po.parent_id
+                         and triple_parameters.parameter_id = po.parameter_id)
+          ''')
+
+    # We're done with the param_order table.
+    crud.Db_cur.execute('''
+        drop table param_order
+      ''')
