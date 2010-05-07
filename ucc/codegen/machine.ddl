@@ -114,7 +114,8 @@ create table operator_info (
 
 create table pattern_by_processor (
     processor varchar(255) not null,
-    pattern_id int not null references pattern(id)
+    pattern_id int not null references pattern(id),
+    primary key (processor, pattern_id)
 );
 
 create table pattern (
@@ -134,8 +135,7 @@ create table pattern (
     right_last_use bool
 );
 
-create unique index pattern_idx on
-    pattern(operator, id, preference desc);
+create unique index pattern_idx on pattern(operator, id);
 
 create table code_seq (
     id integer not null primary key,
