@@ -178,6 +178,27 @@ Assigned orders:
     ...                  block_id=2, order_by='abs_order_in_block')
     [11, 12, 10]
 
+    >>> for row in crud.read_as_tuples('triple_parameters', 'parameter_id',
+    ...                                'parent_id', 'abs_order_in_block',
+    ...                                'parent_seq_num', 'last_parameter_use',
+    ...                                order_by=('parameter_id',
+    ...                                          'abs_order_in_block')):
+    ...     print(row)
+    (2, 1, 6, 1, 1)
+    (3, 1, 10, 2, 1)
+    (4, 1, 8, 3, 1)
+    (5, 7, 2, 4, 0)
+    (5, 3, 9, 5, 0)
+    (5, 14, 14, 6, 1)
+    (6, 2, 1, 7, 0)
+    (6, 4, 7, 8, 0)
+    (6, 15, 12, 9, 1)
+    (7, 2, 4, 10, 1)
+    (8, 7, 3, 11, 1)
+    (9, 2, 5, 12, 1)
+    (11, 10, 1, 13, 1)
+    (12, 10, 2, 14, 1)
+
 All done!
 
     >>> crud.fini(False)
