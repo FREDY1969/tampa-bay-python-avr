@@ -1,5 +1,31 @@
 # load_patterns.py
 
+r'''Loads a "patterns" file into a machine database.
+
+The patterns file uses '#' to EOL as comments and blank lines are ignored.
+
+Each pattern has one line with 1 to 3 comma separated components:
+
+    operator
+        -- this is simply the name of the triples.operator
+    left_param
+        -- specification for left parameter (parameter 1)
+    right_param
+        -- specification for right parameter (parameter 2)
+
+The left and right parameter specifications look like:
+
+    pattern [= use]
+
+Pattern is:
+
+    [last_use|reused] [operator [[min]-[max]]]
+
+Use is:
+
+    [<num_regs_used_from_param> *] reg_class [trashed] [delink]
+'''
+
 import sys
 
 if __name__ == "__main__":
@@ -34,12 +60,12 @@ def load(database_filename, pattern_filename):
                 else:
                     with crud.db_transaction():
                         components = Line.split(',')
-                        if not (3 <= len(components) <= 4):
+                        if not (1 <= len(components) <= 3):
                             raise SyntaxError("syntax error",
                                               (Filename, Lineno, None, Line))
 
-                        if len(components) == 3:
-                            components.append('')
+                        #if len(components) == 3:
+                        #    components.append('')
 
                         operator = components[0].strip()
                         #print("operator", operator)
@@ -47,13 +73,23 @@ def load(database_filename, pattern_filename):
                             last_operator = operator
                             preference = 1
 
-                        l_opcode, l_min, l_max, l_multi_use, \
-                          l_reg_class, l_num_regs, l_trashes, l_delink = \
-                            parse_half(components[1])
+                        if len(components) > 1:
+                            l_opcode, l_min, l_max, l_last_use, \
+                              l_reg_class, l_num_regs, l_trashes, l_delink = \
+                                parse_half(components[1])
+                        else:
+                            l_opcode = l_min = l_max = l_last_use = \
+                              l_reg_class = l_num_regs = None
+                            l_trashes = l_delink = False
 
-                        r_opcode, r_min, r_max, r_multi_use, \
-                          r_reg_class, r_num_regs, r_trashes, r_delink = \
-                            parse_half(components[2])
+                        if len(components) > 2:
+                            r_opcode, r_min, r_max, r_last_use, \
+                              r_reg_class, r_num_regs, r_trashes, r_delink = \
+                                parse_half(components[2])
+                        else:
+                            r_opcode = r_min = r_max = r_last_use = \
+                              r_reg_class = r_num_regs = None
+                            r_trashes = r_delink = False
 
                         code_seq_id = crud.insert('code_seq',
                                         left_reg_class=l_reg_class,
@@ -72,19 +108,19 @@ def load(database_filename, pattern_filename):
                                         left_opcode=l_opcode,
                                         left_const_min=l_min,
                                         left_const_max=l_max,
-                                        left_multi_use=l_multi_use,
+                                        left_last_use=l_last_use,
                                         right_opcode=r_opcode,
                                         right_const_min=r_min,
                                         right_const_max=r_max,
-                                        right_multi_use=r_multi_use)
+                                        right_last_use=r_last_use)
 
                         preference += 1
 
-                        for reg_class, number in reg_req(components[3]):
-                            crud.insert('reg_requirements',
-                                        code_seq_id=code_seq_id,
-                                        reg_class=reg_class,
-                                        num_needed=number)
+                        #for reg_class, number in reg_req(components[3]):
+                        #    crud.insert('reg_requirements',
+                        #                code_seq_id=code_seq_id,
+                        #                reg_class=reg_class,
+                        #                num_needed=number)
 
                         for i, (label, opcode, operand1, operand2) \
                          in enumerate(read_insts(f)):
@@ -99,7 +135,7 @@ def parse_half(text):
     r'''Parse argument pattern.
 
     Returns 8 values:
-        opcode, min, max, multi_use, reg_class, num_regs, trashes, delink
+        opcode, min, max, last_use, reg_class, num_regs, trashes, delink
 
         >>> parse_half("int 0- =single")
         ('int', 0, None, None, 'single', 1, False, False)
@@ -111,10 +147,10 @@ def parse_half(text):
         (None, None, None, None, None, None, False, False)
         >>> parse_half(" any = 2*immed trashed ")
         (None, None, None, None, 'immed', 2, True, False)
-        >>> parse_half(" single_use = 2*immed trashed ")
-        (None, None, None, False, 'immed', 2, True, False)
-        >>> parse_half(" multi_use = 2*immed trashed ")
-        (None, None, None, True, 'immed', 2, True, False)
+        >>> parse_half(" last_use = 2*immed trashed ")
+        (None, None, None, 1, 'immed', 2, True, False)
+        >>> parse_half(" reused = 2*immed trashed ")
+        (None, None, None, 0, 'immed', 2, True, False)
         >>> parse_half("int =2*single delink")
         ('int', None, None, None, 'single', 2, False, True)
     '''
@@ -128,19 +164,23 @@ def parse_half(text):
         raise SyntaxError("too many '=' in one operand",
                           (Filename, Lineno, None, Line))
 
-    opcode = min = max = multi_use = None
+    opcode = min = max = last_use = None
     pattern_args = pattern.split()
-    if pattern_args[0] != 'any':
-        if pattern_args[0] == 'single_use':
-            multi_use = False
-        elif pattern_args[0] == 'multi_use':
-            multi_use = True
-        else:
-            opcode = pattern_args[0]
+    if pattern_args[0] == 'last_use':
+        last_use = 1
+        pattern_args = pattern_args[1:]
+    elif pattern_args[0] == 'reused':
+        last_use = 0
+        pattern_args = pattern_args[1:]
+    if pattern_args and pattern_args[0] != 'any':
+        opcode = pattern_args[0]
     if len(pattern_args) > 1:
         min_arg, max_arg = pattern_args[1].split('-')
         if min_arg: min = int(min_arg)
         if max_arg: max = int(max_arg)
+    if len(pattern_args) > 2:
+        raise SyntaxError("too many pattern args",
+                          (Filename, Lineno, None, Line))
 
     num_regs = 1
     reg_class = num_regs = None
@@ -165,7 +205,7 @@ def parse_half(text):
                 raise SyntaxError("invalid option on register spec",
                                   (Filename, Lineno, None, Line))
 
-    return opcode, min, max, multi_use, reg_class, num_regs, trashes, delink
+    return opcode, min, max, last_use, reg_class, num_regs, trashes, delink
 
 def reg_req(text):
     r'''Generate reg_class, number tuples.
