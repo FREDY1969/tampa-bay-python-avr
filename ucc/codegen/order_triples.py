@@ -577,18 +577,28 @@ def calc_parent_seq_num():
     total = crud.Db_cur.rowcount
     if Debug: print("insert param_order total", total, file=sys.stderr)
 
-    if total:
-        # Copy the assigned seq_nums from param_order to triple_parameters.
-        crud.Db_cur.execute('''
-            update triple_parameters
-               set parent_seq_num =
-                     (select seq_num
-                        from param_order po
-                       where triple_parameters.parent_id = po.parent_id
-                         and triple_parameters.parameter_id = po.parameter_id)
-          ''')
+    # Copy the assigned seq_nums from param_order to triple_parameters.
+    crud.Db_cur.execute('''
+        update triple_parameters
+           set parent_seq_num =
+                 (select seq_num
+                    from param_order po
+                   where triple_parameters.parent_id = po.parent_id
+                     and triple_parameters.parameter_id = po.parameter_id)
+      ''')
 
     # We're done with the param_order table.
     crud.Db_cur.execute('''
         drop table param_order
+      ''')
+
+    # Set triple_parameters.last_parameter_use for all last parameters:
+    crud.Db_cur.execute('''
+        update triple_parameters
+           set last_parameter_use = 1
+         where not exists
+                 (select null
+                    from triple_parameters tp
+                   where tp.parameter_id = triple_parameters.parameter_id
+                     and tp.parent_seq_num > triple_parameters.parent_seq_num)
       ''')

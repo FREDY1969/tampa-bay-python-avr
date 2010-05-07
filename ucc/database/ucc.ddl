@@ -275,6 +275,7 @@ create table triple_parameters (
                                -- (in abs_order_in_block order).
                                -- (these do not re-start at 1 for each set of
                                --  parents).
+    last_parameter_use bool not null default 0,
     reg_class_required int     -- references reg_class table in machine db
 );
 
