@@ -112,41 +112,37 @@ create table operator_info (
     num_extra_regs int not null
 );
 
-create table pattern_by_processor (
+create table code_seq_by_processor (
     processor varchar(255) not null,
-    pattern_id int not null references pattern(id),
-    primary key (processor, pattern_id)
-);
-
-create table pattern (
-    id integer not null primary key,
-    preference int not null,
     code_seq_id int not null references code_seq(id),
-    operator varchar(255) not null,
-
-    -- pattern conditions (these all default to null == "don't care"):
-    left_opcode varchar(255),
-    left_const_min int,
-    left_const_max int,
-    left_last_use bool,
-    right_opcode varchar(255),
-    right_const_min int,
-    right_const_max int,
-    right_last_use bool
+    primary key (processor, code_seq_id)
 );
-
-create unique index pattern_idx on pattern(operator, id);
 
 create table code_seq (
     id integer not null primary key,
-    left_reg_class varchar(20) references reg_class(name),
-    left_num_registers int,
-    left_trashes bool default 0,
-    left_delink bool default 0,
-    right_reg_class varchar(20) references reg_class(name),
-    right_num_registers int,
-    right_trashes bool default 0,
-    right_delink bool default 0
+    preference int not null,
+    operator varchar(255) not null
+);
+
+create unique index pattern_idx on code_seq(operator, preference, id);
+
+create table code_seq_parameter (
+    code_seq_id int not null references code_seq(id),
+    parameter_num int not null,
+
+    -- pattern conditions (these all default to null == "don't care"):
+    opcode varchar(255),
+    const_min int,
+    const_max int,
+    last_use bool,
+
+    -- parameter requirements:
+    reg_class varchar(20) references reg_class(name),
+    num_registers int,
+    trashes bool default 0,
+    delink bool default 0,
+
+    primary key (code_seq_id, parameter_num)
 );
 
 create table reg_requirements (
