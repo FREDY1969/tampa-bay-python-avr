@@ -60,12 +60,9 @@ def load(database_filename, pattern_filename):
                 else:
                     with crud.db_transaction():
                         components = Line.split(',')
-                        if not (1 <= len(components) <= 3):
+                        if len(components) < 1:
                             raise SyntaxError("syntax error",
                                               (Filename, Lineno, None, Line))
-
-                        #if len(components) == 3:
-                        #    components.append('')
 
                         operator = components[0].strip()
                         #print("operator", operator)
@@ -73,46 +70,26 @@ def load(database_filename, pattern_filename):
                             last_operator = operator
                             preference = 1
 
-                        if len(components) > 1:
-                            l_opcode, l_min, l_max, l_last_use, \
-                              l_reg_class, l_num_regs, l_trashes, l_delink = \
-                                parse_half(components[1])
-                        else:
-                            l_opcode = l_min = l_max = l_last_use = \
-                              l_reg_class = l_num_regs = None
-                            l_trashes = l_delink = False
-
-                        if len(components) > 2:
-                            r_opcode, r_min, r_max, r_last_use, \
-                              r_reg_class, r_num_regs, r_trashes, r_delink = \
-                                parse_half(components[2])
-                        else:
-                            r_opcode = r_min = r_max = r_last_use = \
-                              r_reg_class = r_num_regs = None
-                            r_trashes = r_delink = False
-
                         code_seq_id = crud.insert('code_seq',
-                                        left_reg_class=l_reg_class,
-                                        left_num_registers=l_num_regs,
-                                        left_trashes=l_trashes,
-                                        left_delink=l_delink,
-                                        right_reg_class=r_reg_class,
-                                        right_num_registers=r_num_regs,
-                                        right_trashes=r_trashes,
-                                        right_delink=r_delink)
-
-                        pattern_id = crud.insert('pattern',
                                         preference=preference,
+                                        operator=components[0].strip())
+
+                        for i, component in enumerate(components[1:]):
+                            opcode, min, max, last_use, \
+                              reg_class, num_regs, trashes, delink = \
+                                parse_component(component)
+
+                            crud.insert('code_seq_parameter',
                                         code_seq_id=code_seq_id,
-                                        operator=components[0].strip(),
-                                        left_opcode=l_opcode,
-                                        left_const_min=l_min,
-                                        left_const_max=l_max,
-                                        left_last_use=l_last_use,
-                                        right_opcode=r_opcode,
-                                        right_const_min=r_min,
-                                        right_const_max=r_max,
-                                        right_last_use=r_last_use)
+                                        parameter_num=i + 1,
+                                        opcode=opcode,
+                                        const_min=min,
+                                        const_max=max,
+                                        last_use=last_use,
+                                        reg_class=reg_class,
+                                        num_registers=num_regs,
+                                        trashes=trashes,
+                                        delink=delink)
 
                         preference += 1
 
@@ -131,27 +108,27 @@ def load(database_filename, pattern_filename):
                                         operand1=operand1,
                                         operand2=operand2)
 
-def parse_half(text):
+def parse_component(text):
     r'''Parse argument pattern.
 
     Returns 8 values:
         opcode, min, max, last_use, reg_class, num_regs, trashes, delink
 
-        >>> parse_half("int 0- =single")
+        >>> parse_component("int 0- =single")
         ('int', 0, None, None, 'single', 1, False, False)
-        >>> parse_half("int -63 =single")
+        >>> parse_component("int -63 =single")
         ('int', None, 63, None, 'single', 1, False, False)
-        >>> parse_half("int 0-63 =single")
+        >>> parse_component("int 0-63 =single")
         ('int', 0, 63, None, 'single', 1, False, False)
-        >>> parse_half("any")
+        >>> parse_component("any")
         (None, None, None, None, None, None, False, False)
-        >>> parse_half(" any = 2*immed trashed ")
+        >>> parse_component(" any = 2*immed trashed ")
         (None, None, None, None, 'immed', 2, True, False)
-        >>> parse_half(" last_use = 2*immed trashed ")
+        >>> parse_component(" last_use = 2*immed trashed ")
         (None, None, None, 1, 'immed', 2, True, False)
-        >>> parse_half(" reused = 2*immed trashed ")
+        >>> parse_component(" reused = 2*immed trashed ")
         (None, None, None, 0, 'immed', 2, True, False)
-        >>> parse_half("int =2*single delink")
+        >>> parse_component("int =2*single delink")
         ('int', None, None, None, 'single', 2, False, True)
     '''
 

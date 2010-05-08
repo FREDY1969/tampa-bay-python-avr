@@ -22,18 +22,20 @@ echo Creating "$db_name"
 
 for f in machine.ddl "$arch/registers.sql" init.sql
 do
-    #echo reading "$f"
+    echo reading "$f"
     sqlite3 -batch -init "$f" "$db_name" < /dev/null
 done
+
+echo running load_patterns.py
 
 python3.1 load_patterns.py "$db_name" "$arch/patterns"
 
 for processor in "$@"
 do
-    #echo adding "$processor"
+    echo adding "$processor"
     sqlite3 -batch "$db_name" << !
-        insert into pattern_by_processor (processor, pattern_id)
+        insert into code_seq_by_processor (processor, code_seq_id)
           select '$processor', id
-            from pattern;
+            from code_seq;
 !
 done
