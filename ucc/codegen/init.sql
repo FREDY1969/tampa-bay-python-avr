@@ -130,4 +130,14 @@ insert into bound (N, v, value)
              left  join alias a on cc.reg = a.r1 and nc.reg = a.r2
      group by n.id, v.id;
 
+insert into reg_class_subsets (rc1, rc2, subset)
+    select rc.id, vc.C, vc.C
+      from v_classes vc
+             inner join reg_class rc
+               on rc.v = vc.v;
+
+insert or ignore into reg_class_subsets (rc1, rc2, subset)
+    select rc2, rc1, rc2
+      from reg_class_subsets;
+
 analyze;

@@ -97,6 +97,13 @@ create table v_classes (
     unique (v, C)
 );
 
+create table reg_class_subsets (
+    rc1 int not null references reg_class(id),
+    rc2 int not null references reg_class(id),
+    subset int not null references reg_class(id),
+    primary key (rc1, rc2)
+);
+
 create table bound (
     -- Max #registers from reg_class N that can be trashed by assigning to all
     -- registers in reg_classes in vertex v and v's children.
