@@ -318,8 +318,8 @@ def create_where(keys):
         (' order by a', [])
         >>> create_where({'order_by': ('a', 'b')})
         (' order by a, b', [])
-        >>> create_where({'a': 44, 'order_by': ('a', 'b')})
-        (' where a = ? order by a, b', [44])
+        >>> create_where({'a': 44, 'order_by': (('a', 'desc'), 'b')})
+        (' where a = ? order by a desc, b', [44])
     '''
     if 'order_by' in keys:
         value = keys['order_by']
@@ -327,7 +327,9 @@ def create_where(keys):
         if isinstance(value, str):
             order_by_clause = " order by " + value
         else:
-            order_by_clause = " order by " + ', '.join(value)
+            order_by_clause = " order by " + ', '.join((v if isinstance(v, str)
+                                                          else ' '.join(v))
+                                                       for v in value)
     else:
         order_by_clause = ''
     if keys:

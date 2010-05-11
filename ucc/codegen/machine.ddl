@@ -29,7 +29,7 @@ create table reg_class (
 
     id integer not null primary key,
     name varchar(20) not null unique,
-    num_registers int not null default 1,
+    num_registers int not null default 1,       -- ie, register width
     v int references vertex(id)
 );
 

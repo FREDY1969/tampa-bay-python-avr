@@ -4,7 +4,7 @@ import sys
 import itertools
 
 from ucc.database import crud, triple2
-from ucc.codegen import order_triples
+from ucc.codegen import order_triples, reg_alloc
 
 Debug = True
 
@@ -44,6 +44,8 @@ def gen_assembler(processor):
                                     or csp.last_use != tpp.last_parameter_use))
                    order by cs.preference)  -- only first row taken
         ''', (processor,))
+
+    reg_alloc.alloc_regs()
 
 
 def update_use_counts():
