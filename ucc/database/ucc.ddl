@@ -276,11 +276,20 @@ create table triple_parameters (
                                -- (these do not re-start at 1 for each set of
                                --  parents).
     last_parameter_use bool not null default 0,
-    reg_class_required int     -- references reg_class table in machine db
+                               -- true for last parent in abs_order_in_block
+                               -- order.
+    reg_class_for_parent int,  -- references reg_class table in machine db
+    num_regs_for_parent int,
+    trashed bool,
+    delink bool,
+    needed_reg_class int,
+    move_prior_to_needed bool not null default 0,
+    move_needed_to_parent bool not null default 0,
+    move_needed_to_next bool not null default 0
 );
 
 create index tp_parameter_index
-          on triple_parameters(parameter_id, parent_id);
+          on triple_parameters(parameter_id, parent_id, parameter_num);
 
 create index tp_parent_index
           on triple_parameters(parent_id, parameter_num);
