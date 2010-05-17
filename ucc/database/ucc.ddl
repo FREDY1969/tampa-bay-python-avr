@@ -344,6 +344,17 @@ create table outs (
     primary key (block_id, symbol_id, triple_id)
 );
 
+create table reg_map (
+    id integer not null primary key,
+    kind varchar(40) not null,
+    kind_id int not null,
+    reg_num int not null,
+    reg_class int not null,     -- references reg_class(id) in machine db
+    links_to int references reg_map(id)
+);
+
+create index reg_map_name on reg_map(kind, kind_id, reg_num);
+create index reg_map_links on reg_map(links_to, kind);
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------

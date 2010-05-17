@@ -86,7 +86,8 @@ create table vertex (
     id integer not null primary key,
     bit_mask int,       -- this vertex's bit in the bit map.
     vertex_set int,     -- bit map of included vertexes.
-    parent int references vertex(id)
+    parent int references vertex(id),
+    height int          -- from bottom, starting at 1
 );
 
 create table v_classes (
