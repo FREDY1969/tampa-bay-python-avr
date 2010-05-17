@@ -72,6 +72,51 @@ update vertex set vertex_set = (
                            from class_alias ap2
                            where ap2.reg_class = vertex.id));
 
+update vertex set height = 1
+ where not exists (select null from vertex c where c.parent = vertex.id);
+
+update vertex set height = 2
+ where height isnull
+   and not exists (select null from vertex c
+                    where c.parent = vertex.id
+                      and (c.height isnull or c.height > 1));
+
+update vertex set height = 3
+ where height isnull
+   and not exists (select null from vertex c
+                    where c.parent = vertex.id
+                      and (c.height isnull or c.height > 2));
+
+update vertex set height = 4
+ where height isnull
+   and not exists (select null from vertex c
+                    where c.parent = vertex.id
+                      and (c.height isnull or c.height > 3));
+
+update vertex set height = 5
+ where height isnull
+   and not exists (select null from vertex c
+                    where c.parent = vertex.id
+                      and (c.height isnull or c.height > 4));
+
+update vertex set height = 6
+ where height isnull
+   and not exists (select null from vertex c
+                    where c.parent = vertex.id
+                      and (c.height isnull or c.height > 5));
+
+update vertex set height = 7
+ where height isnull
+   and not exists (select null from vertex c
+                    where c.parent = vertex.id
+                      and (c.height isnull or c.height > 6));
+
+update vertex set height = 8
+ where height isnull
+   and not exists (select null from vertex c
+                    where c.parent = vertex.id
+                      and (c.height isnull or c.height > 7));
+
 insert into worst (N, C, value)
   select N.id, C.id,
          (select ifnull(max(cnt),0)
