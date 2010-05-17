@@ -3,7 +3,7 @@
 import sys
 import itertools
 
-from ucc.database import crud, triple2
+from ucc.database import crud
 from ucc.codegen import order_triples, reg_alloc
 
 Debug = True

@@ -325,14 +325,13 @@ def update_triple_parameter_orders():
             update triple_parameters
                set evaluation_order =
                      (select 1 + po.seq_num
-                               - (select min(parent_po.seq_num)
-                                    from param_order parent_po
-                                   where parent_po.parent_id =
+                               - (select min(sibling_po.seq_num)
+                                    from param_order sibling_po
+                                   where sibling_po.parent_id =
                                            triple_parameters.parent_id)
                         from param_order po
                        where po.parent_id = triple_parameters.parent_id 
-                         and po.parameter_id = 
-                               triple_parameters.parameter_id)
+                         and po.parameter_id = triple_parameters.parameter_id)
              where exists (select null
                              from param_order po
                             where po.parent_id = triple_parameters.parent_id 

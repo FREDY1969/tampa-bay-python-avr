@@ -7,13 +7,15 @@ The patterns file uses '#' to EOL as comments and blank lines are ignored.
 Each pattern has one line with 1 to 3 comma separated components:
 
     operator
-        -- this is simply the name of the triples.operator
-    left_param
-        -- specification for left parameter (parameter 1)
-    right_param
-        -- specification for right parameter (parameter 2)
+        -- this is simply the name of the triples.operator followed by a colon
+    parameter
+        -- comma separated parameter specification in parameter_num order
+           followed by a colon
+    reg_requirement
+        -- comma separated reg_requirements for code sequence (in addition to
+           parameter registers).
 
-The left and right parameter specifications look like:
+The parameter specifications look like:
 
     pattern [= use]
 
@@ -24,6 +26,10 @@ Pattern is:
 Use is:
 
     [<num_regs_used_from_param> *] reg_class [trashed] [delink]
+
+Reg_requirement is:
+
+    [<num_regs_used_from_param> *] reg_class
 '''
 
 import sys
@@ -59,9 +65,12 @@ def load(database_filename, pattern_filename):
                     Line = f.readline()
                 else:
                     with crud.db_transaction():
-                        components = Line.split(',')
+                        components = Line.split(':')
                         if len(components) < 1:
-                            raise SyntaxError("syntax error",
+                            raise SyntaxError("missing ':'",
+                                              (Filename, Lineno, None, Line))
+                        elif len(components) > 3:
+                            raise SyntaxError("too many ':' components",
                                               (Filename, Lineno, None, Line))
 
                         operator = components[0].strip()
@@ -72,32 +81,36 @@ def load(database_filename, pattern_filename):
 
                         code_seq_id = crud.insert('code_seq',
                                         preference=preference,
-                                        operator=components[0].strip())
-
-                        for i, component in enumerate(components[1:]):
-                            opcode, min, max, last_use, \
-                              reg_class, num_regs, trashes, delink = \
-                                parse_component(component)
-
-                            crud.insert('code_seq_parameter',
-                                        code_seq_id=code_seq_id,
-                                        parameter_num=i + 1,
-                                        opcode=opcode,
-                                        const_min=min,
-                                        const_max=max,
-                                        last_use=last_use,
-                                        reg_class=reg_class,
-                                        num_registers=num_regs,
-                                        trashes=trashes,
-                                        delink=delink)
+                                        operator=operator)
 
                         preference += 1
 
-                        #for reg_class, number in reg_req(components[3]):
-                        #    crud.insert('reg_requirements',
-                        #                code_seq_id=code_seq_id,
-                        #                reg_class=reg_class,
-                        #                num_needed=number)
+                        if len(components) > 1 and components[1].strip():
+                            for i, component \
+                             in enumerate(components[1].split(',')):
+                                opcode, min, max, last_use, \
+                                  reg_class, num_regs, trashes, delink = \
+                                    parse_component(component)
+
+                                crud.insert('code_seq_parameter',
+                                            code_seq_id=code_seq_id,
+                                            parameter_num=i + 1,
+                                            opcode=opcode,
+                                            const_min=min,
+                                            const_max=max,
+                                            last_use=last_use,
+                                            reg_class=reg_class,
+                                            num_registers=num_regs,
+                                            trashes=trashes,
+                                            delink=delink)
+
+                        if len(components) > 2 and components[2].strip():
+                            for req in components[2].split(','):
+                                reg_class, number = reg_req(req.strip())
+                                crud.insert('reg_requirements',
+                                            code_seq_id=code_seq_id,
+                                            reg_class=reg_class,
+                                            num_needed=number)
 
                         for i, (label, opcode, operand1, operand2) \
                          in enumerate(read_insts(f)):
@@ -185,10 +198,11 @@ def parse_component(text):
     return opcode, min, max, last_use, reg_class, num_regs, trashes, delink
 
 def reg_req(text):
-    r'''Generate reg_class, number tuples.
+    r'''Returns reg_class, number required.
     '''
-    return
-    yield a, b
+    fields = text.split('*')
+    if len(fields) == 1: return 1, fields[0].strip()
+    return int(fields[0].strip()), fields[1].strip()
 
 def read_insts(f):
     r'''Generate label, opcode, operand1, operand2.
