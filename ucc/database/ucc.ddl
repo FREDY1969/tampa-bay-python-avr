@@ -267,9 +267,11 @@ create table triple_parameters (
     parent_id int not null references triples(id),
     parameter_id int not null references triples(id),
     parameter_num int not null,
-    evaluation_order int,      -- starts with 1
+    evaluation_order int,      -- starts with 1 for parameters of each parent
     abs_offset int,            -- abs offset for this tree
     ghost bool default 0,      -- set to 1 if child already evaluated
+                               -- (only during order_triples, later
+                               --  invalidated by delink)
     abs_order_in_block int,    -- abs order for all triples in block
     parent_seq_num int,        -- seq_num for multiple parents of same triple
                                -- (in abs_order_in_block order).

@@ -13,12 +13,18 @@ def alloc_regs():
     figure_out_multi_use(subsets, sizes)
 
 def get_reg_class_subsets():
+    r'''Returns {(reg_class1, reg_class2), subset_reg_class}.
+    '''
     return dict(((rc1, rc2), subset)
                 for rc1, rc2, subset
                  in crud.read_as_tuples('reg_class_subsets',
                                         'rc1', 'rc2', 'subset'))
 
 def get_reg_class_sizes():
+    r'''Returns the number of registers in each reg_class.
+
+    The return value is {reg_class: number_of_registers}
+    '''
     crud.Db_cur.execute('''
         select reg_class, count(reg)
           from reg_in_class
@@ -160,4 +166,27 @@ def figure_out_multi_use(subsets, sizes):
                                      'parameter_num': row['parameter_num']},
                                     needed_reg_class = next_rc,
                                     move_needed_to_parent = 1)
+
+    # Reset ghost flag for delinked triple_parameters:
+    with crud.db_transaction():
+        crud.Db_cur.execute('''
+            update triple_parameters
+               set ghost = 1
+             where ghost = 0 and delink
+          ''')
+
+        crud.Db_cur.execute('''
+            update triple_parameters
+               set ghost = 0
+             where not exists
+                     (select null
+                        from triple_parameters tp
+                       where tp.parameter_id = triple_parameters.parameter_id
+                         and tp.ghost = 0)
+               and parent_seq_num =
+                     (select min(parent_seq_num)
+                        from triple_parameters tp
+                       where tp.parameter_id = triple_parameters.parameter_id
+                         and not tp.delink)
+          ''')
 
