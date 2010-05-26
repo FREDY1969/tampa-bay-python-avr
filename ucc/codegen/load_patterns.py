@@ -201,8 +201,8 @@ def reg_req(text):
     r'''Returns reg_class, number required.
     '''
     fields = text.split('*')
-    if len(fields) == 1: return 1, fields[0].strip()
-    return int(fields[0].strip()), fields[1].strip()
+    if len(fields) == 1: return fields[0].strip(), 1
+    return fields[1].strip(), int(fields[0].strip())
 
 def read_insts(f):
     r'''Generate label, opcode, operand1, operand2.

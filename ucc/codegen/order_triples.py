@@ -537,17 +537,6 @@ def calc_abs_order_in_block():
                  end
       ''')
 
-    # finally, copy the triple_parameters.abs_order_in_block down to its
-    # child.
-    crud.Db_cur.execute('''
-        update triples
-           set abs_order_in_block = (select abs_order_in_block
-                                       from triple_parameters tp
-                                      where triples.id = tp.parameter_id
-                                        and tp.ghost = 0)
-         where use_count != 0
-      ''')
-
 def calc_parent_seq_num():
     r'''Calculate triple_parameters.parent_seq_num.
 

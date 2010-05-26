@@ -50,7 +50,8 @@ def read_triples(block_id):
     #print >> sys.stderr, "read_triples", block_id
     triple_id_map = {}
     triples = [triple(row, triple_id_map)
-               for row in crud.read_as_dicts('triples', block_id=block_id)]
+               for row in crud.read_as_dicts('triples', block_id=block_id,
+                                             order_by='abs_order_in_block')]
     #print >> sys.stderr, "read_triples: triples", triples
     for t in triples:
         t.connect_children(triple_id_map)

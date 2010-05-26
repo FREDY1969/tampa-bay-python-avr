@@ -38,6 +38,8 @@ create table symbol_table (
     unique (label, context)
 );
 
+create unique index symbols_by_context on symbol_table(context, label);
+
 create table type (
     -- Describes what is known about a value at compile time.
 
@@ -49,13 +51,14 @@ create table type (
         -- 'pointer' (memory, element_type)
         -- 'record' (see sub_element table)
         -- 'function' (element_type is return type,
-        --             min_value, max_value of arguments,
+        --             min_value, max_value for number of arguments,
         --             sub_element table is arg types)
     min_value int,
     max_value int,
-    binary_pt int,              -- Number of bits _before_ the binary point
-                                --   so that a number taken as an int *
-                                --   2**binary_pt is the desired value.
+    binary_pt int,              -- Position of the binary_pt, positive to the
+                                -- right so that a number taken as:
+                                --   int * 2**binary_pt
+                                -- is the desired value.
                                 -- For example, 1/4 would be 1 with a
                                 --   binary_pt of -2.
     memory varchar(255),        -- only for pointers
@@ -253,7 +256,9 @@ create table triples (
     abs_offset int,            -- abs offset for this tree
                                -- (only set in top-level triples)
     abs_order_in_block int,    -- abs order for all triples in block
-                               -- (only set in top-level triples)
+                               -- (only set in top-level triples in
+                               --  order_triples.py, later in all triples in
+                               --  reg_alloc.py)
     line_start int,
     column_start int,
     line_end int,
@@ -349,9 +354,12 @@ create table outs (
 create table reg_map (
     id integer not null primary key,
     kind varchar(40) not null,
+        -- 'function' (includes tasks)
+        -- 'block'
+        -- 'triple'
     kind_id int not null,
-    reg_num int not null,
     reg_class int not null,     -- references reg_class(id) in machine db
+    reg_num int not null,
     links_to int references reg_map(id)
 );
 

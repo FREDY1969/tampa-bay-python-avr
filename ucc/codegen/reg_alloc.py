@@ -4,13 +4,17 @@ r'''Register allocation code.
 '''
 
 import itertools
+import collections
 
-from ucc.database import crud
+from ucc.database import crud, triple2
+from ucc.codegen import code_seq, registers
 
 def alloc_regs():
     subsets = get_reg_class_subsets()
     sizes = get_reg_class_sizes()
     figure_out_multi_use(subsets, sizes)
+    code_seqs = code_seq.get_code_seq_info()
+    create_reg_map(subsets, sizes, code_seqs)
 
 def get_reg_class_subsets():
     r'''Returns {(reg_class1, reg_class2), subset_reg_class}.
@@ -34,6 +38,7 @@ def get_reg_class_sizes():
 
 def figure_out_multi_use(subsets, sizes):
     with crud.db_transaction():
+        # FIX: Need to add info for function call parameters!
         crud.Db_cur.execute('''
             update triple_parameters
                set reg_class_for_parent =
@@ -168,6 +173,7 @@ def figure_out_multi_use(subsets, sizes):
                                     move_needed_to_parent = 1)
 
     # Reset ghost flag for delinked triple_parameters:
+    # FIX: This could violate a triple_order_constraint!
     with crud.db_transaction():
         crud.Db_cur.execute('''
             update triple_parameters
@@ -190,3 +196,55 @@ def figure_out_multi_use(subsets, sizes):
                          and not tp.delink)
           ''')
 
+    # Finally, copy the triple_parameters.abs_order_in_block down to its
+    # child.
+    with crud.db_transaction():
+        crud.Db_cur.execute('''
+            update triples
+               set abs_order_in_block = (select abs_order_in_block
+                                           from triple_parameters tp
+                                          where triples.id = tp.parameter_id
+                                            and tp.ghost = 0)
+             where use_count != 0
+          ''')
+
+
+def create_reg_map(subsets, sizes, code_seqs):
+    # {(reg_class, reg_num): [(kind, kind_id, reg_class, reg_num), ...]}
+    reg_map = {}
+
+    for symbol_id in get_functions():
+        do_reg_map_for_fun(symbol_id, subsets, sizes, code_seqs, reg_map)
+
+    write_reg_map(reg_map)
+
+def get_functions():
+    r'''Generates the symbol_id for functions in a bottom-up order.
+    '''
+    successors = collections.defaultdict(set)
+    for caller_id, called_id \
+     in crud.read_as_tuples('fn_calls', 'caller_id', 'called_id', depth=1):
+        successors[called_id].add(caller_id)
+    return registers.topo_sort(successors.keys(), lambda id: successors[id])
+
+def do_reg_map_for_fun(symbol_id, subsets, sizes, code_seqs, reg_map):
+    # {(reg_class, reg_num): [(kind, kind_id, reg_class, reg_num), ...]}
+    fn_reg_map = {}
+
+    for id in crud.read_column('blocks', 'id', word_symbol_id=symbol_id):
+        do_reg_map_for_block(id, symbol_id, subsets, sizes, code_seqs,
+                             fn_reg_map)
+    # FIX: add params and locals to fn_reg_map, then merge with reg_map.
+
+def do_reg_map_for_block(id, symbol_id, subsets, sizes, code_seqs, reg_map):
+    for triple in triple2.read_triples(id):
+        if t.use_count == 0:
+            do_reg_map_for_triple(triple, subsets, sizes, code_seqs, reg_map)
+
+def do_reg_map_for_triple(triple, subsets, sizes, code_seqs, reg_map):
+    params = [do_reg_map_for_triple(param, subsets, sizes, code_seqs, reg_map)
+              for param in triple.children]
+
+def write_reg_map(reg_map):
+    # FIX: implement this!
+    pass

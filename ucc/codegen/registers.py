@@ -213,6 +213,7 @@ def topo_sort(items, successor_fn):
 
     while all_items:
         next_set = all_items - predecessors.keys()
+        assert next_set, "internal error: cycle in topo_sort"
         for item in next_set:
             yield item
             for successor in successors[item]:
