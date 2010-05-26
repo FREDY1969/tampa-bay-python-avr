@@ -347,7 +347,7 @@ def save_word(label, word_symbol, args):
     r'''Writes 'args' as the ast for word_symbol to the database.
 
     Uses 'label' to delete all ast nodes associated with that label first.
-    These would the ast nodes saved from a prior compile.
+    These are the ast nodes saved from a prior compile.
     '''
     delete_word_by_label(label)
     save_args(args, word_symbol)

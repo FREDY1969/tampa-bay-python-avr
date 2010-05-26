@@ -344,6 +344,7 @@ def t_hex_INTEGER(t):
     return t
 
 Names = {
+    '.': '.',
     '<': '<',
     '>': '>',
     '-': '-',
@@ -367,7 +368,7 @@ Names = {
 def t_NAME_n(t):
     r'''[^[( \r\n."'#-]     # first character
         [^[( \r\n.]*        # middle characters
-        [^])[( \r\n.:]      # last character
+        [^]):[( \r\n.]      # last character
     '''
     if t.value in Names:
         t.type = Names[t.value]
@@ -388,8 +389,8 @@ def t_NAME_n(t):
     return t
 
 def t_NAME(t): # single character NAME
-    r'''[^])[( \r\n.:"'#-]
-        (?=[])[( \r\n.:])    # followed by [, ], (, ), space, newline, . or :
+    r'''[^])[( \r\n:"'#-]
+        (?=[]):[( \r\n.])    # followed by [, ], (, ), space, newline, . or :
     '''
     if t.value in Names:
         t.type = Names[t.value]

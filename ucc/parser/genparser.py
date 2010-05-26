@@ -94,7 +94,7 @@ def run():
     if len(sys.argv) == 4:
         genparser(filename, rules, token_dict)
     else:
-        with open(sys.argv[4], 'w') as output_file:
+        with open(sys.argv[4], 'wt') as output_file:
             genparser(filename, rules, token_dict, output_file)
 
 if __name__ == "__main__":

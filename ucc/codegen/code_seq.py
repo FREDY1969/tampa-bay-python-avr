@@ -17,6 +17,10 @@ class code_seq:
         self.requirements[reg_class] = num_registers
 
 def get_code_seq_info():
+    r'''Reads code_seq info from machine.db.
+    
+    Returns {code_seq_id: code_seq object}
+    '''
     ans = {}    # {id: code_seq object}
     last_id = None
     for id, param_num, reg_class, num_registers \
