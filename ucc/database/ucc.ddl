@@ -2,9 +2,8 @@
 
 -- The schema for the ast database.
 
----------------------------------------------------------------------------
--- These are the tables populated by the parse_file method.
----------------------------------------------------------------------------
+-- A row is created for all symbols in all used packages.  Not all of these
+-- will be needed or used by the Installation.
 create table symbol_table (
     id integer not null primary key,
     context integer references symbol_table(id),
@@ -83,6 +82,9 @@ create table sub_element (
     unique (parent_id, element_order)
 );
 
+---------------------------------------------------------------------------
+-- These are the tables populated by the parse_file method.
+---------------------------------------------------------------------------
 create table ast (
     -- The Abstract Syntax Tree (AST).  See AbstractSyntaxTree page in google
     -- code project wiki.
@@ -285,6 +287,7 @@ create table triple_parameters (
     last_parameter_use bool not null default 0,
                                -- true for last parent in abs_order_in_block
                                -- order.
+    parent_code_seq_id int,    -- references code_seq table in machine.db
     reg_class_for_parent int,  -- references reg_class table in machine db
     num_regs_for_parent int,
     trashed bool,

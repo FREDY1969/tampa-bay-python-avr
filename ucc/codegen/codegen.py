@@ -15,7 +15,20 @@ def gen_assembler(processor):
     '''
     update_use_counts()
     order_triples.order_children()
+    assign_code_seq_ids(processor)
+    reg_alloc.alloc_regs()
 
+def update_use_counts():
+    r'''Update use_counts of all triples.
+    '''
+    with crud.db_transaction():
+        crud.Db_cur.execute('''
+            update triples
+               set use_count = (select count(*) from triple_parameters tp
+                                 where tp.parameter_id = triples.id)
+          ''')
+
+def assign_code_seq_ids(processor):
     with crud.db_transaction():
         # assign code_seq_id's to triples.
         crud.Db_cur.execute('''
@@ -43,18 +56,14 @@ def gen_assembler(processor):
                                     or csp.const_max < tpp.int1
                                     or csp.last_use != tpp.last_parameter_use))
                    order by cs.preference)  -- only first row taken
-        ''', (processor,))
+          ''', (processor,))
 
-    reg_alloc.alloc_regs()
-
-
-def update_use_counts():
-    r'''Update use_counts of all triples.
-    '''
     with crud.db_transaction():
+        # and make the code_seq_id available to the triple's parameters.
         crud.Db_cur.execute('''
-            update triples
-               set use_count = (select count(*) from triple_parameters tp
-                                 where tp.parameter_id = triples.id)
+            update triple_parameters
+               set parent_code_seq_id = 
+                     (select code_seq_id
+                        from triples t
+                       where t.id = triple_parameters.parent_id)
           ''')
-

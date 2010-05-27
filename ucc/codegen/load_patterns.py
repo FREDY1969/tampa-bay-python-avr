@@ -25,7 +25,7 @@ Pattern is:
 
 Use is:
 
-    [<num_regs_used_from_param> *] reg_class [trashed] [delink]
+    ([<num_regs_used_from_param> *] reg_class [trashed] | delink)
 
 Reg_requirement is:
 
@@ -33,6 +33,7 @@ Reg_requirement is:
 '''
 
 import sys
+import re
 
 if __name__ == "__main__":
     from doctest_tools import setpath
@@ -121,6 +122,16 @@ def load(database_filename, pattern_filename):
                                         operand1=operand1,
                                         operand2=operand2)
 
+Pattern_re = re.compile(r'''
+      \s*
+      (?: (?P<delink> delink)
+        | (?: (?P<num_regs> \d+) \s* \* \s*)?
+          (?P<reg_class>\w+)
+          (?P<trashed> \s+ trashed)?
+      )
+    ''',
+    re.VERBOSE)
+
 def parse_component(text):
     r'''Parse argument pattern.
 
@@ -141,13 +152,13 @@ def parse_component(text):
         (None, None, None, 1, 'immed', 2, True, False)
         >>> parse_component(" reused = 2*immed trashed ")
         (None, None, None, 0, 'immed', 2, True, False)
-        >>> parse_component("int =2*single delink")
-        ('int', None, None, None, 'single', 2, False, True)
+        >>> parse_component("int =delink")
+        ('int', None, None, None, None, None, False, True)
     '''
 
     pattern_use = text.split('=')
     if len(pattern_use) == 1:
-        pattern, use = pattern_use[0], None
+        pattern, use = pattern_use[0], ''
     elif len(pattern_use) == 2:
         pattern, use = pattern_use
     else:
@@ -172,37 +183,33 @@ def parse_component(text):
         raise SyntaxError("too many pattern args",
                           (Filename, Lineno, None, Line))
 
-    num_regs = 1
     reg_class = num_regs = None
     trashes = delink = False
-    if use:
-        use_args = use.split()
-        reg_specs = use_args[0].split('*')
-        if len(reg_specs) == 1:
-            reg_class = reg_specs[0].strip()
-            num_regs = 1
-        elif len(reg_specs) == 2:
-            num_regs = int(reg_specs[0])
-            reg_class = reg_specs[1].strip()
-        else:
+    if use.strip():
+        m = Pattern_re.match(use)
+        if not m:
             raise SyntaxError("invalid register spec",
                               (Filename, Lineno, None, Line))
-        for option in use_args[1:]:
-            option = option.strip()
-            if option == 'trashed': trashes = True
-            elif option == 'delink': delink = True
-            else:
-                raise SyntaxError("invalid option on register spec",
-                                  (Filename, Lineno, None, Line))
+        if m.group('delink'):
+            delink = True
+        else:
+            num_regs = int(m.group('num_regs') or 1)
+            reg_class = m.group('reg_class')
+            if m.group('trashed'):
+                trashes = True
 
     return opcode, min, max, last_use, reg_class, num_regs, trashes, delink
+
+
+Reg_req_re = re.compile(
+    r'\s* (?: (?P<num_regs> \d+) \s* \* \s*)? (?P<reg_class>\w+)',
+    re.VERBOSE)
 
 def reg_req(text):
     r'''Returns reg_class, number required.
     '''
-    fields = text.split('*')
-    if len(fields) == 1: return fields[0].strip(), 1
-    return fields[1].strip(), int(fields[0].strip())
+    m = Reg_req_re.match(text)
+    return m.group('reg_class'), int(m.group('num_regs') or 1)
 
 def read_insts(f):
     r'''Generate label, opcode, operand1, operand2.
