@@ -227,14 +227,13 @@ def figure_out_multi_use(subsets, sizes):
 
 
 def create_reg_map(subsets, sizes, code_seqs):
-    # {(reg_class, reg_num): [(kind, kind_id, reg_class, reg_num), ...]}
-    reg_map = {}
-
     for next_fn_layer in get_functions():
+        # FIX: What needs to happen between fn layers?
+        # {(reg_class, reg_num): [(kind, kind_id, reg_class, reg_num), ...]}
+        reg_map = {}
         for symbol_id in next_fn_layer:
             do_reg_map_for_fun(symbol_id, subsets, sizes, code_seqs, reg_map)
-
-    write_reg_map(reg_map)
+        write_reg_map(reg_map)
 
 def get_functions():
     r'''Yields sets of functions in a bottom-up order.
