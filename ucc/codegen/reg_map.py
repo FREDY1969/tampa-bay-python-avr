@@ -184,14 +184,14 @@ class fn_reg_map:
         '''
         if reg_use.current_assignment:
             # {rc: {reg_use: [(ref_index, {reg_use: ref_index})]}}
-            left_overs = []     # [(rc, u_use, u_ref_index, (reg_use_comb...))]
+            combs = []     # [(rc, u_use, u_ref_index, (reg_use_comb...))]
             for rc in reg_use.rc.supersets:
                 for u_use, u_refs in self.unassigned_uses[rc].items():
                     for u_ref_index, u_uses in u_refs:
-                        left_overs.append(
+                        combs.append(
                           (rc, u_use, u_ref_index,
-                           left_over_combinations(u_uses, reg_use.regs_needed)))
-            examine_left_overs(left_overs, reg_use)
+                           combinations(u_uses, reg_use.regs_needed)))
+            examine_combinations(combs, reg_use)
 
     def done(self, reg_use):
         r'''Called by reg_use.free.
@@ -219,51 +219,60 @@ def count(start, number):
     '''
     return tuple(range(start, start + number))
 
-def left_over_combinations(u_uses, num_registers):
+def combinations(u_uses, num_registers):
     r'''Generates the combinations of u_uses that can supply num_registers.
 
     u_uses is {reg_use: ref_index}.
 
     Yields a tuple of reg_uses.
     '''
-    fragments = {}
-    for num, uses in itertools.groupby(sorted(u_uses.keys(),
+    return tuple(generate_combinations(num_registers,
+                                       sorted(u_uses.keys(),
                                               key=lambda u: u.regs_needed,
-                                              reverse=True),
-                                       lambda u: u.regs_needed):
-        fragments[num] = tuple(uses)
+                                              reverse=True)))
 
-    groups = []
-    for num in sorted(fragments.keys()):
-        while num > len(groups):
-            groups.append(())
-        groups.append(fragments[num])
-    return tuple(generate_combinations(groups, num_registers))
+def generate_combinations(num_registers, uses, start=0):
+    r'''Yields all combinations of uses[start:] whose sum is >= num_registers.
 
-def generate_combinations(groups, num_registers):
-    r'''Generates all combinations of uses whose sum is >= num_registers.
-
-        >>> tuple(generate_combinations([(), 'AB', 'CD'], 2))
-        (('C',), ('D',), ('A', 'B'))
-        >>> tuple(generate_combinations([(), 'ABC', 'DE'], 3))
-        (('D', 'A'), ('E', 'A'), ('D', 'B'), ('E', 'B'), ('D', 'C'), ('E', 'C'), ('D', 'E'), ('A', 'B', 'C'))
+        >>> class reg_use:
+        ...     def __init__(self, name, regs_needed):
+        ...         self.name = name
+        ...         self.regs_needed = regs_needed
+        ...     def __repr__(self): return self.name
+        >>> A1 = reg_use('A1', 1)
+        >>> B1 = reg_use('B1', 1)
+        >>> C1 = reg_use('C1', 1)
+        >>> D2 = reg_use('D2', 2)
+        >>> E2 = reg_use('E2', 2)
+        >>> tuple(generate_combinations(2, [D2, E2, A1, B1]))
+        ((D2,), (E2,), (A1, B1))
+        >>> tuple(generate_combinations(3, [D2, E2, A1, B1, C1]))
+        ((D2, E2), (D2, A1), (D2, B1), (D2, C1), (E2, A1), (E2, B1), (E2, C1), (A1, B1, C1))
     '''
-    #print("num_registers", num_registers)
     if num_registers <= 0:
         yield ()
         return
-    for num in range(len(groups) - 1, 0, -1):
-        if groups[num]:
-            for repetitions in range(1, (num_registers + num - 1) // num + 1):
-                numr = num * repetitions
-                for rest \
-                 in generate_combinations(groups[:num], num_registers - numr):
-                    for mine \
-                     in itertools.combinations(groups[num], repetitions):
-                        yield mine + rest
+    for i in range(start, len(uses)):
+        use = uses[i]
+        for rest in generate_combinations(num_registers - use.regs_needed,
+                                          uses, i + 1):
+            yield (use,) + rest
 
-def examine_left_overs(left_overs, reg_use):
-    pass
+def examine_combinations(combs, reg_use):
+    r'''Figures out what to do with reg_use.
+
+    combs is [(rc, u_use, u_ref_index, ((reg_use...)...))]
+    '''
+    history = {}        # {reg_use: {used for reg_use}}
+
+def use_needed(combs, reg_use):
+    history = {}        # {reg_use: {used for reg_use}}
+    for rc, u_use, u_ref_index, overlaps in combs:
+        ok = False
+        for comb in overlaps:
+            if reg_use not in comb:
+                # FIX: !!!
+                pass
 
 class temp_reg_use:
     r'''Each instance corresponds to one use of a register.
