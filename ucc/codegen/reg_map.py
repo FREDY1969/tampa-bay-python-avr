@@ -55,23 +55,33 @@ class fn_reg_map:
         self.max_count = collections.defaultdict(int)   # {rc: max_count}
         self.uses = collections.defaultdict(set)        # {rc: set(reg_use)}
         self.spill_reqs = collections.defaultdict(set)  # {rc: set(spill_req)}
+        self.reg_uses = []
 
     def alloc(self, use):
+        self.reg_uses.append(use)
         if not self.alloc_use(use):
             self.conflict(use)
 
     def alloc_use(self, use):
+        #print("alloc_use", use)
         # Check for free space first:
         for sub_rc in use.rc.subsets:  # bottom up
-            if self.use_count[sub_rc] + use.num <= self.max_count[sub_rc]:
-                self.use_count[sub_rc] += use.num
+            if self.use_count[sub_rc] + use.regs_needed <= \
+                 self.max_count[sub_rc]:
+                use.assign_to(sub_rc,
+                              count(self.use_count[sub_rc], use.regs_needed))
+                print("took free_space: use_count was", self.use_count[sub_rc],
+                      end=' ')
+                self.use_count[sub_rc] += use.regs_needed
+                print("now", self.use_count[sub_rc])
                 self.uses[sub_rc].add(use)
                 return True
 
+        #print("alloc_use: no free space")
         # No free space, bump super reg_uses to higher rc:
         selected_sub_rc = None
         selected_use_list = None
-        for sub_rc in rc.subsets:
+        for sub_rc in use.rc.subsets:
             super_uses = sorted((a_use for a_use in self.uses[sub_rc]
                                        if a_use.rc != use.rc and
                                           use.rc in a_use.rc.subsets),
@@ -88,51 +98,106 @@ class fn_reg_map:
                 break
         if selected_sub_rc is not None:
             for a_use in selected_use_list:
-                self.use_count[selected_sub_rc] -= a_use.num
+                print("bumping: use_count was",
+                      self.use_count[selected_sub_rc],
+                      end=' ')
+                self.use_count[selected_sub_rc] -= a_use.regs_needed
+                print("now", self.use_count[selected_sub_rc])
                 self.uses[selected_sub_rc].remove(selected_use_list)
-            self.use_count[selected_sub_rc] += use.num
+            print("taking bumped: use_count was",
+                  self.use_count[selected_sub_rc],
+                  end=' ')
+            self.use_count[selected_sub_rc] += use.regs_needed
+            print("now", self.use_count[selected_sub_rc])
+            self.uses[selected_sub_rc].add(use)
             succeeded = True
             for i, a_use in enumerate(selected_use_list):
                 if not self.alloc_use(a_use):
                     succeeded = False
-                    self.use_count[selected_sub_rc] -= use.num
+                    print("unbumping: use_count was",
+                          self.use_count[selected_sub_rc],
+                          end=' ')
+                    self.use_count[selected_sub_rc] -= use.regs_needed
+                    print("now", self.use_count[selected_sub_rc])
+                    self.uses[selected_sub_rc].remove(a_use)
                     for a_use in selected_use_list[i:]:
-                        assert self.alloc_use(a_use), "internal logic error"
-            return succeeded
+                        if not self.alloc_use(a_use):
+                            raise AssertionError("internal logic error")
+            if succeeded:
+                use.assign_to(selected_sub_rc,
+                              count(self.use_count[selected_sub_rc] -
+                                    use.regs_needed))
+                return True
 
+        #print("alloc_use: nothing to bump")
         # Nothing to bump, increase max_count looking in subsets from biggest
         # to smallest:
         for sub_rc in use.rc.subsets[::-1]:
-            regs_needed = use.num - self.use_count[sub_rc]
+            regs_needed = \
+              use.regs_needed - \
+                (self.max_count[sub_rc] - self.use_count[sub_rc])
+            #print("alloc_use: sub_rc", sub_rc, "regs_needed", regs_needed,
+            #      "max_count", self.max_count[sub_rc])
             if self.max_count[sub_rc] + regs_needed <= sub_rc.num_registers:
-                self.use_count[sub_rc] += use.num
+                use.assign_to(sub_rc,
+                              count(self.use_count[sub_rc], use.regs_needed))
+                print("adding regs: use_count was", self.use_count[sub_rc],
+                      end=' ')
+                self.use_count[sub_rc] += use.regs_needed
+                print("now", self.use_count[sub_rc])
+                self.uses[sub_rc].add(use)
                 self.max_count[sub_rc] = self.use_count[sub_rc]
                 return True
 
+        #print("alloc_use: no room")
         # No room!
         return False
 
     def conflict(self, use):
         r'''Need to spill another reg_use to make room for this one.
         '''
+        #print("conflict", use)
         for sub_rc in use.rc.subsets[::-1]:  # top down
             for s in self.spill_reqs[sub_rc]:
-                if s.size >= use.num:
-                    s.attach(use,
+                if s.num_registers >= use.regs_needed:
+                    s.alloc(use,
                       itertools.chain.from_iterable(self.uses[rc]
                                                     for rc in sub_rc.subsets))
                     self.spill_reqs[sub_rc].remove(s)
+                    self.uses[sub_rc].add(use)
                     return
+        self.uses[use.rc].add(use)
         spill_req(self, use,
-                  itertools.chain.from_iterable(self.uses[rc]
-                                                for rc in use.rc.subsets))
+                  itertools.filterfalse(
+                    lambda u: u.spilled,
+                    itertools.chain.from_iterable(self.uses[rc]
+                                                  for rc in use.rc.subsets)))
 
-    def release(self, use):
-        self.use_count[use.rc] -= use.num
+    def release(self, use, rc):
+        r'''Called when use is freed.
+        '''
+        print("release: use_count was", self.use_count[rc], end=' ')
+        self.use_count[rc] -= use.regs_needed
+        print("now", self.use_count[rc])
+        self.uses[rc].remove(use)
 
     def write(self):
         # FIX: Implement this!
         pass
+
+def count(start, number):
+    r'''Return a tuple of 'number' numbers starting at 'start'.
+
+        >>> count(3, 2)
+        (3, 4)
+        >>> count(3, 3)
+        (3, 4, 5)
+        >>> count(3, 1)
+        (3,)
+        >>> count(3, 0)
+        ()
+    '''
+    return tuple(range(start, start + number))
 
 class reg_use:
     r'''Each instance corresponds to one use of a register.
@@ -157,25 +222,59 @@ class reg_use:
         self.spilled = False
         self.pending_spills = set()
         self.spill_obj = None
-        self.references = []    # [triple_parameter_id] in chronological order.
+        self.references = []      # [(triple_id, triple_reg_num, rc, [reg_num])]
         self.spill_references = []
+        self.active = True
         reg_map.alloc(self)
 
+    def __repr__(self):
+        return "<reg_use {}[{}]>".format(self.triple_id, self.triple_reg_num)
+
+    @property
+    def regs_needed(self):
+        return self.num * self.rc.reg_size
+
     def reference(self, triple_parameter_id):
+        #print("reference", self, triple_parameter_id)
         self.references.append(triple_parameter_id)
         for s in tuple(self.pending_spills):
-            s.clear(self)
+            s.end_use(self, triple_parameter_id)
 
     def free(self):
-        if self.spill_obj:
-            self.spill_obj.available()
-        self.reg_map.release(self)
+        self.active = False
+        if not self.spill_obj and not self.pending_spills:
+            self.reg_map.release(self, self.assigned_rc)
+        else:
+            if self.spill_obj:
+                self.spill_obj.available()
+            for s in tuple(self.pending_spills):
+                s.available()
 
-    def set_spill(self):
+    def set_spill(self, reference_id):
+        self.spill_references.append(reference_id)
+        cost = self.regs_needed
+        if self.spilled:
+            return cost
         self.spilled = True
+        return 2 * cost
 
     def spilled_to(self, s):
+        r'''Spill_obj making room for me.
+        '''
         self.spill_obj = s
+        self.assigned_rc = s.rc
+        self.assigned_nums = []
+
+    def assign_to(self, rc, nums):
+        self.assigned_rc = rc
+        self.assigned_nums = nums
+
+    def add_assigns(self, nums):
+        self.assigned_nums.extend(nums)
+
+    @property
+    def assigns_needed(self):
+        return self.regs_needed - len(self.assigned_nums)
 
 class spill_req:
     r'''This represents a request (or need) to spill reg_use(s).
@@ -185,7 +284,7 @@ class spill_req:
     time.  Thus, freeing one register may be able to satisfy all of their
     needs.
 
-    Also, an attempt is made to find one reg_use to spill with a lifetime long
+    Also, an attempt is made to find a reg_use to spill with a lifetime long
     enough to overlap the lifetimes of all needed reg_uses.
 
     A cost is maintained for how many saves and restores (combined) are
@@ -211,27 +310,64 @@ class spill_req:
     super reg_class, a reg_use spilled later will not fill the first need.
     '''
 
+    count = 1
+
     def __init__(self, reg_map, new_reg, regs):
         self.reg_map = reg_map
         self.rc = new_reg.rc
+        self.which = self.count
+        self.count += 1
         self.new_regs = []
         self.alloc(new_reg, regs)
         self.cost = 0
 
-    def alloc(self, new_reg, regs):
-        self.new_regs.append(new_reg)
-        self.num_registers = new_reg.num
-        self.candidate_reg_uses = set(regs)
-        new_reg.spilled_to(self)
-        for r in regs: r.pending_spills.add(self)
+    def __repr__(self):
+        return "<spill_req {}.{}>".format(self.rc, self.which)
 
-    def clear(self, reg):
-        self.candidate_reg_uses.remove(reg)
-        reg.pending_spills.remove(self)
-        if len(self.candidate_reg_uses) == 0:
-            reg.set_spill()
-            self.cost += 2 * self.num_registers
+    def alloc(self, new_reg, regs):
+        r'''Called to make room for new_reg, with regs currently in-use.
+        '''
+        self.current_regs_needed = [new_reg]
+        self.new_regs.append(new_reg)
+        self.num_registers = new_reg.regs_needed
+        self.candidate_reg_uses = set(regs)
+        #print("alloc", self, new_reg, self.candidate_reg_uses)
+        new_reg.spilled_to(self)
+        for u in self.candidate_reg_uses:
+            u.pending_spills.add(self)
+
+    def end_use(self, reg, reference_id):
+        r'''Called when an overlapping reg_use hits a reference.
+        '''
+        #print("clear", reg, reference_id)
+        remainder = sum(u.regs_needed
+                        for u in self.candidate_reg_uses
+                          if u != reg)
+        if remainder < self.num_registers:
+            #print("clear: setting spill", reg)
+            self.cost += reg.set_spill(reference_id)
+            num_freed = reg.regs_needed
+            num_used = 0
+            for r in self.current_regs_needed[:]:
+                if r.assigns_needed <= num_freed:
+                    r.add_assigns(
+                      reg.assigned_nums[num_used:num_used + r.assigns_needed])
+                    self.current_regs_needed.remove(r)
+                    self.candidate_reg_uses.add(r)
+                    num_used += r.assigns_needed
+                else:
+                    r.add_assigns(reg.assigned_nums[num_used:])
+            if self.current_regs_needed:
+                self.current_regs_needed.append(reg)
 
     def available(self):
-        self.reg_map.spills[self.rc].add(self)
+        r'''Called when a reg_use is freed.
+
+        This is called for both the new_reg and overlapping reg_uses.
+        '''
+        #print("available")
+        for use in self.candidate_reg_uses:
+            use.pending_spills.remove(self)
+        self.candidate_reg_uses = set()
+        self.reg_map.spill_reqs[self.rc].add(self)
 
