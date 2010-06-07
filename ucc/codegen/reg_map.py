@@ -51,30 +51,42 @@ class fn_reg_map:
 
     def __init__(self, symbol_id):
         self.symbol_id = symbol_id
-        self.use_count = collections.defaultdict(int)   # {rc: use_count}
-        self.max_count = collections.defaultdict(int)   # {rc: max_count}
-        self.uses = collections.defaultdict(set)        # {rc: set(reg_use)}
-        self.spill_reqs = collections.defaultdict(set)  # {rc: set(spill_req)}
+
+        # {rc: use_count}
+        self.use_count = collections.defaultdict(int)
+
+        # {rc: max_count}
+        self.max_count = collections.defaultdict(int)
+
+        # {rc: {reg_use: ref_index}}
+        self.assigned_uses = collections.defaultdict(dict)
+
+        # {rc: {reg_use: [(ref_index, {reg_use: ref_index})]}}
+        self.unassigned_uses = \
+          collections.defaultdict(lambda: collections.defaultdict(list))
+
         self.reg_uses = []
 
-    def alloc(self, use):
-        self.reg_uses.append(use)
-        if not self.alloc_use(use):
-            self.conflict(use)
+    def alloc(self, use, ref_index = None):
+        if ref_index is None:
+            self.reg_uses.append(use)
+        if not self.alloc_use(use, ref_index):
+            self.conflict(use, ref_index)
 
-    def alloc_use(self, use):
+    def alloc_use(self, use, ref_index = None):
         #print("alloc_use", use)
         # Check for free space first:
         for sub_rc in use.rc.subsets:  # bottom up
             if self.use_count[sub_rc] + use.regs_needed <= \
                  self.max_count[sub_rc]:
-                use.assign_to(sub_rc,
-                              count(self.use_count[sub_rc], use.regs_needed))
+                use.assign_to((sub_rc,
+                               count(self.use_count[sub_rc], use.regs_needed)),
+                              ref_index)
                 print("took free_space: use_count was", self.use_count[sub_rc],
                       end=' ')
                 self.use_count[sub_rc] += use.regs_needed
                 print("now", self.use_count[sub_rc])
-                self.uses[sub_rc].add(use)
+                self.assigned_uses[sub_rc][use] = ref_index
                 return True
 
         #print("alloc_use: no free space")
@@ -82,51 +94,56 @@ class fn_reg_map:
         selected_sub_rc = None
         selected_use_list = None
         for sub_rc in use.rc.subsets:
-            super_uses = sorted((a_use for a_use in self.uses[sub_rc]
-                                       if a_use.rc != use.rc and
-                                          use.rc in a_use.rc.subsets),
-                                key = lambda u: u.num,
+            super_uses = sorted(((a_use, a_ref_index)
+                                 for a_use, a_ref_index
+                                  in self.assigned_uses[sub_rc].items()
+                                   if a_use.rc != use.rc and
+                                      use.rc in a_use.rc.subsets),
+                                key = lambda u: u[0].regs_needed,
                                 reverse = True)
-            sum = 0
-            for i, a_use in enumerate(super_uses):
-                sum += a_use.num
-                if sum >= num:
+            sum = self.max_count[sub_rc] - self.use_count[sub_rc]
+            for i, (a_use, a_ref_index) in enumerate(super_uses):
+                sum += a_use.regs_needed
+                if sum >= use.regs_needed:
                     selected_sub_rc = sub_rc
                     selected_use_list = super_uses[:i + 1]
                     break
             if selected_sub_rc is not None:
                 break
         if selected_sub_rc is not None:
-            for a_use in selected_use_list:
+            # Remove selected_use_list from selected_sub_rc:
+            for a_use, a_ref_index in selected_use_list:
                 print("bumping: use_count was",
                       self.use_count[selected_sub_rc],
                       end=' ')
                 self.use_count[selected_sub_rc] -= a_use.regs_needed
                 print("now", self.use_count[selected_sub_rc])
-                self.uses[selected_sub_rc].remove(selected_use_list)
+                del self.assigned_uses[selected_sub_rc][a_use]
+            # Assign new use:
             print("taking bumped: use_count was",
                   self.use_count[selected_sub_rc],
                   end=' ')
             self.use_count[selected_sub_rc] += use.regs_needed
             print("now", self.use_count[selected_sub_rc])
-            self.uses[selected_sub_rc].add(use)
-            succeeded = True
-            for i, a_use in enumerate(selected_use_list):
-                if not self.alloc_use(a_use):
-                    succeeded = False
+            self.assigned_uses[selected_sub_rc][use] = ref_index
+            for i, (a_use, a_ref_index) in enumerate(selected_use_list):
+                if not self.alloc_use(a_use, a_ref_index):
                     print("unbumping: use_count was",
                           self.use_count[selected_sub_rc],
                           end=' ')
                     self.use_count[selected_sub_rc] -= use.regs_needed
                     print("now", self.use_count[selected_sub_rc])
-                    self.uses[selected_sub_rc].remove(a_use)
-                    for a_use in selected_use_list[i:]:
-                        if not self.alloc_use(a_use):
+                    del self.assigned_uses[selected_sub_rc][use]
+                    for a_use, a_ref_index in selected_use_list[i:]:
+                        if not self.alloc_use(a_use, a_ref_index):
                             raise AssertionError("internal logic error")
-            if succeeded:
-                use.assign_to(selected_sub_rc,
-                              count(self.use_count[selected_sub_rc] -
-                                    use.regs_needed))
+                    break
+            else:
+                use.assign_to((selected_sub_rc,
+                               count(self.use_count[selected_sub_rc] -
+                                     use.regs_needed,
+                                     use.regs_needed)),
+                              ref_index)
                 return True
 
         #print("alloc_use: nothing to bump")
@@ -139,13 +156,14 @@ class fn_reg_map:
             #print("alloc_use: sub_rc", sub_rc, "regs_needed", regs_needed,
             #      "max_count", self.max_count[sub_rc])
             if self.max_count[sub_rc] + regs_needed <= sub_rc.num_registers:
-                use.assign_to(sub_rc,
-                              count(self.use_count[sub_rc], use.regs_needed))
+                use.assign_to((sub_rc,
+                               count(self.use_count[sub_rc], use.regs_needed)),
+                              ref_index)
                 print("adding regs: use_count was", self.use_count[sub_rc],
                       end=' ')
                 self.use_count[sub_rc] += use.regs_needed
                 print("now", self.use_count[sub_rc])
-                self.uses[sub_rc].add(use)
+                self.assigned_uses[sub_rc][use] = ref_index
                 self.max_count[sub_rc] = self.use_count[sub_rc]
                 return True
 
@@ -153,33 +171,35 @@ class fn_reg_map:
         # No room!
         return False
 
-    def conflict(self, use):
+    def conflict(self, use, ref_index = None):
         r'''Need to spill another reg_use to make room for this one.
         '''
-        #print("conflict", use)
-        for sub_rc in use.rc.subsets[::-1]:  # top down
-            for s in self.spill_reqs[sub_rc]:
-                if s.num_registers >= use.regs_needed:
-                    s.alloc(use,
-                      itertools.chain.from_iterable(self.uses[rc]
-                                                    for rc in sub_rc.subsets))
-                    self.spill_reqs[sub_rc].remove(s)
-                    self.uses[sub_rc].add(use)
-                    return
-        self.uses[use.rc].add(use)
-        spill_req(self, use,
-                  itertools.filterfalse(
-                    lambda u: u.spilled,
-                    itertools.chain.from_iterable(self.uses[rc]
-                                                  for rc in use.rc.subsets)))
+        #print("conflict", use, ref_index)
+        self.unassigned_uses[use.rc][use].append((ref_index, dict(
+          itertools.chain.from_iterable(self.assigned_uses[rc].items()
+                                        for rc in use.rc.subsets))))
 
-    def release(self, use, rc):
-        r'''Called when use is freed.
+    def ref(self, reg_use, ref_index):
+        r'''Called by reg_use.reference.
         '''
-        print("release: use_count was", self.use_count[rc], end=' ')
-        self.use_count[rc] -= use.regs_needed
-        print("now", self.use_count[rc])
-        self.uses[rc].remove(use)
+        if reg_use.current_assignment:
+            # {rc: {reg_use: [(ref_index, {reg_use: ref_index})]}}
+            left_overs = []     # [(rc, u_use, u_ref_index, (reg_use_comb...))]
+            for rc in reg_use.rc.supersets:
+                for u_use, u_refs in self.unassigned_uses[rc].items():
+                    for u_ref_index, u_uses in u_refs:
+                        left_overs.append(
+                          (rc, u_use, u_ref_index,
+                           left_over_combinations(u_uses, reg_use.regs_needed)))
+            examine_left_overs(left_overs, reg_use)
+
+    def done(self, reg_use):
+        r'''Called by reg_use.free.
+        '''
+        if reg_use.current_assignment:
+            rc = reg_use.current_assignment[0]
+            del self.assigned_uses[rc][reg_use]
+            self.use_count[rc] -= reg_use.regs_needed
 
     def write(self):
         # FIX: Implement this!
@@ -199,82 +219,115 @@ def count(start, number):
     '''
     return tuple(range(start, start + number))
 
-class reg_use:
+def left_over_combinations(u_uses, num_registers):
+    r'''Generates the combinations of u_uses that can supply num_registers.
+
+    u_uses is {reg_use: ref_index}.
+
+    Yields a tuple of reg_uses.
+    '''
+    fragments = {}
+    for num, uses in itertools.groupby(sorted(u_uses.keys(),
+                                              key=lambda u: u.regs_needed,
+                                              reverse=True),
+                                       lambda u: u.regs_needed):
+        fragments[num] = tuple(uses)
+
+    groups = []
+    for num in sorted(fragments.keys()):
+        while num > len(groups):
+            groups.append(())
+        groups.append(fragments[num])
+    return tuple(generate_combinations(groups, num_registers))
+
+def generate_combinations(groups, num_registers):
+    r'''Generates all combinations of uses whose sum is >= num_registers.
+
+        >>> tuple(generate_combinations([(), 'AB', 'CD'], 2))
+        (('C',), ('D',), ('A', 'B'))
+        >>> tuple(generate_combinations([(), 'ABC', 'DE'], 3))
+        (('D', 'A'), ('E', 'A'), ('D', 'B'), ('E', 'B'), ('D', 'C'), ('E', 'C'), ('D', 'E'), ('A', 'B', 'C'))
+    '''
+    #print("num_registers", num_registers)
+    if num_registers <= 0:
+        yield ()
+        return
+    for num in range(len(groups) - 1, 0, -1):
+        if groups[num]:
+            for repetitions in range(1, (num_registers + num - 1) // num + 1):
+                numr = num * repetitions
+                for rest \
+                 in generate_combinations(groups[:num], num_registers - numr):
+                    for mine \
+                     in itertools.combinations(groups[num], repetitions):
+                        yield mine + rest
+
+def examine_left_overs(left_overs, reg_use):
+    pass
+
+class temp_reg_use:
     r'''Each instance corresponds to one use of a register.
 
     The instance is created at the point where the register is set to a value.
     This is the only place in the reg_use lifetime that the register can be
-    set.
+    set.  But if a triple has multiple parents, the temp_reg_use could have
+    multiple references.
 
     However, the register may be referenced multiple times.
     '''
 
-    def __init__(self, reg_map, triple_id, triple_reg_num, rc, num = 1):
+    def __init__(self, reg_map, reg_map_key, rc, num = 1):
         r'''The object is created where the register is set.
 
         This is the point of first use.
         '''
         self.reg_map = reg_map
-        self.triple_id = triple_id
-        self.triple_reg_num = triple_reg_num
+        self.reg_map_key = reg_map_key
         self.rc = rc
         self.num = num
-        self.spilled = False
-        self.pending_spills = set()
-        self.spill_obj = None
-        self.references = []      # [(triple_id, triple_reg_num, rc, [reg_num])]
-        self.spill_references = []
+        self.references = []      # list of list of reg_map_key, optional fn_key
         self.active = True
+        self.spilled = False
+        self.current_assignment = None
         reg_map.alloc(self)
 
     def __repr__(self):
-        return "<reg_use {}[{}]>".format(self.triple_id, self.triple_reg_num)
+        return "<temp_reg_use {}>".format(self.reg_map_key)
 
     @property
     def regs_needed(self):
         return self.num * self.rc.reg_size
 
-    def reference(self, triple_parameter_id):
-        #print("reference", self, triple_parameter_id)
-        self.references.append(triple_parameter_id)
-        for s in tuple(self.pending_spills):
-            s.end_use(self, triple_parameter_id)
+    def reference(self, reg_map_key):
+        #print("reference", self, reg_map_key)
+        ref_index = len(self.references)
+        self.references.append([reg_map_key])
+        self.reg_map.ref(self, ref_index)
 
     def free(self):
         self.active = False
-        if not self.spill_obj and not self.pending_spills:
-            self.reg_map.release(self, self.assigned_rc)
-        else:
-            if self.spill_obj:
-                self.spill_obj.available()
-            for s in tuple(self.pending_spills):
-                s.available()
+        self.reg_map.done(self)
 
-    def set_spill(self, reference_id):
-        self.spill_references.append(reference_id)
+    def set_spill(self):
         cost = self.regs_needed
+        self.current_assignment = None
         if self.spilled:
             return cost
         self.spilled = True
         return 2 * cost
 
-    def spilled_to(self, s):
-        r'''Spill_obj making room for me.
-        '''
-        self.spill_obj = s
-        self.assigned_rc = s.rc
-        self.assigned_nums = []
-
-    def assign_to(self, rc, nums):
-        self.assigned_rc = rc
-        self.assigned_nums = nums
-
-    def add_assigns(self, nums):
-        self.assigned_nums.extend(nums)
+    def assign_to(self, fn_key, ref_index = None):
+        if ref_index is None:
+            self.assigned = fn_key
+        else:
+            assert len(self.refernces[ref_index]) == 1, \
+                   "{}: duplicate assign_ref on {}".format(self, ref_index)
+            self.references[ref_index].append(fn_key)
+        self.current_assignment = fn_key
 
     @property
     def assigns_needed(self):
-        return self.regs_needed - len(self.assigned_nums)
+        return self.regs_needed - len(self.current_assignment[1])
 
 class spill_req:
     r'''This represents a request (or need) to spill reg_use(s).

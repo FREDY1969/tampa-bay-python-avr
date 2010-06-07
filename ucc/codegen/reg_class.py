@@ -9,9 +9,9 @@ class reg_class:
         self.reg_size = reg_size
         self.num_registers = num_registers  # not included in subsets
         self.subsets = [self]               # smaller to larger, including self
-                                            #   old: [(subset_rc, map)...]
-                                            #   new: [subset_rc...]
-
+                                            #   [subset_rc...]
+        self.supersets = [self]             # smaller to larger, including self
+                                            #   [superset_rc...]
     def __repr__(self):
         return "<reg_class {}>".format(self.name)
 

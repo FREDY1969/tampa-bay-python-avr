@@ -20,18 +20,16 @@ def do_perm(p):
     use_map = {}
     for x in p:
         if x.isupper():
-            use_map[x] = reg_map.reg_use(rm, x, 1, rc)
+            use_map[x] = reg_map.temp_reg_use(rm, x, rc)
         else:
             use_map[x.upper()].reference(1)
             use_map[x.upper()].free()
-    if rm.uses[rc]:
-        print("reg_map.uses not empty at end:", rm.uses[rc])
+    if rm.assigned_uses[rc]:
+        print("reg_map.assigned_uses not empty at end:", rm.assigned_uses[rc])
     if rm.use_count[rc] != 0:
         print("reg_map.use_count != 0 at end:", rm.use_count[rc])
-    for ss in rm.spill_reqs.values():
-        for s in ss: print(s, "cost", s.cost)
     for use in rm.reg_uses:
-        print("use", use, use.assigned_rc, use.assigned_nums, end='')
+        print("use", use, use.assigned, end='')
         if use.spilled: print(" spilled")
         else: print()
 
