@@ -36,9 +36,9 @@ class function:
               from triples t
                      inner join triple_parameters tp
                         on t.id = tp.parent_id
-             where t.id in (%s)
+             where t.id in ({})
              order by tp.parameter_num, t.reg_class
-         ''' % (', '.join(('?',) * len(triple_ids)),),
+         '''.format(', '.join(('?',) * len(triple_ids)),),
          triple_ids)
         # {parameter_num: (reg_class, ...)}
         self.params_provided_reg_classes = \
