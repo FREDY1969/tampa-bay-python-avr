@@ -54,6 +54,8 @@ def load(database_filename, pattern_filename):
     global Line, Lineno, Filename
     Filename = pattern_filename
     with crud.db_connection(database_filename, False, False):
+        reg_class_by_name = dict(crud.read_as_tuples('reg_class', 'name', 'id'))
+        reg_class_by_name[None] = None
         with open(pattern_filename) as f:
             last_operator = None
             Line = f.readline()
@@ -97,36 +99,38 @@ def load(database_filename, pattern_filename):
 
                                 if opcode != 'ans':
                                     crud.insert('code_seq_parameter',
-                                                code_seq_id=code_seq_id,
-                                                parameter_num=i + 1,
-                                                opcode=opcode,
-                                                const_min=min,
-                                                const_max=max,
-                                                last_use=last_use,
-                                                reg_class=reg_class,
-                                                num_registers=num_regs,
-                                                trashes=trashes,
-                                                delink=delink)
+                                      code_seq_id=code_seq_id,
+                                      parameter_num=i + 1,
+                                      opcode=opcode,
+                                      const_min=min,
+                                      const_max=max,
+                                      last_use=last_use,
+                                      reg_class=reg_class_by_name[reg_class],
+                                      num_registers=num_regs,
+                                      trashes=trashes,
+                                      delink=delink)
 
                                     if output:
                                         crud.update('code_seq',
-                                                    {'id': code_seq_id},
-                                                    output_reg_class=reg_class,
-                                                    num_output=num_regs,
-                                                    from_param_num=i + 1)
+                                          {'id': code_seq_id},
+                                          output_reg_class=
+                                            reg_class_by_name[reg_class],
+                                          num_output=num_regs,
+                                          from_param_num=i + 1)
                                 else:
                                     crud.update('code_seq',
-                                                {'id': code_seq_id},
-                                                output_reg_class=reg_class,
-                                                num_output=num_regs)
+                                      {'id': code_seq_id},
+                                      output_reg_class=
+                                        reg_class_by_name[reg_class],
+                                      num_output=num_regs)
 
                         if len(components) > 2 and components[2].strip():
                             for req in components[2].split(','):
                                 reg_class, number = reg_req(req.strip())
                                 crud.insert('reg_requirements',
-                                            code_seq_id=code_seq_id,
-                                            reg_class=reg_class,
-                                            num_needed=number)
+                                  code_seq_id=code_seq_id,
+                                  reg_class=reg_class_by_name[reg_class],
+                                  num_needed=number)
 
                         for i, (label, opcode, operand1, operand2) \
                          in enumerate(read_insts(f)):

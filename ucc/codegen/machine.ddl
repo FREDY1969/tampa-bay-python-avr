@@ -130,7 +130,7 @@ create table code_seq (
     id integer not null primary key,
     preference int not null,
     operator varchar(255) not null,
-    output_reg_class varchar(20) references reg_class(name),
+    output_reg_class int references reg_class(id),
     num_output int,
     from_param_num int
 );
@@ -148,7 +148,7 @@ create table code_seq_parameter (
     last_use bool,
 
     -- parameter requirements:
-    reg_class varchar(20) references reg_class(name),
+    reg_class int references reg_class(id),
     num_registers int,
     trashes bool default 0,
     delink bool default 0,
@@ -158,7 +158,7 @@ create table code_seq_parameter (
 
 create table reg_requirements (
     code_seq_id int not null references code_seq(id),
-    reg_class varchar(20) not null references reg_class(name),
+    reg_class int not null references reg_class(id),
     num_needed int not null,
     primary key (code_seq_id, reg_class)
 );

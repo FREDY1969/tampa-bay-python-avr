@@ -3,6 +3,7 @@
 r'''Register allocation code.
 '''
 
+#import sys   # for debug traces
 import itertools
 import collections
 
@@ -286,24 +287,70 @@ def get_functions():
                 if not calls[caller]: del calls[caller]
 
 def do_reg_map_for_fun(symbol_id, subsets, sizes, code_seqs, reg_map):
-    examine_locals(symbol_id, subsets, sizes)
+    fn_name, kind, suspends = crud.read1_as_tuple('symbol_table',
+                                                  'label', 'kind', 'suspends',
+                                                  id=symbol_id)
+    locals = gather_locals(symbol_id, subsets, sizes)
 
-def examine_locals(symbol_id, subsets, sizes):
-    kind, suspends = crud.read1_as_tuple('symbol_table', 'kind', 'suspends',
-                                         id=symbol_id)
-    locals = crud.read_as_dicts('symbol_table', 'id', 'kind', 'type_id', 'int1',
-                                context=symbol_id)
+    #print(fn_name, "locals", locals, file=sys.stderr)
+
+def gather_locals(fn_symbol_id, subsets, sizes):
+    r'''Returns {symbol_id: (reg_class, num_regs, use_count)}
+    '''
+
     crud.Db_cur.execute('''
-        select t.symbol_id, needed_reg_class, num_needed_regs
+        select u.symbol_id, u.reg_class, count(*), max(u.num_regs)
           from blocks b
-                 inner join triples t
-                   on b.id = t.block_id
+                 inner join (  select t.block_id, t.symbol_id, 'use',
+                                      needed_reg_class as reg_class,
+                                      num_needed_regs as num_regs
+                                 from triples t
+                                where operator = 'local'
+                             union
+                               select t2.block_id, tl.symbol_id, 'definition',
+                                      t2.reg_class, t2.num_regs_output
+                                 from triples t2
+                                        inner join triple_labels tl
+                                          on t2.id = tl.triple_id
+                                        inner join symbol_table st
+                                          on tl.symbol_id = st.id
+                                          and st.context = ?
+                            ) u
+                   on b.id = u.block_id
          where b.word_symbol_id = ?
-           and t.operator = 'local'
-         order by t.symbol_id, needed_reg_class
-      ''', (symbol_id,))
-    for id, reg_class, num_regs in crud.Db_cur.fetchall():
-        pass
+         group by u.symbol_id, u.reg_class
+         order by u.symbol_id
+      ''', (fn_symbol_id, fn_symbol_id))
+
+    ans = {}    # {symbol_id: (reg_class, num_regs, use_count)}
+
+    #print('sizes', sizes, file=sys.stderr)
+
+    for id, reg_iter in itertools.groupby(list(crud.Db_cur.fetchall()),
+                                          lambda t: t[0]):
+        reg_classes = collections.defaultdict(int)  # {rc: num_uses}
+        max_regs = 0
+        saved_reg_iter = tuple(info for info in reg_iter if info[1] is not None)
+        for _, reg_class, count, max_needed in saved_reg_iter:
+            if max_needed > max_regs: max_regs = max_needed
+            reg_classes[reg_class] = count
+        for (_, rc1, count1, _), (_, rc2, count2, _) \
+         in itertools.combinations(saved_reg_iter, 2):
+            sub_rc = subsets.get((rc1, rc2))
+            if sub_rc is not None:
+                if sub_rc != rc1:
+                    reg_classes[sub_rc] += count1
+                if sub_rc != rc2:
+                    reg_classes[sub_rc] += count2
+
+        # Select max count:
+        rc, count = sorted(reg_classes.items(),
+                           key=lambda i: (i[1], sizes[i[0]]),
+                           reverse=True) \
+                      [0]
+        ans[id] = (rc, max_regs, count)
+
+    return ans
 
 def write_reg_map(reg_map):
     # FIX: implement this!
