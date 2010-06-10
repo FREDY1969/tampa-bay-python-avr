@@ -61,9 +61,8 @@ class fn_reg_map:
         # {rc: {reg_use: ref_index}}
         self.assigned_uses = collections.defaultdict(dict)
 
-        # {rc: {reg_use: [(ref_index, {reg_use: ref_index})]}}
-        self.unassigned_uses = \
-          collections.defaultdict(lambda: collections.defaultdict(list))
+        # [(reg_use, ref_index, {reg_use: ref_index})]
+        self.unassigned_uses = []
 
         self.reg_uses = []
 
@@ -175,7 +174,7 @@ class fn_reg_map:
         r'''Need to spill another reg_use to make room for this one.
         '''
         #print("conflict", use, ref_index)
-        self.unassigned_uses[use.rc][use].append((ref_index, dict(
+        self.unassigned_uses.append((use, ref_index, dict(
           itertools.chain.from_iterable(self.assigned_uses[rc].items()
                                         for rc in use.rc.subsets))))
 
@@ -183,14 +182,18 @@ class fn_reg_map:
         r'''Called by reg_use.reference.
         '''
         if reg_use.current_assignment:
-            # {rc: {reg_use: [(ref_index, {reg_use: ref_index})]}}
-            combs = []     # [(rc, u_use, u_ref_index, (reg_use_comb...))]
-            for rc in reg_use.rc.supersets:
-                for u_use, u_refs in self.unassigned_uses[rc].items():
-                    for u_ref_index, u_uses in u_refs:
-                        combs.append(
-                          (rc, u_use, u_ref_index,
-                           combinations(u_uses, reg_use.regs_needed)))
+            # [(reg_use, ref_index, {reg_use: ref_index})]
+            prior_unassigned = {}  # {u_reg_use: num_registers}
+            for i, (u_use, u_ref_index, overlaps) \
+             in enumerate(self.unassigned_uses):
+                needed = u_use.regs_needed
+                for use in overlaps.keys():
+                    if use in prior_unassigned:
+                        needed += use.regs_needed
+                    elif use != reg_use:
+                        needed -= use.regs_needed
+                    else:
+                        pass
             examine_combinations(combs, reg_use)
 
     def done(self, reg_use):

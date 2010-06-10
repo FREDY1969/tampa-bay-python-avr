@@ -38,6 +38,22 @@ def get_reg_class_sizes():
 
 def figure_out_multi_use(subsets, sizes):
     with crud.db_transaction():
+        crud.Db_cur.execute('''
+            update triples
+               set reg_class =       (select cs.output_reg_class
+                                        from code_seq cs
+                                       where triples.code_seq_id = cs.id),
+                   num_regs_output = (select cs.num_output
+                                        from code_seq cs
+                                       where triples.code_seq_id = cs.id)
+             where operator not in
+                     ('output', 'output-bit-set', 'output-bit-clear',
+                      'global_addr', 'global', 'local_addr', 'local',
+                      'call_direct', 'call_indirect', 'return',
+                      'if_false', 'if_true')
+          ''')
+
+    with crud.db_transaction():
         # FIX: Need to add info for function call parameters!
         crud.Db_cur.execute('''
             update triple_parameters
@@ -184,7 +200,7 @@ def figure_out_multi_use(subsets, sizes):
 
     # Reset ghost flag for delinked triple_parameters:
     # FIX: This could violate a triple_order_constraint!
-    #      But I don't think that it will be cause it should only be
+    #      But I don't think that it will because it should only be
     #      constant parameters that are delinked.
     with crud.db_transaction():
         # Mark delinks as ghosts.
@@ -219,6 +235,14 @@ def figure_out_multi_use(subsets, sizes):
         crud.Db_cur.execute('''
             update triples
                set abs_order_in_block = (select abs_order_in_block
+                                           from triple_parameters tp
+                                          where triples.id = tp.parameter_id
+                                            and tp.ghost = 0),
+                   needed_reg_class =   (select tp.needed_reg_class
+                                           from triple_parameters tp
+                                          where triples.id = tp.parameter_id
+                                            and tp.ghost = 0),
+                   num_needed_regs =    (select tp.num_regs_for_parent
                                            from triple_parameters tp
                                           where triples.id = tp.parameter_id
                                             and tp.ghost = 0)
@@ -262,23 +286,24 @@ def get_functions():
                 if not calls[caller]: del calls[caller]
 
 def do_reg_map_for_fun(symbol_id, subsets, sizes, code_seqs, reg_map):
-    # {(reg_class, reg_num): [(kind, kind_id, reg_class, reg_num), ...]}
-    fn_reg_map = {}
+    examine_locals(symbol_id, subsets, sizes)
 
-    for id in crud.read_column('blocks', 'id', word_symbol_id=symbol_id):
-        do_reg_map_for_block(id, symbol_id, subsets, sizes, code_seqs,
-                             fn_reg_map)
-    # FIX: add params and locals to fn_reg_map, then merge with reg_map.
-
-def do_reg_map_for_block(id, symbol_id, subsets, sizes, code_seqs, reg_map):
-    for triple in triple2.read_triples(id):
-        if triple.use_count == 0:
-            do_reg_map_for_triple(triple, subsets, sizes, code_seqs, reg_map)
-
-def do_reg_map_for_triple(triple, subsets, sizes, code_seqs, reg_map):
-    params = [do_reg_map_for_triple(param.parameter, subsets, sizes, code_seqs,
-                                    reg_map)
-              for param in triple.children]
+def examine_locals(symbol_id, subsets, sizes):
+    kind, suspends = crud.read1_as_tuple('symbol_table', 'kind', 'suspends',
+                                         id=symbol_id)
+    locals = crud.read_as_dicts('symbol_table', 'id', 'kind', 'type_id', 'int1',
+                                context=symbol_id)
+    crud.Db_cur.execute('''
+        select t.symbol_id, needed_reg_class, num_needed_regs
+          from blocks b
+                 inner join triples t
+                   on b.id = t.block_id
+         where b.word_symbol_id = ?
+           and t.operator = 'local'
+         order by t.symbol_id, needed_reg_class
+      ''', (symbol_id,))
+    for id, reg_class, num_regs in crud.Db_cur.fetchall():
+        pass
 
 def write_reg_map(reg_map):
     # FIX: implement this!

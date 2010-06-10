@@ -424,7 +424,7 @@ def read1_as_tuple(table, *cols, **keys):
     if 'zero_ok' in keys:
         zero_ok = keys['zero_ok']
         del keys['zero_ok']
-    return return1(read_as_tuple(table, *cols, **keys), zero_ok)
+    return return1(read_as_tuples(table, *cols, **keys), zero_ok)
 
 def read_as_dicts(table, *cols, **keys):
     r'''Reads rows from table, returning a sequence of dicts.

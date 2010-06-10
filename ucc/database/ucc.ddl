@@ -250,7 +250,10 @@ create table triples (
     type_id int references type(id),
     use_count int,             -- count times used as a parameter
     code_seq_id int,           -- references code_seq table in machine db
-    reg_class int,
+    needed_reg_class int,      -- needed_reg_class of non-ghost triple_parameter
+    num_needed_regs int,       -- num_regs_for_parent of non-ghost tp
+    reg_class int,             -- output_reg_class from code_seq
+    num_regs_output int,       -- num_output from code_seq
     register_est int,          -- Estimate of number of registers needed by
                                -- this node and all of it's decendants.
     order_in_block int,        -- order within block amoung top-level triples
