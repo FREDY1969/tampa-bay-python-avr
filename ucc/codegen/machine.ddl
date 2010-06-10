@@ -129,7 +129,10 @@ create table code_seq_by_processor (
 create table code_seq (
     id integer not null primary key,
     preference int not null,
-    operator varchar(255) not null
+    operator varchar(255) not null,
+    output_reg_class varchar(20) references reg_class(name),
+    num_output int,
+    from_param_num int
 );
 
 create unique index pattern_idx on code_seq(operator, preference, id);

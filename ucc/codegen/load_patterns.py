@@ -21,11 +21,12 @@ The parameter specifications look like:
 
 Pattern is:
 
-    [last_use|reused] [operator [[min]-[max]]]
+    'ans'
+  | [last_use|reused] [operator [[min]-[max]]]
 
 Use is:
 
-    ([<num_regs_used_from_param> *] reg_class [trashed] | delink)
+    ([<num_regs_used_from_param> *] reg_class [output|trashed] | delink)
 
 Reg_requirement is:
 
@@ -90,20 +91,34 @@ def load(database_filename, pattern_filename):
                             for i, component \
                              in enumerate(components[1].split(',')):
                                 opcode, min, max, last_use, \
-                                  reg_class, num_regs, trashes, delink = \
+                                  reg_class, num_regs, \
+                                  trashes, delink, output = \
                                     parse_component(component)
 
-                                crud.insert('code_seq_parameter',
-                                            code_seq_id=code_seq_id,
-                                            parameter_num=i + 1,
-                                            opcode=opcode,
-                                            const_min=min,
-                                            const_max=max,
-                                            last_use=last_use,
-                                            reg_class=reg_class,
-                                            num_registers=num_regs,
-                                            trashes=trashes,
-                                            delink=delink)
+                                if opcode != 'ans':
+                                    crud.insert('code_seq_parameter',
+                                                code_seq_id=code_seq_id,
+                                                parameter_num=i + 1,
+                                                opcode=opcode,
+                                                const_min=min,
+                                                const_max=max,
+                                                last_use=last_use,
+                                                reg_class=reg_class,
+                                                num_registers=num_regs,
+                                                trashes=trashes,
+                                                delink=delink)
+
+                                    if output:
+                                        crud.update('code_seq',
+                                                    {'id': code_seq_id},
+                                                    output_reg_class=reg_class,
+                                                    num_output=num_regs,
+                                                    from_param_num=i + 1)
+                                else:
+                                    crud.update('code_seq',
+                                                {'id': code_seq_id},
+                                                output_reg_class=reg_class,
+                                                num_output=num_regs)
 
                         if len(components) > 2 and components[2].strip():
                             for req in components[2].split(','):
@@ -127,7 +142,11 @@ Pattern_re = re.compile(r'''
       (?: (?P<delink> delink)
         | (?: (?P<num_regs> \d+) \s* \* \s*)?
           (?P<reg_class>\w+)
-          (?P<trashed> \s+ trashed)?
+          (?: \s+
+              (?: (?P<trashed> trashed)
+                | (?P<output> output)
+              )
+          )?
       )
     ''',
     re.VERBOSE)
@@ -136,24 +155,24 @@ def parse_component(text):
     r'''Parse argument pattern.
 
     Returns 8 values:
-        opcode, min, max, last_use, reg_class, num_regs, trashes, delink
+        opcode, min, max, last_use, reg_class, num_regs, trashes, delink, output
 
         >>> parse_component("int 0- =single")
-        ('int', 0, None, None, 'single', 1, False, False)
+        ('int', 0, None, None, 'single', 1, False, False, False)
         >>> parse_component("int -63 =single")
-        ('int', None, 63, None, 'single', 1, False, False)
+        ('int', None, 63, None, 'single', 1, False, False, False)
         >>> parse_component("int 0-63 =single")
-        ('int', 0, 63, None, 'single', 1, False, False)
+        ('int', 0, 63, None, 'single', 1, False, False, False)
         >>> parse_component("any")
-        (None, None, None, None, None, None, False, False)
+        (None, None, None, None, None, None, False, False, False)
         >>> parse_component(" any = 2*immed trashed ")
-        (None, None, None, None, 'immed', 2, True, False)
-        >>> parse_component(" last_use = 2*immed trashed ")
-        (None, None, None, 1, 'immed', 2, True, False)
+        (None, None, None, None, 'immed', 2, True, False, False)
+        >>> parse_component(" last_use = 2*immed output ")
+        (None, None, None, 1, 'immed', 2, True, False, True)
         >>> parse_component(" reused = 2*immed trashed ")
-        (None, None, None, 0, 'immed', 2, True, False)
+        (None, None, None, 0, 'immed', 2, True, False, False)
         >>> parse_component("int =delink")
-        ('int', None, None, None, None, None, False, True)
+        ('int', None, None, None, None, None, False, True, False)
     '''
 
     pattern_use = text.split('=')
@@ -167,7 +186,12 @@ def parse_component(text):
 
     opcode = min = max = last_use = None
     pattern_args = pattern.split()
-    if pattern_args[0] == 'last_use':
+    if pattern_args[0] == 'ans':
+        if len(pattern_args) > 1:
+            raise SyntaxError("no min/max allowed on ans",
+                              (Filename, Lineno, None, Line))
+        opcode = 'ans'
+    elif pattern_args[0] == 'last_use':
         last_use = 1
         pattern_args = pattern_args[1:]
     elif pattern_args[0] == 'reused':
@@ -184,7 +208,7 @@ def parse_component(text):
                           (Filename, Lineno, None, Line))
 
     reg_class = num_regs = None
-    trashes = delink = False
+    trashes = delink = output = False
     if use.strip():
         m = Pattern_re.match(use)
         if not m:
@@ -197,8 +221,15 @@ def parse_component(text):
             reg_class = m.group('reg_class')
             if m.group('trashed'):
                 trashes = True
+            if m.group('output'):
+                trashes = True
+                output = True
 
-    return opcode, min, max, last_use, reg_class, num_regs, trashes, delink
+    if opcode == 'ans' and reg_class is None:
+        raise SyntaxError("ans needs reg_class", (Filename, Lineno, None, Line))
+
+    return opcode, min, max, last_use, reg_class, num_regs, trashes, delink, \
+           output
 
 
 Reg_req_re = re.compile(
