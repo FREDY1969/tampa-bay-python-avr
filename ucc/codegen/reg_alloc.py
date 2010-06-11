@@ -3,7 +3,7 @@
 r'''Register allocation code.
 '''
 
-#import sys   # for debug traces
+import sys   # for debug traces
 import itertools
 import collections
 
@@ -253,12 +253,10 @@ def figure_out_multi_use(subsets, sizes):
 
 def create_reg_map(subsets, sizes, code_seqs):
     for next_fn_layer in get_functions():
-        # FIX: What needs to happen between fn layers?
-        # {(reg_class, reg_num): [(kind, kind_id, reg_class, reg_num), ...]}
-        reg_map = {}
         for symbol_id in next_fn_layer:
-            do_reg_map_for_fun(symbol_id, subsets, sizes, code_seqs, reg_map)
-        write_reg_map(reg_map)
+            reg_map = reg_map_for_fun(symbol_id, subsets, sizes, code_seqs)
+            write_reg_map(reg_map)
+        # FIX: What needs to happen between fn layers?
 
 def get_functions():
     r'''Yields sets of functions in a bottom-up order.
@@ -286,7 +284,7 @@ def get_functions():
                 calls[caller].remove(fn)
                 if not calls[caller]: del calls[caller]
 
-def do_reg_map_for_fun(symbol_id, subsets, sizes, code_seqs, reg_map):
+def reg_map_for_fun(symbol_id, subsets, sizes, code_seqs):
     fn_name, kind, suspends = crud.read1_as_tuple('symbol_table',
                                                   'label', 'kind', 'suspends',
                                                   id=symbol_id)
@@ -294,20 +292,30 @@ def do_reg_map_for_fun(symbol_id, subsets, sizes, code_seqs, reg_map):
 
     #print(fn_name, "locals", locals, file=sys.stderr)
 
+    temp_map = map_temporaries(symbol_id, locals)
+
+    # FIX: figure out reg_map for fn and return it!
+
+
 def gather_locals(fn_symbol_id, subsets, sizes):
-    r'''Returns {symbol_id: (reg_class, num_regs, use_count)}
+    r'''Returns {symbol_id: (reg_class, num_regs, use_count, total_definitions)}
     '''
 
+    params = frozenset(crud.read_column('symbol_table', 'id',
+                                        context=fn_symbol_id,
+                                        kind='parameter'))
+
     crud.Db_cur.execute('''
-        select u.symbol_id, u.reg_class, count(*), max(u.num_regs)
+        select u.symbol_id, u.reg_class,
+               count(*), max(u.num_regs), sum(definition)
           from blocks b
-                 inner join (  select t.block_id, t.symbol_id, 'use',
+                 inner join (  select t.block_id, t.symbol_id, 0 as definition,
                                       needed_reg_class as reg_class,
                                       num_needed_regs as num_regs
                                  from triples t
                                 where operator = 'local'
                              union
-                               select t2.block_id, tl.symbol_id, 'definition',
+                               select t2.block_id, tl.symbol_id, 1,
                                       t2.reg_class, t2.num_regs_output
                                  from triples t2
                                         inner join triple_labels tl
@@ -322,7 +330,7 @@ def gather_locals(fn_symbol_id, subsets, sizes):
          order by u.symbol_id
       ''', (fn_symbol_id, fn_symbol_id))
 
-    ans = {}    # {symbol_id: (reg_class, num_regs, use_count)}
+    ans = {}  # {symbol_id: (reg_class, num_regs, use_count, total_definitions)}
 
     #print('sizes', sizes, file=sys.stderr)
 
@@ -330,11 +338,13 @@ def gather_locals(fn_symbol_id, subsets, sizes):
                                           lambda t: t[0]):
         reg_classes = collections.defaultdict(int)  # {rc: num_uses}
         max_regs = 0
+        total_definitions = 0
         saved_reg_iter = tuple(info for info in reg_iter if info[1] is not None)
-        for _, reg_class, count, max_needed in saved_reg_iter:
-            if max_needed > max_regs: max_regs = max_needed
+        for _, reg_class, count, max_needed, definitions in saved_reg_iter:
             reg_classes[reg_class] = count
-        for (_, rc1, count1, _), (_, rc2, count2, _) \
+            if max_needed > max_regs: max_regs = max_needed
+            total_definitions += definitions
+        for (_, rc1, count1, _, _), (_, rc2, count2, _, _) \
          in itertools.combinations(saved_reg_iter, 2):
             sub_rc = subsets.get((rc1, rc2))
             if sub_rc is not None:
@@ -348,9 +358,69 @@ def gather_locals(fn_symbol_id, subsets, sizes):
                            key=lambda i: (i[1], sizes[i[0]]),
                            reverse=True) \
                       [0]
-        ans[id] = (rc, max_regs, count)
-
+        if id in params: count += 1
+        ans[id] = (rc, max_regs, count, total_definitions)
     return ans
+
+def map_temporaries(fn_symbol_id, locals):
+    r'''Returns {symbol_id: (reg_class, num_regs, use_count, total_definitions)}
+    '''
+    crud.Db_cur.execute('''
+        select b.id block_id, t.id, t.abs_order_in_block,
+               t.needed_reg_class t_needed_reg_class,
+               t.num_needed_regs t_num_needed_regs,
+               t.reg_class t_reg_class,
+               t.num_regs_output t_num_regs_output,
+               tp.parent_id, tp.ghost, tp.parameter_num,
+               tp.reg_class_for_parent, tp.num_regs_for_parent,
+               tp.needed_reg_class tp_needed_reg_class,
+               tp.move_prior_to_needed, tp.move_needed_to_parent,
+               tp.move_needed_to_next,
+               rr.reg_class rr_reg_class, rr.num_needed rr_num_needed
+          from blocks b
+                 inner join triples t
+                   on b.id = t.block_id
+                 left outer join triple_parameters tp
+                   on t.id = tp.parameter_id
+                 left outer join reg_requirements rr
+                   on t.code_seq_id = rr.code_seq_id
+         where b.word_symbol_id = ?
+         order by b.id, t.id, tp.parent_id
+      ''', (fn_symbol_id,))
+    col_names = [x[0] for x in crud.Db_cur.description]
+    rows = [crud.row(col_names, row) for row in crud.Db_cur.fetchall()]
+    triples = {}  # {id: row}
+    for id, tps in itertools.groupby(rows, lambda r: (r.block_id, r.id)):
+        id = id[1]
+        tps = iter(tps)
+        first_row = next(tps)
+        #print("first_row for triple", id, first_row, file=sys.stderr)
+        #print("abs_order_in_block", first_row.abs_order_in_block,
+        #      file=sys.stderr)
+        if first_row.abs_order_in_block is not None:
+            triples[id] = first_row
+            triples[id].tps = []
+            for parent_id, rrs \
+             in itertools.groupby(itertools.chain((first_row,), tps),
+                                  lambda r: r.parent_id):
+                rrs = iter(rrs)
+                first_row = next(rrs)
+                if first_row.parent_id is not None:
+                    triples[id].tps.append(first_row)
+                triples[id].rrs = {row.rr_reg_class: row.rr_num_needed
+                                   for row in itertools.chain((first_row,), rrs)
+                                   if row.rr_reg_class is not None}
+    ordered_triples = sorted(triples.values(),
+                             key=lambda r: (r.block_id, r.abs_order_in_block))
+    for t in ordered_triples:
+        for tp in t.tps:
+            tp.parent = triples[tp.parent_id]
+        t.tps.sort(key=lambda tp: tp.parent.abs_order_in_block)
+        print("triple", t.block_id, t.id, t.abs_order_in_block, file=sys.stderr)
+        print("  rrs", t.rrs, file=sys.stderr)
+        for tp in t.tps:
+            print("  tp", tp.parent.id, tp.parent_id,
+                  tp.parent.abs_order_in_block, tp.ghost, file=sys.stderr)
 
 def write_reg_map(reg_map):
     # FIX: implement this!

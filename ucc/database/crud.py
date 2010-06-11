@@ -196,6 +196,24 @@ class db_cur_test:
     def fetchall(self):
         return list(self.answers)
 
+class row:
+    def __init__(self, names, values):
+        assert len(names) == len(values)
+        super().__setattr__('_names', sorted(names))
+        for name, value in zip(names, values):
+            super().__setattr__(name, value)
+
+    def __repr__(self):
+        return "<row {}>".format(
+                            ' '.join("{}={}".format(name, getattr(self, name))
+                                     for name in self._names))
+
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        if name not in self._names:
+            self._names.append(name)
+            self._names.sort()
+
 Strings = {}
 
 def string_lookup(s):
@@ -425,6 +443,42 @@ def read1_as_tuple(table, *cols, **keys):
         zero_ok = keys['zero_ok']
         del keys['zero_ok']
     return return1(read_as_tuples(table, *cols, **keys), zero_ok)
+
+def read_as_rows(table, *cols, **keys):
+    r'''Reads rows from table, returning a sequence of 'row' objects.
+
+    'cols' are just the names of the columns to return.  If no 'cols' are
+    specified, all columns are returned.
+
+    'keys' are used to build the SQL 'where' clause (see `doctor_test`).
+
+    A key of 'order_by' contains a list of columns to sort by.
+
+        >>> cur = db_cur_test('b')
+        >>> cur.set_answers((1,), (3,))
+        >>> read_as_rows('a', 'b')
+        query: select b from a
+        parameters: []
+        [<row b=1>, <row b=3>]
+    '''
+    run_query(table, cols, keys)
+    col_names = [x[0] for x in Db_cur.description]
+    return [row(col_names, a_row) for a_row in Db_cur.fetchall()]
+
+def read1_as_row(table, *cols, **keys):
+    r'''Reads 1 row as a row object.
+
+    Calls `read_as_rows` and returns the first answer.  Raises an exception
+    if not exactly one answer was found.
+
+    A key of 'zero_ok' set to True will return None if no rows are found
+    rather than raising an exception.
+    '''
+    zero_ok = False
+    if 'zero_ok' in keys:
+        zero_ok = keys['zero_ok']
+        del keys['zero_ok']
+    return return1(read_as_rows(table, *cols, **keys), zero_ok)
 
 def read_as_dicts(table, *cols, **keys):
     r'''Reads rows from table, returning a sequence of dicts.
