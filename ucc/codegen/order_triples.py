@@ -242,16 +242,17 @@ def calc_reg_est_for_functions():
     all of their blocks.
 
     Returns the number of symbols updated.
-
-    FIX: Need to account for parameters and locals.  Do they get mapped into
-    registers?  Or least do a max on the number of parameters...
     '''
     crud.Db_cur.execute('''
         update symbol_table
            set register_est = 
              (select max(b.register_est)
                 from blocks b
-               where b.word_symbol_id = symbol_table.id)
+               where b.word_symbol_id = symbol_table.id) +
+             (select count(*)
+                from symbol_table v
+               where v.context = symbol_table.id
+                 and v.kind in ('parameter', 'var'))
          where symbol_table.kind in ('function', 'task')
            and symbol_table.register_est isnull
            and exists (select null
@@ -355,10 +356,6 @@ def update_top_level_triple_orders():
     whose top-level triples have a register_est.
 
     Returns the number of triples updated.
-
-    FIX: This doesn't actually use register_est, so this function could
-    probably just be run once, rather than each time through the order_children
-    loop.
     '''
 
     # Create table to assign sequential evaluation_order numbers to
