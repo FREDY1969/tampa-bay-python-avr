@@ -49,8 +49,10 @@ class fn_reg_map:
     r'''Juggles all of the register assignments for one function.
     '''
 
-    def __init__(self, symbol_id):
-        self.symbol_id = symbol_id
+    def __init__(self, fn_symbol_id, subsets, sizes):
+        self.fn_symbol_id = fn_symbol_id
+        self.subsets = subsets
+        self.sizes = sizes
 
         # {rc: use_count}
         self.use_count = collections.defaultdict(int)

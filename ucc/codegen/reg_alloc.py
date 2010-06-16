@@ -25,6 +25,20 @@ def get_reg_class_subsets():
                  in crud.read_as_tuples('reg_class_subsets',
                                         'rc1', 'rc2', 'subset'))
 
+def get_subsets_of_reg_classes():
+    r'''Returns {reg_class: {subset_rc}}
+    '''
+    crud.Db_cur.execute('''
+        select rc.id, vc.C
+          from v_classes vc
+                 inner join reg_class rc
+                   on rc.v = vc.v
+         order by rc.id
+      ''')
+    return {rc: frozenset(sub[1] for sub in subs)
+            for rc, subs in itertools.groupby(crud.Db_cur.fetchall(),
+                                              lambda row: row[0])}
+
 def get_reg_class_sizes():
     r'''Returns the number of registers in each reg_class.
 
@@ -292,7 +306,7 @@ def reg_map_for_fun(symbol_id, subsets, sizes, code_seqs):
 
     #print(fn_name, "locals", locals, file=sys.stderr)
 
-    temp_map = map_temporaries(symbol_id, locals)
+    temp_map = map_temporaries(symbol_id, locals, kind, suspends, sizes)
 
     # FIX: figure out reg_map for fn and return it!
 
@@ -362,7 +376,7 @@ def gather_locals(fn_symbol_id, subsets, sizes):
         ans[id] = (rc, max_regs, count, total_definitions)
     return ans
 
-def map_temporaries(fn_symbol_id, locals):
+def map_temporaries(fn_symbol_id, locals, kind, suspends, sizes):
     r'''Returns {symbol_id: (reg_class, num_regs, use_count, total_definitions)}
     '''
     crud.Db_cur.execute('''
@@ -410,17 +424,22 @@ def map_temporaries(fn_symbol_id, locals):
                 triples[id].rrs = {row.rr_reg_class: row.rr_num_needed
                                    for row in itertools.chain((first_row,), rrs)
                                    if row.rr_reg_class is not None}
+
     ordered_triples = sorted(triples.values(),
                              key=lambda r: (r.block_id, r.abs_order_in_block))
     for t in ordered_triples:
         for tp in t.tps:
             tp.parent = triples[tp.parent_id]
         t.tps.sort(key=lambda tp: tp.parent.abs_order_in_block)
-        print("triple", t.block_id, t.id, t.abs_order_in_block, file=sys.stderr)
-        print("  rrs", t.rrs, file=sys.stderr)
-        for tp in t.tps:
-            print("  tp", tp.parent.id, tp.parent_id,
-                  tp.parent.abs_order_in_block, tp.ghost, file=sys.stderr)
+        #print("triple", t.block_id, t.id, t.abs_order_in_block, file=sys.stderr)
+        #print("  rrs", t.rrs, file=sys.stderr)
+        #for tp in t.tps:
+        #    print("  tp", tp.parent.id, tp.parent_id,
+        #          tp.parent.abs_order_in_block, tp.ghost, file=sys.stderr)
+
+    #brains = reg_map.fn_reg_map(fn_symbol_id, subsets, sizes)
+    #for t in ordered_triples:
+    #    brains.alloc(...)
 
 def write_reg_map(reg_map):
     # FIX: implement this!

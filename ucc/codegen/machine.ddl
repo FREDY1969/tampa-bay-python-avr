@@ -95,7 +95,7 @@ create table v_classes (
 
     v int not null references vertex(id),
     C int not null references reg_class(id),
-    unique (v, C)
+    primary key (v, C)
 );
 
 create table reg_class_subsets (
