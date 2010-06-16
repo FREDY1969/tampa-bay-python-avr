@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_bool</name>
+    <label>Test Bool</label>
+    <kind>test_bool_defining</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="my_bool" repeated="False" type="bool" value="True" />
+    </answers>
+</word>

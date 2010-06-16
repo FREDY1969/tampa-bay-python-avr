@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_repeatable_string</name>
+    <label>Test Repeatable String</label>
+    <kind>test_repeatable_string_defining</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="my_string" repeated="True" type="string" value="value1" />
+        <answer name="my_string" repeated="True" type="string" value="value2" />
+        <answer name="my_string" repeated="True" type="string" value="value3" />
+        <answer name="my_string" repeated="True" type="string" value="value4" />
+    </answers>
+</word>

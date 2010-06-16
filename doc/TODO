@@ -1,0 +1,11 @@
+B Separate the GUI code from the app code to make it easier to switch GUIs.
+B Rewrite GUI.
+- Assembler
+- Base words
+- Pins
+- Interfacing with avrdude
+- Figure out which GUI package to use for keeps.
+- Add packages.
+
+
+B means "Background task"

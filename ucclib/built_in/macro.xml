@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>macro</name>
+    <label>macro</label>
+    <kind>singleton</kind>
+    <defining>True</defining>
+    <questions>
+        <question>
+            <name>syntax</name>
+            <label>syntax</label>
+            <min>0</min>
+            <max>infinite</max>
+            <orderable>True</orderable>
+            <type>string</type>
+        </question>
+        <questions>
+            <name>new_syntax_keyword</name>
+            <label>new syntax keyword</label>
+            <min>0</min>
+            <max>infinite</max>
+            <orderable>True</orderable>
+            <question>
+                <name>keyword_name</name>
+                <label>keyword name</label>
+                <type>string</type>
+            </question>
+            <question>
+                <name>token_value</name>
+                <label>token value</label>
+                <type>string</type>
+            </question>
+        </questions>
+        <question>
+            <name>argument</name>
+            <label>argument</label>
+            <min>0</min>
+            <max>infinite</max>
+            <orderable>True</orderable>
+            <type>string</type>
+        </question>
+    </questions>
+</word>

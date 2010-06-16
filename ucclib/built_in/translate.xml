@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>translate</name>
+    <label>translate</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" null="True" repeated="False" type="string" />
+    </answers>
+    <questions>
+        <questions>
+            <name>translation</name>
+            <label>translation</label>
+            <min>0</min>
+            <max>infinite</max>
+            <orderable>True</orderable>
+            <question>
+                <name>input</name>
+                <label>input</label>
+                <type>string</type>
+            </question>
+            <question>
+                <name>output</name>
+                <label>output</label>
+                <type>string</type>
+            </question>
+        </questions>
+    </questions>
+</word>

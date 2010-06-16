@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>pwm</name>
+    <label>pwm</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" null="True" repeated="False" type="string" />
+    </answers>
+    <questions>
+        <question>
+            <name>type</name>
+            <label>type</label>
+            <type>choice</type>
+            <default>0</default>
+            <options>
+                <option name="Fast PWM" value="0" />
+                <option name="Phase Correct PWM" value="1" />
+            </options>
+        </question>
+        <question>
+            <name>pin_number</name>
+            <label>pin-number</label>
+            <type>int</type>
+        </question>
+        <question>
+            <name>on_is</name>
+            <label>on-is</label>
+            <type>choice</type>
+            <default>1</default>
+            <options>
+                <option name="HIGH" value="1" />
+                <option name="LOW" value="0" />
+            </options>
+        </question>
+        <question>
+            <name>freq</name>
+            <label>freq</label>
+            <type>number</type>
+        </question>
+    </questions>
+</word>

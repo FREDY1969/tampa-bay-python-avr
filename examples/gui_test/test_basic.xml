@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_basic</name>
+    <label>Test Basic</label>
+    <kind>test_basic_defining</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="my_bool" repeated="False" type="bool" value="True" />
+        <answer name="my_int" repeated="False" type="int" value="20" />
+        <answer name="my_int2" repeated="False" type="int" value="40" />
+        <answer name="my_string" repeated="False" type="string" value="my int 20" />
+        <answer name="my_string2" repeated="False" type="string" value="my int 40" />
+    </answers>
+</word>
