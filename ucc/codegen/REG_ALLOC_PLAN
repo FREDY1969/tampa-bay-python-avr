@@ -2,20 +2,23 @@ Here is how register allocation works.
 
 There are several register classes, rc, (depending on the machine architecture).
 It is assumed that for any two rc's, either one is a subset of the other, or
-they are completely disjoint.  So each rc has a set of subset rcs.
+they are completely disjoint.  So each rc has a set of subset rcs (which
+generally includes itself).
 
-Much the allocation works with all subsets of an rc (including the rc itself).
-A "top down" order means going from superset to subset.  A "bottom up" order
-means going from subset to superset.
+Much of the allocation works with all subsets of an rc (including the rc
+itself).  A "top down" order means going from superset to subset.  A "bottom
+up" order means going from subset to superset.
 
 Register Uses:
 
 Register uses start out associated with the output of a single triple.  This
-represents a definition of the register use, and is always the first use.
+represents the sole definition in the register use, and is always the first
+use, or "head" of the register usage.
+
 After that, there may be any number of references to the register spread across
 time (these are currently limited to the same block, but that will change when
 the optimizer is implemented).  These references are simply all of the
-triple_parameters that link to this triple as their parameter_id.
+triple_parameters that link to this head triple as their parameter_id.
 
 In addition, there may be points in the reference list where the rc changes --
 these are indicated by the move_prior_to_needed or move_needed_to_next flags
@@ -23,11 +26,12 @@ in the triple_parameter.  The move_needed_to_parent flag indicates a brief need
 to use some other rc.
 
 If the register use is spilled, the copy to memory is always done at the
-initial definition.  This copy in memory may then be used at all reference
-points, regardless of their rc.  But the data may remain valid for some time
-in the register, so that copying the data from memory back to the register
+initial definition (the head).  This copy in memory may then be used at any
+reference point, regardless of its rc.  But the data may remain valid for some
+time in the register, so that copying the data from memory back to the register
 each time it is referenced may not be needed (if a spill was not required
-during that stretch of time).
+during that stretch of time).  Therefore, spilling a reference in the register
+usage always also spills the head; but not vice versa.
 
 Preparation step:
 
@@ -59,22 +63,23 @@ not clear.
 
 Spilling
 
-1.  Each line of register usage starts with a definition.  This is the only
-    definition in the whole line of usage and is called the "head".
-
-    Divide each line of register usage into segments terminating with each
-    reference.  Each segment has a lifetime starting at the previous decl/ref
-    and ending at this reference.  Record the head of the line of register
-    usage in each segment.
+1.  Divide each line of register usage into segments terminating with each
+    reference.  Each segment has a lifetime (start, end) starting at the
+    previous decl/ref and ending at this reference.  Record the head of the
+    line of register usage in each segment.
 
     Also create a segment for the head itself with start == end.
 
-2.  Make a list of all of the local variables, setting the cost of each
-    variable as the total number of definitions and uses (including the
-    implicit definition in the call for parameters).  Sort this in
-    increasing cost order.
+2.  If the function does not suspend, make a list of all of the local
+    variables, setting the cost of each variable as the total number of
+    definitions and uses (including the implicit definition in the call for
+    parameters).  Sort this in increasing cost order.
 
     Also record the register class required by each local variable.
+
+    Otherwise (if the function _does_ suspend), all locals will be allocated
+    in memory (even though parameters are still passed in registers) and this
+    list will be empty.
 
 3.  Create an available number of registers for each register class starting
     with the top-most superclass and working down recursively through the
@@ -84,12 +89,12 @@ Spilling
     number of overflow locals from the superclass.  (The assumption here is
     that there is at most one superclass for each register class).
 
-    The number of overflows to pass on to the subclasses is the number of
-    registers in the register class, excluding the subclasses minus the number
+    The number of overflows, OV, to pass on to the subclasses is the number of
+    registers in the register class, excluding the subclasses, minus the number
     of locals in the register class minus the number of overflow locals from
-    the superclass.  Pick this overflow number of locals vars from the lowest
-    cost vars in the union of the overflow locals from the superclass and
-    locals for this register class and store this list on the register class.
+    the superclass.  Pick the OV lowest cost local vars in the union of the
+    overflow locals from the superclass and locals for this register class,
+    and store this list as the overflow locals for this register class.
 
 4.  At each point in time where there are more register segments than available
     registers, make an "overage list" of all of the segments at that point in
@@ -97,23 +102,23 @@ Spilling
     segments.
 
     When comparing each register class, include the segments from the
-    subclasses and compare to the total number of registers in the class
-    (minus the number of locals in that class).
+    subclasses and compare to the total number of available registers in the
+    class calculated in step 3.
 
     Because of the multiple register classes, it is possible to have multiple
     overage lists for the same point in time (but for different register
     classes).  It is also possible for one segment to appear on more than
     overage list for the same point in time.  This shouldn't be a problem as
-    long as the "double count rule", below, is obeyed.
+    long as the "double count rule", below, is observed.
 
     For each segment, A, in the overage list, store a count of the number of
-    segments, B, also in the overage list, that are fully contained in A.
+    segments, B, also in the overage list, that are "fully contained" in A.
     B is fully contained in A iff A.start < B.start and A.end > B.end.
 
     "Double Count Rule":
 
         Do not count B more than once in A.count, even if both B and A appear
-        together in multiple overage lists.
+        together in multiple overage lists at the same point in time.
 
 5.  Loop until there are no more overages:
 
@@ -128,11 +133,11 @@ Spilling
 
     D.  Set X.start = X.end.
 
-    E.  Delete X from each overage list, L, containing X, except for the
-        overage list (if any) corresponding to X.end.
+    E.  Delete X from each overage list, L, containing X, except for 
+        overage lists (if any) corresponding to X.end.
 
         If there is an overage list for time X.end, add 1 to the count of each
-        other segment in that list that didn't previously overlap X.
+        other segment in that list that didn't previously fully contain X.
         
         For each other list L:
 
@@ -146,58 +151,74 @@ Spilling
                 But do not decrement a count for segment B in segment A if B
                 also appears with A in another overage list.
 
-            Otherwise, for each segment, Y, in L, that overlapped X; decrement
-            Y.count.
+            Otherwise, for each segment, Y, in L, that fully contained X;
+            decrement Y.count.
 
 6.  Make a list of all the spills (including the heads).
 
-7.  Gather spills up into chains to compare their combined costs to spilling
-    local vars.
+7.  Taking the register classes in sets of siblings, bottom up:
 
-    A.  Loop:
-        a.  pairs = []
+    A.  For each sibling RC, make a list of spill chains, using the following
+        for each spill chain.  The list of spill chains should end up in
+        reverse cost order.
 
-        b.  For each parent reg_class (starting with null):
+        a.  Select the spill from RC with the least end time, and create a
+            chain with this as the only element.
 
-            1.  pairs.append((Make_chain(children of parent + parent + parent's
-                                         superclasses),
-                              cheapest overflow locals for parent))
+        b.  While there are spills, S, in RC whose start > chain[-1].end:
 
-            2.  For each child:
-                    pairs.append((Make_chain(child + parent + parent's
-                                             superclasses),
-                                  cheapest locals for child + subclasses))
+            - append Sle, the spill in S with lowest end, to the chain.
+            - remove Sle from the list of spills.
 
-        c.  Pick the pair with the greatest difference between the spill total
-            cost and the locals cost (spill cost > locals cost).
-            
-            If none, exit loop A.
+    B.  While overflow locals from parent RC.
 
-            Otherwise,
+        a.  Determine sibling RC that has the lowest cost for its first (most
+            expensive) spill chain.  Call this RCs, and the cost, C.  If an
+            RC's list of spill chains is empty, C is 0.
 
-                1.  Remove the spills in the spill chain from the master list
-                    of spills (created in step 6).
+        b.  is cheapest overflow local cost > cost C from step a?
 
-                2.  Spill the local variable, removing it from the list
-                    created in step 2 and from all overflow lists its in.
+            1.  Yes.
 
-                3.  Assign the freed register from the local var to each of
-                    the spills in the spill chain and unmark them (unspill
-                    them).  If all of the references to a register usage have
-                    been unspilled, unspill the head.
+                - spill the last (cheapest) spill chain in RCs (not the one
+                  with cost C) and remove this from RCs' list of spill chains.
 
-    B.  Make_chain(reg_classes)
+                - Find most expensive local, Le, in parent RC (including its
+                  superclasses) and interchange this with the cheapest
+                  overflow local.
 
-        a.  Select the spill from the reg_classes with the least end time, and
-            create a chain with this is the only element.
+                - Mark Le so that it will not be considered any more.
 
-        b.  While there are spills, S, in reg_classes, whose
-            start > chain[-1].end:
+                - Remove the cheapest overflow local from the list of overflow
+                  locals for the parent RC.
 
-            - append the spill in S with lowest end to the chain.
+            2.  No.
 
-        c.  The total cost for the chain is the number of spills in the chain.
+                - spill the cheapest overflow local
+                
+                - remove it from the list of overflow locals for the parent RC.
 
-8.  Assign a memory location to each spilled element remaining in list 6 and
-    each spilled local variable created in step 7.A.c.2.
+                - mark the first spill chain in RCs (with cost C) as not
+                  spilled and remove it from RCs' list of spill chains.
 
+        c.  For each sibling RC, RC2, excluding RCs:
+
+            - mark the first spill chain in RC2 as not spilled and remove it
+              from RC2's list of spill chains.
+
+    C.  For each sibling RC, RC1:
+
+        a.  pair up the spill chains (in descending cost order) with the locals
+            assigned to RC1 (in ascending cost order).
+
+        b.  For all locals whose cost < their associated spill chain:
+
+            - spill the local
+            - assign the spill chain to the register used by local
+
+8.  Assign a memory location to each spilled head each spilled local variable.
+
+9.  Assign unspilled segments and locals to registers.
+
+    Bottom up
+    Match next segment to greatest prior end < next.start
