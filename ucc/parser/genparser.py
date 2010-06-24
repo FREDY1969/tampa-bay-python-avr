@@ -90,7 +90,7 @@ def run():
     with open(sys.argv[2]) as f:
         rules = f.read()
     with open(sys.argv[3]) as f:
-        token_dict = dict(tuple(line.split()) for line in f)
+        token_dict = dict(line.split() for line in f)
     if len(sys.argv) == 4:
         genparser(filename, rules, token_dict)
     else:

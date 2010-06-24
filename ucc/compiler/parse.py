@@ -112,7 +112,7 @@ def parse_needed_words(top, package_parsers, quiet):
     Returns a set of the labels of the words parsed.
     '''
     words_done = set()
-    words_needed = set(['startup'])
+    words_needed = {'startup'}
     num_errors = 0
     while words_needed:
         next_word = words_needed.pop()

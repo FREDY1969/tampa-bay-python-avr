@@ -42,18 +42,19 @@ def run():
 
     options, args = optparser.parse_args(values=options_dict())
 
-    kw_args = dict((param, config.get('arduino', param))
-        for param in (
-            'install_dir',
-            'avrdude_port',
-            'mcu',
-            'avr_dude_path',
-            'avr_config_path',
-            'avrdude_programmer',
-            'upload_rate'
-        ) if config.has_option('arduino', param)
-    )
-       
+    kw_args = {param: config.get('arduino', param)
+               for param in (
+                     'install_dir',
+                     'avrdude_port',
+                     'mcu',
+                     'avr_dude_path',
+                     'avr_config_path',
+                     'avrdude_programmer',
+                     'upload_rate',
+                    )
+               if config.has_option('arduino', param)
+              }
+
     kw_args.update(options)    
     load.run(*args, **kw_args)
 

@@ -40,10 +40,9 @@ class package:
         self.load_words(top_package)
 
     def load_words(self, top_package):
-        self.word_dict = dict((name, self.read_word(name, top_package))
-                              for name
-                               in xml_access.read_word_list(self.package_dir)[1]
-                             )
+        self.word_dict = {name: self.read_word(name, top_package)
+                          for name
+                           in xml_access.read_word_list(self.package_dir)[1]}
 
     def get_words(self):
         return list(self.word_dict.values())

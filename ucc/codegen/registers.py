@@ -41,8 +41,8 @@ def init():
                                     lambda v: (v.parent,) if v.parent else ())):
         v.topo_order = i + 1
 
-    Reg_classes = dict((d['name'], reg_class(d))
-                       for d in crud.read_as_dicts('reg_class'))
+    Reg_classes = {d['name']: reg_class(d)
+                   for d in crud.read_as_dicts('reg_class')}
 
     for rc in Reg_classes.values():
         # These are in order from biggest to smallest in size

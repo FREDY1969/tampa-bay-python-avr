@@ -20,10 +20,10 @@ def alloc_regs():
 def get_reg_class_subsets():
     r'''Returns {(reg_class1, reg_class2), subset_reg_class}.
     '''
-    return dict(((rc1, rc2), subset)
-                for rc1, rc2, subset
-                 in crud.read_as_tuples('reg_class_subsets',
-                                        'rc1', 'rc2', 'subset'))
+    return {(rc1, rc2): subset
+            for rc1, rc2, subset
+             in crud.read_as_tuples('reg_class_subsets',
+                                    'rc1', 'rc2', 'subset')}
 
 def get_subsets_of_reg_classes():
     r'''Returns {reg_class: {subset_rc}}

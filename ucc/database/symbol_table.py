@@ -136,6 +136,6 @@ class symbol:
             crud.update('symbol_table',
                         {'label': self.label,
                          'context': self.context and self.context.id},
-                        **dict((attr, getattr(self, attr))
-                               for attr in self.updated_attrs))
+                        **{attr: getattr(self, attr)
+                           for attr in self.updated_attrs})
             self.updated_attrs.clear()

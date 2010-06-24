@@ -213,8 +213,8 @@ class q_series(question):
     
     def make_default_answer(self):
         return answers.ans_series(self.name,
-                                  dict((q.name, q.make_default_answer())
-                                       for q in self.subquestions))
+                                  {q.name: q.make_default_answer()
+                                   for q in self.subquestions})
     
 
 class q_choice(question):
@@ -263,8 +263,8 @@ class q_choice(question):
             if value == self.default:
                 return answers.ans_choice(self.name,
                                           self.default,
-                                          dict((q.name, q.make_default_answer())
-                                               for q in subquestions))
+                                          {q.name: q.make_default_answer()
+                                           for q in subquestions})
         raise AssertionError("q_choice({}): default, {!r}, not found in options"
                                .format(self.name, self.default))
 
