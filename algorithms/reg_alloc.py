@@ -10,7 +10,7 @@ Reg_classes = {}
 class register:
     def __init__(self, name):
         self.name = name
-        self.aliases = set((self,))
+        self.aliases = {self}
         Registers[name] = self
     def set_aliases(self, *b):
         self.aliases.update(b)

@@ -100,7 +100,7 @@ class base_type:
             row['element_type'] = Types_by_id[row['element_type']]
         key = cls.row_to_key(row)
         cls.Instances[key] = \
-          cls(row['id'], dict((col, row['col']) for col in cls.Columns),
+          cls(row['id'], {col: row['col'] for col in cls.Columns},
               cls.read_sub_elements(row, key))
 
     @classmethod
@@ -173,7 +173,7 @@ class base_type:
 
         This may be overridden by base classes.
         '''
-        columns = dict(list(zip(cls.Columns, args)))
+        columns = dict(zip(cls.Columns, args))
         return cls.add(**columns)
 
     @classmethod

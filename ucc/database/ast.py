@@ -205,9 +205,8 @@ class ast:
         '''
         kws = dict(itertools.chain(
                      [(attr, getattr(self, attr)) for attr in self.attr_cols],
-                     list(zip(self.arg_cols,
-                         (word_symbol.id, parent, parent_arg_num,
-                          arg_order)))))
+                     zip(self.arg_cols,
+                         (word_symbol.id, parent, parent_arg_num, arg_order))))
         self.word_symbol = word_symbol
         self.id = crud.insert('ast', **kws)
         save_args(self.args, word_symbol, self.id)

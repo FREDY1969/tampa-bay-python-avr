@@ -244,10 +244,10 @@ def format(s, operands, notes, args, labels, next_address):
         '0xc34'
     '''
     assert len(s) % 16 == 0
-    values = dict((name, lookup(name, Convert, notes)
-                           (args[name], num_bits, notes.get(name), labels,
-                            next_address))
-                  for name, num_bits in operands.items())
+    values = {name: lookup(name, Convert, notes)
+                       (args[name], num_bits, notes.get(name), labels,
+                        next_address)
+              for name, num_bits in operands.items()}
     ans = 0
     for i, x in enumerate(s[::-1]):
         if x == '0': pass
@@ -285,7 +285,7 @@ class inst1:
         s = set(self.opcode)
         s.discard('0')
         s.discard('1')
-        self.operands = dict((operand, opcode.count(operand)) for operand in s)
+        self.operands = {operand: opcode.count(operand) for operand in s}
         self.operand_codes = operand_order(list(self.operands.keys()), notes)
         self.cycles = cycles
         self.notes = notes
@@ -313,8 +313,7 @@ class inst1:
                    "{} instruction requires one operand".format(self.name)
             assert op2 is None, \
                    "{} instruction only takes one operand".format(self.name)
-            return dict(zip(self.operand_codes[0],
-                                       itertools.repeat(op1)))
+            return dict(zip(self.operand_codes[0], itertools.repeat(op1)))
         assert len(self.operand_codes) == 2, \
                "internal error: {} illegal instruction format specification" \
                  .format(self.name)

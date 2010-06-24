@@ -27,10 +27,9 @@ class validator:
     r'''Base class of all validators.'''
     def add_xml_subelement(self, root_element):
         ElementTree.SubElement(root_element, VALIDATOR_TAG,
-                               dict((xml_attr, getattr(self, self_attr)) 
-                                    for self_attr, xml_attr in self.xml_mapping
-                                    if getattr(self, self_attr, None)
-                                         is not None),
+                               {xml_attr: getattr(self, self_attr)
+                                for self_attr, xml_attr in self.xml_mapping
+                                if getattr(self, self_attr, None) is not None},
                                type = self.__class__.__name__)
     
 

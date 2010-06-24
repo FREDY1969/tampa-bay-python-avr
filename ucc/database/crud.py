@@ -499,7 +499,7 @@ def read_as_dicts(table, *cols, **keys):
     '''
     run_query(table, cols, keys)
     col_names = [x[0] for x in Db_cur.description]
-    return [dict(list(zip(col_names, row))) for row in Db_cur.fetchall()]
+    return [dict(zip(col_names, row)) for row in Db_cur.fetchall()]
 
 def read1_as_dict(table, *cols, **keys):
     r'''Reads 1 row as a dict.

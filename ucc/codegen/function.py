@@ -7,11 +7,11 @@ from ucc.database import crud
 class function:
     def __init__(self, symbol_id):
         self.id = symbol_id
-        self.locals = dict((t[0], make_local(t))
-                           for t in crud.read_as_tuples('symbol_table',
-                                                        'id', 'label',
-                                                        'kind', 'int1',
-                                                        context=symbol_id))
+        self.locals = {t[0]: make_local(t)
+                       for t in crud.read_as_tuples('symbol_table',
+                                                    'id', 'label',
+                                                    'kind', 'int1',
+                                                    context=symbol_id)}
         self.collect_calls()
         self.collect_params()
 
@@ -42,10 +42,10 @@ class function:
          triple_ids)
         # {parameter_num: (reg_class, ...)}
         self.params_provided_reg_classes = \
-          dict((parameter_num, tuple(t[1] for t in group))
-               for parameter_num, group
-                in itertools.groupby(crud.Db_cur.fetchall(),
-                                     key = lambda t: t[0]))
+          {parameter_num: tuple(t[1] for t in group)
+           for parameter_num, group
+            in itertools.groupby(crud.Db_cur.fetchall(),
+                                 key = lambda t: t[0])}
 
 def make_local(t):
     id, label, kind, int1 = t

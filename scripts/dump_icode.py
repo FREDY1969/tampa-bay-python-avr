@@ -75,7 +75,7 @@ def dump_triples(db_cur, block_id):
         (block_id,))
 
     triple_list = [triple(db_cur, *info) for info in db_cur.fetchall()]
-    triples = dict([(t.id, t) for t in triple_list])
+    triples = {t.id: t for t in triple_list}
 
     for t in triple_list:
         t.tag(triples)
