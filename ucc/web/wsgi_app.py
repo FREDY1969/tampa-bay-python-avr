@@ -59,46 +59,60 @@ def import_(modulename):
 
 def wsgi_app(environ, start_response):
     """Return requested media or respond to ajax request."""
-    global module_cache
 
-    # Parse the path:
-    path = environ["PATH_INFO"].lstrip('/')
+    path, components = parse_path(environ["PATH_INFO"])
+
+    if components[0] == 'ajax' and len(components) == 3:
+        status, headers, document = ajax_dispatch(path, components, environ)
+    else:
+        status, headers, document = media_dispatch(path, components, environ)
+    
+    start_response(status, headers)
+    return document
+
+def parse_path(path):
+    """Clean path, parse it into a / delimited list and return both."""
+    path = path.strip('/')
     components = path.split('/')
+    return path, components
 
-    if len(components) != 3 or components[0] != 'ajax':
-        if not path:
-            path = 'index.html'
-        full_path = os.path.join(MEDIA_DIR, path)
-        suffix = path.rsplit('.', 1)[1]
+def media_dispatch(path, components, environ):
+    if not path:
+        path = 'index.html'
+    full_path = os.path.join(MEDIA_DIR, path)
+    suffix = path.rsplit('.', 1)[1]
+    try:
         try:
-            try:
-                data = __loader__.get_data(full_path)
-            except NameError:
-                with open(full_path, 'rb') as f:
-                    data = f.read()
-            start_response("200 OK", [('Content-Type', CONTENT_TYPES[suffix])])
-            return [data]
-        except IOError:
-            start_response("404 Not Found", [])
-            return []
+            data = __loader__.get_data(full_path)
+        except NameError:
+            with open(full_path, 'rb') as f:
+                data = f.read()
+        return "200 OK", [('Content-Type', CONTENT_TYPES[suffix])], [data]
+    except IOError:
+        return "404 Not Found", [], []
 
-    # else AJAX call...
-
+def ajax_dispatch(path, components, environ):
+    global module_cache
     modulepath, fn_name = components[1:]
 
     if modulepath not in module_cache:
-        module_cache[modulepath] = import_('ucc.web.ajax.' + modulepath)
-
+        module_cache[modulepath] = import_("ucc.web.ajax." + modulepath)
+        
     if environ["REQUEST_METHOD"] == "GET":
         query_string = environ["QUERY_STRING"]
     else:
         post_data = environ['wsgi.input'].read(int(environ['CONTENT_LENGTH']))
         query_string = post_data.decode('utf-8')
-    data = urllib.parse.parse_qs(query_string)['data'][0]
+    qs_dict = urllib.parse.parse_qs(query_string)
+    try:
+        data = json.loads(qs_dict['data'][0])
+    except KeyError:
+        data = {}
 
-    # "200 OK", [('header_field_name', 'header_field_value')...], data
+    print('', qs_dict, '')
+
     status, headers, document = \
-      getattr(module_cache[modulepath], fn_name)(session, **json.loads(data))
+                   getattr(module_cache[modulepath], fn_name)(session, data)
     headers.append(('Content-Type', 'application/json'))
-    start_response(status, headers)
-    return [json.dumps(document)]
+    # "200 OK", [('header_field_name', 'header_field_value')...], data
+    return status, headers, [json.dumps(document)]

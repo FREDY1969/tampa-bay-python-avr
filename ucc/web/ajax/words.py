@@ -6,7 +6,7 @@ import os
 
 from ucc.word import top_package
 
-def get(session, **kwarg):
+def get(session, data):
     """Return a jsTree compatible tree of words for the package."""
 
     def buildSerializedTree(words, parent=None):
@@ -41,4 +41,4 @@ def get(session, **kwarg):
     top = top_package.top(os.path.abspath('examples/gui_test'))
     serializedTree = buildSerializedTree(top.roots);
 
-    return ('200 OK', [], serializedTree)
+    return '200 OK', [], serializedTree
