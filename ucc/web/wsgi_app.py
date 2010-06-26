@@ -76,6 +76,14 @@ def parse_path(path):
     components = path.split('/')
     return path, components
 
+def parse_qs(query_string):
+    """Parse query_string into dict of values."""
+    data = urllib.parse.parse_qs(query_string, True)
+    for key in data:
+        if len(data[key]) == 1:
+            data[key] = data[key][0]
+    return data
+
 def media_dispatch(path, components, environ):
     if not path:
         path = 'index.html'
@@ -103,13 +111,9 @@ def ajax_dispatch(path, components, environ):
     else:
         post_data = environ['wsgi.input'].read(int(environ['CONTENT_LENGTH']))
         query_string = post_data.decode('utf-8')
-    qs_dict = urllib.parse.parse_qs(query_string)
-    try:
-        data = json.loads(qs_dict['data'][0])
-    except KeyError:
-        data = {}
+    data = parse_qs(query_string)
 
-    print('', qs_dict, '')
+    
 
     status, headers, document = \
                    getattr(module_cache[modulepath], fn_name)(session, data)
