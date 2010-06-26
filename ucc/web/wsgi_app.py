@@ -15,17 +15,28 @@
 #     wsgi.multithread: True
 #     wsgi.run_once: False
 
+"""WSGI application to handle media and AJAX requests.
+
+AJAX requests folow the format:
+
+    /ajax/{module}/{handler}?data={json_payload}
+
+Response to AJAX requests are either blank or JSON.
+
+Media requests are any static file that is not an AJAX call.
+
+"""
+
 import os
+
 import urllib.parse
 import json
+import sys
+import ucc.web.session
 
-from ucc.web import session
-
-Debug = 0
-
-Web_framework_dir = os.path.join(os.path.dirname(__file__), "media")
-
-Content_types = {
+DEBUG = 1
+MEDIA_DIR = os.path.join(os.path.dirname(__file__), "media")
+CONTENT_TYPES = {
     'html': 'text/html',
     'js': 'text/javascript',
     'css': 'text/css',
@@ -35,21 +46,20 @@ Content_types = {
     'jpg': 'image/jpeg',
 }
 
-Module_cache = {}
-
-Session = session.session()
+module_cache = {}
+session = ucc.web.session.Session()
 
 def import_(modulename):
-    ''' modulepath does not include .py
-    '''
-    if Debug: print("import_:", modulename, file=sys.stderr)
+    """Import and return modulename."""
+    if DEBUG: print("import_:", modulename, file=sys.stderr)
     mod = __import__(modulename)
     for comp in modulename.split('.')[1:]:
         mod = getattr(mod, comp)
     return mod
 
 def wsgi_app(environ, start_response):
-    global Module_cache
+    """Return requested media or respond to ajax request."""
+    global module_cache
 
     # Parse the path:
     path = environ["PATH_INFO"].lstrip('/')
@@ -58,7 +68,7 @@ def wsgi_app(environ, start_response):
     if len(components) != 3 or components[0] != 'ajax':
         if not path:
             path = 'index.html'
-        full_path = os.path.join(Web_framework_dir, path)
+        full_path = os.path.join(MEDIA_DIR, path)
         suffix = path.rsplit('.', 1)[1]
         try:
             try:
@@ -66,7 +76,7 @@ def wsgi_app(environ, start_response):
             except NameError:
                 with open(full_path, 'rb') as f:
                     data = f.read()
-            start_response("200 OK", [('Content-Type', Content_types[suffix])])
+            start_response("200 OK", [('Content-Type', CONTENT_TYPES[suffix])])
             return [data]
         except IOError:
             start_response("404 Not Found", [])
@@ -76,8 +86,8 @@ def wsgi_app(environ, start_response):
 
     modulepath, fn_name = components[1:]
 
-    if modulepath not in Module_cache:
-        Module_cache[modulepath] = import_('ucc.web.' + modulepath)
+    if modulepath not in module_cache:
+        module_cache[modulepath] = import_('ucc.web.ajax.' + modulepath)
 
     if environ["REQUEST_METHOD"] == "GET":
         query_string = environ["QUERY_STRING"]
@@ -88,8 +98,7 @@ def wsgi_app(environ, start_response):
 
     # "200 OK", [('header_field_name', 'header_field_value')...], data
     status, headers, document = \
-      getattr(Module_cache[modulepath], fn_name)(Session, **json.loads(data))
+      getattr(module_cache[modulepath], fn_name)(session, **json.loads(data))
     headers.append(('Content-Type', 'application/json'))
     start_response(status, headers)
     return [json.dumps(document)]
-
