@@ -2,9 +2,8 @@
 
 """An example module for handling ajax requests."""
 
-def bar(session, **kwarg):
-    if 'foo' in kwarg:
-        return ('200 OK', [], 'foo was set to {}'.format(kwarg['foo']))
+def bar(session, data):
+    if 'foo' in data:
+        return ('200 OK', [], 'foo was set to {foo}'.format(data))
     else:
-        return ('500 Server Error', [], 'foo was not set!')
-    
+        return '500 Server Error', [], 'foo was not set!'
