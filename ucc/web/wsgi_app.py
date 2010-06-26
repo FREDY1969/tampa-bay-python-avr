@@ -28,10 +28,10 @@ Media requests are any static file that is not an AJAX call.
 """
 
 import os
-
+import sys
 import urllib.parse
 import json
-import sys
+
 import ucc.web.session
 
 DEBUG = 1
