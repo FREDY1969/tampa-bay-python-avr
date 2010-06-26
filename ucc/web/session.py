@@ -10,5 +10,5 @@ multiple sessions in the future.
 
 """
 
-class Session(object):
+class Session:
     pass
