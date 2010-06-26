@@ -1,0 +1,95 @@
+Overview:
+
+1.  Assign temps and locals to the vertex they need.  (No moving to subclasses
+    yet).
+
+2.  Loop bottom up, considering all sibling vertexes together:
+
+    A.  For each sibling, spill what won't fit:
+
+        a.  Create chains of ru's, TC's, that can all occupy the same register.
+        b.  Loop until no more to spills needed or no more free space in child
+            reg classes:
+            - Reassign the most expensive TC/local to the child vertex that
+              has the most available registers.
+        c.  Loop until no more spills needed:
+            - For each TC that won't fit (bottom up, starting at overflow
+              point):
+              - For each block, B, in TC:
+                1. Figure out the best solution for this block.  This may be a
+                   set of temps to spill, or a local to save/restore (+ temps).
+                   Remember that you can spill temps from child vertexes
+                   (recursively) too!
+                   - For each ru in TC in B:
+                     - Pick the segment, S, not in TC, containing ru that
+                       contains the most remaining ru's in TC.  Break ties by
+                       selecting the S that already has it's head spilled.
+                       - Penalty for either endpoint in any ru still in TC.
+                         These could just be subtracted from the contained ru
+                         count.
+                       - Seems like locals can be treated the same, except that
+                         if there is a "local", it would be treated as a
+                         segment from the start of the block, ending at the
+                         "local".  And if the block has a "set", there would
+                         be a final segment added to the "set"s register
+                         usage extending to the end of the block.
+                     - Pick the local, L, with no sets or refs originally in
+                       v, in ru; with the most remaining ru's in B in TC
+                       containing no sets or refs; with the least cost.
+                     - Select the best S or L
+                     - delete all contained ru's, in the selected S or L, from
+                       TC
+                2. Store this as Chosen(B)
+                3. Figure out what the cost would be if each local was spilled.
+                   Make a list of all locals that have a lower cost, if
+                   spilled, than Chosen(B).  Store these as Spilled_local(B,
+                   local).  For all locals that are more expensive spilled
+                   than Chosen(B), set Spilled_local(B, local) to Chosen(B).
+              - Loop while locals found in next step:
+                - Chose local, L, with max(sum(Chosen(all B)) - (Spill_cost(L)
+                  + sum(Spilled_local(all B, L)))), if any
+                - If L found, spill L:
+                  - Mark L as spilled
+                  - For all B: set Chosen(B) = Spilled_local(B, L)
+              - For each block, B, in TC:
+                - record the Chosen(B) as the answer for B
+
+    B.  Reassign entire temp register usages from super to fill holes in
+        chains in the siblings (but not increase the number of registers
+        needed in each sibling).
+
+        a.  Let OC(ru, v) be the max overlap count of register usage, ru, and
+            all other ru's in vertex, v.
+        b.  Let RC(v) be the number of registers (register count) in vertex
+            (excluding subclasses).
+        c.  Let RN(v) be the number of registers needed for vertex (excluding
+            subclasses).  This will always be <= RC(v).
+        d.  Loop until no more ru's can be reassigned:
+            1.  Calc OC(ru, super), for each register usage, ru, in super.
+                Select ru's with OC(ru, super) > RC(super).
+            2.  Calc, AV(ru, sibling) = RN(sibling) - OC(ru, sibling), for
+                each selected ru and each sibling.  Select ru's that have at
+                least one AV(ru, sibling) > 0 and remember the greatest AV(ru,
+                sibling).
+            3.  Reassign the ru (if any) with the greatest (OC(ru, super),
+                AV(ru, sibling) to the sibling in its AV(ru, sibling).
+
+locals can be spilled locally within any contiguious region inside a block:
+
+    - Add save at start of region and restore at end.
+        - save could be backed up to the next previous "set".
+        - restore could be delayed to the next "local".
+        - this makes the "set" -- "local" look a lot like a temp reg usage
+          segment...
+          - actually, the refs to a "set" should already simply be chained to
+            the same triple that has the "set" label on it...
+    - Within the region, replace sets with saves, and "local" intermediate
+      codes with restore.
+    - The total of the two above is the cost to spill the local for this
+      region.
+    - When total cost of region spills >= total number of sets and restores in
+      fun for local:
+        - switch to spill the local everywhere. This means that all sets are
+          saves and all "locals" are restores, and no region saves or restores
+          are done.
+

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="dragonfire-letters.svg">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3837">
+      <stop
+         style="stop-color:#ff0004;stop-opacity:0;"
+         offset="0"
+         id="stop3839" />
+      <stop
+         id="stop3845"
+         offset="0.5"
+         style="stop-color:#ff0004;stop-opacity:0.3882353;" />
+      <stop
+         style="stop-color:#ff0004;stop-opacity:1;"
+         offset="1"
+         id="stop3841" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3794">
+      <stop
+         style="stop-color:#00ffff;stop-opacity:1;"
+         offset="0"
+         id="stop3796" />
+      <stop
+         style="stop-color:#00ffff;stop-opacity:0;"
+         offset="1"
+         id="stop3798" />
+    </linearGradient>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+    <font
+       horiz-adv-x="1024"
+       id="font2820"
+       inkscape:label="font 1">
+      <font-face
+         units-per-em="1024"
+         id="font-face2822"
+         font-family="SVGFont 1" />
+      <missing-glyph
+         d="M0,0h1000v1024h-1000z"
+         id="missing-glyph2824" />
+    </font>
+    <filter
+       id="filter2964"
+       inkscape:label="Matte jelly"
+       x="0"
+       y="0"
+       width="1"
+       height="1"
+       inkscape:menu="ABCs"
+       inkscape:menu-tooltip="Bulging, matte jelly covering"
+       color-interpolation-filters="sRGB">
+      <feColorMatrix
+         id="feColorMatrix2966"
+         values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.85 0"
+         result="result0"
+         in="SourceGraphic" />
+      <feGaussianBlur
+         id="feGaussianBlur2968"
+         in="SourceAlpha"
+         stdDeviation="7" />
+      <feSpecularLighting
+         id="feSpecularLighting2970"
+         surfaceScale="5"
+         specularConstant="0.9"
+         specularExponent="25"
+         result="result1">
+        <feDistantLight
+           id="feDistantLight2972"
+           elevation="60"
+           azimuth="225" />
+      </feSpecularLighting>
+      <feComposite
+         id="feComposite2974"
+         in2="result0"
+         operator="atop" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="183.85305"
+     inkscape:cy="992.87167"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="607"
+     inkscape:window-height="738"
+     inkscape:window-x="609"
+     inkscape:window-y="1"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-size:65.07772063999999546px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:85.00000237999998376%;writing-mode:lr-tb;text-anchor:middle;fill:#ff0004;fill-opacity:0.30143541000000001;stroke:#f00b00;stroke-width:2.99999999;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;font-family:URW Bookman L;-inkscape-font-specification:URW Bookman L Bold"
+       x="167.48511"
+       y="54.243042"
+       id="text2826"
+       sodipodi:linespacing="100%"
+       transform="scale(0.81872845,1.2214062)"
+       inkscape:export-filename="/home/bruce/Desktop/df-letters.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90"><tspan
+         sodipodi:role="line"
+         x="167.48509"
+         y="54.243042"
+         id="tspan2830"
+         style="font-size:64.21554548999999668px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr;text-anchor:middle;fill:#ff0000;fill-opacity:0.19138758;stroke:#ff0000;stroke-width:2.99999999000000006;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;font-family:URW Bookman L;-inkscape-font-specification:URW Bookman L Bold"><tspan
+           style="font-size:71.99999981999999932;stroke-width:2.99999999000000006;stroke-miterlimit:4;stroke-dasharray:none;stroke:#ff0000;stroke-opacity:1;fill:#ff0000;fill-opacity:0.19138758"
+           id="tspan3874">D</tspan><tspan
+           style="font-size:55.99999986000000263;stroke-width:2.99999999000000006;stroke-miterlimit:4;stroke-dasharray:none;stroke:#ff0000;stroke-opacity:1;fill:#ff0000;fill-opacity:0.19138758"
+           id="tspan3870">RAGON</tspan></tspan><tspan
+         sodipodi:role="line"
+         x="167.48511"
+         y="109.5591"
+         style="font-size:64.21554548999999668px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr;text-anchor:middle;fill:#ff0000;fill-opacity:0.19138758;stroke:#ff0000;stroke-width:2.99999999000000006;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;font-family:URW Bookman L;-inkscape-font-specification:URW Bookman L Bold"
+         id="tspan3847"><tspan
+           style="font-size:71.99999981999999932;stroke-width:2.99999999000000006;stroke-miterlimit:4;stroke-dasharray:none;stroke:#ff0000;stroke-opacity:1;fill:#ff0000;fill-opacity:0.19138758"
+           id="tspan3872">F</tspan><tspan
+           style="font-size:55.99999986000000263;stroke-width:2.99999999000000006;stroke-miterlimit:4;stroke-dasharray:none;stroke:#ff0000;stroke-opacity:1;fill:#ff0000;fill-opacity:0.19138758"
+           id="tspan3868">IRE</tspan></tspan></text>
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot3854"
+       style="-inkscape-font-specification:URW Bookman L Bold;font-family:URW Bookman L;font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:65.07772064px;text-anchor:middle;text-align:center;writing-mode:lr;line-height:85%;fill:#ff0004;stroke:#f00b00;stroke-opacity:1;stroke-width:4.641;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:0.30143541;stroke-linecap:round;stroke-linejoin:round"><flowRegion
+         id="flowRegion3856"><rect
+           id="rect3858"
+           width="217"
+           height="106"
+           x="5"
+           y="5.3621826" /></flowRegion><flowPara
+         id="flowPara3860"></flowPara></flowRoot>  </g>
+</svg>
