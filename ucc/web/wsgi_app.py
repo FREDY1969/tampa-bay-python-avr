@@ -113,8 +113,6 @@ def ajax_dispatch(path, components, environ):
         query_string = post_data.decode('utf-8')
     data = parse_qs(query_string)
 
-    
-
     status, headers, document = \
                    getattr(module_cache[modulepath], fn_name)(session, data)
     headers.append(('Content-Type', 'application/json'))
