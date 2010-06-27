@@ -1,15 +1,17 @@
 
-// Load Tree Control
+(function ($, ucc) {
 
-$(function () {
-	$("#package-tree").tree({
-		data: { 
-			type: "json",
-			opts: {
-				method: "GET",
-				url: '/ajax/words/get?data={}'
+	// Load Tree Control
+
+	$(function () {
+		$("#package-tree").tree({
+			data: { 
+				type: "json",
+				opts: {
+					method: "GET",
+					url: '/ajax/words/get'
+				}
 			}
-		},
-		opened: ['declaration']
+		});
 	});
-});
+})(jQuery, ucc);
