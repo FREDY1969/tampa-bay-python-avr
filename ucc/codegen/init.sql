@@ -130,6 +130,20 @@ insert into worst (N, C, value)
                    group by CC.reg))
     from reg_class N cross join reg_class C;
 
+-- We populate v_classes by depths of powers of 2:
+--
+-- height of vertex:                1 2 3 4 5 6 7 8
+-- after direct register classes:   A B C D E F G H
+-- after level 1 copy:                A B C D E F G
+-- after level 2 copy:                  A B C D E F
+--                                        A B C D E
+-- after level 4 copy:                      A B C D
+--                                            A B C
+--                                              A B
+--                                                A
+--                    
+--
+
 -- reg_classes directly in each vertex:
 insert into v_classes (v, C)
     select v, id
@@ -157,14 +171,21 @@ insert or ignore into v_classes (v, C)
              inner join vertex v on v3.parent = v.id
      where v.parent is not null;
 
--- 4 levels:
-insert or ignore into v_classes (v, C)
-    select v.parent, vc.C
-      from v_classes vc inner join vertex v1 on vc.v = v1.id
-             inner join vertex v2 on v1.parent = v2.id
-             inner join vertex v3 on v2.parent = v3.id
-             inner join vertex v on v3.parent = v.id
-     where v.parent is not null;
+-- set num_registers temporarily to total number in vertex:
+update vertex set num_registers = (
+    select count(distinct r.name)
+      from v_classes vc inner join class_alias ca
+               on vc.C = ca.reg_class
+             inner join register r
+               on ca.reg = r.name
+     where vc.v = vertex.id
+       and r.is_primary);
+
+-- then subtract subclasses:
+update vertex set num_registers = num_registers - (
+    select ifnull(sum(num_registers), 0)
+      from vertex c
+     where c.parent = vertex.id);
 
 insert into bound (N, v, value)
     select n.id, v.id, count(distinct a.r2)
