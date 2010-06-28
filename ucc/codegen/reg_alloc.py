@@ -117,8 +117,8 @@ def figure_out_multi_use(subsets, sizes):
 
     with crud.db_transaction():
         rows = tuple(crud.read_as_dicts('triple_parameters',
-                     'parameter_id', 'parent_id', 'parameter_num',
-                     'trashed', 'reg_class_for_parent', 'last_parameter_use',
+                     'id', 'parameter_id', 'trashed', 'reg_class_for_parent',
+                     'last_parameter_use',
                      order_by=('parameter_id', ('parent_seq_num', 'desc'))))
         for k, params \
          in itertools.groupby(rows, key=lambda row: row['parameter_id']):
@@ -130,9 +130,7 @@ def figure_out_multi_use(subsets, sizes):
                     if next_rc is None: break
                 elif row['trashed']:
                     crud.update('triple_parameters',
-                                {'parameter_id': row['parameter_id'], 
-                                 'parent_id': row['parent_id'],
-                                 'parameter_num': row['parameter_num']},
+                                {'id': row['id']},
                                 needed_reg_class = next_rc,
                                 move_needed_to_parent = 1)
                 elif row['reg_class_for_parent'] is None:
@@ -140,9 +138,7 @@ def figure_out_multi_use(subsets, sizes):
                 elif (next_rc, row['reg_class_for_parent']) in subsets:
                     next_rc = subsets[next_rc, row['reg_class_for_parent']]
                     crud.update('triple_parameters',
-                                {'parameter_id': row['parameter_id'], 
-                                 'parent_id': row['parent_id'],
-                                 'parameter_num': row['parameter_num']},
+                                {'id': row['id']},
                                 needed_reg_class = next_rc)
                 else:
                     prior = i + 1
@@ -159,22 +155,15 @@ def figure_out_multi_use(subsets, sizes):
                                 if sizes[subset] > sizes[next_rc]:
                                     next_rc = subset
                                     crud.update('triple_parameters',
-                                      {'parameter_id': row['parameter_id'], 
-                                       'parent_id': row['parent_id'],
-                                       'parameter_num': row['parameter_num']},
+                                      {'id': row['id']},
                                       needed_reg_class = next_rc)
                                     crud.update('triple_parameters',
-                                      {'parameter_id': row['parameter_id'],
-                                       'parent_id': params[i - 1]['parent_id'],
-                                       'parameter_num':
-                                         params[i - 1]['parameter_num']},
+                                      {'id': params[i - 1]['id']},
                                       move_prior_to_needed = 1)
                                 else:
                                     next_rc = subset
                                     crud.update('triple_parameters',
-                                      {'parameter_id': row['parameter_id'], 
-                                       'parent_id': row['parent_id'],
-                                       'parameter_num': row['parameter_num']},
+                                      {'id': row['id']},
                                       needed_reg_class = next_rc,
                                       move_needed_to_next = 1)
                                 done = True
@@ -184,9 +173,7 @@ def figure_out_multi_use(subsets, sizes):
                                 if subset is not None:
                                     next_rc = subset
                                     crud.update('triple_parameters',
-                                      {'parameter_id': row['parameter_id'],
-                                       'parent_id': row['parent_id'],
-                                       'parameter_num': row['parameter_num']},
+                                      {'id': row['id']},
                                       needed_reg_class = next_rc,
                                       move_needed_to_parent = 1)
                                     done = True
@@ -194,22 +181,14 @@ def figure_out_multi_use(subsets, sizes):
                         if sizes[row['reg_class_for_parent']] > sizes[next_rc]:
                             next_rc = row['reg_class_for_parent']
                             crud.update('triple_parameters',
-                                        {'parameter_id': row['parameter_id'],
-                                         'parent_id': row['parent_id'],
-                                         'parameter_num': row['parameter_num']},
+                                        {'id': row['id']},
                                         needed_reg_class = next_rc)
                             crud.update('triple_parameters',
-                                        {'parameter_id': row['parameter_id'], 
-                                         'parent_id':
-                                           params[i - 1]['parent_id'],
-                                         'parameter_num':
-                                           params[i - 1]['parameter_num']},
+                                        {'id': params[i - 1]['id']},
                                         move_prior_to_needed = 1)
                         else:
                             crud.update('triple_parameters',
-                                        {'parameter_id': row['parameter_id'],
-                                         'parent_id': row['parent_id'],
-                                         'parameter_num': row['parameter_num']},
+                                        {'id': row['id']},
                                         needed_reg_class = next_rc,
                                         move_needed_to_parent = 1)
 

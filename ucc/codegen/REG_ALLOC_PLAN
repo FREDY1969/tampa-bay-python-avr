@@ -12,15 +12,13 @@ registers.  In the AVR architecture, for example, "single" includes all
 (single) registers, and "pair" includes all consecutive even and odd numbered
 pairs of registers.  So every register belongs to both register classes.
 
-To deal with this, "vertex" are used to represent register classes.  All
+To deal with this, a "vertex" is used to represent register classes.  All
 register classes mapping to the same set of registers are assigned to the same
-vertex, and the subclass/superclass arrangements are between vertexes.  Thus,
-generally where the term "register class" is used here, it generally actually
-means "vertex".
+vertex, and the subclass/superclass arrangements are between vertexes.
 
-Much of the allocation works with all subsets of an rc (including the rc
-itself).  A "top down" order means going from superset to subset.  A "bottom
-up" order means going from subset to superset.
+Much of the allocation works with all subsets of an vertex (including the
+vertex itself).  A "top down" order means going from superset to subset.
+A "bottom up" order means going from subset to superset.
 
 Register Uses:
 
@@ -39,19 +37,37 @@ Local variables may be set and referenced any number of times.
 
 Because we're not doing optimization, specifically live variable analysis, we
 assume that all local variables require the register for the lifetime of the
-function (unless they are spilled to memory).
+function unless they are spilled to memory.
 
-The compiler examines all uses of the local variable to see if there is a
+The compiler examines all uses of each local variable to see if there is a
 register class that is a common subset of the register class required for
-each use.  IF so, the compiler assigns the local variable to that register
+each use.  If so, the compiler assigns the local variable to that register
 class.  If not, the compiler assigns the local variable to the register class
 that works for the most uses (sets and references).
 
+Note that for each block, a local variable can have at most one "local" triple
+and at most one "set" label on a triple (the last one in the block to assign to
+that local variable).  The "local" and "set" are already treated as temporary
+register uses by the compiler.  We can pretty much treat local variables the
+same way we treat temporary register uses if:
+
+    1.  for every "local" triple, a pseudo register use is added from the
+        beginning of the block containing the "local" and ending at the
+        "local".
+    2.  for every "set", the register use starting at that "set" is extended
+        to the end of the block containing the "set".
+    3.  for every block not containing either a "local" or "set" for a local
+        variable, a pseudo register use is added for that local variable
+        extending from the beginning to the end of that block.
+
+These pseudo register uses will be modified later when live variable analysis
+is available.
+
 Temporary Register Use:
 
-Temporary register uses start out associated with the output of a single
-triple.  This always represents the sole definition in that register's use,
-and is always the first use, or "head" of the register usage chain.
+Temporary register uses start with the output of a single triple.  This always
+represents the sole definition in that register's use, and is always the first
+use, or "head" of the register usage chain.
 
 After that, there may be any number of references to the register spread across
 time (these are currently limited to the same block, but that will change when
@@ -73,187 +89,104 @@ register usage always also spills the _head_; but not vice versa.
 
 Algorithm:
 
-/**** OLD
-For each register use, try to allocate a place for it in the following order:
+1.  Assign temps and locals to the vertex they need.  (No moving to subclasses
+    yet).
 
-1.  Look for a free register, bottom up.  This does not increase the number of
-registers the function needs, as it reuses a previously used register.
+2.  Loop bottom up, considering all sibling vertexes together:
 
-2.  Look for a super rc to bump, bottom up.  The "bottom up" refers the to the
-subclasses of the rc being allocated, not the rc being bumped.  Bumping this
-super rc may bump other, even more super rc uses or increase the number of
-registers the function needs (in a super rc), but may not spill registers.
+    A.  For each sibling vertex, V, spill what won't fit:
 
-Note that to bump the super rc use, the period of time need for it must go
-back to it's first use.  So steps 1 and 2 must be able to have a variable
-start time (the use always goes up to the current time).
+        a.  Create chains of ru's, TC's, that can all occupy the same register.
+        b.  Loop until no more to spills needed or no more free space in child
+            reg classes:
+            - Reassign the most expensive TC/local to the child vertex that
+              has the most available registers.
+        c.  Loop until no more spills needed:
+            1. For each TC that won't fit (bottom up, starting at overflow
+               point):
+               - For each block, B, in TC:
+                 A. Figure out the best solution for this block.  This may be a
+                    set of temps to spill, or a local to save/restore (+ temps).
+                    Remember that you can spill temps from child vertexes
+                    (recursively) too!
+                    - For each ru in TC in B:
+                      - Pick the segment, S, in V or subset of V, not in TC,
+                        containing ru that contains the most remaining ru's in
+                        TC.  Break ties by selecting the S that already has
+                        it's head spilled.
+                        - Penalty for either endpoint in any ru still in TC.
+                          These could just be subtracted from the contained ru
+                          count.
+                        - Seems like locals can be treated the same, except that
+                          if there is a "local", it would be treated as a
+                          segment from the start of the block, ending at the
+                          "local".  And if the block has a "set", there would
+                          be a final segment added to the "set"s register
+                          usage extending to the end of the block.  And if
+                          there was neither a "local" or "set" in a block it
+                          would be treated as a single segment spanning the
+                          whole block.  (Need to combine "local" and "set" into
+                          one ru to use same register too).
+                      - Delete all contained ru's, in the selected S, from TC
+                 B. Store this as Chosen(TC, B)
+                 C. Figure out what the cost (0-2) would be if each local was
+                    spilled.  Make a list of all locals that have a lower cost,
+                    if spilled, than Chosen(TC, B).  Store these as
+                    Spilled_local(TC, B, local).  For all locals that are more
+                    expensive spilled than Chosen(TC, B), set Spilled_local(TC,
+                    B, local) to Chosen(TC, B).
+                    - when a local is spilled:
+                      - there would be no dummy segments before "local", after
+                        "set", or spanning blocks that don't use that local
+                        variable.
+                      - different ru's could use different register assignments
+                        and/or different register classes.
+              2. Try all combinations mapping locals to TC's and pick the
+                 combination, C, with the greatest total savings.
+                 - The savings of L and TC is:
+                     sum(Chosen(TC, all B)) -
+                       (Spill_cost(L) + sum(Spilled_local(TC, all B, L)))
+              3. If a combination is found:
+                 - For each L, TC where L is spilled:
+                   - Mark L as spilled
+                   - For all B: set Chosen(TC, B) = Spilled_local(TC, B, L)
+              4. For each TC, B:
+                 - record the Chosen(TC, B) as the answer for B
 
-3.  Increase the number of registers the function needs, top down.
+    B.  Reassign entire temp register usages from super to fill holes in
+        chains in the siblings (but not increase the number of registers
+        needed in each sibling).
 
-4.  Spill some other register.  This register could be in any subclass rc.
-Spilling a subclass rc might also be useful to a wider range of later rc uses.
-And also, picking a use to spill that goes further into the future might also
-be useful to a wider range of later rc uses.  Which should take precedence is
-not clear.
-*****/
+        a.  Let OC(ru, V) be the max overlap count of register usage, ru, and
+            all other ru's in vertex, V, including ru itself.
+        b.  Let RC(V) be the number of registers (register count) in vertex
+            (excluding subclasses).
+        c.  Let RN(V) be the number of registers needed for vertex (excluding
+            subclasses).  This will always be <= RC(V).
+        d.  Loop until no more ru's can be reassigned:
+            1.  Calc OC(ru, super), for each register usage, ru, in super.
+                Select ru's with OC(ru, super) > RC(super).
+            2.  Calc, left overs:
+                  LO(ru, sibling) = RN(sibling) - OC(ru, sibling)
+                for each selected ru and each sibling.  Select ru's that have
+                at least one LO(ru, sibling) >= 0 and remember the greatest
+                LO(ru, sibling).
+            3.  Reassign the ru (if any) with the greatest (OC(ru, super),
+                LO(ru, sibling)) to the sibling.
 
-1.  Divide each line of register usage into segments terminating with each
-    reference.  Each segment has a lifetime (start, end) starting at the
-    previous decl/ref and ending at this reference.  Record the head of the
-    line of register usage in each segment.
+To handle function calls:
 
-    Also create a segment for the head itself with start == end.
+1.  For each function, F, do the routine above.  For each function, S, called
+    by F, for each V, set SV(F, S, V) to the max number of registers that F
+    needs to save across all calls to function, S, for V.
 
-2.  If the function does not suspend, make a list of all of the local
-    variables, setting the cost of each variable to the total number of
-    definitions and uses (including the implicit definition in the call for
-    parameters).  Sort this in increasing cost order.
+2.  For each function, S, and vertex V, take the second highest count of all
+    callers, F, of SV(F, S, V) as the number of registers to save/restore on
+    entry/exit to S.  Store these as FS(S, V).
 
-    Also record the register class required by each local variable.
+3.  For each function, S, and vertex, V:
+    - find the function, F, with highest SV(F, S, V).  Do:
+        SV(F, S, V) -= FS(S, V)
+    - for all other functions, F2, not equal to F:
+        SV(F2, S, V) = 0
 
-    Otherwise (if the function _does_ suspend), all locals will be allocated
-    in memory (even though parameters are still passed in registers) and this
-    list will be empty.
-
-3.  Create an available number of registers for each vertex starting with the
-    top-most superclass and working down recursively through the subclasses.
-    The available number of registers is the total number of registers in the
-    vertex including subclasses, minus the number of locals assigned to that
-    vertex, including subclasses (not to exceed the number of registers in
-    the subclass), minus the number of overflow locals from the superclass.
-    (The assumption here is that there is at most one superclass for each
-    vertex).
-
-    The number of overflows, OV, to pass on to the subclasses is the number of
-    registers in the vertex, excluding the subclasses, minus the number
-    of locals in the vertex minus the number of overflow locals from
-    the superclass.  Pick the OV lowest cost local vars in the union of the
-    overflow locals from the superclass and locals for this register class,
-    and store this list as the overflow locals for this vertex.
-
-4.  At each point in time where there are more register segments than available
-    registers, make an "overage list" of all of the segments at that point in
-    time.  This point in time corresponds to the end time of one or more
-    segments.
-
-    When comparing each register class, include the segments from the
-    subclasses and compare to the total number of available registers in the
-    class calculated in step 3.
-
-    Because of the multiple register classes, it is possible to have multiple
-    overage lists for the same point in time (but for different register
-    classes).  It is also possible for one segment to appear on more than
-    overage list for the same point in time.  This shouldn't be a problem as
-    long as the "double count rule", below, is observed.
-
-    For each segment, A, in the overage list, store a count of the number of
-    segments, B, also in the overage list, that are "fully contained" in A.
-    B is fully contained in A iff A.start < B.start and A.end > B.end.
-
-    "Double Count Rule":
-
-        Do not count B more than once in A.count, even if both B and A appear
-        together in multiple overage lists at the same point in time.
-
-5.  Loop until there are no more overages:
-
-    A.  Pick the segment, X, with the greatest count.  Break ties by
-        picking the segment whose head has already been spilled.
-
-        Note that it may be possible that the greatest count is 0.
-
-    B.  Mark X and its head as being spilled.
-
-    C.  Set X.count = 0.
-
-    D.  Set X.start = X.end.
-
-    E.  Delete X from each overage list, L, containing X, except for 
-        overage lists (if any) corresponding to X.end.
-
-        If there is an overage list for time X.end, add 1 to the count of each
-        other segment in that list that didn't previously fully contain X.
-        
-        For each other list L:
-
-            If the list no longer exceeds the maximum number of registers
-            available:
-
-                Decrement the counts associated with L for all segments in L.
-                Note that the amount subtracted will be different for
-                different segments.
-
-                But do not decrement a count for segment B in segment A if B
-                also appears with A in another overage list.
-
-            Otherwise, for each segment, Y, in L, that fully contained X;
-            decrement Y.count.
-
-6.  Make a list of all the spills (including the heads).
-
-7.  Taking the register classes in sets of siblings, bottom up:
-
-    A.  For each sibling RC, make a list of spill chains, using the following
-        for each spill chain.  The list of spill chains should end up in
-        reverse cost order.
-
-        a.  Select the spill from RC with the least end time, and create a
-            chain with this as the only element.
-
-        b.  While there are spills, S, in RC whose start > chain[-1].end:
-
-            - append Sle, the spill in S with lowest end, to the chain.
-            - remove Sle from the list of spills.
-
-    B.  While overflow locals from parent RC.
-
-        a.  Determine sibling RC that has the lowest cost for its first (most
-            expensive) spill chain.  Call this RCs, and the cost, C.  If an
-            RC's list of spill chains is empty, C is 0.
-
-        b.  is cheapest overflow local cost > cost C from step a?
-
-            1.  Yes.
-
-                - spill the last (cheapest) spill chain in RCs (not the one
-                  with cost C) and remove this from RCs' list of spill chains.
-
-                - Find most expensive local, Le, in parent RC (including its
-                  superclasses) and interchange this with the cheapest
-                  overflow local.
-
-                - Mark Le so that it will not be considered any more.
-
-                - Remove the cheapest overflow local from the list of overflow
-                  locals for the parent RC.
-
-            2.  No.
-
-                - spill the cheapest overflow local
-                
-                - remove it from the list of overflow locals for the parent RC.
-
-                - mark the first spill chain in RCs (with cost C) as not
-                  spilled and remove it from RCs' list of spill chains.
-
-        c.  For each sibling RC, RC2, excluding RCs:
-
-            - mark the first spill chain in RC2 as not spilled and remove it
-              from RC2's list of spill chains.
-
-    C.  For each sibling RC, RC1:
-
-        a.  pair up the spill chains (in descending cost order) with the locals
-            assigned to RC1 (in ascending cost order).
-
-        b.  For all locals whose cost < their associated spill chain:
-
-            - spill the local
-            - assign the spill chain to the register used by local
-
-8.  Assign a memory location to each spilled head each spilled local variable.
-
-9.  Assign unspilled segments and locals to registers.
-
-    Bottom up
-    Match next segment to greatest prior end < next.start

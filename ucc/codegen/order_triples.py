@@ -177,7 +177,7 @@ def calc_reg_est_for_triples():
            set register_est = max(
              (select max(1, count(*))
                 from triple_parameters tp
-               where tp.parent_id = id)
+               where tp.parent_id = triples.id)
              + ifnull((select num_extra_regs
                          from operator_info io
                         where io.operator = triples.operator), 0),
@@ -197,7 +197,7 @@ def calc_reg_est_for_triples():
          where triples.register_est isnull
            and not exists (select null
                              from triple_parameters tp
-                            where tp.parent_id = id
+                            where tp.parent_id = triples.id
                               and tp.evaluation_order isnull)
            and (triples.operator != 'call_direct'
                 or (select sym.register_est notnull
@@ -281,16 +281,16 @@ def update_triple_parameter_orders():
     crud.Db_cur.execute('''
         create temp table param_order (
             seq_num integer not null primary key,  -- assigned seq number
-            parent_id int not null,                -- parent triple id
-            parameter_id int not null
+            tp_id int not null,                    -- triple_parameters id
+            parent_id int not null                 -- parent triple id
         )
       ''')
 
     # Load temp param_order table with all sets of triple_parameters that
     # are ready to order.
     crud.Db_cur.execute('''
-        insert into param_order (parent_id, parameter_id)
-          select tp.parent_id, tp.parameter_id
+        insert into param_order (tp_id, parent_id)
+          select tp.id, tp.parent_id
             from triple_parameters tp
            where tp.parent_id in
                    (select t.id
@@ -331,13 +331,10 @@ def update_triple_parameter_orders():
                                    where sibling_po.parent_id =
                                            triple_parameters.parent_id)
                         from param_order po
-                       where po.parent_id = triple_parameters.parent_id 
-                         and po.parameter_id = triple_parameters.parameter_id)
+                       where po.tp_id = triple_parameters.id)
              where exists (select null
                              from param_order po
-                            where po.parent_id = triple_parameters.parent_id 
-                              and po.parameter_id = 
-                                    triple_parameters.parameter_id)
+                            where po.tp_id = triple_parameters.id)
           ''')
         if Debug:
             print("update triple_parameters total", total, file=sys.stderr)
@@ -547,15 +544,14 @@ def calc_parent_seq_num():
     crud.Db_cur.execute('''
         create temp table param_order (
             seq_num integer not null primary key,    -- assigned seq number
-            parent_id int not null,
-            parameter_id int not null
+            tp_id int not null
         )
       ''')
 
     # Load temp param_order table with all triple_parameters.
     crud.Db_cur.execute('''
-        insert into param_order (parent_id, parameter_id)
-          select parent_id, parameter_id
+        insert into param_order (tp_id)
+          select id
             from triple_parameters
            order by parameter_id, abs_order_in_block
       ''')
@@ -568,8 +564,7 @@ def calc_parent_seq_num():
            set parent_seq_num =
                  (select seq_num
                     from param_order po
-                   where triple_parameters.parent_id = po.parent_id
-                     and triple_parameters.parameter_id = po.parameter_id)
+                   where triple_parameters.id = po.tp_id)
       ''')
 
     # We're done with the param_order table.
