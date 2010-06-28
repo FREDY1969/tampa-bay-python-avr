@@ -1,38 +1,43 @@
 -- registers.sql
 
-insert into register (name) values ('r0');
-insert into register (name) values ('r1');
-insert into register (name) values ('r2');
-insert into register (name) values ('r3');
-insert into register (name) values ('r4');
-insert into register (name) values ('r5');
-insert into register (name) values ('r6');
-insert into register (name) values ('r7');
-insert into register (name) values ('r8');
-insert into register (name) values ('r9');
-insert into register (name) values ('r10');
-insert into register (name) values ('r11');
-insert into register (name) values ('r12');
-insert into register (name) values ('r13');
-insert into register (name) values ('r14');
-insert into register (name) values ('r15');
-insert into register (name) values ('r16');
-insert into register (name) values ('r17');
-insert into register (name) values ('r18');
-insert into register (name) values ('r19');
-insert into register (name) values ('r20');
-insert into register (name) values ('r21');
-insert into register (name) values ('r22');
-insert into register (name) values ('r23');
-insert into register (name) values ('r24');
-insert into register (name) values ('r25');
-insert into register (name) values ('r26');
-insert into register (name) values ('r27');
-insert into register (name) values ('r28');
-insert into register (name) values ('r29');
-insert into register (name) values ('r30');
-insert into register (name) values ('r31');
+-- Defines the registers, aliases and reg_classes for the Atmel AVR
+-- architecture.
 
+-- primary registers:
+insert into register (name, is_primary) values ('r0', 1);
+insert into register (name, is_primary) values ('r1', 1);
+insert into register (name, is_primary) values ('r2', 1);
+insert into register (name, is_primary) values ('r3', 1);
+insert into register (name, is_primary) values ('r4', 1);
+insert into register (name, is_primary) values ('r5', 1);
+insert into register (name, is_primary) values ('r6', 1);
+insert into register (name, is_primary) values ('r7', 1);
+insert into register (name, is_primary) values ('r8', 1);
+insert into register (name, is_primary) values ('r9', 1);
+insert into register (name, is_primary) values ('r10', 1);
+insert into register (name, is_primary) values ('r11', 1);
+insert into register (name, is_primary) values ('r12', 1);
+insert into register (name, is_primary) values ('r13', 1);
+insert into register (name, is_primary) values ('r14', 1);
+insert into register (name, is_primary) values ('r15', 1);
+insert into register (name, is_primary) values ('r16', 1);
+insert into register (name, is_primary) values ('r17', 1);
+insert into register (name, is_primary) values ('r18', 1);
+insert into register (name, is_primary) values ('r19', 1);
+insert into register (name, is_primary) values ('r20', 1);
+insert into register (name, is_primary) values ('r21', 1);
+insert into register (name, is_primary) values ('r22', 1);
+insert into register (name, is_primary) values ('r23', 1);
+insert into register (name, is_primary) values ('r24', 1);
+insert into register (name, is_primary) values ('r25', 1);
+insert into register (name, is_primary) values ('r26', 1);
+insert into register (name, is_primary) values ('r27', 1);
+insert into register (name, is_primary) values ('r28', 1);
+insert into register (name, is_primary) values ('r29', 1);
+insert into register (name, is_primary) values ('r30', 1);
+insert into register (name, is_primary) values ('r31', 1);
+
+-- double registers:
 insert into register (name) values ('d0');
 insert into register (name) values ('d2');
 insert into register (name) values ('d4');
@@ -50,6 +55,7 @@ insert into register (name) values ('d26');
 insert into register (name) values ('d28');
 insert into register (name) values ('d30');
 
+-- indirect registers:
 insert into register (name) values ('X');
 insert into register (name) values ('Y');
 insert into register (name) values ('Z');
@@ -98,60 +104,10 @@ insert into alias (r1, r2) values ('d26', 'X');
 insert into alias (r1, r2) values ('d28', 'Y');
 insert into alias (r1, r2) values ('d30', 'Z');
 
+-- all of the above aliases are symetrical:
 insert into alias (r1, r2) select r2, r1 from alias;
 
--- insert into vertex (id) values (1);                       -- 1, 2
---   insert into vertex (id, parent) values (2, 1);          -- 3
---     insert into vertex (id, parent) values (3, 2);        -- 4
---       insert into vertex (id, parent) values (4, 3);      -- 5
---         insert into vertex (id, parent) values (5, 4);    -- 6
---           insert into vertex (id, parent) values (6, 5);  -- 7
---     insert into vertex (id, parent) values (7, 2);        -- 8
---   insert into vertex (id, parent) values (8, 1);          -- 9
-
--- insert into reg_class (id, name, v) values (1, 'single', 1);
--- insert into reg_in_class (reg_class, reg)
---   select 1, name from register where name like 'r%';
--- 
--- insert into reg_class (id, name, v) values (2, 'pair', 1);
--- insert into reg_in_class (reg_class, reg)
---   select 2, name from register where name like 'd%';
--- 
--- insert into reg_class (id, name, v) values (3, 'immed', 2);
--- insert into reg_in_class (reg_class, reg)
---   select 3, name from register where name like 'r__' and name >= 'r16';
--- 
--- insert into reg_class (id, name, v) values (4, 'immed_word', 3);
--- insert into reg_in_class (reg_class, reg) values (4, 'd24');
--- insert into reg_in_class (reg_class, reg) values (4, 'd26');
--- insert into reg_in_class (reg_class, reg) values (4, 'd28');
--- insert into reg_in_class (reg_class, reg) values (4, 'd30');
--- 
--- insert into reg_class (id, name, v) values (5, 'index', 4);
--- insert into reg_in_class (reg_class, reg) values (5, 'X');
--- insert into reg_in_class (reg_class, reg) values (5, 'Y');
--- insert into reg_in_class (reg_class, reg) values (5, 'Z');
--- 
--- insert into reg_class (id, name, v) values (6, 'offset', 5);
--- insert into reg_in_class (reg_class, reg) values (6, 'Y');
--- insert into reg_in_class (reg_class, reg) values (6, 'Z');
--- 
--- insert into reg_class (id, name, v) values (7, 'lpm', 6);
--- insert into reg_in_class (reg_class, reg) values (7, 'Z');
--- 
--- insert into reg_class (id, name, v) values (8, 'fmul', 7);
--- insert into reg_in_class (reg_class, reg) values (8, 'r16');
--- insert into reg_in_class (reg_class, reg) values (8, 'r17');
--- insert into reg_in_class (reg_class, reg) values (8, 'r18');
--- insert into reg_in_class (reg_class, reg) values (8, 'r19');
--- insert into reg_in_class (reg_class, reg) values (8, 'r20');
--- insert into reg_in_class (reg_class, reg) values (8, 'r21');
--- insert into reg_in_class (reg_class, reg) values (8, 'r22');
--- insert into reg_in_class (reg_class, reg) values (8, 'r23');
--- 
--- insert into reg_class (id, name, v) values (9, 'mul_out', 8);
--- insert into reg_in_class (reg_class, reg) values (9, 'd0');
-
+-- register classes:
 insert into reg_class (name) values ('single');
 insert into reg_in_class (reg_class, reg)
   select 1, name from register where name like 'r%';
@@ -170,7 +126,7 @@ insert into reg_in_class (reg_class, reg) values (4, 'd26');
 insert into reg_in_class (reg_class, reg) values (4, 'd28');
 insert into reg_in_class (reg_class, reg) values (4, 'd30');
 
-insert into reg_class (name, num_registers) values ('index', 2);
+insert into reg_class (name, num_registers) values ('indirect', 2);
 insert into reg_in_class (reg_class, reg) values (5, 'X');
 insert into reg_in_class (reg_class, reg) values (5, 'Y');
 insert into reg_in_class (reg_class, reg) values (5, 'Z');
