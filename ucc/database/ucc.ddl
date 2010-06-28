@@ -274,6 +274,7 @@ create index triple_block_id_index
           on triples(block_id, use_count);
 
 create table triple_parameters (
+    id integer not null primary key,
     parent_id int not null references triples(id),
     parameter_id int not null references triples(id),
     parameter_num int not null,
@@ -305,7 +306,7 @@ create index tp_parameter_index
           on triple_parameters(parameter_id, parent_id, parameter_num);
 
 create index tp_parent_index
-          on triple_parameters(parent_id, parameter_num);
+          on triple_parameters(parent_id, parameter_num, parameter_id);
 
 create table triple_labels (
     -- The symbols (if any) that each triple's result must be stored in.
