@@ -8,7 +8,7 @@ create table register (
 
     name varchar(20) not null primary key,
     is_primary bool not null default 0  -- True if this register is seen as a
-                                        -- primary, or fundamental, register;
+                                        -- primary, or fundamental, register
                                         -- versus an alias name.
 );
 
