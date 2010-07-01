@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>const</name>
+    <label>const</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" null="True" repeated="False" type="string" />
+    </answers>
+    <questions>
+        <question>
+            <name>value</name>
+            <label>value</label>
+            <type>string</type>
+        </question>
+    </questions>
+</word>

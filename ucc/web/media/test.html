@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script type="text/javascript" src="/components/jquery-1.4.2.min.js"></script>
+<script type="text/javascript" charset="utf-8">
+$(function () {
+	$('#submit').click(function (e) {
+		e.preventDefault();
+		$.ajax({
+			url: $('#request_url').val(),
+			type: $('#request_type').val(),
+			data: $.parseJSON($('#request_data').val()),
+			success: function (data, textStatus, request) {
+				$('#response_status').val(request.status + ' ' + request.statusText);
+				$('#response_data').val(request.responseText);
+			},
+			error: function (request) {
+				$('#response_status').val(request.status + ' ' + request.statusText);
+				$('#response_data').val(request.responseText);
+			}
+		});
+	});
+});
+</script>
+
+</head>
+<body>
+
+<h2>Test AJAX Requests</h2>
+
+request url: <input type="text" value="/ajax/test/bar" id="request_url"><br>
+request type: <select id="request_type">
+				<option value="get">GET</option>
+				<option value="post">POST</option>
+			</select><br>
+request data: <input type="text" value="{&#34;foo&#34;:&#34;bar&#34;}" id="request_data"><br>
+<br>
+<input type="submit" value="submit" id="submit"><br>
+<br>
+response status: <input type="text" value="" id="response_status"><br>
+response data:<br>
+<textarea id="response_data" rows="6" cols="40"></textarea>
+
+</body>
+</html>

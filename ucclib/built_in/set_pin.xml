@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>set_pin</name>
+    <label>set_pin</label>
+    <kind>function</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="argument" repeated="True" type="string" value="register" />
+        <answer name="argument" repeated="True" type="string" value="mask" />
+        <answer name="argument" repeated="True" type="string" value="value" />
+    </answers>
+</word>

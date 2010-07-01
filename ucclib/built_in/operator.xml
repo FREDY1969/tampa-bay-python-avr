@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>operator</name>
+    <label>operator</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" null="True" repeated="False" type="string" />
+    </answers>
+</word>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>toggle</name>
+    <label>toggle</label>
+    <kind>macro</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="argument" repeated="True" type="string" value="pin" />
+        <answer name="new_syntax_keyword" null="True" repeated="True" />
+        <answer name="syntax" null="True" repeated="True" />
+    </answers>
+</word>

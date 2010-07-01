@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package>
+    <name>washer</name>
+    <words>
+        <word name="agitate" />
+        <word name="buzz" />
+        <word name="cold-water" />
+        <word name="drain" />
+        <word name="fill" />
+        <word name="hot-water" />
+        <word name="open" />
+        <word name="run" />
+        <word name="spin" />
+        <word name="temp-switch" />
+        <word name="water-on" />
+    </words>
+</package>

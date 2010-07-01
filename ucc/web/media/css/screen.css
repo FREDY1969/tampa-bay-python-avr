@@ -1,0 +1,163 @@
+
+/* Defaults */
+
+body {
+	font-family: Verdana, Helvetica, Arial, sans-serif;
+	font-size: 12px;
+}
+h1, h2, h3, h4, h5, h6, p {
+	margin: 15px 0;
+}
+h1, h2, h3, h4, h5, h6 {
+	font-weight: bold;
+}
+h1 {
+	font-size:1.5em;
+}
+h2 {
+	font-size:1.4em;
+}
+h3 {
+	font-size:1.15em;
+}
+h4 {
+	font-size:1.1em;
+}
+a img {
+	border: none;
+}
+strong {
+	font-style: inherit;
+	font-weight: bold;
+}
+em {
+	font-style: italic;
+	font-weight: inherit;
+}
+
+/* Generic Classes */
+
+.clear {
+	clear: both;
+	height:0;
+}
+.hide {
+	visibility: hidden;
+}
+.off {
+	display: none;
+}
+
+.center {
+	text-align: center;
+}
+.left {
+	float: left;
+}
+.right {
+	float: right;
+}
+
+.nomargin {
+	margin:0;
+}
+.nopadding {
+	padding:0;
+}
+
+/* Typography */
+
+body {
+	font-family: "Century Gothic", Verdana, Helvetica, Arial, sans-serif;
+	background-color:#fefefe;
+}
+
+p {}
+
+h1 {}
+h2 {}
+h3 {}
+h4 {}
+h5 {}
+h6 {}
+
+a,
+a:link,
+a:visited,
+a:active {
+	color:#2964b7;
+}
+a:hover {
+	color:#E88B32;
+}
+
+/* ================================= Header ============================== */
+
+/* Menu */
+
+#menu {
+	list-style:none;
+	font-size:13px;
+	background-color:#fcfcfc;
+	padding:10px;
+	border-bottom:1px solid #f8f8f8;
+}
+#menu li {
+	display:inline;
+	margin:5px;
+}
+#menu a {
+	text-decoration:none;
+}
+
+/* ================================== Body =============================== */
+
+/* Package Tree */
+
+#package-tree {
+	float:left;
+	overflow:auto;
+	margin:5px 10px;
+	padding:0 20px 0 0;
+}
+#word {
+	overflow:auto;
+	margin-bottom:26px;
+}
+
+/* ================================= Footer ============================== */
+
+/* Status */
+
+#footer {
+	position:fixed;
+	bottom:0;
+	left:0;
+	width:100%;
+	background-color:#fcfcfc;
+	padding:5px 10px;
+	border-top:1px solid #f8f8f8;
+}
+
+
+/* ============================== Simple Modal =========================== */
+
+#simplemodal-overlay {
+	background-color:#fff;
+}
+#simplemodal-container {
+	background-color:#eee;
+	border:8px solid #e0e0e0;
+	padding:12px;
+}
+#simplemodal-container a.modalCloseImg {
+	background:url(/images/x.png) no-repeat;
+	width:25px;
+	height:29px;
+	display:inline;
+	z-index:3200;
+	position:absolute;
+	top:-15px;
+	right:-18px;
+	cursor:pointer;
+}
