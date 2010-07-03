@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_int_defining</name>
+    <label>Test Integer Defining</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="py" />
+    </answers>
+    <questions>
+        <question>
+            <name>my_int</name>
+            <label>My Integer</label>
+            <min>1</min>
+            <max>1</max>
+            <type>int</type>
+        </question>
+    </questions>
+</word>

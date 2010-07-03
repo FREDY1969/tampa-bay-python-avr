@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>Port-C</name>
+    <label>Port-C</label>
+    <kind>ATmega328_port</kind>
+    <defining>False</defining>
+    <answers>
+        <answer name="data_direction_register_address" repeated="False" type="int" value="0x27" />
+        <answer name="data_register_address" repeated="False" type="int" value="0x28" />
+        <answer name="input_pins_register_address" repeated="False" type="int" value="0x26" />
+    </answers>
+</word>

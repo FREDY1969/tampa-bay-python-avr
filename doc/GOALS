@@ -1,0 +1,48 @@
+I'm trying for an extensible language; but, as it seems that all attempts at
+extensible languages have come to the conclusion that extensible languages are
+not the way to go, not _too_ extensible.  Or maybe, better said, only
+_slightly_ extensible.
+
+It seems that conceptually syntax is composed of 4 things:
+
+1.  Tokens (scanner output)
+2.  Expressions
+3.  Statements
+4.  Declarations
+
+I'm thinking that the first two are not extensible, but that the last two are
+(though declarations may not require any more than the question/answer
+facility).  I'm thinking that some kind of keyword parameter syntax should
+provide enough flexibility for expresions.
+
+It doesn't seem, at first glance, that there should be a need for reserved
+words (aka, keywords).  These can just be part of __builtin__.  Thus, the list
+of reserved words is not extensible.
+
+It seems that mileage can be had out of making spaces significant in certain
+places (in addition to indenting):
+
+    - require binary operators to have spaces before and after them.
+    - require unary operators to have a space before and no space after them.
+    - treat "foo(" and "foo (" differently.
+    - treat NEWLINE differently if it follows a ':' or not.
+
+By doing this, we should be able to do away with commas and most parenthesis
+and greatly reduce the token clutter.  Whether this ends up being a good idea
+or not remains to be seen...  It will certainly feel strange at first to
+programmers coming from a traditional background.
+
+
+Extensibility with functions as compilers.  This seems to boil down to some
+kind of macro capability, but with the addition (over what Lisp has) of
+allowing the macro function to get information about:
+
+    1.  The parameters passed to it (types, min/max values, precision, whether
+        it's a constant or not, etc)
+
+    2.  The function/module/class it's being called within (the calling
+        context).
+
+    3.  The parent AST structure (what's expected of it by its caller).  This
+        may just be handled by a set of methods for the macro: compile_value,
+        compile_lvalue, compile_condition, etc?

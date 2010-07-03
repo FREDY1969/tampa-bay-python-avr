@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>bogus</name>
+    <label>bogus</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" null="True" repeated="False" type="string" />
+    </answers>
+    <questions>
+        <questions>
+            <name>the_series</name>
+            <label>the series</label>
+            <min>1</min>
+            <max>1</max>
+            <question>
+                <name>q1</name>
+                <label>q1</label>
+                <min>0</min>
+                <max>infinite</max>
+                <orderable>False</orderable>
+                <type>string</type>
+            </question>
+            <question>
+                <name>q2</name>
+                <label>q2</label>
+                <min>1</min>
+                <max>1</max>
+                <type>int</type>
+            </question>
+        </questions>
+    </questions>
+</word>

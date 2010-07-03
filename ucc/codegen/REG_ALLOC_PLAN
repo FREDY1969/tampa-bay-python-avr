@@ -1,0 +1,192 @@
+Here is how register allocation works.
+
+Register Classes and Vertexes:
+
+There are several register classes, rc, (depending on the machine architecture).
+It is assumed that for any two rc's, either one is a subset of the other, or
+they are completely disjoint.  So each rc has a set of subset rcs (which
+generally includes itself).
+
+Also, there may be more than one register class that map the same set of
+registers.  In the AVR architecture, for example, "single" includes all
+(single) registers, and "pair" includes all consecutive even and odd numbered
+pairs of registers.  So every register belongs to both register classes.
+
+To deal with this, a "vertex" is used to represent register classes.  All
+register classes mapping to the same set of registers are assigned to the same
+vertex, and the subclass/superclass arrangements are between vertexes.
+
+Much of the allocation works with all subsets of an vertex (including the
+vertex itself).  A "top down" order means going from superset to subset.
+A "bottom up" order means going from subset to superset.
+
+Register Uses:
+
+There are two kinds of register uses which compete for the same limited set of
+registers:
+
+    A.  Local variables (including parameters)
+    B.  Temporary uses
+
+Either of these may be "spilled" to memory if there are not enough registers
+to go around.
+
+Local Variable Register Use:
+
+Local variables may be set and referenced any number of times.
+
+Because we're not doing optimization, specifically live variable analysis, we
+assume that all local variables require the register for the lifetime of the
+function unless they are spilled to memory.
+
+The compiler examines all uses of each local variable to see if there is a
+register class that is a common subset of the register class required for
+each use.  If so, the compiler assigns the local variable to that register
+class.  If not, the compiler assigns the local variable to the register class
+that works for the most uses (sets and references).
+
+Note that for each block, a local variable can have at most one "local" triple
+and at most one "set" label on a triple (the last one in the block to assign to
+that local variable).  The "local" and "set" are already treated as temporary
+register uses by the compiler.  We can pretty much treat local variables the
+same way we treat temporary register uses if:
+
+    1.  for every "local" triple, a pseudo register use is added from the
+        beginning of the block containing the "local" and ending at the
+        "local".
+    2.  for every "set", the register use starting at that "set" is extended
+        to the end of the block containing the "set".
+    3.  for every block not containing either a "local" or "set" for a local
+        variable, a pseudo register use is added for that local variable
+        extending from the beginning to the end of that block.
+
+These pseudo register uses will be modified later when live variable analysis
+is available.
+
+Temporary Register Use:
+
+Temporary register uses start with the output of a single triple.  This always
+represents the sole definition in that register's use, and is always the first
+use, or "head" of the register usage chain.
+
+After that, there may be any number of references to the register spread across
+time (these are currently limited to the same block, but that will change when
+the optimizer is implemented).  These references are simply all of the
+triple_parameters that link to this head triple as their parameter_id.
+
+In addition, there may be points in the reference list where the rc changes --
+these are indicated by the move_prior_to_needed or move_needed_to_next flags
+in the triple_parameter.  The move_needed_to_parent flag indicates a brief need
+to use some other rc.
+
+If the register use is spilled, the copy to memory is always done at the
+initial definition (the head).  This copy in memory may then be used at any
+reference point, regardless of its rc.  But the data may remain valid for some
+time in the register, so that copying the data from memory back to the register
+each time it is referenced may not be needed (if a spill was not required
+during that stretch of time).  Therefore, spilling a _reference_ in the
+register usage always also spills the _head_; but not vice versa.
+
+Algorithm:
+
+1.  Assign temps and locals to the vertex they need.  (No moving to subclasses
+    yet).
+
+2.  Loop bottom up, considering all sibling vertexes together:
+
+    A.  For each sibling vertex, V, spill what won't fit:
+
+        a.  Create chains of ru's, TC's, that can all occupy the same register.
+        b.  Loop until no more to spills needed or no more free space in child
+            reg classes:
+            - Reassign the most expensive TC/local to the child vertex that
+              has the most available registers.
+        c.  Loop until no more spills needed:
+            1. For each TC that won't fit (bottom up, starting at overflow
+               point):
+               - For each block, B, in TC:
+                 A. Figure out the best solution for this block.  This may be a
+                    set of temps to spill, or a local to save/restore (+ temps).
+                    Remember that you can spill temps from child vertexes
+                    (recursively) too!
+                    - For each ru in TC in B:
+                      - Pick the segment, S, in V or subset of V, not in TC,
+                        containing ru that contains the most remaining ru's in
+                        TC.  Break ties by selecting the S that already has
+                        it's head spilled.
+                        - Penalty for either endpoint in any ru still in TC.
+                          These could just be subtracted from the contained ru
+                          count.
+                        - Seems like locals can be treated the same, except that
+                          if there is a "local", it would be treated as a
+                          segment from the start of the block, ending at the
+                          "local".  And if the block has a "set", there would
+                          be a final segment added to the "set"s register
+                          usage extending to the end of the block.  And if
+                          there was neither a "local" or "set" in a block it
+                          would be treated as a single segment spanning the
+                          whole block.  (Need to combine "local" and "set" into
+                          one ru to use same register too).
+                      - Delete all contained ru's, in the selected S, from TC
+                 B. Store this as Chosen(TC, B)
+                 C. Figure out what the cost (0-2) would be if each local was
+                    spilled.  Make a list of all locals that have a lower cost,
+                    if spilled, than Chosen(TC, B).  Store these as
+                    Spilled_local(TC, B, local).  For all locals that are more
+                    expensive spilled than Chosen(TC, B), set Spilled_local(TC,
+                    B, local) to Chosen(TC, B).
+                    - when a local is spilled:
+                      - there would be no dummy segments before "local", after
+                        "set", or spanning blocks that don't use that local
+                        variable.
+                      - different ru's could use different register assignments
+                        and/or different register classes.
+              2. Try all combinations mapping locals to TC's and pick the
+                 combination, C, with the greatest total savings.
+                 - The savings of L and TC is:
+                     sum(Chosen(TC, all B)) -
+                       (Spill_cost(L) + sum(Spilled_local(TC, all B, L)))
+              3. If a combination is found:
+                 - For each L, TC where L is spilled:
+                   - Mark L as spilled
+                   - For all B: set Chosen(TC, B) = Spilled_local(TC, B, L)
+              4. For each TC, B:
+                 - record the Chosen(TC, B) as the answer for B
+
+    B.  Reassign entire temp register usages from super to fill holes in
+        chains in the siblings (but not increase the number of registers
+        needed in each sibling).
+
+        a.  Let OC(ru, V) be the max overlap count of register usage, ru, and
+            all other ru's in vertex, V, including ru itself.
+        b.  Let RC(V) be the number of registers (register count) in vertex
+            (excluding subclasses).
+        c.  Let RN(V) be the number of registers needed for vertex (excluding
+            subclasses).  This will always be <= RC(V).
+        d.  Loop until no more ru's can be reassigned:
+            1.  Calc OC(ru, super), for each register usage, ru, in super.
+                Select ru's with OC(ru, super) > RC(super).
+            2.  Calc, left overs:
+                  LO(ru, sibling) = RN(sibling) - OC(ru, sibling)
+                for each selected ru and each sibling.  Select ru's that have
+                at least one LO(ru, sibling) >= 0 and remember the greatest
+                LO(ru, sibling).
+            3.  Reassign the ru (if any) with the greatest (OC(ru, super),
+                LO(ru, sibling)) to the sibling.
+
+To handle function calls:
+
+1.  For each function, F, do the routine above.  For each function, S, called
+    by F, for each V, set SV(F, S, V) to the max number of registers that F
+    needs to save across all calls to function, S, for V.
+
+2.  For each function, S, and vertex V, take the second highest count of all
+    callers, F, of SV(F, S, V) as the number of registers to save/restore on
+    entry/exit to S.  Store these as FS(S, V).
+
+3.  For each function, S, and vertex, V:
+    - find the function, F, with highest SV(F, S, V).  Do:
+        SV(F, S, V) -= FS(S, V)
+    - for all other functions, F2, not equal to F:
+        SV(F2, S, V) = 0
+

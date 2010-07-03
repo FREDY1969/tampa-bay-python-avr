@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_repeatable_string_defining</name>
+    <label>Test Repeatable String Defining</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="py" />
+    </answers>
+    <questions>
+        <question>
+            <name>my_string</name>
+            <label>My String</label>
+            <min>1</min>
+            <max>infinite</max>
+            <type>string</type>
+        </question>
+    </questions>
+</word>
