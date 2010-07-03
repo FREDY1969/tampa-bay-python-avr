@@ -1,12 +1,13 @@
 # order_triples.tst
 
     >>> import os
+    >>> import tempfile
     >>> from ucc.codegen import codegen, order_triples
     >>> from ucc.database import crud
 
 Open a dummy database:
 
-    >>> Db_file = '/tmp/ot_test.db'
+    >>> Db_file = os.path.join(tempfile.gettempdir(), 'ot_test.db')
     >>> if os.path.exists(Db_file): os.remove(Db_file)
     >>> crud.init(Db_file, load_gensym = False)
     >>> _ = crud.Db_cur.execute(
