@@ -249,11 +249,11 @@ def doctor_test(item, values):
 
         >>> values = []
         >>> doctor_test(('col', None), values)
-        'col is null'
+        'col isnull'
         >>> values
         []
         >>> doctor_test(('col_', None), values)
-        'col is not null'
+        'col notnull'
         >>> values
         []
         >>> doctor_test(('col', 44), values)
@@ -279,8 +279,8 @@ def doctor_test(item, values):
     '''
     key, value = item
     if value is None:
-        if key.endswith('_'): return key[:-1] + ' is not null'
-        return key + ' is null'
+        if key.endswith('_'): return key[:-1] + ' notnull'
+        return key + ' isnull'
     if hasattr(value, '__iter__') and not isinstance(value, str):
         t = tuple(value)
         assert t, "crud where key tuple values can't be empty"
@@ -329,7 +329,7 @@ def create_where(keys):
         >>> create_where({'a': 44})
         (' where a = ?', [44])
         >>> create_where({'a': None})
-        (' where a is null', [])
+        (' where a isnull', [])
         >>> create_where({})
         ('', [])
         >>> create_where({'order_by': 'a'})
