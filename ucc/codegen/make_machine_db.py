@@ -7,7 +7,8 @@ def main(argv):
         usage()
         
     architecture = argv[1]
-    processor = argv[2]
+    processors = argv[2:]
+    
     db_name = "%s.db" % architecture # basename?
     
     if os.path.exists(db_name):
@@ -40,15 +41,15 @@ def main(argv):
     
     print('Running load_patterns.py...')
     load_patterns.load(db_name, os.path.join(architecture, 'patterns'))
-    
-    values = (processor, )
+
     query = """
-        insert into code_seq_by_processor (processor, code_seq_id)
-        select ?, id
-        from code_seq;
-        """
-    print("Adding processor %s..." % processor)
-    cursor.execute(query, values)
+            insert into code_seq_by_processor (processor, code_seq_id)
+            select ?, id
+            from code_seq;
+            """
+    for p in processors:
+        print("Adding processor %s..." % p)
+        cursor.execute(query, (p, ))
     conn.commit()
     
 def usage():
