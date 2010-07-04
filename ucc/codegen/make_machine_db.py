@@ -2,6 +2,11 @@ import os
 import sys
 import sqlite3 as db
 
+if __name__ == "__main__":
+    from doctest_tools import setpath
+    setpath.setpath(__file__, remove_first=True)
+    from ucc.codegen import load_patterns
+
 def usage():
 	sys.stderr.write("make_machine_db architecture processor...")
 	sys.exit(2)
@@ -19,7 +24,8 @@ if len(sys.argv) < 3:
 	usage()
 	
 architecture = sys.argv[1]
-db_name = "%s.sqlite" % architecture # basename?
+processor = sys.argv[2]
+db_name = "%s.db" % architecture # basename?
 
 if os.path.exists(db_name):
 	print("Attepting to remove %s..." % db_name)
@@ -47,4 +53,17 @@ for file in files:
 			print('Query: %s' % q)
 			sys.exit(1)
 	print('OK')
+conn.commit()
+
+print('Running load_patterns.py...')
+load_patterns.load(db_name, os.path.join(architecture, 'patterns'))
+
+values = (processor, )
+query = """
+	insert into code_seq_by_processor (processor, code_seq_id)
+	select ?, id
+	from code_seq;
+	"""
+print("Adding processor %s..." % processor)
+cursor.execute(query, values)
 conn.commit()
