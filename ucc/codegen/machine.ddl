@@ -8,7 +8,7 @@ create table register (
 
     name varchar(20) not null primary key,
     is_primary bool not null default 0  -- True if this register is seen as a
-                                        -- primary, or fundamental, register
+                                        -- primary, or fundamental, register;
                                         -- versus an alias name.
 );
 
@@ -65,7 +65,7 @@ create table worst (
     -- by using a single register in reg_class C.
     --
     -- Note that if C is a class of register pairs, and N is a class of single
-    -- registers, then using a single register in C could trash two registers in N.
+    -- registers; using a single register in C could trash two registers in N.
 
     N int not null references reg_class(id),
     C int not null references reg_class(id),
