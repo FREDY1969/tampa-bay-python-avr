@@ -10,33 +10,17 @@ def main(argv):
     processors = argv[2:]
     
     db_name = "%s.db" % architecture # basename?
-    
     if os.path.exists(db_name):
         print("Attepting to remove %s..." % db_name)
         remove_db(db_name)
     
-    print("Creating %s..." % db_name)
-    
-    files = (
-        'machine.ddl',
-        os.path.join(architecture, 'registers.sql'),
-        'init.sql'
-    )
-    
+    print("Creating %s..." % db_name)    
     conn = db.connect(db_name)
     cursor = conn.cursor()
-    for file in files:
+    for file in ['machine.ddl', os.path.join(architecture, 'registers.sql'), 'init.sql']:
         print("Reading %s..." % file)
-        f = open(file)
-        queries = f.read().split(';')
-        for q in queries:
-            try:
-                cursor.execute(q)
-            except db.OperationalError as e:
-                print('Exception: %s' % e)
-                print('Query: %s' % q)
-                sys.exit(1)
-        print('OK')
+        queries = open(file).read()
+        cursor.executescript(queries)
     conn.commit()
     
     print('Running load_patterns.py...')
