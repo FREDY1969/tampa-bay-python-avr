@@ -11,9 +11,9 @@ object is created, and never updated after that.
 
 Prepare a couple of types for the rest of the doctests:
 
-        >>> cur = crud.db_cur_test()
+        >>> db_conn, cur = crud.db_connection.test()
 
-        >>> crud.dummy_transaction()
+        >>> db_conn.dummy_transaction()
         >>> cur.description = (('kind',),)
         >>> cur.answers = []
         >>> init()
@@ -197,10 +197,10 @@ class int(base_type):
 
     Use lookup(min_value, max_value).
 
-        >>> cur = crud.db_cur_test()
+        >>> db_conn, cur = crud.db_connection.test()
 
         >>> cur.lastrowid = 3
-        >>> crud.dummy_transaction()
+        >>> db_conn.dummy_transaction()
         >>> int.lookup(100, 400)
         query: insert into type (kind, max_value, min_value) values (?, ?, ?)
         parameters: ['int', 400, 100]
@@ -239,10 +239,10 @@ class fixedpt(base_type):
 
     Use lookup(min_value, max_value, binary_pt).
 
-        >>> cur = crud.db_cur_test()
+        >>> db_conn, cur = crud.db_connection.test()
 
         >>> cur.lastrowid = 6
-        >>> crud.dummy_transaction()
+        >>> db_conn.dummy_transaction()
         >>> fixedpt.lookup(100, 400, -2)
         query: insert into type (binary_pt, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [-2, 'fixedpt', 400, 100]
@@ -291,13 +291,13 @@ class array(base_type):
 
     Use lookup(element_type, min_value, max_value).
 
-        >>> cur = crud.db_cur_test()
+        >>> db_conn, cur = crud.db_connection.test()
 
         >>> int1_type = int.lookup(-100, 400)
         >>> fixedpt1_type = fixedpt.lookup(-100, 400, -2)
 
         >>> cur.lastrowid = 10
-        >>> crud.dummy_transaction()
+        >>> db_conn.dummy_transaction()
         >>> array.lookup(int1_type, 100, 400)
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)
         parameters: [1, 'array', 400, 100]
@@ -350,13 +350,13 @@ class pointer(base_type):
 
     Use lookup(element_type, memory).
 
-        >>> cur = crud.db_cur_test()
+        >>> db_conn, cur = crud.db_connection.test()
 
         >>> int1_type = int.lookup(-100, 400)
         >>> fixedpt1_type = fixedpt.lookup(-100, 400, -2)
 
         >>> cur.lastrowid = 14
-        >>> crud.dummy_transaction()
+        >>> db_conn.dummy_transaction()
         >>> pointer.lookup(int1_type, 'ram')
         query: insert into type (element_type, kind, memory) values (?, ?, ?)
         parameters: [1, 'pointer', 'ram']
@@ -404,13 +404,13 @@ class record(base_type):
 
     Use lookup((field_name, type), ...).
 
-        >>> cur = crud.db_cur_test()
+        >>> db_conn, cur = crud.db_connection.test()
 
         >>> int1_type = int.lookup(-100, 400)
         >>> fixedpt1_type = fixedpt.lookup(-100, 400, -2)
 
         >>> cur.lastrowid = 18
-        >>> crud.dummy_transaction()
+        >>> db_conn.dummy_transaction()
         >>> record.lookup(('foo', int1_type), ('bar', int1_type))
         query: insert into type (kind) values (?)
         parameters: ['record']
@@ -489,13 +489,13 @@ class function(base_type):
 
     Examples:
 
-        >>> cur = crud.db_cur_test()
+        >>> db_conn, cur = crud.db_connection.test()
 
         >>> int1_type = int.lookup(-100, 400)
         >>> fixedpt1_type = fixedpt.lookup(-100, 400, -2)
 
         >>> cur.lastrowid = 22
-        >>> crud.dummy_transaction()
+        >>> db_conn.dummy_transaction()
         >>> function.lookup(int1_type, (('foo', int1_type), ('bar', int1_type)),
         ...                            ())
         query: insert into type (element_type, kind, max_value, min_value) values (?, ?, ?, ?)

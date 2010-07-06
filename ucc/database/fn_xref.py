@@ -38,22 +38,22 @@ def expand(quiet = False):
     '''
     # Fill out fn_calls table to full depth:
     for depth in itertools.count(1):
-        crud.Db_cur.execute("""
+        rowcount = crud.execute("""
           insert or ignore into fn_calls (caller_id, called_id, depth)
             select top.caller_id, bottom.called_id, top.depth + 1
               from fn_calls top inner join fn_calls bottom
                 on top.called_id = bottom.caller_id
              where top.depth = ? and bottom.depth = 1
           """,
-          (depth,))
-        if not crud.Db_cur.rowcount:
+          (depth,))[0]
+        if not rowcount:
             if not quiet:
                 print("fn_xref.expand: did", depth + 1, \
                       "database calls for fn_calls")
             break
 
     # Fill out the fn_global_var_uses table:
-    crud.Db_cur.execute("""
+    crud.execute("""
       insert or ignore into fn_global_var_uses (fn_id, var_id, sets, depth)
         select calls.caller_id,
                uses.var_id, uses.sets, calls.depth + uses.depth
@@ -62,8 +62,8 @@ def expand(quiet = False):
       """)
 
     # Fill out symbol_table.side_effects:
-    symbol_table.write_symbols()        # flush attribute changes to database
-    crud.Db_cur.execute("""
+    symbol_table.write_symbols()   # flush attribute changes to database
+    crud.execute("""
       update symbol_table
          set side_effects = 1
        where side_effects = 0
@@ -75,7 +75,7 @@ def expand(quiet = False):
        """)
 
     # Fill out symbol_table.suspends:
-    crud.Db_cur.execute("""
+    crud.execute("""
       update symbol_table
          set suspends = 1
        where suspends = 0

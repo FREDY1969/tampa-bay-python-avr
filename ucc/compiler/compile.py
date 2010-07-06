@@ -27,10 +27,10 @@ def run(top, processor, prime_start_time = True, quiet = False):
         compile_start_time = Start_time
         if not quiet: print("top: {:.2f}".format(elapsed()))
 
-    with crud.db_connection(top.packages[-1].package_dir):
-        crud.Db_cur.execute(
-          'attach database {!r} as architecture'
-            .format(os.path.join(os.path.dirname(codegen.__file__), 'avr.db')))
+    with crud.db_connection(top.packages[-1].package_dir) as db_conn:
+        db_conn.attach(os.path.join(os.path.dirname(codegen.__file__),
+                                    'avr.db'),
+                       'architecture')
 
         if not quiet: print("crud.db_connection: {:.2f}".format(elapsed()))
 
@@ -52,7 +52,7 @@ def run(top, processor, prime_start_time = True, quiet = False):
 
         # ast => intermediate code
         for word_label in words_done:
-            with crud.db_transaction():
+            with db_conn.db_transaction():
                 symbol_table.get(word_label).word_obj.compile()
         if not quiet:
             print("generate intermediate code: {:.2f}".format(elapsed()))
