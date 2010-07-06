@@ -9,12 +9,11 @@ Open a dummy database:
 
     >>> Db_file = os.path.join(tempfile.gettempdir(), 'ot_test.db')
     >>> if os.path.exists(Db_file): os.remove(Db_file)
-    >>> crud.init(Db_file, load_gensym = False)
-    >>> _ = crud.Db_cur.execute(
-    ...       'attach database {!r} as architecture'
-    ...         .format(os.path.join(os.path.dirname(codegen.__file__),
-    ...                              'avr.db')))
-    >>> crud.dummy_transaction()
+    >>> db_conn = crud.db_connection(Db_file, load_gensym = False)
+    >>> db_conn.dummy_transaction()
+    >>> db_conn.attach(os.path.join(os.path.dirname(codegen.__file__),
+    ...                             'avr.db'),
+    ...                'architecture')
 
 We'll have the following triple structure for block1:
 
@@ -99,33 +98,33 @@ And block2:
 
 OK, the data is ready!
 
-    >>> crud.Db_conn.commit()
+    >>> crud.commit()
 
 First we need to:
 
     >>> codegen.update_use_counts()
-    >>> crud.Db_conn.commit()
+    >>> crud.commit()
 
 Check these results:
 
     #1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
-    >>> crud.read_column('triples', 'use_count', order_by='id')
+    >>> list(crud.read_column('triples', 'use_count', order_by='id'))
     [0, 1, 1, 1, 3, 3, 1, 1, 1, 0, 1, 1, 0, 0, 0]
 
 And now it's show time!
 
     >>> _ = order_triples.order_children()
-    >>> crud.Db_conn.commit()
+    >>> crud.commit()
 
 Check the results:
 
 Register estimates:
 
     #1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
-    >>> crud.read_column('triples', 'register_est', order_by='id')
+    >>> list(crud.read_column('triples', 'register_est', order_by='id'))
     [3, 3, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 1]
 
-    >>> crud.read_column('blocks', 'register_est', order_by='id')
+    >>> list(crud.read_column('blocks', 'register_est', order_by='id'))
     [3, 2]
 
     >>> crud.read1_column('symbol_table', 'register_est', id=1)
@@ -133,50 +132,50 @@ Register estimates:
 
 Order constraints:
 
-    >>> crud.read_as_tuples('triple_order_constraints', 'predecessor',
-    ...                     'successor', 'depth',
-    ...                     order_by=('predecessor', 'successor'))
+    >>> list(crud.read_as_tuples('triple_order_constraints', 'predecessor',
+    ...                          'successor', 'depth',
+    ...                          order_by=('predecessor', 'successor')))
     [(1, 13, 2), (1, 13, 1), (1, 14, 1), (2, 3, 1), (4, 3, 1), (6, 7, 1), (14, 13, 1), (15, 13, 2), (15, 14, 1)]
 
 Assigned orders:
 
     # 1-15-14-13 and 10
-    >>> crud.read_column('triples', 'order_in_block', order_by='id')
+    >>> list(crud.read_column('triples', 'order_in_block', order_by='id'))
     [1, None, None, None, None, None, None, None, None, 1, None, None, 4, 3, 2]
 
     # 2,3,4
-    >>> crud.read_column('triple_parameters', 'evaluation_order', parent_id=1,
-    ...                  order_by='parameter_id')
+    >>> list(crud.read_column('triple_parameters', 'evaluation_order',
+    ...                       parent_id=1, order_by='parameter_id'))
     [1, 3, 2]
 
     # 6,7,9
-    >>> crud.read_column('triple_parameters', 'evaluation_order', parent_id=2,
-    ...                  order_by='parameter_id')
+    >>> list(crud.read_column('triple_parameters', 'evaluation_order',
+    ...                       parent_id=2, order_by='parameter_id'))
     [1, 2, 3]
 
     # 5,8
-    >>> crud.read_column('triple_parameters', 'evaluation_order', parent_id=7,
-    ...                  order_by='parameter_id')
+    >>> list(crud.read_column('triple_parameters', 'evaluation_order',
+    ...                       parent_id=7, order_by='parameter_id'))
     [1, 2]
 
     # 11,12
-    >>> crud.read_column('triple_parameters', 'evaluation_order', parent_id=10,
-    ...                  order_by='parameter_id')
+    >>> list(crud.read_column('triple_parameters', 'evaluation_order',
+    ...                       parent_id=10, order_by='parameter_id'))
     [1, 2]
 
     # Everything else should have 1:
-    >>> crud.read_column('triple_parameters', 'evaluation_order',
-    ...                  parent_id_=(1, 2, 7, 10))
+    >>> list(crud.read_column('triple_parameters', 'evaluation_order',
+    ...                       parent_id_=(1, 2, 7, 10)))
     [1, 1, 1, 1]
 
     ## Absolute order of triples in block 1:
-    #>>> crud.read_column('triples', 'id',
-    #...                  block_id=1, order_by='abs_order_in_block')
+    #>>> list(crud.read_column('triples', 'id',
+    #...                       block_id=1, order_by='abs_order_in_block'))
     #[6, 5, 8, 7, 9, 2, 4, 3, 1, 15, 14, 13]
     #
     ## Absolute order of triples in block 2:
-    #>>> crud.read_column('triples', 'id',
-    #...                  block_id=2, order_by='abs_order_in_block')
+    #>>> list(crud.read_column('triples', 'id',
+    #...                       block_id=2, order_by='abs_order_in_block'))
     #[11, 12, 10]
 
     >>> for row in crud.read_as_tuples('triple_parameters', 'parameter_id',
@@ -202,4 +201,4 @@ Assigned orders:
 
 All done!
 
-    >>> crud.fini(False)
+    >>> db_conn.close()

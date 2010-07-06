@@ -25,9 +25,10 @@ create table symbol_table (
     param_register varchar(255),
     address int,
     reg_class int,
+    num_registers int,
     register varchar(255),
-    register_est int,          -- Estimate of number of registers needed by
-                               -- this function.
+    register_est int,           -- Estimate of number of registers needed by
+                                -- this function.
     flash_size int,
     ram_size int,
     far_size int,
@@ -270,8 +271,8 @@ create table triples (
     column_end int
 );
 
-create index triple_block_id_index
-          on triples(block_id, use_count);
+create index triple_block_id_index on triples(block_id, use_count);
+create index triple_operator_index on triples(block_id, operator, use_count);
 
 create table triple_parameters (
     id integer not null primary key,

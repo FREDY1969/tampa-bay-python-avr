@@ -22,7 +22,7 @@ def update_use_counts():
     r'''Update use_counts of all triples.
     '''
     with crud.db_transaction():
-        crud.Db_cur.execute('''
+        crud.execute('''
             update triples
                set use_count = (select count(*) from triple_parameters tp
                                  where tp.parameter_id = triples.id)
@@ -31,7 +31,7 @@ def update_use_counts():
 def assign_code_seq_ids(processor):
     with crud.db_transaction():
         # assign code_seq_id's to triples.
-        crud.Db_cur.execute('''
+        crud.execute('''
             update triples
                set code_seq_id = (
                   select cs.id
@@ -60,7 +60,7 @@ def assign_code_seq_ids(processor):
 
     with crud.db_transaction():
         # and make the code_seq_id available to the triple's parameters.
-        crud.Db_cur.execute('''
+        crud.execute('''
             update triple_parameters
                set parent_code_seq_id = 
                      (select code_seq_id

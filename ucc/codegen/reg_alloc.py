@@ -28,32 +28,30 @@ def get_reg_class_subsets():
 def get_subsets_of_reg_classes():
     r'''Returns {reg_class: {subset_rc}}
     '''
-    crud.Db_cur.execute('''
-        select rc.id, vc.C
-          from v_classes vc
-                 inner join reg_class rc
-                   on rc.v = vc.v
-         order by rc.id
-      ''')
+    it = crud.fetchall('''
+             select rc.id, vc.C
+               from v_classes vc
+                    inner join reg_class rc
+                      on rc.v = vc.v
+              order by rc.id
+           ''')
     return {rc: frozenset(sub[1] for sub in subs)
-            for rc, subs in itertools.groupby(crud.Db_cur.fetchall(),
-                                              lambda row: row[0])}
+            for rc, subs in itertools.groupby(it, lambda row: row[0])}
 
 def get_reg_class_sizes():
     r'''Returns the number of registers in each reg_class.
 
     The return value is {reg_class: number_of_registers}
     '''
-    crud.Db_cur.execute('''
-        select reg_class, count(reg)
-          from reg_in_class
-         group by reg_class
-      ''')
-    return dict(crud.Db_cur.fetchall())
+    return dict(crud.fetchall('''
+                    select reg_class, count(reg)
+                      from reg_in_class
+                     group by reg_class
+                  '''))
 
 def figure_out_multi_use(subsets, sizes):
     with crud.db_transaction():
-        crud.Db_cur.execute('''
+        crud.execute('''
             update triples
                set reg_class =       (select cs.output_reg_class
                                         from code_seq cs
@@ -61,16 +59,36 @@ def figure_out_multi_use(subsets, sizes):
                    num_regs_output = (select cs.num_output
                                         from code_seq cs
                                        where triples.code_seq_id = cs.id)
-             where operator not in
+             where code_seq_id not null
+               and operator not in
                      ('output', 'output-bit-set', 'output-bit-clear',
                       'global_addr', 'global', 'local_addr', 'local',
                       'call_direct', 'call_indirect', 'return',
                       'if_false', 'if_true')
           ''')
 
+    for next_fn_layer in get_functions():
+        for symbol_id in next_fn_layer:
+            with crud.db_transaction():
+                it = crud.fetchall('''
+                         select exp_t.reg_class, exp_t.num_regs_output
+                           from blocks b
+                                inner join triples ret_t
+                                  on b.id = ret_t.block_id
+                                inner join triple_parameters tp
+                                  on tp.parent_id = ret_t.id
+                                inner join triples exp_t
+                                  on exp_t.id = tp.parameter_id
+                          where b.word_symbol_id = ?
+                            and ret_t.operator = 'return'
+                       ''', (symbol_id,))
+                for rc, num in it:
+                    # FIX: Finish!
+                    pass
+
     with crud.db_transaction():
         # FIX: Need to add info for function call parameters!
-        crud.Db_cur.execute('''
+        crud.execute('''
             update triple_parameters
                set reg_class_for_parent =
                      (select csp.reg_class
@@ -108,7 +126,7 @@ def figure_out_multi_use(subsets, sizes):
 
     # This will handle the vast majority of triple_parameters:
     with crud.db_transaction():
-        crud.Db_cur.execute('''
+        crud.execute('''
             update triple_parameters
                set needed_reg_class = reg_class_for_parent
              where last_parameter_use
@@ -198,7 +216,7 @@ def figure_out_multi_use(subsets, sizes):
     #      constant parameters that are delinked.
     with crud.db_transaction():
         # Mark delinks as ghosts.
-        crud.Db_cur.execute('''
+        crud.execute('''
             update triple_parameters
                set ghost = 1
              where ghost = 0 and delink
@@ -208,7 +226,7 @@ def figure_out_multi_use(subsets, sizes):
         # Note that if all triple_parameters are marked 'delink', then the
         # parameter triple will not have any ghost = 0, so will not have code
         # generated for it.
-        crud.Db_cur.execute('''
+        crud.execute('''
             update triple_parameters
                set ghost = 0
              where not exists
@@ -226,7 +244,7 @@ def figure_out_multi_use(subsets, sizes):
     # Finally, copy the triple_parameters.abs_order_in_block down to its
     # child.
     with crud.db_transaction():
-        crud.Db_cur.execute('''
+        crud.execute('''
             update triples
                set abs_order_in_block = (select abs_order_in_block
                                            from triple_parameters tp
@@ -298,37 +316,37 @@ def gather_locals(fn_symbol_id, subsets, sizes):
                                         context=fn_symbol_id,
                                         kind='parameter'))
 
-    crud.Db_cur.execute('''
-        select u.symbol_id, u.reg_class,
-               count(*), max(u.num_regs), sum(definition)
-          from blocks b
-                 inner join (  select t.block_id, t.symbol_id, 0 as definition,
-                                      needed_reg_class as reg_class,
-                                      num_needed_regs as num_regs
-                                 from triples t
-                                where operator = 'local'
-                             union
-                               select t2.block_id, tl.symbol_id, 1,
-                                      t2.reg_class, t2.num_regs_output
-                                 from triples t2
-                                        inner join triple_labels tl
-                                          on t2.id = tl.triple_id
-                                        inner join symbol_table st
-                                          on tl.symbol_id = st.id
-                                          and st.context = ?
-                            ) u
-                   on b.id = u.block_id
-         where b.word_symbol_id = ?
-         group by u.symbol_id, u.reg_class
-         order by u.symbol_id
-      ''', (fn_symbol_id, fn_symbol_id))
+    it = crud.fetchall('''
+             select u.symbol_id, u.reg_class,
+                    count(*), max(u.num_regs), sum(definition)
+               from blocks b
+                      inner join (  select t.block_id, t.symbol_id,
+                                           0 as definition,
+                                           needed_reg_class as reg_class,
+                                           num_needed_regs as num_regs
+                                      from triples t
+                                     where operator = 'local'
+                                  union
+                                    select t2.block_id, tl.symbol_id, 1,
+                                           t2.reg_class, t2.num_regs_output
+                                      from triples t2
+                                             inner join triple_labels tl
+                                               on t2.id = tl.triple_id
+                                             inner join symbol_table st
+                                               on tl.symbol_id = st.id
+                                               and st.context = ?
+                                 ) u
+                        on b.id = u.block_id
+              where b.word_symbol_id = ?
+              group by u.symbol_id, u.reg_class
+              order by u.symbol_id
+       ''', (fn_symbol_id, fn_symbol_id))
 
     ans = {}  # {symbol_id: (reg_class, num_regs, use_count, total_definitions)}
 
     #print('sizes', sizes, file=sys.stderr)
 
-    for id, reg_iter in itertools.groupby(list(crud.Db_cur.fetchall()),
-                                          lambda t: t[0]):
+    for id, reg_iter in itertools.groupby(it, lambda t: t[0]):
         reg_classes = collections.defaultdict(int)  # {rc: num_uses}
         max_regs = 0
         total_definitions = 0
@@ -358,30 +376,28 @@ def gather_locals(fn_symbol_id, subsets, sizes):
 def map_temporaries(fn_symbol_id, locals, kind, suspends, sizes):
     r'''Returns {symbol_id: (reg_class, num_regs, use_count, total_definitions)}
     '''
-    crud.Db_cur.execute('''
-        select b.id block_id, t.id, t.abs_order_in_block,
-               t.needed_reg_class t_needed_reg_class,
-               t.num_needed_regs t_num_needed_regs,
-               t.reg_class t_reg_class,
-               t.num_regs_output t_num_regs_output,
-               tp.parent_id, tp.ghost, tp.parameter_num,
-               tp.reg_class_for_parent, tp.num_regs_for_parent,
-               tp.needed_reg_class tp_needed_reg_class,
-               tp.move_prior_to_needed, tp.move_needed_to_parent,
-               tp.move_needed_to_next,
-               rr.reg_class rr_reg_class, rr.num_needed rr_num_needed
-          from blocks b
-                 inner join triples t
-                   on b.id = t.block_id
-                 left outer join triple_parameters tp
-                   on t.id = tp.parameter_id
-                 left outer join reg_requirements rr
-                   on t.code_seq_id = rr.code_seq_id
-         where b.word_symbol_id = ?
-         order by b.id, t.id, tp.parent_id
-      ''', (fn_symbol_id,))
-    col_names = [x[0] for x in crud.Db_cur.description]
-    rows = [crud.row(col_names, row) for row in crud.Db_cur.fetchall()]
+    rows = crud.fetchall('''
+               select b.id block_id, t.id, t.abs_order_in_block,
+                      t.needed_reg_class t_needed_reg_class,
+                      t.num_needed_regs t_num_needed_regs,
+                      t.reg_class t_reg_class,
+                      t.num_regs_output t_num_regs_output,
+                      tp.parent_id, tp.ghost, tp.parameter_num,
+                      tp.reg_class_for_parent, tp.num_regs_for_parent,
+                      tp.needed_reg_class tp_needed_reg_class,
+                      tp.move_prior_to_needed, tp.move_needed_to_parent,
+                      tp.move_needed_to_next,
+                      rr.reg_class rr_reg_class, rr.num_needed rr_num_needed
+                 from blocks b
+                      inner join triples t
+                        on b.id = t.block_id
+                      left outer join triple_parameters tp
+                        on t.id = tp.parameter_id
+                      left outer join reg_requirements rr
+                        on t.code_seq_id = rr.code_seq_id
+                where b.word_symbol_id = ?
+                order by b.id, t.id, tp.parent_id
+             ''', (fn_symbol_id,), ctor_factory = crud.row.factory_from_cur)
     triples = {}  # {id: row}
     for id, tps in itertools.groupby(rows, lambda r: (r.block_id, r.id)):
         id = id[1]

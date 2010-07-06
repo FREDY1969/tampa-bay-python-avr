@@ -1,7 +1,7 @@
 # metaparser.tst
 
 >>> from ucc.database import crud
->>> crud.init(None)
+>>> _ = crud.db_connection.test()
 
 >>> from ucc.parser import metaparser, parser_init, metascanner
 >>> metaparser.init()
