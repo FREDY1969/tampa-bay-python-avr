@@ -10,15 +10,107 @@ import collections
 from ucc.database import crud, triple2
 from ucc.codegen import code_seq
 
+class rc_subset:
+    r'''Sqlite3 aggregate function for rc_subset.
+    
+    Tries to produce the rc that is a subset to the most submitted entries.
+
+        >>> subsets = {(1, 1): 1, (1, 3): 1, (3, 1): 1, 
+        ...            (2, 2): 2, (2, 3): 2, (3, 2): 2, (3, 3): 3}
+        >>> rcs = rc_subset(subsets)
+        >>> rcs.finalize()       # NULL for 0 rows.
+        >>> rcs = rc_subset(subsets)
+        >>> rcs.step(2)
+        >>> rcs.step(2)
+        >>> rcs.step(2)
+        >>> rcs.step(2)
+        >>> rcs.step(3)
+        >>> rcs.step(1)
+        >>> rcs.step(1)
+        >>> rcs.finalize()
+        2
+    '''
+    def __init__(self, subsets = None):
+        if subsets: self.subsets = subsets
+        else: self.subsets = Subsets
+        self.rc_counts = collections.defaultdict(int)
+
+    def step(self, rc):
+        self.rc_counts[rc] += 1
+
+    def finalize(self):
+        if not self.rc_counts: return None
+        if len(self.rc_counts) == 1: return next(iter(self.rc_counts.keys()))
+
+        # Eliminate all disjoint rc's with the smallest cost to keep.
+        while len(self.rc_counts) > 1:
+            keep_cost = collections.defaultdict(int)
+            for rc1, rc2 in itertools.combinations(self.rc_counts.keys(), 2):
+                if (rc1, rc2) not in self.subsets:
+                    keep_cost[rc1] += self.rc_counts[rc2]
+                    keep_cost[rc2] += self.rc_counts[rc1]
+            if not keep_cost: break
+            rc_to_dump = max(keep_cost.items(), key = lambda item: item[1])[0]
+            print("keep_cost:", keep_cost, "rc_to_dump:", rc_to_dump,
+                  file=sys.stderr)
+            del self.rc_counts[rc_to_dump]
+
+        # Return subset of all remaining rc's:
+        ans = None
+        for rc in self.rc_counts.keys():
+            if ans is None: ans = rc
+            else:
+                ans = self.subsets.get((ans, rc))
+                assert ans is not None, "rc_subset: internal logic error"
+        return ans
+
+class num_regs:
+    r'''Sqlite3 aggregate function for num_regs.
+
+    All num_regs seen should match.  If not, an AssertionError is raised.
+
+        >>> nr = num_regs()
+        >>> nr.finalize()       # NULL for 0 rows.
+        >>> nr = num_regs()
+        >>> nr.step(2)
+        >>> nr.step(2)
+        >>> nr.step(2)
+        >>> nr.step(2)
+        >>> nr.finalize()
+        2
+        >>> nr = num_regs()
+        >>> nr.step(2)
+        >>> nr.step(1)
+        >>> nr.step(2)
+        >>> nr.finalize()
+        Traceback (most recent call last):
+          ...
+        AssertionError: non-conforming num_regs: {1, 2}
+    '''
+    def __init__(self):
+        self.num_regs = set()
+
+    def step(self, num_regs):
+        self.num_regs.add(num_regs)
+
+    def finalize(self):
+        if not self.num_regs: return None
+        if len(self.num_regs) == 1: return next(iter(self.num_regs))
+        raise AssertionError(
+                "non-conforming num_regs: {}".format(self.num_regs))
+
 def alloc_regs():
-    subsets = get_reg_class_subsets()
+    global Subsets
+    Subsets = get_reg_class_subsets()
+    crud.Db_conn.db_conn.create_aggregate("rc_subset", 1, rc_subset)
+    crud.Db_conn.db_conn.create_aggregate("num_regs", 1, num_regs)
     sizes = get_reg_class_sizes()
-    figure_out_multi_use(subsets, sizes)
+    figure_out_multi_use(Subsets, sizes)
     code_seqs = code_seq.get_code_seq_info()
-    create_reg_map(subsets, sizes, code_seqs)
+    create_reg_map(Subsets, sizes, code_seqs)
 
 def get_reg_class_subsets():
-    r'''Returns {(reg_class1, reg_class2), subset_reg_class}.
+    r'''Returns {(reg_class1, reg_class2): subset_reg_class}.
     '''
     return {(rc1, rc2): subset
             for rc1, rc2, subset
@@ -50,6 +142,18 @@ def get_reg_class_sizes():
                   '''))
 
 def figure_out_multi_use(subsets, sizes):
+    # Copy the triple_parameters.abs_order_in_block down to its child.
+    with crud.db_transaction():
+        crud.execute('''
+            update triples
+               set abs_order_in_block = (select abs_order_in_block
+                                           from triple_parameters tp
+                                          where triples.id = tp.parameter_id
+                                            and tp.ghost = 0)
+             where use_count != 0
+          ''')
+
+    # Copy reg_class and num_regs_output from code_seq to triples.
     with crud.db_transaction():
         crud.execute('''
             update triples
