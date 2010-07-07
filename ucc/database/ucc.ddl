@@ -390,18 +390,18 @@ create table reg_use (
         --   for 'function' and 'function-return'
     position_kind varchar(40),
         -- 'parameter' or 'temp' for 'triple' kind.
-        -- 'parameter' or 'local' for 'function' kind.
+        -- 'parameter' or 'var' for 'function' kind.
     position int,
         -- NULL for 'triple-output' and 'function-return'
         -- references triple_parameters(parameter_num) for 'triple'/'parameter'
         -- references reg_requirements(num_needed) for 'triple'/'temp'
         --   used in conjunction with initial_reg_class.
-        -- references symbol_table(id) of local for 'function'/'local'
+        -- references symbol_table(id) of var for 'function'/'var'
         -- references symbol_table(int1) for 'function'/'parameter'
-    initial_reg_class int not null references reg_class(id),
-    num_registers int not null,
-    is_definition bool not null,
-    shared_reg_id int references shared_register(id),
+    initial_reg_class int references reg_class(id),
+    num_registers int,
+    is_definition bool not null default 0,
+    reg_group_id int references register_group(id),
 
     -- only for 'triple-output' and 'triple':
     --
@@ -410,20 +410,32 @@ create table reg_use (
     abs_order_in_block int           -- copied from triples(abs_order_in_block)
 );
 
-create table reg_use_segment (
+create table reg_use_linkage (
+    -- Each row represents a link between two reg_uses, such that it would be
+    -- convenient if they shared the same register.
+    --
+    -- If is_segment:
+    --   reg_use_1.abs_order_in_block < reg_use_2.abs_order_in_block
     id integer not null primary key,
-    reg_use_1 int not null references reg_use(id),
-    reg_use_2 int not null references reg_use(id),
+
+    -- these both reference reg_use(id) for level 1, else reg_use_linkage(id)
+    reg_use_1 int not null,
+    reg_use_2 int not null,
+
+    is_segment bool not null default 0,
+    level int default 1,
+    reg_group_id int references register_group(id)
 );
 
 create table overlaps (
-    seq_id int not null references reg_use_segment(id),
+    linkage_id int not null references reg_use_linkage(id),
     reg_use_id int not null references reg_use(id)
 );
 
-create table shared_register (
+create table register_group (
     id integer not null primary key,
-    reg_class int references reg_class(id)
+    reg_class int references reg_class(id),
+    num_registers int
 );
 
 
