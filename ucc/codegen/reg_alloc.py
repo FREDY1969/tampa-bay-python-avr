@@ -10,16 +10,16 @@ import collections
 from ucc.database import crud, triple2
 from ucc.codegen import code_seq
 
-class rc_subset:
-    r'''Sqlite3 aggregate function for rc_subset.
+class aggr_rc_subset:
+    r'''Sqlite3 aggregate function for aggr_rc_subset.
     
     Tries to produce the rc that is a subset to the most submitted entries.
 
         >>> subsets = {(1, 1): 1, (1, 3): 1, (3, 1): 1, 
         ...            (2, 2): 2, (2, 3): 2, (3, 2): 2, (3, 3): 3}
-        >>> rcs = rc_subset(subsets)
+        >>> rcs = aggr_rc_subset(subsets)
         >>> rcs.finalize()       # NULL for 0 rows.
-        >>> rcs = rc_subset(subsets)
+        >>> rcs = aggr_rc_subset(subsets)
         >>> rcs.step(2)
         >>> rcs.step(2)
         >>> rcs.step(2)
@@ -36,7 +36,8 @@ class rc_subset:
         self.rc_counts = collections.defaultdict(int)
 
     def step(self, rc):
-        self.rc_counts[rc] += 1
+        if rc is not None:
+            self.rc_counts[rc] += 1
 
     def finalize(self):
         if not self.rc_counts: return None
@@ -61,24 +62,24 @@ class rc_subset:
             if ans is None: ans = rc
             else:
                 ans = self.subsets.get((ans, rc))
-                assert ans is not None, "rc_subset: internal logic error"
+                assert ans is not None, "aggr_rc_subset: internal logic error"
         return ans
 
-class num_regs:
-    r'''Sqlite3 aggregate function for num_regs.
+class aggr_num_regs:
+    r'''Sqlite3 aggregate function for aggr_num_regs.
 
     All num_regs seen should match.  If not, an AssertionError is raised.
 
-        >>> nr = num_regs()
+        >>> nr = aggr_num_regs()
         >>> nr.finalize()       # NULL for 0 rows.
-        >>> nr = num_regs()
+        >>> nr = aggr_num_regs()
         >>> nr.step(2)
         >>> nr.step(2)
         >>> nr.step(2)
         >>> nr.step(2)
         >>> nr.finalize()
         2
-        >>> nr = num_regs()
+        >>> nr = aggr_num_regs()
         >>> nr.step(2)
         >>> nr.step(1)
         >>> nr.step(2)
@@ -91,7 +92,8 @@ class num_regs:
         self.num_regs = set()
 
     def step(self, num_regs):
-        self.num_regs.add(num_regs)
+        if num_regs is not None:
+            self.num_regs.add(num_regs)
 
     def finalize(self):
         if not self.num_regs: return None
@@ -99,15 +101,28 @@ class num_regs:
         raise AssertionError(
                 "non-conforming num_regs: {}".format(self.num_regs))
 
+def rc_subset(rc1, rc2):
+    if rc1 is None: return rc2
+    if rc2 is None: return rc1
+    return Subsets.get((rc1, rc2))
+
+def chk_num_regs(nr1, nr2):
+    if nr1 is None: return nr2
+    if nr2 is None: return nr1
+    if nr1 == nr2: return nr1
+    raise AssertionError("non-conforming num_regs: {{{}, {}}}".format(nr1, nr2))
+
 def alloc_regs():
     global Subsets
     Subsets = get_reg_class_subsets()
-    crud.Db_conn.db_conn.create_aggregate("rc_subset", 1, rc_subset)
-    crud.Db_conn.db_conn.create_aggregate("num_regs", 1, num_regs)
+    crud.Db_conn.db_conn.create_function("rc_subset", 2, rc_subset)
+    crud.Db_conn.db_conn.create_function("chk_num_regs", 2, chk_num_regs)
+    crud.Db_conn.db_conn.create_aggregate("aggr_rc_subset", 1, aggr_rc_subset)
+    crud.Db_conn.db_conn.create_aggregate("aggr_num_regs", 1, aggr_num_regs)
     sizes = get_reg_class_sizes()
     figure_out_multi_use(Subsets, sizes)
     code_seqs = code_seq.get_code_seq_info()
-    create_reg_map(Subsets, sizes, code_seqs)
+    #create_reg_map(Subsets, sizes, code_seqs)
 
 def get_reg_class_subsets():
     r'''Returns {(reg_class1, reg_class2): subset_reg_class}.
@@ -153,6 +168,406 @@ def figure_out_multi_use(subsets, sizes):
              where use_count != 0
           ''')
 
+    # Populate reg_use
+    with crud.db_transaction():
+        # Populate reg_use for triple-output
+        crud.execute('''
+            insert into reg_use
+              (kind, ref_id, initial_reg_class, num_registers, is_definition,
+               block_id, abs_order_in_block)
+              select 'triple-output', t.id, cs.output_reg_class, cs.num_output,
+                     1, t.block_id, t.abs_order_in_block
+                from triples t
+                     inner join code_seq cs
+                       on t.code_seq_id = cs.id
+               where t.code_seq_id notnull
+                 and t.operator not in 
+                     ('output', 'output-bit-set', 'output-bit-clear',
+                      'global_addr', 'global', 'local_addr', 'local',
+                      'call_direct', 'call_indirect', 'return',
+                      'if_false', 'if_true')
+                 and cs.num_output
+          ''')
+
+        # Populate reg_use for triple-output for 'global' and 'local'
+        crud.execute('''
+            insert into reg_use
+              (kind, ref_id, is_definition, block_id, abs_order_in_block)
+              select 'triple-output', t.id, 1, t.block_id, t.abs_order_in_block
+                from triples t
+               where t.operator in ('global', 'local')
+          ''')
+
+        # Populate reg_use for triple/parameter
+        crud.execute('''
+            insert into reg_use
+              (kind, ref_id, position_kind, position,
+               initial_reg_class, num_registers,
+               block_id, abs_order_in_block)
+              select 'triple', t.id, 'parameter', csp.parameter_num,
+                     csp.reg_class, csp.num_registers,
+                     t.block_id, tp.abs_order_in_block
+                from triples t
+                     inner join triple_parameters tp
+                       on t.id = tp.parent_id
+                     inner join code_seq_parameter csp
+                       on t.code_seq_id = csp.code_seq_id
+                          and tp.parameter_num = csp.parameter_num
+               where t.code_seq_id notnull
+                 and t.operator not in 
+                     ('output', 'output-bit-set', 'output-bit-clear',
+                      'global_addr', 'global', 'local_addr', 'local',
+                      'call_direct', 'call_indirect', 'return',
+                      'if_false', 'if_true')
+          ''')
+
+        # Populate reg_use for 'call_direct' triple-output
+        crud.execute('''
+            insert into reg_use
+              (kind, ref_id, is_definition, block_id, abs_order_in_block)
+              select 'triple-output', t.id, 1, t.block_id, t.abs_order_in_block
+                from triples t
+               where t.operator = 'call_direct'
+          ''')
+
+        # Populate reg_use for 'call_direct' triple/parameter
+        crud.execute('''
+            insert into reg_use
+              (kind, ref_id, position_kind, position,
+               block_id, abs_order_in_block)
+              select 'triple', t.id, 'parameter', tp.parameter_num,
+                     t.block_id, tp.abs_order_in_block
+                from triples t
+                     inner join triple_parameters tp
+                       on t.id = tp.parent_id
+               where t.operator = 'call_direct'
+          ''')
+
+        # Populate reg_use for triple/temp
+        it = crud.fetchall('''
+              select t.id, rr.reg_class, rr.num_needed,
+                     t.block_id, t.abs_order_in_block
+                from triples t
+                     inner join reg_requirements rr
+                       on t.code_seq_id = rr.code_seq_id
+               where t.code_seq_id notnull
+                 and t.operator not in 
+                     ('output', 'output-bit-set', 'output-bit-clear',
+                      'global_addr', 'global', 'local_addr', 'local',
+                      'call_direct', 'call_indirect', 'return',
+                      'if_false', 'if_true')
+          ''')
+        crud.executemany('''
+            insert into reg_use
+              (kind, ref_id, position_kind, position,
+               initial_reg_class, num_registers, block_id, abs_order_in_block)
+              values ('triple', ?, 'temp', ?,
+                      ?, 1, ?, ?)
+          ''', ((id, n, rc, block_id, order)
+                for id, rc, nn, block_id, order in it
+                  for n in range(1, nn + 1)))
+
+        # Populate reg_use for function:
+        crud.execute('''
+            insert into reg_use
+              (kind, ref_id, position_kind, position, num_registers)
+              select 'function', fn.id, local.kind,
+                     case local.kind
+                       when 'parameter' then local.int1
+                       else local.id
+                     end,
+                     1
+                from symbol_table fn
+                     inner join symbol_table local
+                       on fn.id = local.context
+               where fn.kind in ('function', 'task')
+                 and local.kind in ('parameter', 'var')
+          ''')
+
+        # Populate reg_use for function-return:
+        crud.execute('''
+            insert into reg_use (kind, ref_id)
+              select 'function-return', fn.id
+                from symbol_table fn
+               where fn.kind in ('function', 'task')
+                 and exists (select null
+                               from blocks b
+                                    inner join triples ret_t
+                                      on ret_t.block_id = b.id
+                                    inner join triple_parameters tp
+                                      on ret_t.id = tp.parent_id
+                              where b.word_symbol_id = fn.id
+                                and ret_t.operator = 'return'
+                                and tp.parameter_num = 1)
+          ''')
+
+    # Populate reg_use_linkage
+    with crud.db_transaction():
+        # triple(-output) -> triple/parameter linkages
+        #   chaining the triple-output to its parent's triple_parameters.
+        it = crud.fetchall('''
+              select ru1.id, ru2.id
+                from reg_use ru1
+                     inner join triple_parameters tp
+                       on ru1.ref_id = tp.parameter_id
+                     inner join reg_use ru2
+                       on     ru2.ref_id = tp.parent_id
+                          and ru2.position = tp.parameter_num
+               where ru1.kind = 'triple-output'
+                 and ru2.kind = 'triple'
+                 and ru2.position_kind = 'parameter'
+               order by ru1.id, ru2.abs_order_in_block
+          ''')
+        crud.executemany('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2, is_segment)
+                                 values (?, ?, 1)
+          ''',
+          itertools.chain.from_iterable(
+            pairs(itertools.chain((head,), (r[1] for r in refs)))
+            for head, refs in itertools.groupby(it, lambda x: x[0])))
+
+        print("done inserting reg_use_linkage segments", file = sys.stderr)
+
+        # triple-output -> function/parameter linkages
+        #   assignment to parameter inside the function (not passing parameter).
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2)
+              select ru1.id, ru2.id
+                from reg_use ru1
+                     inner join triple_labels tl
+                       on ru1.ref_id = tl.triple_id
+                     inner join symbol_table p
+                       on p.id = tl.symbol_id
+                     inner join reg_use ru2
+                       on     ru2.ref_id = p.context
+                          and ru2.position = p.int1
+               where ru1.kind = 'triple-output'
+                 and ru2.kind = 'function'
+                 and ru2.position_kind = 'parameter'
+          ''')
+
+        print("done triple-output -> function/parameter", file = sys.stderr)
+
+        # triple-output -> function/var linkages
+        #   assignment to local variable inside a function.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2)
+              select ru1.id, ru2.id
+                from reg_use ru1
+                     inner join triple_labels tl
+                       on ru1.ref_id = tl.triple_id
+                     inner join reg_use ru2
+                       on ru2.position = tl.symbol_id
+               where ru1.kind = 'triple-output'
+                 and ru2.kind = 'function'
+                 and ru2.position_kind = 'var'
+          ''')
+
+        print("done triple-output -> function/var", file = sys.stderr)
+
+        # triple-output -> function-return linkages
+        #   binding function-return to triple-output of 'call-direct' triples.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2)
+              select ru1.id, ru2.id
+                from reg_use ru1
+                     inner join triples t
+                       on ru1.ref_id = t.id
+                     inner join reg_use ru2
+                       on ru2.ref_id = t.symbol_id
+               where ru1.kind = 'triple-output'
+                 and t.operator = 'call-direct'
+                 and ru2.kind = 'function-return'
+          ''')
+
+        print("done triple-output -> function-return", file = sys.stderr)
+
+        # triple/parameter -> function/parameter linkages
+        #   binding triple/parameter of 'call_direct' triples to
+        #   function/parameters.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2)
+              select ru1.id, ru2.id
+                from reg_use ru1
+                       inner join triples t
+                         on ru1.ref_id = t.id
+                       inner join reg_use ru2
+                         on     ru2.ref_id = t.symbol_id
+                            and ru1.position = ru2.position
+               where ru1.kind = 'triple'
+                 and ru1.position_kind = 'parameter'
+                 and t.operator = 'call-direct'
+                 and ru2.kind = 'function'
+                 and ru2.position_kind = 'parameter'
+          ''')
+
+        print("done triple/parameter -> function/parameter", file = sys.stderr)
+
+        # triple/parameter -> function-return linkages
+        #   links triple/parameter of 'return' triple to function-return.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2)
+              select ru1.id, ru2.id
+                from reg_use ru1
+                     inner join triples t
+                       on t.id = ru1.ref_id
+                     inner join blocks b
+                       on b.id = t.block_id
+                     inner join reg_use ru2
+                       on ru2.ref_id = b.word_symbol_id
+               where ru1.kind = 'triple'
+                 and ru1.position_kind = 'parameter'
+                 and ru1.position = 1
+                 and t.operator = 'return'
+                 and ru2.kind = 'function-return'
+          ''')
+
+        print("done triple/parameter -> function-return", file = sys.stderr)
+
+        # function/parameter -> triple-output linkages
+        #   function parameter use inside the function.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2)
+              select ru1.id, ru2.id
+                from reg_use ru1
+                     inner join symbol_table p
+                       on     p.context = ru1.ref_id
+                          and p.int1 = ru1.position
+                     inner join triples t
+                       on t.symbol_id = p.id
+                     inner join reg_use ru2
+                       on ru2.ref_id = t.id
+               where ru1.kind = 'function'
+                 and ru1.position_kind = 'parameter'
+                 and p.kind = 'parameter'
+                 and t.operator = 'local'
+                 and ru2.kind = 'triple-output'
+          ''')
+
+        print("done function/parameter -> triple-output", file = sys.stderr)
+
+        # function/var -> triple-output linkages
+        #   function local variable use inside the function.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2)
+              select ru1.id, ru2.id
+                from reg_use ru1
+                     inner join triples t
+                       on t.symbol_id = ru1.position
+                     inner join reg_use ru2
+                       on ru2.ref_id = t.id
+               where ru1.kind = 'function'
+                 and ru1.position_kind = 'var'
+                 and t.operator = 'local'
+                 and ru2.kind = 'triple-output'
+          ''')
+
+        print("done function/var -> triple-output", file = sys.stderr)
+
+    # Populate reg_group
+    #with crud.db_transaction():
+    if True:
+        # Extend reg_use_linkage
+        for level in itertools.count(1):
+          with crud.db_transaction():
+            rowcount = crud.execute('''
+                           insert into reg_use_linkage
+                             (reg_use_1, reg_use_2, level)
+                             select l1.id, l2.id, ? + 1
+                               from reg_use_linkage l1
+                                    inner join reg_use_linkage l2
+                                      on    l1.reg_use_1 = l2.reg_use_1
+                                         or l1.reg_use_1 = l2.reg_use_2
+                                         or l1.reg_use_2 = l2.reg_use_1
+                                         or l1.reg_use_2 = l2.reg_use_2
+                              where l1.id < l2.id
+                                and l1.level = ?
+                                and l2.level = ?
+                         ''', (level, level, level))[0]
+            if rowcount == 0: break
+            print("inserted", rowcount, "rows for reg_use_linkage level", level, file = sys.stderr)
+
+        print("done extending reg_use_linkage", file = sys.stderr)
+
+        # Gather the roots into register_group
+        crud.execute('''
+            insert into register_group (id)
+              select rul1.id
+                from reg_use_linkage rul1
+               where not exists (select null
+                                   from reg_use_linkage rul2
+                                  where rul2.level > 1
+                                    and (   rul2.reg_use_1 = rul1.id
+                                         or rul2.reg_use_2 = rul1.id))
+          ''')
+
+        print("done gathering roots into register_group", file = sys.stderr)
+
+        # Assign reg_group_id top down:
+        #   First do the roots.
+        rowcount = crud.execute('''
+            update reg_use_linkage
+               set reg_group_id = id
+             where id in (select id from register_group)
+          ''')[0]
+
+        print("done assigning reg_group_id to roots", file = sys.stderr)
+
+        #   Then propogate the reg_group_id down into each child node.
+        while rowcount:
+            rowcount = crud.execute('''
+                update reg_use_linkage
+                   set reg_group_id = (
+                               select reg_group_id
+                                 from reg_use_linkage p   -- parent
+                                where p.level > 1
+                                  and p.reg_group_id notnull
+                                  and (   p.reg_use_1 = reg_use_linkage.id
+                                       or p.reg_use_2 = reg_use_linkage.id))
+                 where reg_group_id isnull
+                   and exists (select null
+                                 from reg_use_linkage p
+                                where p.level > 1
+                                  and p.reg_group_id notnull
+                                  and (   p.reg_use_1 = reg_use_linkage.id
+                                       or p.reg_use_2 = reg_use_linkage.id))
+              ''')[0]
+            print("propogated", rowcount, "reg_group_ids", file = sys.stderr)
+        print("done propogating reg_group_ids", file = sys.stderr)
+
+    with crud.db_transaction():
+        #   Finally, copy the reg_group_id into the reg_uses:
+        #     But first, check to make sure each reg_use only has one
+        #     register_group:
+        it = crud.fetchall('''
+            select id
+              from reg_use ru
+             where (select count(distinct rul.reg_group_id)
+                      from reg_use_linkage rul
+                     where rul.level = 1
+                       and (   rul.reg_use_1 = ru.id
+                            or rul.reg_use_2 = ru.id)) > 1
+          ''')
+        count = 0
+        for id in it:
+            print("duplicate register_groups for reg_use", id)
+            count += 1
+        if count:
+            raise AssertionError(
+                    "{} reg_uses have duplicate register_groups".format(count))
+        #     Then copy the reg_group_ids down to the reg_uses
+        crud.execute('''
+            update reg_use
+               set reg_group_id = (select reg_group_id
+                                     from reg_use_linkage rul
+                                    where rul.level = 1
+                                      and (   rul.reg_use_1 = reg_use.id
+                                           or rul.reg_use_2 = reg_use.id))
+          ''')
+
+
+######################### OLD figure_out_multi_use code ###################
+"""
     # Copy reg_class and num_regs_output from code_seq to triples.
     with crud.db_transaction():
         crud.execute('''
@@ -364,6 +779,7 @@ def figure_out_multi_use(subsets, sizes):
                                             and tp.ghost = 0)
              where use_count != 0
           ''')
+"""
 
 
 def create_reg_map(subsets, sizes, code_seqs):
@@ -543,3 +959,20 @@ def map_temporaries(fn_symbol_id, locals, kind, suspends, sizes):
 def write_reg_map(reg_map):
     # FIX: implement this!
     pass
+
+def pairs(it):
+    r'''Generates pairs from seq.
+
+        >>> tuple(pairs(()))
+        ()
+        >>> tuple(pairs((1,)))
+        ()
+        >>> tuple(pairs((1,2,3)))
+        ((1, 2), (2, 3))
+    '''
+    it = iter(it)
+    prior = next(it)
+    for x in it:
+        yield prior, x
+        prior = x
+
