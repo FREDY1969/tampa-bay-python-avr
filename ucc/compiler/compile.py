@@ -27,7 +27,8 @@ def run(top, processor, prime_start_time = True, quiet = False):
         compile_start_time = Start_time
         if not quiet: print("top: {:.2f}".format(elapsed()))
 
-    with crud.db_connection(top.packages[-1].package_dir) as db_conn:
+    with crud.db_connection(top.packages[-1].package_dir, True, True, True) \
+      as db_conn:
         db_conn.attach(os.path.join(os.path.dirname(codegen.__file__),
                                     'avr.db'),
                        'architecture')

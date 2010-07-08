@@ -295,8 +295,8 @@ create table triple_parameters (
     parent_code_seq_id int,    -- references code_seq table in machine.db
     reg_class_for_parent int,  -- references reg_class table in machine db
     num_regs_for_parent int,
-    trashed bool,
-    delink bool,
+    trashed bool default 0,
+    delink bool default 0,
     needed_reg_class int,
     move_prior_to_needed bool not null default 0,
     move_needed_to_parent bool not null default 0,
@@ -422,9 +422,7 @@ create table reg_use_linkage (
     reg_use_1 int not null,
     reg_use_2 int not null,
 
-    is_segment bool not null default 0,
-    level int default 1,
-    reg_group_id int references register_group(id)
+    is_segment bool not null default 0
 );
 
 create table overlaps (
@@ -433,7 +431,7 @@ create table overlaps (
 );
 
 create table register_group (
-    id integer not null primary key,
+    id int not null primary key,
     reg_class int references reg_class(id),
     num_registers int
 );
