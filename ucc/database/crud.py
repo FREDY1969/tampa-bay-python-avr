@@ -36,11 +36,12 @@ class db_connection:
 
     @classmethod
     def test(cls, *cols):
-        db_conn = cls(None, False, False)
+        db_conn = cls(None)
         db_conn.bogus_cursor = db_cur_test(*cols)
         return db_conn, db_conn.bogus_cursor
 
-    def __init__(self, directory, create = True, load_gensym = True):
+    def __init__(self, directory,
+                 create = False, load_gensym = False, delete = False):
         r'''Create a database connection.
 
         Opens a database connection to the 'ucc.db' file in 'directory'.
@@ -66,7 +67,10 @@ class db_connection:
                 db_path = directory
             else:
                 db_path = os.path.join(directory, Db_filename)
-            if not os.path.exists(db_path):
+            if os.path.exists(db_path) and not delete:
+                self.db_conn = db.connect(db_path)
+            else:
+                if os.path.exists(db_path): os.remove(db_path)
                 if not create:
                     raise AssertionError(
                             "Database {} does not exist".format(db_path))
@@ -81,8 +85,6 @@ class db_connection:
                 with self.db_transaction():
                     for command in ddl.split(';'):
                         self.execute(command)
-            else:
-                self.db_conn = db.connect(db_path)
             if load_gensym:
                 self._gensyms = dict(self.fetchall(
                                   '''select prefix, last_used_index 

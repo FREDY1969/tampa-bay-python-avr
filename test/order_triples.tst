@@ -8,8 +8,7 @@
 Open a dummy database:
 
     >>> Db_file = os.path.join(tempfile.gettempdir(), 'ot_test.db')
-    >>> if os.path.exists(Db_file): os.remove(Db_file)
-    >>> db_conn = crud.db_connection(Db_file, load_gensym = False)
+    >>> db_conn = crud.db_connection(Db_file, create = True, delete = True)
     >>> db_conn.dummy_transaction()
     >>> db_conn.attach(os.path.join(os.path.dirname(codegen.__file__),
     ...                             'avr.db'),

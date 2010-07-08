@@ -9,8 +9,7 @@ database.
     >>> from ucc.database import crud
     >>> import os
     >>> with crud.db_connection(os.path.join(os.path.dirname(__file__),
-    ...                                      'avr.db'),
-    ...                         False, False) as db_conn:
+    ...                                      'avr.db')) as db_conn:
     ...     registers.init(db_conn)
     >>> a = registers.reg_usage.make(single=4, immed=2)
     >>> a

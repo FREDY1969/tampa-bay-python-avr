@@ -114,6 +114,7 @@ def chk_num_regs(nr1, nr2):
 
 def alloc_regs():
     global Subsets
+    delete()  # start from a clean slate
     Subsets = get_reg_class_subsets()
     crud.Db_conn.db_conn.create_function("rc_subset", 2, rc_subset)
     crud.Db_conn.db_conn.create_function("chk_num_regs", 2, chk_num_regs)
@@ -168,6 +169,45 @@ def figure_out_multi_use(subsets, sizes):
              where use_count != 0
           ''')
 
+    # Copy reg_class_for_parent, num_regs_for_parent, trashed and delink from
+    # code_seq_parameter.
+    with crud.db_transaction():
+        crud.execute('''
+            update triple_parameters
+               set reg_class_for_parent =
+                     (select csp.reg_class
+                        from code_seq_parameter csp
+                       where triple_parameters.parent_code_seq_id =
+                               csp.code_seq_id
+                         and triple_parameters.parameter_num =
+                               csp.parameter_num),
+                   num_regs_for_parent =
+                     (select csp.num_registers
+                        from code_seq_parameter csp
+                       where triple_parameters.parent_code_seq_id =
+                               csp.code_seq_id
+                         and triple_parameters.parameter_num =
+                               csp.parameter_num),
+                   trashed =
+                     (select csp.trashes
+                        from code_seq_parameter csp
+                       where triple_parameters.parent_code_seq_id =
+                               csp.code_seq_id
+                         and triple_parameters.parameter_num =
+                               csp.parameter_num),
+                   delink =
+                     (select csp.delink
+                        from code_seq_parameter csp
+                       where triple_parameters.parent_code_seq_id =
+                               csp.code_seq_id
+                         and triple_parameters.parameter_num =
+                               csp.parameter_num)
+             where parent_id not in (select t.id
+                                       from triples t
+                                      where t.operator in ('call_direct',
+                                                           'call_indirect'))
+          ''')
+
     # Populate reg_use
     with crud.db_transaction():
         # Populate reg_use for triple-output
@@ -187,6 +227,13 @@ def figure_out_multi_use(subsets, sizes):
                       'call_direct', 'call_indirect', 'return',
                       'if_false', 'if_true')
                  and cs.num_output
+                 and (   exists (select null
+                                   from triple_parameters tp
+                                  where t.id = tp.parameter_id
+                                    and not tp.delink)
+                      or exists (select null
+                                   from triple_labels tl
+                                  where t.id = tl.triple_id))
           ''')
 
         # Populate reg_use for triple-output for 'global' and 'local'
@@ -196,6 +243,13 @@ def figure_out_multi_use(subsets, sizes):
               select 'triple-output', t.id, 1, t.block_id, t.abs_order_in_block
                 from triples t
                where t.operator in ('global', 'local')
+                 and (   exists (select null
+                                   from triple_parameters tp
+                                  where t.id = tp.parameter_id
+                                    and not tp.delink)
+                      or exists (select null
+                                   from triple_labels tl
+                                  where t.id = tl.triple_id))
           ''')
 
         # Populate reg_use for triple/parameter
@@ -219,6 +273,7 @@ def figure_out_multi_use(subsets, sizes):
                       'global_addr', 'global', 'local_addr', 'local',
                       'call_direct', 'call_indirect', 'return',
                       'if_false', 'if_true')
+                 and not tp.delink
           ''')
 
         # Populate reg_use for 'call_direct' triple-output
@@ -228,6 +283,13 @@ def figure_out_multi_use(subsets, sizes):
               select 'triple-output', t.id, 1, t.block_id, t.abs_order_in_block
                 from triples t
                where t.operator = 'call_direct'
+                 and (   exists (select null
+                                   from triple_parameters tp
+                                  where t.id = tp.parameter_id
+                                    and not tp.delink)
+                      or exists (select null
+                                   from triple_labels tl
+                                  where t.id = tl.triple_id))
           ''')
 
         # Populate reg_use for 'call_direct' triple/parameter
@@ -241,6 +303,7 @@ def figure_out_multi_use(subsets, sizes):
                      inner join triple_parameters tp
                        on t.id = tp.parent_id
                where t.operator = 'call_direct'
+                 and not tp.delink
           ''')
 
         # Populate reg_use for triple/temp
@@ -464,106 +527,51 @@ def figure_out_multi_use(subsets, sizes):
 
         print("done function/var -> triple-output", file = sys.stderr)
 
-    # Populate reg_group
-    #with crud.db_transaction():
-    if True:
-        # Extend reg_use_linkage
-        for level in itertools.count(1):
-          with crud.db_transaction():
-            rowcount = crud.execute('''
-                           insert into reg_use_linkage
-                             (reg_use_1, reg_use_2, level)
-                             select l1.id, l2.id, ? + 1
-                               from reg_use_linkage l1
-                                    inner join reg_use_linkage l2
-                                      on    l1.reg_use_1 = l2.reg_use_1
-                                         or l1.reg_use_1 = l2.reg_use_2
-                                         or l1.reg_use_2 = l2.reg_use_1
-                                         or l1.reg_use_2 = l2.reg_use_2
-                              where l1.id < l2.id
-                                and l1.level = ?
-                                and l2.level = ?
-                         ''', (level, level, level))[0]
-            if rowcount == 0: break
-            print("inserted", rowcount, "rows for reg_use_linkage level", level, file = sys.stderr)
-
-        print("done extending reg_use_linkage", file = sys.stderr)
-
-        # Gather the roots into register_group
-        crud.execute('''
-            insert into register_group (id)
-              select rul1.id
-                from reg_use_linkage rul1
-               where not exists (select null
-                                   from reg_use_linkage rul2
-                                  where rul2.level > 1
-                                    and (   rul2.reg_use_1 = rul1.id
-                                         or rul2.reg_use_2 = rul1.id))
-          ''')
-
-        print("done gathering roots into register_group", file = sys.stderr)
-
-        # Assign reg_group_id top down:
-        #   First do the roots.
-        rowcount = crud.execute('''
-            update reg_use_linkage
-               set reg_group_id = id
-             where id in (select id from register_group)
-          ''')[0]
-
-        print("done assigning reg_group_id to roots", file = sys.stderr)
-
-        #   Then propogate the reg_group_id down into each child node.
-        while rowcount:
-            rowcount = crud.execute('''
-                update reg_use_linkage
-                   set reg_group_id = (
-                               select reg_group_id
-                                 from reg_use_linkage p   -- parent
-                                where p.level > 1
-                                  and p.reg_group_id notnull
-                                  and (   p.reg_use_1 = reg_use_linkage.id
-                                       or p.reg_use_2 = reg_use_linkage.id))
-                 where reg_group_id isnull
-                   and exists (select null
-                                 from reg_use_linkage p
-                                where p.level > 1
-                                  and p.reg_group_id notnull
-                                  and (   p.reg_use_1 = reg_use_linkage.id
-                                       or p.reg_use_2 = reg_use_linkage.id))
-              ''')[0]
-            print("propogated", rowcount, "reg_group_ids", file = sys.stderr)
-        print("done propogating reg_group_ids", file = sys.stderr)
-
+    # Populate reg_group_id
     with crud.db_transaction():
-        #   Finally, copy the reg_group_id into the reg_uses:
-        #     But first, check to make sure each reg_use only has one
-        #     register_group:
-        it = crud.fetchall('''
-            select id
-              from reg_use ru
-             where (select count(distinct rul.reg_group_id)
-                      from reg_use_linkage rul
-                     where rul.level = 1
-                       and (   rul.reg_use_1 = ru.id
-                            or rul.reg_use_2 = ru.id)) > 1
-          ''')
-        count = 0
-        for id in it:
-            print("duplicate register_groups for reg_use", id)
-            count += 1
-        if count:
-            raise AssertionError(
-                    "{} reg_uses have duplicate register_groups".format(count))
-        #     Then copy the reg_group_ids down to the reg_uses
+        # Copy all reg_use.ids to reg_use.reg_group_id
         crud.execute('''
             update reg_use
-               set reg_group_id = (select reg_group_id
-                                     from reg_use_linkage rul
-                                    where rul.level = 1
-                                      and (   rul.reg_use_1 = reg_use.id
-                                           or rul.reg_use_2 = reg_use.id))
+               set reg_group_id = id
           ''')
+
+        rowcount = 1
+        while rowcount:
+            rowcount = crud.execute('''
+                update reg_use
+                   set reg_group_id =
+                     (select min(min(ru1.reg_group_id), min(ru2.reg_group_id))
+                        from reg_use_linkage
+                             inner join reg_use ru1
+                               on reg_use_1 = ru1.id
+                             inner join reg_use ru2
+                               on reg_use_2 = ru2.id
+                       where ru1.reg_group_id != ru2.reg_group_id
+                         and (   ru1.reg_group_id = reg_use.reg_group_id
+                              or ru2.reg_group_id = reg_use.reg_group_id))
+                 where exists (
+                         select null
+                           from reg_use_linkage
+                                inner join reg_use ru1
+                                  on reg_use_1 = ru1.id
+                                inner join reg_use ru2
+                                  on reg_use_2 = ru2.id
+                          where ru1.reg_group_id != ru2.reg_group_id
+                            and (   ru1.reg_group_id = reg_use.reg_group_id
+                                 or ru2.reg_group_id = reg_use.reg_group_id)
+                            and min(ru1.reg_group_id, ru2.reg_group_id) <
+                                  reg_use.reg_group_id)
+              ''')[0]
+            print("updated", rowcount, "reg_use.reg_group_ids", file = sys.stderr)
+        print("done updating reg_group_ids", file = sys.stderr)
+
+        # Gather the remaining reg_group_ids into register_group
+        crud.execute('''
+            insert into register_group (id)
+              select distinct reg_group_id from reg_use
+          ''')
+
+        print("done populating register_group", file = sys.stderr)
 
 
 ######################### OLD figure_out_multi_use code ###################
@@ -975,4 +983,11 @@ def pairs(it):
     for x in it:
         yield prior, x
         prior = x
+
+def delete():
+    with crud.db_transaction():
+        crud.delete('reg_use')
+        crud.delete('reg_use_linkage')
+        crud.delete('overlaps')
+        crud.delete('register_group')
 

@@ -53,7 +53,7 @@ Lineno = 1
 def load(database_filename, pattern_filename):
     global Line, Lineno, Filename
     Filename = pattern_filename
-    with crud.db_connection(database_filename, False, False) as db_conn:
+    with crud.db_connection(database_filename) as db_conn:
         reg_class_by_name = \
           dict(db_conn.read_as_tuples('reg_class', 'name', 'id'))
         reg_class_by_name[None] = None

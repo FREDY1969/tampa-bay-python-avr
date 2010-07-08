@@ -9,7 +9,7 @@ setpath.setpath(__file__, remove_first = True)
 from ucc.database import crud
 
 def init():
-    db_conn = crud.db_connection('avr.db', False, False)
+    db_conn = crud.db_connection('avr.db')
     try:
         # insert 0's for m=0:
 
@@ -63,7 +63,7 @@ def init():
         db_conn.close()
 
 def class_compares():
-    db_conn = crud.db_connection('avr.db', False, False)
+    db_conn = crud.db_connection('avr.db')
     try:
         reg_classes = db_conn.read_column('reg_class', 'id')
         aliases = {}
