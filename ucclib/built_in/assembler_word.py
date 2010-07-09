@@ -17,7 +17,7 @@ class assembler_word(declaration.word):
         instructions = []
         filename = self.ww.get_filename()
         with open(filename) as f:
-            block = assembler.block(self.ww.symbol.id, 'flash', self.label,
+            block = assembler.block(self.ww.symbol.id, 'code', self.label,
                                     self.ww.get_value('address'))
             blocks = [block]
             for i, line in enumerate(f):
@@ -117,7 +117,7 @@ def parse_asm(word_symbol_id, block, filename, line, lineno):
     else:
         if fields:
             label = fields[0]
-            ans = block = assembler.block(word_symbol_id, 'flash', label)
+            ans = block = assembler.block(word_symbol_id, 'code', label)
             if len(fields) > 1:
                 opcode = fields[1]
                 operands = ''.join(fields[2:]).split(',')

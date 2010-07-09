@@ -585,6 +585,10 @@ class row:
         col_names = [x[0] for x in cur.description]
         return lambda row: cls(col_names, row)
 
+    @classmethod
+    def from_kws(cls, **kws):
+        return cls(tuple(kws.keys()), tuple(kws.values()))
+
     def __init__(self, names, values):
         assert len(names) == len(values)
         super().__setattr__('_names', sorted(names))
@@ -601,6 +605,13 @@ class row:
         if name not in self._names:
             self._names.append(name)
             self._names.sort()
+
+    def __eq__(self, b):
+        if not isinstance(b, row) or self._names != b._names:
+            return False
+        for c in self._names:
+            if getattr(self, c) != getattr(b, c): return False
+        return True
 
 Strings = {}
 

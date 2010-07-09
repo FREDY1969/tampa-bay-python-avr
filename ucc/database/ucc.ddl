@@ -29,6 +29,7 @@ create table symbol_table (
     register varchar(255),
     register_est int,           -- Estimate of number of registers needed by
                                 -- this function.
+    fn_order real,
     flash_size int,
     ram_size int,
     far_size int,
@@ -205,8 +206,9 @@ create table blocks (
     last_triple_id int references triples(id), --FIX: doesn't seem to be used...
     next varchar(255) references blocks(name),
     next_conditional varchar(255) references blocks(name),
-    register_est int           -- Estimate of number of registers needed by
+    register_est int,          -- Estimate of number of registers needed by
                                -- this block.
+    block_order int
 );
 
 create unique index blocks_word_symbol_id_index
@@ -402,6 +404,7 @@ create table reg_use (
     num_registers int,
     is_definition bool not null default 0,
     reg_group_id int references register_group(id),
+    assigned_register varchar(20),
 
     -- only for 'triple-output' and 'triple':
     --
@@ -433,7 +436,8 @@ create table overlaps (
 create table register_group (
     id int not null primary key,
     reg_class int references reg_class(id),
-    num_registers int
+    num_registers int,
+    assigned_register varchar(20)
 );
 
 

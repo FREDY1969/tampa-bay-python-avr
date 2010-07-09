@@ -8,8 +8,7 @@ output-pin.
 You may specify whether the argument being True sets or resets the bit.
 '''
 
-from ucc.database import ast, symbol_table
-from ucc.assembler import io
+from ucc.database import ast
 from ucclib.built_in import declaration
 
 class output_pin(declaration.word):
@@ -40,7 +39,7 @@ class output_pin(declaration.word):
         port_label, bit_number = digital_pin_lookup[pin_number]
         print("output_pin: port_label", port_label, ", bit_number", bit_number)
         ioreg_bit = ast.ast(kind='ioreg-bit',
-                            label='io.port' + port_label, int1=bit_number)
+                            label='port' + port_label, int1=bit_number)
         if on_is == 'HIGH':
             true_call = 'set-output-bit'
             false_call = 'clear-output-bit'
