@@ -66,5 +66,5 @@ output-bit-set
 if-true: any=2*single
     OR   lo_reg({left}), lo_reg({left})
     CPC  lo_reg({left}), hi_reg({left})
-    BREQ {next_conditional}
+    BRNE {next_conditional}
 

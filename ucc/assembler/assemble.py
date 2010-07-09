@@ -51,6 +51,7 @@ def assemble(section, labels):
     for block_id, block_label, block_address, next_block \
      in assembler.gen_blocks(section):
         if last_next and last_next != block_label:
+            last_address += 1
             for n in getattr(asm_opcodes, 'JMP') \
                        .assemble(last_next, None, labels, last_address):
                 yield last_address, n
@@ -62,6 +63,12 @@ def assemble(section, labels):
             yield address, byte
             last_address = address
         last_next = next_block
+    if last_next is not None:
+        last_address += 1
+        for n in getattr(asm_opcodes, 'JMP') \
+                   .assemble(last_next, None, labels, last_address):
+            yield last_address, n
+            last_address += 1
 
 def assemble_word(block_id, block_address, labels):
     r'''Yields (address, byte) for all instructions in an assembler block.
