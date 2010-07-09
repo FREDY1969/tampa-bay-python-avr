@@ -8,32 +8,29 @@ from ucc.database import crud
 from ucc.assembler import asm_opcodes
 
 def gen_blocks(section):
-    r'''Generates (block_id, label, address) for each block in section.
+    r'''Generates info for each block in 'section'.
+
+    Yields (block_id, label, address, next_label).
     '''
-    for block_id, label, address \
-     in itertools.chain(
-          crud.read_as_tuples('assembler_blocks', 'id', 'label', 'address',
-                              section=section,
-                              address_=None,
-                              order_by=('address',)),
-          crud.read_as_tuples('assembler_blocks', 'id', 'label', 'address',
-                              section=section,
-                              address=None,
-                              order_by=('id',))):
-        yield block_id, label, address
+    return itertools.chain(
+             crud.read_as_tuples('assembler_blocks',
+                                 'id', 'label', 'address', 'next_label',
+                                 section=section,
+                                 address_=None,
+                                 order_by=('address',)),
+             crud.read_as_tuples('assembler_blocks',
+                                 'id', 'label', 'address', 'next_label',
+                                 section=section,
+                                 address=None,
+                                 order_by=('id',)))
 
 def gen_insts(block_id):
     r'''Generates (label, opcode, op1, op2) for each instruction in block.
     '''
-    for label, opcode, op1, op2 \
-     in crud.read_as_tuples('assembler_code',
-                            'label',
-                            'opcode',
-                            'operand1',
-                            'operand2',
-                            block_id=block_id,
-                            order_by=('inst_order',)):
-        yield label, opcode, op1, op2
+    return crud.read_as_tuples('assembler_code',
+                               'label', 'opcode', 'operand1', 'operand2',
+                               block_id=block_id,
+                               order_by=('inst_order',))
 
 def update_block_address(block_id, address):
     crud.update('assembler_blocks', {'id': block_id}, address=address)

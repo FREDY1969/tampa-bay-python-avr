@@ -7,14 +7,20 @@ import itertools
 
 from ucc.database import assembler, crud
 from ucc.assembler import asm_opcodes, hex_file
+from ucc.codegen import expand_assembler
 
 def assign_labels(section, labels, starting_address = 0):
     r'''Assign addresses to all labels in 'section'.
 
     Addresses are stored in 'labels' dict.  This is {label: address}.
     '''
+    last_next = None
     running_address = starting_address
-    for block_id, block_label, block_address in assembler.gen_blocks(section):
+    for block_id, block_label, block_address, next_block \
+     in assembler.gen_blocks(section):
+        if last_next and last_next != block_label:
+            running_address += \
+              getattr(asm_opcodes, 'JMP').length(last_next, None)[1]
         if block_address is None:
             address = running_address
             assembler.update_block_address(block_id, address)
@@ -38,15 +44,27 @@ def assign_labels(section, labels, starting_address = 0):
 def assemble(section, labels):
     r'''Meta generator for an assembler 'section'.
 
-    This generator function yields one value for each assembler block in the
-    section.  That value is (block_address, byte_generator).  The
-    byte_generator generates the individual machine code bytes for that block.
+    This generator function yields (address, byte) for all blocks in 'section'.
     '''
-    for block_id, block_label, block_address in assembler.gen_blocks(section):
-        yield block_address, assemble_word(block_id, block_address, labels)
+    last_next = None
+    last_address = None
+    for block_id, block_label, block_address, next_block \
+     in assembler.gen_blocks(section):
+        if last_next and last_next != block_label:
+            for n in getattr(asm_opcodes, 'JMP') \
+                       .assemble(last_next, None, labels, last_address):
+                yield last_address, n
+                last_address += 1
+        assert last_address is None or last_address + 1 == block_address, \
+               "internal logic error: last_address ({}) != block_address ({})" \
+                 .format(last_address, block_address)
+        for address, byte in assemble_word(block_id, block_address, labels):
+            yield address, byte
+            last_address = address
+        last_next = next_block
 
 def assemble_word(block_id, block_address, labels):
-    r'''Yields the individual bytes for all instructions in an assembler block.
+    r'''Yields (address, byte) for all instructions in an assembler block.
 
     The bytes are generated taking byte swapping into account.  The AVR is
     little-endian, so the least significant byte of each instruction word is
@@ -57,7 +75,7 @@ def assemble_word(block_id, block_address, labels):
         if opcode is not None:
             inst = getattr(asm_opcodes, opcode.upper())
             for n in inst.assemble(op1, op2, labels, address):
-                yield n
+                yield address, n
                 address += 1
             #address += getattr(asm_opcodes, opcode.upper()).length(op1, op2)[1]
 
@@ -71,8 +89,8 @@ def assemble_program(package_dir):
     labels = {}         # {label: address}
 
     with crud.db_transaction():
-        # flash
-        start_data = assign_labels('flash', labels)
+        # code
+        start_data = assign_labels('code', labels)
 
         # data
         assert 'start_data' not in labels, \
@@ -93,7 +111,7 @@ def assemble_program(package_dir):
         assign_labels('eeprom', labels)
 
     # assemble flash and data:
-    hex_file.write(itertools.chain(assemble('flash', labels),
+    hex_file.write(itertools.chain(assemble('code', labels),
                                    assemble('data', labels)),
                    package_dir, 'flash')
 

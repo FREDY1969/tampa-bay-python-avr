@@ -18,6 +18,31 @@ Bits = {        #: Maps bit to bit number
     0x80: 7,
 }
 
+def lo_reg(reg):
+    r'''Returns low order (least significant) register of pair reg.
+
+        >>> lo_reg('r12')
+        'r12'
+        >>> lo_reg('d12')
+        'd12'
+    '''
+    return reg
+
+def hi_reg(reg):
+    r'''Returns high order (most significant) register of pair reg.
+
+        >>> hi_reg('r12')
+        'r13'
+        >>> hi_reg('d12')
+        'd13'
+    '''
+    return reg[0] + str(int(reg[1:]) + 1)
+
+Reg_fns = {
+    'lo_reg': lo_reg,
+    'hi_reg': hi_reg,
+}
+
 def convert_reg(arg, num_bits, note, labels, address):
     r'''Convert register operand to number.
 
@@ -30,13 +55,13 @@ def convert_reg(arg, num_bits, note, labels, address):
     >>> convert_reg('r32', 5, None, None, None)
     Traceback (most recent call last):
         ...
-    AssertionError: r32: illegal register
+    AssertionError: r32: illegal register, >= 32
     >>> convert_reg('r31', 5, 'd', None, None)
     31
     >>> convert_reg('r16', 4, None, None, None)
     Traceback (most recent call last):
         ...
-    AssertionError: r16: illegal register
+    AssertionError: r16: illegal register, >= 16
     >>> convert_reg('r16', 4, (16, 31), None, None)
     0
     >>> convert_reg('r31', 4, (16, 31), None, None)
@@ -44,11 +69,11 @@ def convert_reg(arg, num_bits, note, labels, address):
     >>> convert_reg('r15', 4, (16, 31), None, None)
     Traceback (most recent call last):
         ...
-    AssertionError: r15: illegal register
+    AssertionError: r15: illegal register, not between 16 and 31
     >>> convert_reg('r15', 3, (16, 30), None, None)
     Traceback (most recent call last):
         ...
-    AssertionError: r15: illegal register
+    AssertionError: r15: illegal register, not between 16 and 30
     >>> convert_reg('r16', 3, (16, 30), None, None)
     0
     >>> convert_reg('r30', 3, (16, 30), None, None)
@@ -56,15 +81,15 @@ def convert_reg(arg, num_bits, note, labels, address):
     >>> convert_reg('r31', 3, (16, 30), None, None)
     Traceback (most recent call last):
         ...
-    AssertionError: r31: illegal register
+    AssertionError: r31: illegal register, not between 16 and 30
     >>> convert_reg('r17', 3, (16, 30), None, None)
     Traceback (most recent call last):
         ...
-    AssertionError: r17: illegal register
+    AssertionError: r17: illegal register, must be even
     >>> convert_reg('r23', 2, (24, 30), None, None)
     Traceback (most recent call last):
         ...
-    AssertionError: r23: illegal register
+    AssertionError: r23: illegal register, not between 24 and 30
     >>> convert_reg('r24', 2, (24, 30), None, None)
     0
     >>> convert_reg('r30', 2, (24, 30), None, None)
@@ -72,25 +97,29 @@ def convert_reg(arg, num_bits, note, labels, address):
     >>> convert_reg('r31', 2, (24, 30), None, None)
     Traceback (most recent call last):
         ...
-    AssertionError: r31: illegal register
+    AssertionError: r31: illegal register, not between 24 and 30
     >>> convert_reg('r25', 2, (24, 30), None, None)
     Traceback (most recent call last):
         ...
-    AssertionError: r25: illegal register
+    AssertionError: r25: illegal register, must be even
     '''
-    assert arg[0].lower() == 'r', "{}: illegal register".format(arg)
     max = 2**num_bits
+    if '(' in arg:
+        fn, args = arg.rstrip(')').split('(')
+        arg = Reg_fns[fn](*(a.strip() for a in args.split(',')))
+    assert arg[0].lower() in ('d', 'r'), "{}: illegal register".format(arg)
     n = int(arg[1:])
     if note is None or note == 'd':
-        assert n < max, "{}: illegal register".format(arg)
+        assert n < max, "{}: illegal register, >= {}".format(arg, max)
         return n
     low, high = note
-    assert low <= n <= high, "{}: illegal register".format(arg)
+    assert low <= n <= high, \
+           "{}: illegal register, not between {} and {}".format(arg, low, high)
     if (high - low + 1) == max:
         return n - low
     if (high - low + 2) == 2*max:
         assert low <= n <= high, "{}: illegal register".format(arg)
-        assert n % 2 == 0, "{}: illegal register".format(arg)
+        assert n % 2 == 0, "{}: illegal register, must be even".format(arg)
         return (n - low) // 2
     raise AssertionError("internal error: convert_reg: "
                          "bad args: {!r}, {!r}, {!r}"

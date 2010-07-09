@@ -123,7 +123,7 @@ def alloc_regs():
     sizes = get_reg_class_sizes()
     figure_out_multi_use(Subsets, sizes)
     code_seqs = code_seq.get_code_seq_info()
-    #create_reg_map(Subsets, sizes, code_seqs)
+    create_reg_map(Subsets, sizes, code_seqs)
 
 def get_reg_class_subsets():
     r'''Returns {(reg_class1, reg_class2): subset_reg_class}.
@@ -791,11 +791,27 @@ def figure_out_multi_use(subsets, sizes):
 
 
 def create_reg_map(subsets, sizes, code_seqs):
-    for next_fn_layer in get_functions():
-        for symbol_id in next_fn_layer:
-            reg_map = reg_map_for_fun(symbol_id, subsets, sizes, code_seqs)
-            write_reg_map(reg_map)
-        # FIX: What needs to happen between fn layers?
+    with crud.db_transaction():
+        # FIX: This is a temp kludge to get blinky2 going!
+        sequencer = iter(itertools.count(24, step=2))
+        for id in crud.read_column('register_group', 'id'):
+            crud.update('register_group', {'id': id},
+                        assigned_register="d{}".format(next(sequencer)))
+
+        # Copy to reg_use table
+        crud.execute('''
+            update reg_use
+               set assigned_register = (select rg.assigned_register
+                                          from register_group rg
+                                         where rg.id = reg_use.reg_group_id)
+          ''')
+
+#def create_reg_map(subsets, sizes, code_seqs):
+#    for next_fn_layer in get_functions():
+#        for symbol_id in next_fn_layer:
+#            reg_map = reg_map_for_fun(symbol_id, subsets, sizes, code_seqs)
+#            write_reg_map(reg_map)
+#        # FIX: What needs to happen between fn layers?
 
 def get_functions():
     r'''Yields sets of functions in a bottom-up order.
