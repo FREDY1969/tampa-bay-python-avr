@@ -147,14 +147,16 @@ def gen_block(fn, current_block, next_block):
                                                   column_end=x.column_end,
                                                   ans=x.ans)):
         inst_order = \
-          gen_triple(assem_block, next_conditional, t,
+          gen_triple(assem_block, next_block[1], next_conditional, t,
                      tuple((p.param, p.param_int1) for p in params),
                      inst_order)
 
-def gen_triple(assem_block, next_conditional, t, params, inst_order):
+def gen_triple(assem_block, next_block, next_conditional, t, params,
+               inst_order):
     for code in crud.read_as_rows('code', code_seq_id=t.code_seq_id,
                                           order_by='inst_order'):
-        expansions = {'next_conditional': next_conditional,
+        expansions = {'next_block': next_block,
+                      'next_conditional': next_conditional,
                       'ans': t.ans,
                       'int1': t.int1,
                       'int2': t.int2,

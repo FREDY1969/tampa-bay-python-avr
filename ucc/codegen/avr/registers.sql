@@ -108,46 +108,56 @@ insert into alias (r1, r2) values ('d30', 'Z');
 insert into alias (r1, r2) select r2, r1 from alias;
 
 -- register classes:
-insert into reg_class (name) values ('single');
+insert into reg_class (id, name) values (1, 'single');
 insert into reg_in_class (reg_class, reg)
   select 1, name from register where name like 'r%';
 
-insert into reg_class (name, num_registers) values ('pair', 2);
+insert into reg_class (id, name, num_registers) values (2, 'pair', 2);
 insert into reg_in_class (reg_class, reg)
   select 2, name from register where name like 'd%';
 
-insert into reg_class (name) values ('immed');
+insert into reg_class (id, name) values (3, 'immed');
 insert into reg_in_class (reg_class, reg)
   select 3, name from register where name like 'r__' and name >= 'r16';
 
-insert into reg_class (name, num_registers) values ('immed_word', 2);
-insert into reg_in_class (reg_class, reg) values (4, 'd24');
-insert into reg_in_class (reg_class, reg) values (4, 'd26');
-insert into reg_in_class (reg_class, reg) values (4, 'd28');
-insert into reg_in_class (reg_class, reg) values (4, 'd30');
+insert into reg_class (id, name, num_registers) values (4, 'immed_pair', 2);
+insert into reg_in_class (reg_class, reg)
+  select 4, name from register where name like 'd__' and name >= 'd16';
 
-insert into reg_class (name, num_registers) values ('indirect', 2);
-insert into reg_in_class (reg_class, reg) values (5, 'X');
-insert into reg_in_class (reg_class, reg) values (5, 'Y');
-insert into reg_in_class (reg_class, reg) values (5, 'Z');
+insert into reg_class (id, name, num_registers) values (5, 'immed_word', 2);
+insert into reg_in_class (reg_class, reg) values (5, 'd24');
+insert into reg_in_class (reg_class, reg) values (5, 'd26');
+insert into reg_in_class (reg_class, reg) values (5, 'd28');
+insert into reg_in_class (reg_class, reg) values (5, 'd30');
 
-insert into reg_class (name, num_registers) values ('offset', 2);
+insert into reg_class (id, name, num_registers) values (6, 'indirect', 2);
+insert into reg_in_class (reg_class, reg) values (6, 'X');
 insert into reg_in_class (reg_class, reg) values (6, 'Y');
 insert into reg_in_class (reg_class, reg) values (6, 'Z');
 
-insert into reg_class (name, num_registers) values ('lpm', 2);
+insert into reg_class (id, name, num_registers) values (7, 'offset', 2);
+insert into reg_in_class (reg_class, reg) values (7, 'Y');
 insert into reg_in_class (reg_class, reg) values (7, 'Z');
 
-insert into reg_class (name) values ('fmul');
-insert into reg_in_class (reg_class, reg) values (8, 'r16');
-insert into reg_in_class (reg_class, reg) values (8, 'r17');
-insert into reg_in_class (reg_class, reg) values (8, 'r18');
-insert into reg_in_class (reg_class, reg) values (8, 'r19');
-insert into reg_in_class (reg_class, reg) values (8, 'r20');
-insert into reg_in_class (reg_class, reg) values (8, 'r21');
-insert into reg_in_class (reg_class, reg) values (8, 'r22');
-insert into reg_in_class (reg_class, reg) values (8, 'r23');
+insert into reg_class (id, name, num_registers) values (8, 'lpm', 2);
+insert into reg_in_class (reg_class, reg) values (8, 'Z');
 
-insert into reg_class (name, num_registers) values ('mul_out', 2);
-insert into reg_in_class (reg_class, reg) values (9, 'd0');
+insert into reg_class (id, name) values (9, 'fmul');
+insert into reg_in_class (reg_class, reg) values (9, 'r16');
+insert into reg_in_class (reg_class, reg) values (9, 'r17');
+insert into reg_in_class (reg_class, reg) values (9, 'r18');
+insert into reg_in_class (reg_class, reg) values (9, 'r19');
+insert into reg_in_class (reg_class, reg) values (9, 'r20');
+insert into reg_in_class (reg_class, reg) values (9, 'r21');
+insert into reg_in_class (reg_class, reg) values (9, 'r22');
+insert into reg_in_class (reg_class, reg) values (9, 'r23');
+
+insert into reg_class (id, name, num_registers) values (10, 'fmul_pair', 2);
+insert into reg_in_class (reg_class, reg) values (10, 'd16');
+insert into reg_in_class (reg_class, reg) values (10, 'd18');
+insert into reg_in_class (reg_class, reg) values (10, 'd20');
+insert into reg_in_class (reg_class, reg) values (10, 'd22');
+
+insert into reg_class (id, name, num_registers) values (11, 'mul_out', 2);
+insert into reg_in_class (reg_class, reg) values (11, 'd0');
 

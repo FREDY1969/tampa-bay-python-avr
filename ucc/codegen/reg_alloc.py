@@ -239,9 +239,13 @@ def figure_out_multi_use(subsets, sizes):
         # Populate reg_use for triple-output for 'global' and 'local'
         crud.execute('''
             insert into reg_use
-              (kind, ref_id, is_definition, block_id, abs_order_in_block)
-              select 'triple-output', t.id, 1, t.block_id, t.abs_order_in_block
+              (kind, ref_id, initial_reg_class, num_registers, is_definition,
+               block_id, abs_order_in_block)
+              select 'triple-output', t.id, sym.reg_class, sym.num_registers, 1,
+                     t.block_id, t.abs_order_in_block
                 from triples t
+                     inner join symbol_table sym
+                       on t.symbol_id = sym.id
                where t.operator in ('global', 'local')
                  and (   exists (select null
                                    from triple_parameters tp
