@@ -1,0 +1,71 @@
+# patterns
+
+# The following elements are available for operand expansion:
+#
+#    left               register assigned to parameter 1
+#    left_int1          from parameter 1 triple
+#    right              register assigned to parameter 2
+#    right_int1         from parameter 2 triple
+#    ans                register assigned to output
+#    int1               from triple
+#    int2               from triple
+#    string             from triple
+#    next_conditional   from block
+
++: int 0-63=delink, any=immed_word output
+    ADIW  {right}, {left_int1}
+
++: any=immed_word output, int 0-63=delink
+    ADIW  {left}, {right_int1}
+
++: int=delink, any=immed_pair output
+    SUBI  lo_reg({right}), lo8(-{left_int1})
+    SBCI  hi_reg({right}), hi8(-{left_int1})
+
++: any=immed_pair output, int=delink
+    SUBI  lo_reg({left}), lo8(-{right_int1})
+    SBCI  hi_reg({left}), hi8(-{right_int1})
+
++: last_use any=pair output, any=pair
+    ADD  lo_reg({left}), lo_reg({right})
+    ADC  hi_reg({left}), hi_reg({right})
+
++: reused=pair, last_use=pair output
+    ADD  lo_reg({right}), lo_reg({left})
+    ADC  hi_reg({right}), hi_reg({left})
+
++: reused=pair, reused=pair output
+    ADD  lo_reg({right}), lo_reg({left})
+    ADC  hi_reg({right}), hi_reg({left})
+
+-: any=immed_word output, int 0-63=delink
+    SBIW  {left}, {right_int1}
+
+-: any=immed_pair output, int=delink
+    SUBI  lo_reg({left}), lo8({right_int1})
+    SBCI  hi_reg({left}), hi8({right_int1})
+
+-: any=pair output, any=pair
+    SUB  lo_reg({left}), lo_reg({right})
+    SBC  hi_reg({left}), hi_reg({right})
+
+int: ans=pair
+    LDI  lo_reg({ans}), lo8({int1})
+    LDI  hi_reg({ans}), hi8({int1})
+
+#local
+#    get_local
+
+output-bit-set
+    SBI  io.{string}, {int1}
+
+#if-true: last_use
+#    OR   lo_reg({left}), hi_reg({left})
+#    jeq  {next_conditional}
+
+if-true: any=pair
+    OR   lo_reg({left}), lo_reg({left})
+    CPC  lo_reg({left}), hi_reg({left})
+    BREQ {next_block}
+    JMP  {next_conditional}
+

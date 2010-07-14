@@ -1,0 +1,13 @@
+A copy of the ply library is provided here so that the ucc code is using a
+known version of the ply library.
+
+The ply library is covered under different copyrights and a different license
+than the ucc compiler.  The license is included in this directory as the file
+called "README", which is copied from the ply distribution.
+
+This directory only includes the files needed by ucc to function.  The
+complete ply library may be found at http://www.dabeaz.com/ply/.
+
+Ucc has not made any modification to these files.
+
+-bruce frederiksen, Nov 6, 2009

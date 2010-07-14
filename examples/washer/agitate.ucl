@@ -1,0 +1,4 @@
+with clutch-on< agitate:
+    with motor-on< get< agitate-speed:
+        wait how-long
+

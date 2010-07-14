@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>test_rational_defining</name>
+    <label>Test Rational Defining</label>
+    <kind>declaration</kind>
+    <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" repeated="False" type="string" value="py" />
+    </answers>
+    <questions>
+        <question>
+            <name>my_rational</name>
+            <label>My Rational</label>
+            <min>1</min>
+            <max>1</max>
+            <type>rational</type>
+        </question>
+    </questions>
+</word>
