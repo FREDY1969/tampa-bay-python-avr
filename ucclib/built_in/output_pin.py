@@ -38,8 +38,10 @@ class output_pin(declaration.word):
         on_is = self.ww.get_answer('on_is').tag
         port_label, bit_number = digital_pin_lookup[pin_number]
         print("output_pin: port_label", port_label, ", bit_number", bit_number)
-        ioreg_bit = ast.ast(kind='ioreg-bit',
-                            label='port' + port_label, int1=bit_number)
+        syntax_position = ast_node.get_syntax_position_info()
+        ioreg_bit = ast.ast.from_parser(syntax_position, kind='ioreg-bit',
+                                        label='port' + port_label,
+                                        int1=bit_number)
         if on_is == 'HIGH':
             true_call = 'set-output-bit'
             false_call = 'clear-output-bit'
@@ -47,10 +49,12 @@ class output_pin(declaration.word):
             true_call = 'clear-output-bit'
             false_call = 'set-output-bit'
         new_args = (
-            ast.ast.word('if'),
+            ast.ast.word('if', syntax_position),
             ast_node.args[1][0],
-            (ast.ast.call(true_call, ioreg_bit, expect='statement'),),
-            (ast.ast.call(false_call, ioreg_bit, expect='statement'),),
+            (ast.ast.call(true_call, ioreg_bit, expect='statement',
+                          syntax_position_info=syntax_position),),
+            (ast.ast.call(false_call, ioreg_bit, expect='statement',
+                          syntax_position_info=syntax_position),),
         )
         return ast_node.macro_expand(fn_symbol, words_needed, new_args,
                                      kind='call')

@@ -153,28 +153,28 @@ def gen_block(fn, current_block, next_block):
 
 def gen_triple(assem_block, next_block, next_conditional, t, params,
                inst_order):
+    expansions = {'next_block': next_block,
+                  'next_conditional': next_conditional,
+                  'ans': t.ans,
+                  'int1': t.int1,
+                  'int2': t.int2,
+                  'string': t.string,
+                 }
+    #print(t.code_seq_id, "params", params, file = sys.stderr)
+    if len(params) >= 1:
+        expansions['left'] = params[0][0]
+        expansions['left_int1'] = params[0][1]
+    if len(params) >= 2:
+        expansions['right'] = params[1][0]
+        expansions['right_int1'] = params[1][1]
+
+    def expand(s):
+        #print(code.opcode, "expand", s, expansions, file=sys.stderr)
+        if s is None: return None
+        return s.format(**expansions)
+
     for code in crud.read_as_rows('code', code_seq_id=t.code_seq_id,
                                           order_by='inst_order'):
-        expansions = {'next_block': next_block,
-                      'next_conditional': next_conditional,
-                      'ans': t.ans,
-                      'int1': t.int1,
-                      'int2': t.int2,
-                      'string': t.string,
-                     }
-        #print(t.code_seq_id, "params", params, file = sys.stderr)
-        if len(params) >= 1:
-            expansions['left'] = params[0][0]
-            expansions['left_int1'] = params[0][1]
-        if len(params) >= 2:
-            expansions['right'] = params[1][0]
-            expansions['right_int1'] = params[1][1]
-
-        def expand(s):
-            #print(code.opcode, "expand", s, expansions, file=sys.stderr)
-            if s is None: return None
-            return s.format(**expansions)
-
         crud.insert('assembler_code',
                     block_id=assem_block,
                     inst_order=inst_order,
