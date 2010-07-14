@@ -20,10 +20,13 @@ class if_(macro.macro):
                                   label=endif_label,
                                   expect='statement'),
               true_branch,
-              ast.ast(kind='label', label=endif_label, expect='statement'),
+              ast.ast.from_parser(ast_node.get_syntax_position_info(),
+                                  kind='label', label=endif_label,
+                                  expect='statement'),
             )
         else:
             else_label = crud.gensym('else')
+            syntax_position = ast_node.get_syntax_position_info()
             new_args = (
               ast.ast.from_parser(condition.get_syntax_position_info(),
                                   condition,
@@ -31,10 +34,16 @@ class if_(macro.macro):
                                   label=else_label,
                                   expect='statement'),
               true_branch,
-              ast.ast(kind='jump', label=endif_label, expect='statement'),
-              ast.ast(kind='label', label=else_label, expect='statement'),
+              ast.ast.from_parser(syntax_position,
+                                  kind='jump', label=endif_label,
+                                  expect='statement'),
+              ast.ast.from_parser(syntax_position,
+                                  kind='label', label=else_label,
+                                  expect='statement'),
               false_branch,
-              ast.ast(kind='label', label=endif_label, expect='statement'),
+              ast.ast.from_parser(syntax_position,
+                                  kind='label', label=endif_label,
+                                  expect='statement'),
             )
         return ast_node.macro_expand(fn_symbol, words_needed, new_args,
                                      kind='series')

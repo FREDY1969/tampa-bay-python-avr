@@ -156,29 +156,33 @@ class block:
             return True
         return False
 
-    def true_to(self, cond, name_t):
+    def true_to(self, cond, name_t, syntax_position_info = None):
         r'''Branch to 'name_t' if `triple` 'cond' is true.
 
         False falls through.
 
         This method is only called on Current_block.
         '''
-        if self.more(): Current_block.true_to(cond, name_t)
+        if self.more():
+            Current_block.true_to(cond, name_t, syntax_position_info)
         else:
-            self.last_triple = triple.triple('if-true', (cond,), string=name_t)
+            self.last_triple = triple.triple('if-true', (cond,), string=name_t,
+                                 syntax_position_info=syntax_position_info)
             self.next_conditional = name_t
             self.state = 'end_fall_through'
 
-    def false_to(self, cond, name_f):
+    def false_to(self, cond, name_f, syntax_position_info = None):
         r'''Branch to 'name_f' if `triple` 'cond' is false.
 
         True falls through.
 
         This method is only called on Current_block.
         '''
-        if self.more(): Current_block.false_to(cond, name_f)
+        if self.more():
+            Current_block.false_to(cond, name_f, syntax_position_info)
         else:
-            self.last_triple = triple.triple('if-false', (cond,), string=name_f)
+            self.last_triple = triple.triple('if-false', (cond,), string=name_f,
+                                 syntax_position_info=syntax_position_info)
             self.next_conditional = name_f
             self.state = 'end_fall_through'
 

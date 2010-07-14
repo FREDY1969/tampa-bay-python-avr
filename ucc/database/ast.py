@@ -265,12 +265,14 @@ class ast:
 
         if self.kind == 'if-true':
             arg_triples = self.compile_args()
-            block.Current_block.true_to(arg_triples[0], self.label)
+            block.Current_block.true_to(arg_triples[0], self.label,
+                                        self.get_syntax_position_info())
             return None
 
         if self.kind == 'if-false':
             arg_triples = self.compile_args()
-            block.Current_block.false_to(arg_triples[0], self.label)
+            block.Current_block.false_to(arg_triples[0], self.label,
+                                         self.get_syntax_position_info())
             return None
 
         if self.kind == 'series':

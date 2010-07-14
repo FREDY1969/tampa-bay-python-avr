@@ -30,10 +30,12 @@ class toggle(macro.macro):
                       .get_value('pin_number')
         port_label, bit_number = output_pin.digital_pin_lookup[pin_number]
         #print "toggle: port_label", port_label, ", bit_number", bit_number
-        ioreg_bit = ast.ast(kind='ioreg-bit',
-                            label='pin' + port_label, int1=bit_number)
+        ioreg_bit = ast.ast.from_parser(pin.get_syntax_position_info(),
+                                        kind='ioreg-bit',
+                                        label='pin' + port_label,
+                                        int1=bit_number)
         new_args = (
-            ast.ast.word('set-output-bit'),
+            ast.ast.word('set-output-bit', ast_node.get_syntax_position_info()),
             (ioreg_bit,),
         )
         return ast_node.macro_expand(fn_symbol, words_needed, new_args,

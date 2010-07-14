@@ -12,16 +12,25 @@ class repeat(macro.macro):
     def macro_expand(self, fn_symbol, ast_node, words_needed):
         #print "repeat.macro_expand"
         _, count, body = ast_node.args
+        syntax_position = line_start, column_start, _, _ = \
+          ast_node.get_syntax_position_info()
         loop_label = crud.gensym('repeat')
         if not count:
             #print "no count"
             new_args = (
-              ast.ast(kind='label', label=loop_label, expect='statement'),
+              ast.ast.from_parser(syntax_position,
+                                  kind='label', label=loop_label,
+                                  expect='statement'),
               body,
-              ast.ast(kind='jump', label=loop_label, expect='statement'),
+              ast.ast.from_parser(syntax_position,
+                                  kind='jump', label=loop_label,
+                                  expect='statement'),
             )
         else:
             count = count[0]
+            _, _, line_end, column_end = count.get_syntax_position_info()
+            head_syntax_position = \
+              line_start, column_start, line_end, column_end
             #print "count", count
             if count.kind == 'int':
                 assert count.int1 >= 0, \
@@ -36,10 +45,12 @@ class repeat(macro.macro):
                 test_label = ()
             else:
                 first_jmp = (
-                    ast.ast(kind='jump', label=test, expect='statement'),
+                  ast.ast.from_parser(syntax_position, kind='jump', label=test,
+                                                       expect='statement'),
                 )
                 test_label = (
-                  ast.ast(kind='label', label=test, expect='statement'),
+                  ast.ast.from_parser(syntax_position, kind='label', label=test,
+                                                       expect='statement'),
                 )
 
             loop_var = crud.gensym('repeat_var')
@@ -47,33 +58,47 @@ class repeat(macro.macro):
               symbol_table.symbol.create(loop_var, 'var', fn_symbol).id
             test = crud.gensym('repeat_test')
             new_args = (
-              ast.ast(ast.ast.word(symbol_table.get('set').id),
-                      (ast.ast.word(symbol_id),
-                       count,
-                      ),
-                      kind='call',
-                      expect='statement') \
+              ast.ast.from_parser(syntax_position,
+                                  ast.ast.word(symbol_table.get('set').id,
+                                               head_syntax_position),
+                                  (ast.ast.word(symbol_id,
+                                                head_syntax_position),
+                                   count,
+                                  ),
+                                  kind='call',
+                                  expect='statement') \
                  .prepare(fn_symbol, words_needed),
             ) + first_jmp + (
-              ast.ast(kind='label', label=loop_label, expect='statement'),
+              ast.ast.from_parser(syntax_position, kind='label',
+                                                   label=loop_label,
+                                                   expect='statement'),
             ) + body + (
-              ast.ast(ast.ast.word(symbol_table.get('set').id),
-                      (ast.ast.word(symbol_id),
-                       ast.ast(ast.ast.word(symbol_table.get('-').id),
-                               ast.ast.word(symbol_id),
-                               ast.ast(kind='int', int1=1),
-                               kind='call',
-                              ) \
-                          .prepare(fn_symbol, words_needed),
-                      ),
-                      kind='call',
-                      expect='statement') \
-                 .prepare(fn_symbol, words_needed),
+              ast.ast.from_parser(head_syntax_position,
+                                  ast.ast.word(symbol_table.get('set').id,
+                                               syntax_position),
+                                  (ast.ast.word(symbol_id,
+                                                head_syntax_position),
+                                   ast.ast.from_parser(head_syntax_position,
+                                       ast.ast.word(symbol_table.get('-').id,
+                                                    head_syntax_position),
+                                       ast.ast.word(symbol_id,
+                                                    head_syntax_position),
+                                       ast.ast.from_parser(head_syntax_position,
+                                                           kind='int', int1=1),
+                                       kind='call',
+                                     ) \
+                                     .prepare(fn_symbol, words_needed),
+                                  ),
+                                  kind='call',
+                                  expect='statement') \
+                     .prepare(fn_symbol, words_needed),
             ) + test_label + (
-              ast.ast(ast.ast.word(symbol_id, expect='condition'),
-                      kind='if-true',
-                      label=loop_label,
-                      expect='statement'),
+              ast.ast.from_parser(head_syntax_position,
+                                  ast.ast.word(symbol_id, head_syntax_position,
+                                               expect='condition'),
+                                  kind='if-true',
+                                  label=loop_label,
+                                  expect='statement'),
             )
 
         return ast_node.macro_expand(fn_symbol, words_needed, new_args,
