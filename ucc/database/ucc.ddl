@@ -425,7 +425,8 @@ create table reg_use_linkage (
     reg_use_1 int not null,
     reg_use_2 int not null,
 
-    is_segment bool not null default 0
+    is_segment bool not null default 0,
+    broken bool not null default 0
 );
 
 create table overlaps (
@@ -434,7 +435,7 @@ create table overlaps (
 );
 
 create table register_group (
-    id int not null primary key,
+    id integer not null primary key,
     reg_class int references reg_class(id),
     num_registers int,
     assigned_register varchar(20)

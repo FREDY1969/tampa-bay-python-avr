@@ -544,6 +544,8 @@ def figure_out_multi_use(subsets, sizes):
             rowcount = crud.execute('''
                 update reg_use
                    set reg_group_id =
+                     -- Set reg_group_id to min reg_group_id of all directly
+                     -- linked reg_uses.
                      (select min(min(ru1.reg_group_id), min(ru2.reg_group_id))
                         from reg_use_linkage
                              inner join reg_use ru1
@@ -566,7 +568,8 @@ def figure_out_multi_use(subsets, sizes):
                             and min(ru1.reg_group_id, ru2.reg_group_id) <
                                   reg_use.reg_group_id)
               ''')[0]
-            print("updated", rowcount, "reg_use.reg_group_ids", file = sys.stderr)
+            print("updated", rowcount, "reg_use.reg_group_ids",
+                  file = sys.stderr)
         print("done updating reg_group_ids", file = sys.stderr)
 
         # Gather the remaining reg_group_ids into register_group
@@ -576,6 +579,157 @@ def figure_out_multi_use(subsets, sizes):
           ''')
 
         print("done populating register_group", file = sys.stderr)
+
+    # Eliminate conflicts
+    with crud.db_transaction():
+        links1 = tuple(crud.read_as_tuples('reg_use_linkage',
+                                           'reg_use_1', 'reg_use_2'))
+        links = sorted(itertools.chain(links1, ((b, a) for a, b in links1)))
+        neighbors = dict((use, set(u[1] for u in uses))
+                         for use, uses
+                          in itertools.groupby(links, key=lambda row: row[0]))
+        print("neighbors", neighbors, file=sys.stderr)
+        it = crud.fetchall('''
+                 select ru1.reg_group_id, ru1.id as id1, ru2.id as id2
+                   from reg_use ru1
+                        inner join reg_use ru2
+                          on ru1.reg_group_id = ru2.reg_group_id
+                          and ru1.id < ru2.id
+                  where ru1.initial_reg_class notnull
+                    and ru2.initial_reg_class notnull
+                    and not exists (select null
+                                      from reg_class_subsets rcs
+                                     where rc1 = ru1.initial_reg_class
+                                       and rc2 = ru2.initial_reg_class
+                                        or rc2 = ru1.initial_reg_class
+                                       and rc1 = ru2.initial_reg_class)
+                     or ru1.kind = ru2.kind
+                    and ru1.ref_id = ru2.ref_id
+                  order by ru1.reg_group_id
+               ''', ctor_factory=crud.row.factory_from_cur)
+        for reg_group_id, conflicts \
+         in itertools.groupby(it, lambda row: row.reg_group_id):
+
+            # only for print ..., comment out with print
+            conflicts = tuple(conflicts)
+            print("reg_group_id", reg_group_id, "conflicts", conflicts,
+                  file=sys.stderr)
+
+            for ru_ids in split(conflicts, neighbors):
+                ru_qmarks = ', '.join(('?',) * len(ru_ids))
+                new_group_id = crud.execute('''
+                    insert into register_group (reg_class, num_registers)
+                    select aggr_rc_subset(initial_reg_class),
+                           aggr_num_regs(num_registers)
+                      from reg_use
+                     where id in ({})
+                  '''.format(ru_qmarks),
+                  ru_ids)[1]
+                print("new_group_id", new_group_id, file=sys.stderr)
+                crud.execute('''
+                    update reg_use
+                       set reg_group_id = ?
+                     where id in ({})
+                  '''.format(ru_qmarks),
+                  (new_group_id,) + ru_ids)
+            crud.delete('reg_group', id=reg_group_id)
+
+        crud.execute('''
+            update reg_use_linkage
+               set broken = 1
+             where (select ru1.reg_group_id != ru2.reg_group_id
+                      from reg_use ru1, reg_use ru2
+                     where ru1.id = reg_use_linkage.reg_use_1
+                       and ru2.id = reg_use_linkage.reg_use_2)
+         ''')
+
+def split(conflicts, neighbors):
+    r'''Yields sets of ru_ids for disjoint groups based on conflicts.
+
+        'conflicts' is a sequence of objects with 'id1' and 'id2' attributes.
+        'neighbors' is {id: {id}}
+
+        >>> class conflict:
+        ...     def __init__(self, id1, id2):
+        ...         self.id1, self.id2 = id1, id2
+        ...     def __repr__(self):
+        ...         return "conflict({}, {})".format(self.id1, self.id2)
+        >>> def pp(it):
+        ...     return sorted(sorted(x) for x in it)
+        >>> pp(split((conflict(1, 2), conflict(1, 3),
+        ...           conflict(2, 4), conflict(3, 4)),
+        ...          {}))
+        [[1, 4], [2, 3]]
+        >>> pp(split((conflict(1, 2), conflict(3, 4)),
+        ...          {1: {2, 3}, 2: {1, 4}, 3: {1, 4}, 4: {2, 3}}))
+        [[1, 3], [2, 4]]
+        >>> pp(split((conflict(1, 2), conflict(1, 3), conflict(1, 4),
+        ...           conflict(1, 5), conflict(2, 3), conflict(2, 5),
+        ...           conflict(3, 4), conflict(4, 5)),
+        ...          {}))
+        [[1], [2, 4], [3, 5]]
+        >>> pp(split((conflict(1, 2), conflict(1, 3), conflict(1, 4),
+        ...           conflict(1, 5), conflict(2, 3), conflict(2, 5),
+        ...           conflict(3, 4)),
+        ...          {}))
+        [[1], [2, 4], [3, 5]]
+    '''
+    d1 = collections.defaultdict(set)
+    for c in conflicts:
+        d1[c.id1].add(c.id2)
+        d1[c.id2].add(c.id1)
+
+    colors = {}                              # {id: color}
+    ids_by_color = {1: set(), 2: set()}      # {color: {id}}
+    last_color = 2
+
+    stack = []
+    def prune(max_colors):
+        again = True
+        while again:
+            again = False
+            ids = []
+            for k, v in tuple(d1.items()):
+                if k not in colors and len(v) <= max_colors - 1:
+                    again = True
+                    stack.insert(0, (k, v))
+                    del d1[k]
+                    for x in v: d1[x].remove(k)
+        print("prune({}): stack is".format(max_colors), stack, file=sys.stderr)
+
+    prune(2)
+
+    def pick_color(colors, id):
+        if len(colors) == 1: return colors.pop()
+        n = neighbors.get(id, frozenset())
+        return max(((c, len(ids_by_color[c] & n)) for c in colors),
+                   key=lambda t: t[1])[0]
+
+    while len(colors) < len(d1):
+        next_id, colored_conflicts, uncolored_conflicts = \
+            max(((k, v & colors.keys(), v - colors.keys())
+                 for k, v in d1.items()
+                 if k not in colors.keys()),
+                key=lambda t: (len(t[1]), len(t[2])))
+        ok_colors = ids_by_color.keys() - (colors[id]
+                                             for id in colored_conflicts)
+        if ok_colors:
+            color = pick_color(ok_colors, next_id)
+            colors[next_id] = color
+            ids_by_color[color].add(next_id)
+        else:
+            last_color += 1
+            ids_by_color[last_color] = set()
+            prune(len(ids_by_color))
+
+    for k, v in stack:
+        #print("split: unstacking", k, v, file=sys.stderr)
+        color = pick_color(ids_by_color.keys() - (colors[id] for id in v),
+                           k)
+        colors[k] = color
+        ids_by_color[color].add(k)
+
+    return ids_by_color.values()
 
 
 ######################### OLD figure_out_multi_use code ###################
