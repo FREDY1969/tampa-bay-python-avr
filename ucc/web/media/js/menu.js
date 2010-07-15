@@ -3,7 +3,22 @@
 	ucc.menu = {};
 	ucc.menu.handlers = {
 		'open-package': function () {
-			
+			$.getJSON('/ajax/fs/examples', function(data) {
+				var markup = $('<div class="center">\
+									<p>Please choose a Package:</p>\
+									<div class="margin"><select></select></div>\
+									<div class="margin"><input type="button" value="Ok" class="modal-ok-button" />\
+										<input type="button" value="Cancel" class="modal-cancel-button simplemodal-close" /></div>\
+								</div>');
+				$(data).each(function () {
+					$('select', markup).append('<option value="' + this + '">' + this + '</option>');
+				});
+				$('.modal-ok-button', markup).click(function () {
+					console.log($('select', markup).val());
+					$.modal.close();
+				});
+				$(markup).modal();
+			});
 		},
 		'save-current-word': function () {
 			

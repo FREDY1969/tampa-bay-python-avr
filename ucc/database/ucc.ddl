@@ -25,9 +25,11 @@ create table symbol_table (
     param_register varchar(255),
     address int,
     reg_class int,
+    num_registers int,
     register varchar(255),
-    register_est int,          -- Estimate of number of registers needed by
-                               -- this function.
+    register_est int,           -- Estimate of number of registers needed by
+                                -- this function.
+    fn_order real,
     flash_size int,
     ram_size int,
     far_size int,
@@ -204,8 +206,9 @@ create table blocks (
     last_triple_id int references triples(id), --FIX: doesn't seem to be used...
     next varchar(255) references blocks(name),
     next_conditional varchar(255) references blocks(name),
-    register_est int           -- Estimate of number of registers needed by
+    register_est int,          -- Estimate of number of registers needed by
                                -- this block.
+    block_order int
 );
 
 create unique index blocks_word_symbol_id_index
@@ -270,8 +273,8 @@ create table triples (
     column_end int
 );
 
-create index triple_block_id_index
-          on triples(block_id, use_count);
+create index triple_block_id_index on triples(block_id, use_count);
+create index triple_operator_index on triples(block_id, operator, use_count);
 
 create table triple_parameters (
     id integer not null primary key,
@@ -294,8 +297,8 @@ create table triple_parameters (
     parent_code_seq_id int,    -- references code_seq table in machine.db
     reg_class_for_parent int,  -- references reg_class table in machine db
     num_regs_for_parent int,
-    trashed bool,
-    delink bool,
+    trashed bool default 0,
+    delink bool default 0,
     needed_reg_class int,
     move_prior_to_needed bool not null default 0,
     move_needed_to_parent bool not null default 0,
@@ -320,12 +323,6 @@ create table triple_labels (
     primary key (triple_id, symbol_id)
 );
 
-create table gens (
-    block_id int not null references blocks(id),
-    symbol_id int not null references symbol_table(id),
-    triple_id int not null references triples(id)
-);
-
 create table triple_order_constraints (
     predecessor int not null references triples(id),
     successor int not null references triples(id),
@@ -337,6 +334,18 @@ create table triple_order_constraints (
 
 create index toc_successor_index
           on triple_order_constraints(successor, predecessor);
+
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- These are the tables for the (future) optimizer.
+-- (They are not used yet).
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+create table gens (
+    block_id int not null references blocks(id),
+    symbol_id int not null references symbol_table(id),
+    triple_id int not null references triples(id)
+);
 
 create table kills (
     block_id int not null references blocks(id),
@@ -358,20 +367,79 @@ create table outs (
     primary key (block_id, symbol_id, triple_id)
 );
 
-create table reg_map (
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- These are the tables used for register allocation.
+---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+create table reg_use (
+    -- This brings all of the register uses into one place and gives each one
+    -- a unique id.
+    --
+    -- The combination of kind and ref_id is designed to reflect the situations
+    -- where different registers are required.  The addition of position
+    -- uniquely identifieds the register use.
+
     id integer not null primary key,
     kind varchar(40) not null,
-        -- 'function' (includes tasks)
-        -- 'block'
+        -- 'triple-output'
         -- 'triple'
-    kind_id int not null,
-    reg_class int not null,     -- references reg_class(id) in machine db
-    reg_num int not null,
-    links_to int references reg_map(id)
+        -- 'function'
+        -- 'function-return'
+    ref_id int not null,
+        -- references triples(id) for 'triple-output' and 'triple'
+        -- references symbol_table(id) of function/task
+        --   for 'function' and 'function-return'
+    position_kind varchar(40),
+        -- 'parameter' or 'temp' for 'triple' kind.
+        -- 'parameter' or 'var' for 'function' kind.
+    position int,
+        -- NULL for 'triple-output' and 'function-return'
+        -- references triple_parameters(parameter_num) for 'triple'/'parameter'
+        -- references reg_requirements(num_needed) for 'triple'/'temp'
+        --   used in conjunction with initial_reg_class.
+        -- references symbol_table(id) of var for 'function'/'var'
+        -- references symbol_table(int1) for 'function'/'parameter'
+    initial_reg_class int references reg_class(id),
+    num_registers int,
+    is_definition bool not null default 0,
+    reg_group_id int references register_group(id),
+    assigned_register varchar(20),
+
+    -- only for 'triple-output' and 'triple':
+    --
+    -- collectively, these are the "time" element to determine overlaps.
+    block_id int references block_id(id),
+    abs_order_in_block int           -- copied from triples(abs_order_in_block)
 );
 
-create index reg_map_name on reg_map(kind, kind_id, reg_num);
-create index reg_map_links on reg_map(links_to, kind);
+create table reg_use_linkage (
+    -- Each row represents a link between two reg_uses, such that it would be
+    -- convenient if they shared the same register.
+    --
+    -- If is_segment:
+    --   reg_use_1.abs_order_in_block < reg_use_2.abs_order_in_block
+    id integer not null primary key,
+
+    -- these both reference reg_use(id) for level 1, else reg_use_linkage(id)
+    reg_use_1 int not null,
+    reg_use_2 int not null,
+
+    is_segment bool not null default 0
+);
+
+create table overlaps (
+    linkage_id int not null references reg_use_linkage(id),
+    reg_use_id int not null references reg_use(id)
+);
+
+create table register_group (
+    id int not null primary key,
+    reg_class int references reg_class(id),
+    num_registers int,
+    assigned_register varchar(20)
+);
+
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------

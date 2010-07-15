@@ -53,8 +53,9 @@ Lineno = 1
 def load(database_filename, pattern_filename):
     global Line, Lineno, Filename
     Filename = pattern_filename
-    with crud.db_connection(database_filename, False, False):
-        reg_class_by_name = dict(crud.read_as_tuples('reg_class', 'name', 'id'))
+    with crud.db_connection(database_filename) as db_conn:
+        reg_class_by_name = \
+          dict(db_conn.read_as_tuples('reg_class', 'name', 'id'))
         reg_class_by_name[None] = None
         with open(pattern_filename) as f:
             last_operator = None
@@ -68,7 +69,7 @@ def load(database_filename, pattern_filename):
                     Lineno += 1
                     Line = f.readline()
                 else:
-                    with crud.db_transaction():
+                    with db_conn.db_transaction():
                         components = Line.split(':')
                         if len(components) < 1:
                             raise SyntaxError("missing ':'",
@@ -83,7 +84,7 @@ def load(database_filename, pattern_filename):
                             last_operator = operator
                             preference = 1
 
-                        code_seq_id = crud.insert('code_seq',
+                        code_seq_id = db_conn.insert('code_seq',
                                         preference=preference,
                                         operator=operator)
 
@@ -98,7 +99,7 @@ def load(database_filename, pattern_filename):
                                     parse_component(component)
 
                                 if opcode != 'ans':
-                                    crud.insert('code_seq_parameter',
+                                    db_conn.insert('code_seq_parameter',
                                       code_seq_id=code_seq_id,
                                       parameter_num=i + 1,
                                       opcode=opcode,
@@ -111,14 +112,14 @@ def load(database_filename, pattern_filename):
                                       delink=delink)
 
                                     if output:
-                                        crud.update('code_seq',
+                                        db_conn.update('code_seq',
                                           {'id': code_seq_id},
                                           output_reg_class=
                                             reg_class_by_name[reg_class],
                                           num_output=num_regs,
                                           from_param_num=i + 1)
                                 else:
-                                    crud.update('code_seq',
+                                    db_conn.update('code_seq',
                                       {'id': code_seq_id},
                                       output_reg_class=
                                         reg_class_by_name[reg_class],
@@ -127,19 +128,19 @@ def load(database_filename, pattern_filename):
                         if len(components) > 2 and components[2].strip():
                             for req in components[2].split(','):
                                 reg_class, number = reg_req(req.strip())
-                                crud.insert('reg_requirements',
+                                db_conn.insert('reg_requirements',
                                   code_seq_id=code_seq_id,
                                   reg_class=reg_class_by_name[reg_class],
                                   num_needed=number)
 
                         for i, (label, opcode, operand1, operand2) \
                          in enumerate(read_insts(f)):
-                            crud.insert('code',
-                                        code_seq_id=code_seq_id,
-                                        inst_order=i + 1,
-                                        opcode=opcode,
-                                        operand1=operand1,
-                                        operand2=operand2)
+                            db_conn.insert('code',
+                                           code_seq_id=code_seq_id,
+                                           inst_order=i + 1,
+                                           opcode=opcode,
+                                           operand1=operand1,
+                                           operand2=operand2)
 
 Pattern_re = re.compile(r'''
       \s*

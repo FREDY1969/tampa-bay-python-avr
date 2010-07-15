@@ -356,7 +356,7 @@ def delete(symbol):
 
     This is used to delete the results from a prior compile run.
     '''
-    block_ids = crud.read_column('blocks', 'id', word_symbol_id=symbol)
+    block_ids = tuple(crud.read_column('blocks', 'id', word_symbol_id=symbol))
     if block_ids:
         crud.delete('gens', block_id=block_ids)
         crud.delete('kills', block_id=block_ids)

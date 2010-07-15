@@ -11,20 +11,43 @@ def write(words, package_dir, filetype):
     filename = os.path.join(package_dir, filetype + '.hex')
     with open(filename, 'wt', encoding='ascii', newline='\r\n') as hex_file:
         generated_something = False
-        for address, bytes in words:
-            bytes_iter = iter(bytes)
-            for i in itertools.count():
-                data_hex = ''.join("{:02x}".format(n)
-                                   for n in itertools.islice(bytes_iter, 16))
-                if not data_hex: break
-                line = "{:02x}{:04x}00{}" \
-                         .format(len(data_hex)//2, address + i * 16, data_hex)
-                hex_file.write(":{}{:02x}\n".format(line, check_sum(line)))
-                generated_something = True
-                if len(data_hex) < 32: break 
+        for address, bytes in split(words, 16):
+            data_hex = ''.join("{:02x}".format(n) for n in bytes)
+            line = "{:02x}{:04x}00{}" \
+                     .format(len(data_hex)//2, address, data_hex)
+            hex_file.write(":{}{:02x}\n".format(line, check_sum(line)))
+            generated_something = True
         hex_file.write(":00000001FF\n")
     if not generated_something:
         os.remove(filename)
+
+def split(it, size = 16):
+    r'''Generates address, bytes where len(bytes) <= size.
+
+    'it' is a sequence of (address, byte).
+
+    Terminates bytes if there are any jumps in the address produced by it.
+
+        >>> tuple(split(()))
+        ()
+        >>> tuple(split((x, x) for x in range(1, 30)))
+        ((1, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]), (17, [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]))
+    '''
+    first_address = None
+    last_address = None
+    bytes = []
+    for address, byte in it:
+        if first_address is None:
+            first_address = address
+            bytes = [byte]
+        elif last_address + 1 != address or len(bytes) >= size:
+            if bytes: yield first_address, bytes
+            first_address = address
+            bytes = [byte]
+        else:
+            bytes.append(byte)
+        last_address = address
+    if bytes: yield first_address, bytes
 
 def byte_reverse(n):
     r'''Reverses the two bytes in a 16 bit number.

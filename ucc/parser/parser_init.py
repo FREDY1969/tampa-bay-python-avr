@@ -99,7 +99,6 @@ def test(parser_module, scanner_module, text):
 
     '''
     import pprint
-    import io
     ans = parse(parser_module, scanner_module, 'test', True, 0, text)
     if isinstance(ans, set): ans = list(ans)
     pprint.pprint(ans)
