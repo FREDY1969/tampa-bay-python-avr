@@ -9,7 +9,7 @@ def main(argv):
     architecture = argv[1]
     processors = argv[2:]
     
-    db_name = "%s.db" % architecture # basename?
+    db_name = "%s.db" % architecture
     if os.path.exists(db_name):
         print("Attepting to remove %s..." % db_name)
         remove_db(db_name)
