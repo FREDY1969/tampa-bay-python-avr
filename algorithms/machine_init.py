@@ -9,28 +9,27 @@ setpath.setpath(__file__, remove_first = True)
 from ucc.database import crud
 
 def init():
-    crud.Db_conn = crud.db.connect('avr.db')
-    crud.Db_cur = crud.Db_conn.cursor()
+    db_conn = crud.db_connection('avr.db')
     try:
         # insert 0's for m=0:
 
-        crud.Db_cur.execute("""
+        db_conn.execute("""
           insert into worst (N, C, m, value)
             select N.id, C.id, 0, 0 from reg_class N cross join reg_class C
         """)
 
-        crud.Db_conn.commit()
+        db_conn.commit()
 
-        registers = crud.read_column('register', 'name')
+        registers = db_conn.read_column('register', 'name')
         aliases = {}
         for R in registers:
-            aliases[R] = frozenset(crud.read_column('alias', 'r2', r1=R))
+            aliases[R] = frozenset(db_conn.read_column('alias', 'r2', r1=R))
 
-        reg_classes = crud.read_column('reg_class', 'id')
+        reg_classes = db_conn.read_column('reg_class', 'id')
         regs_in_class = {}
         for C in reg_classes:
             regs_in_class[C] = \
-              frozenset(crud.read_column('reg_in_class', 'reg', reg_class=C))
+              frozenset(db_conn.read_column('reg_in_class', 'reg', reg_class=C))
         print('reg_classes', reg_classes)
 
         for N in reg_classes:
@@ -51,28 +50,26 @@ def init():
                             if R not in S0:
                                 worsts1[S0.union((R,))] = \
                                     regs.union(aliases[R]).intersection(N_regs)
-                    crud.insert('worst', N=N, C=C, m=m,
-                                value=max(len(regs)
-                                          for regs in worsts1.values()))
+                    db_conn.insert('worst', N=N, C=C, m=m,
+                                   value=max(len(regs)
+                                             for regs in worsts1.values()))
                     worsts0 = worsts1
-            crud.Db_conn.commit()
+            db_conn.commit()
         worst0 = worst1 = None
     except:
-        crud.Db_conn.rollback()
+        db_conn.rollback()
         raise
     finally:
-        crud.Db_cur.close()
-        crud.Db_conn.close()
+        db_conn.close()
 
 def class_compares():
-    crud.Db_conn = crud.db.connect('avr.db')
-    crud.Db_cur = crud.Db_conn.cursor()
+    db_conn = crud.db_connection('avr.db')
     try:
-        reg_classes = crud.read_column('reg_class', 'id')
+        reg_classes = db_conn.read_column('reg_class', 'id')
         aliases = {}
         for C in reg_classes:
             aliases[C] = \
-              frozenset(crud.read_column('class_alias', 'reg', reg_class=C))
+              frozenset(db_conn.read_column('class_alias', 'reg', reg_class=C))
 
         for C1, C2 in itertools.combinations(reg_classes, 2):
             if aliases[C1] == aliases[C2]:
@@ -85,6 +82,5 @@ def class_compares():
                 print(C1, '*** UNKNOWN ***', C2)
 
     finally:
-        crud.Db_cur.close()
-        crud.Db_conn.close()
+        db_conn.close()
 

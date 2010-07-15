@@ -82,7 +82,7 @@ def dump_triples(db_cur, block_id):
 
     for t in triple_list:
         if not t.tagged:
-            t.write(db_cur, triples)
+            t.write(db_cur)
 
 
 class triple:
@@ -104,22 +104,27 @@ class triple:
         else:
             self.symbol = get_symbol(db_cur, symbol_id)[0]
         self.string = string
-        db_cur.execute("""select parameter_id
+        db_cur.execute("""select parameter_id, trashed, delink
                             from triple_parameters
                            where parent_id = ?
                            order by parameter_num
                        """,
                        (self.id,))
-        self.parameter_ids = tuple(x[0] for x in db_cur)
+        self.parameter_ids = tuple(db_cur)
         self.written = False
 
     def tag(self, triples):
-        self.parameters = tuple(triples[id] for id in self.parameter_ids)
-        for t in self.parameters: t.tagged = True
+        self.parameters = \
+          tuple((triples[id], bool(trashed), bool(delink))
+                for id, trashed, delink in self.parameter_ids)
+        for t, _, _ in self.parameters: t.tagged = True
 
-    def write(self, db_cur, triples, indent = 2):
+    def write(self, db_cur, info = '', indent = 2):
         if self.written:
-            print('{}{}.'.format(' ' * indent, self.id))
+            if info:
+                print('{}{}: {}.'.format(' ' * indent, self.id, info))
+            else:
+                print('{}{}.'.format(' ' * indent, self.id))
         else:
             self.written = True
 
@@ -139,7 +144,7 @@ class triple:
                                 .format(get_symbol(db_cur, x[0])[0])
                               for x in db_cur.fetchall()])
 
-            print("{indent}{id}: [{uses}] {op}{int1}{int2}{sym}{st}{pred}{lbls}"
+            print("{indent}{id}: [{uses}] {op}{int1}{int2}{sym}{st}{pred}{info}{lbls}"
                     .format(indent=' ' * indent,
                             id=self.id,
                             uses=self.use_count,
@@ -150,9 +155,14 @@ class triple:
                             st=' ' + repr(self.string) if self.string else '',
                             pred=' ({})'.format(predecessors) if predecessors
                                                               else '',
+                            info=' {} '.format(info) if info else '',
                             lbls=labels))
-            for param in self.parameters:
-                param.write(db_cur, triples, indent + 2)
+            for param, trashed, delink in self.parameters:
+                if trashed and delink: info = 'trashed delink'
+                elif trashed: info = 'trashed'
+                elif delink: info = 'delink'
+                else: info = ''
+                param.write(db_cur, info, indent + 2)
 
 def get_symbol(db_cur, id):
     if Debug: print("get_symbol: ", id)

@@ -16,36 +16,35 @@ class function:
         self.collect_params()
 
     def collect_calls(self):
-        crud.Db_cur.execute('''
-            select t.id, tp.id, tp.needed_reg_class, tp.trashed
-              from triple_parameters tp
-                     inner join triples t
-                        on tp.parameter_id = t.id
-             where t.kind = 'call_direct'
-               and t.symbol_id = ?
-             order by t.id
-         ''', (self.id,))
-        self.calls = tuple(crud.Db_cur.fetchall())
+        self.calls = tuple(
+                       crud.fetchall('''
+                           select t.id, tp.id, tp.needed_reg_class, tp.trashed
+                             from triple_parameters tp
+                                    inner join triples t
+                                       on tp.parameter_id = t.id
+                            where t.kind = 'call_direct'
+                              and t.symbol_id = ?
+                            order by t.id
+                        ''', (self.id,)))
 
     def collect_params(self):
         # get tuple of unique triple ids (self.calls already sorted on t[0]):
         triple_ids = \
           tuple(k for k, g in itertools.groupby(self.calls, key=lambda t: t[0]))
-        crud.Db_cur.execute('''
-            select tp.parameter_num, t.reg_class
-              from triples t
-                     inner join triple_parameters tp
-                        on t.id = tp.parent_id
-             where t.id in ({})
-             order by tp.parameter_num, t.reg_class
-         '''.format(', '.join(('?',) * len(triple_ids)),),
-         triple_ids)
+        it = crud.fetchall('''
+                 select tp.parameter_num, t.reg_class
+                   from triples t
+                          inner join triple_parameters tp
+                             on t.id = tp.parent_id
+                  where t.id in ({})
+                  order by tp.parameter_num, t.reg_class
+              '''.format(', '.join(('?',) * len(triple_ids)),),
+              triple_ids)
         # {parameter_num: (reg_class, ...)}
         self.params_provided_reg_classes = \
           {parameter_num: tuple(t[1] for t in group)
            for parameter_num, group
-            in itertools.groupby(crud.Db_cur.fetchall(),
-                                 key = lambda t: t[0])}
+            in itertools.groupby(it, key = lambda t: t[0])}
 
 def make_local(t):
     id, label, kind, int1 = t
@@ -56,7 +55,7 @@ class ret:
         self.id = symbol_id
 
     def gather_uses(self):
-        crud.Db_cur.execute('''
+        crud.fetchall('''
             select tp.FIX
               from blocks b
                      inner join triples t

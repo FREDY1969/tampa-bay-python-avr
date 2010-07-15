@@ -58,6 +58,9 @@ em {
 	float: right;
 }
 
+.margin {
+	margin:15px 0;
+}
 .nomargin {
 	margin:0;
 }
@@ -148,7 +151,7 @@ a:hover {
 #simplemodal-container {
 	background-color:#eee;
 	border:8px solid #e0e0e0;
-	padding:12px;
+	padding:0 15px;
 }
 #simplemodal-container a.modalCloseImg {
 	background:url(/images/x.png) no-repeat;

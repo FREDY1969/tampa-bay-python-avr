@@ -31,7 +31,7 @@ class toggle(macro.macro):
         port_label, bit_number = output_pin.digital_pin_lookup[pin_number]
         #print "toggle: port_label", port_label, ", bit_number", bit_number
         ioreg_bit = ast.ast(kind='ioreg-bit',
-                            label='io.pin' + port_label, int1=bit_number)
+                            label='pin' + port_label, int1=bit_number)
         new_args = (
             ast.ast.word('set-output-bit'),
             (ioreg_bit,),

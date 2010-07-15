@@ -185,7 +185,7 @@ def delete(block_ids):
 
     This also deletes the data associated with the triples.
     '''
-    triple_ids = crud.read_column('triples', 'id', block_id=block_ids)
+    triple_ids = tuple(crud.read_column('triples', 'id', block_id=block_ids))
     if triple_ids:
         crud.delete('triple_parameters', parent_id=triple_ids)
         crud.delete('triple_order_constraints', predecessor=triple_ids)

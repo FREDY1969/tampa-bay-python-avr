@@ -6,11 +6,11 @@ These are machine independant, taking their information from the machine
 database.
 
     >>> from ucc.codegen import registers
+    >>> from ucc.database import crud
     >>> import os
     >>> with crud.db_connection(os.path.join(os.path.dirname(__file__),
-    ...                                      'avr.db'),
-    ...                         False, False):
-    ...     registers.init()
+    ...                                      'avr.db')) as db_conn:
+    ...     registers.init(db_conn)
     >>> a = registers.reg_usage.make(single=4, immed=2)
     >>> a
     <reg_usage immed=2 single=4>
@@ -24,14 +24,13 @@ database.
 import collections
 import itertools
 
-from ucc.database import crud
 
 Debug = False
 
-def init():
+def init(db_conn):
     global reg_usage, Reg_classes
 
-    for d in crud.read_as_dicts('vertex'): vertex(d)
+    for d in db_conn.read_as_dicts('vertex'): vertex(d)
     for v in Vertex_by_id.values():
         v.parent_vertex = Vertex_by_id[v.parent] if v.parent else None
         if v.parent_vertex:
@@ -41,8 +40,8 @@ def init():
                                     lambda v: (v.parent,) if v.parent else ())):
         v.topo_order = i + 1
 
-    Reg_classes = {d['name']: reg_class(d)
-                   for d in crud.read_as_dicts('reg_class')}
+    Reg_classes = {d['name']: reg_class(db_conn, d)
+                   for d in db_conn.read_as_dicts('reg_class')}
 
     for rc in Reg_classes.values():
         # These are in order from biggest to smallest in size
@@ -134,13 +133,15 @@ def init():
             return self.make(**ans)
 
 class reg_class:
-    def __init__(self, fields):
+    def __init__(self, db_conn, fields):
         for attr_name, value in fields.items():
             setattr(self, attr_name, value)
         self.registers = \
-          frozenset(crud.read_column('reg_in_class', 'reg', reg_class=self.id))
+          frozenset(db_conn.read_column('reg_in_class', 'reg',
+                                        reg_class=self.id))
         self.aliases = \
-          frozenset(crud.read_column('class_alias', 'reg', reg_class=self.id))
+          frozenset(db_conn.read_column('class_alias', 'reg',
+                                        reg_class=self.id))
         self.vertex = Vertex_by_id[self.v]
         self.vertex.add_reg_class(self)
 
