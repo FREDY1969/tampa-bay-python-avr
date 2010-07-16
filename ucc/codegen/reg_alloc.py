@@ -13,7 +13,7 @@ from ucc.codegen import code_seq
 class aggr_rc_subset:
     r'''Sqlite3 aggregate function for aggr_rc_subset.
     
-    Tries to produce the rc that is a subset to the most submitted entries.
+    Produces the rc that is a subset of each of the submitted entries.
 
         >>> subsets = {(1, 1): 1, (1, 3): 1, (3, 1): 1, 
         ...            (2, 2): 2, (2, 3): 2, (3, 2): 2, (3, 3): 3}
@@ -23,12 +23,21 @@ class aggr_rc_subset:
         >>> rcs.step(2)
         >>> rcs.step(2)
         >>> rcs.step(2)
+        >>> rcs.step(3)
+        >>> rcs.finalize()
+        2
+        >>> rcs = aggr_rc_subset(subsets)
+        >>> rcs.step(2)
+        >>> rcs.step(2)
+        >>> rcs.step(2)
         >>> rcs.step(2)
         >>> rcs.step(3)
         >>> rcs.step(1)
         >>> rcs.step(1)
         >>> rcs.finalize()
-        2
+        Traceback (most recent call last):
+           ...
+        AssertionError: aggr_rc_subset -- no subset possible
     '''
     def __init__(self, subsets = None):
         if subsets: self.subsets = subsets
@@ -41,28 +50,14 @@ class aggr_rc_subset:
 
     def finalize(self):
         if not self.rc_counts: return None
-        if len(self.rc_counts) == 1: return next(iter(self.rc_counts.keys()))
 
-        # Eliminate all disjoint rc's with the smallest cost to keep.
-        while len(self.rc_counts) > 1:
-            keep_cost = collections.defaultdict(int)
-            for rc1, rc2 in itertools.combinations(self.rc_counts.keys(), 2):
-                if (rc1, rc2) not in self.subsets:
-                    keep_cost[rc1] += self.rc_counts[rc2]
-                    keep_cost[rc2] += self.rc_counts[rc1]
-            if not keep_cost: break
-            rc_to_dump = max(keep_cost.items(), key = lambda item: item[1])[0]
-            print("keep_cost:", keep_cost, "rc_to_dump:", rc_to_dump,
-                  file=sys.stderr)
-            del self.rc_counts[rc_to_dump]
-
-        # Return subset of all remaining rc's:
+        # Return subset of all rc's:
         ans = None
-        for rc in self.rc_counts.keys():
+        for rc in self.rc_counts:
             if ans is None: ans = rc
             else:
                 ans = self.subsets.get((ans, rc))
-                assert ans is not None, "aggr_rc_subset: internal logic error"
+                assert ans is not None, "aggr_rc_subset -- no subset possible"
         return ans
 
 class aggr_num_regs:
