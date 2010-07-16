@@ -642,6 +642,19 @@ def figure_out_multi_use(subsets, sizes):
                      where ru1.id = reg_use_linkage.reg_use_1
                        and ru2.id = reg_use_linkage.reg_use_2)
          ''')
+    set_reg_classes()
+
+def set_reg_classes():
+    with crud.db_transaction():
+        crud.execute('''
+            update register_group
+               set reg_class = (select aggr_rc_subset(initial_reg_class)
+                                  from reg_use ru1
+                                 where ru1.reg_group_id = register_group.id),
+                   num_registers = (select aggr_num_regs(num_registers)
+                                      from reg_use ru2
+                                     where ru2.reg_group_id = register_group.id)
+         ''')
 
 def split(conflicts, neighbors):
     r'''Yields sets of ru_ids for disjoint groups based on conflicts.
@@ -951,10 +964,28 @@ def split(conflicts, neighbors):
 def create_reg_map(subsets, sizes, code_seqs):
     with crud.db_transaction():
         # FIX: This is a temp kludge to get blinky2 going!
-        sequencer = iter(itertools.count(24, step=2))
-        for id in crud.read_column('register_group', 'id'):
-            crud.update('register_group', {'id': id},
-                        assigned_register="d{}".format(next(sequencer)))
+        regs_assigned = set()
+        for v_height in range(1, 1 + max(crud.read_column('vertex', 'height'))):
+            for rc in crud.fetchall('''
+                          select rc.id
+                            from vertex v
+                                 inner join reg_class rc
+                                   on v.id = rc.v
+                           where v.height = ?
+                        ''', (v_height,)):
+                regs = sorted(set(crud.read_column('reg_in_class', 'reg',
+                                                   reg_class=rc)) \
+                                - regs_assigned)
+                new_assigned = set()
+                for rg in crud.read_column('register_group', 'id',
+                                           reg_class=rc):
+                    reg = regs.pop(0)
+                    new_assigned.add(reg)
+                    crud.update('register_group', {'id': rg},
+                                assigned_register=reg)
+                if new_assigned:
+                    regs_assigned.update(crud.read_column('alias', 'r2',
+                                                          r1=new_assigned))
 
         # Copy to reg_use table
         crud.execute('''
