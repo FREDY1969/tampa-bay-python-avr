@@ -692,6 +692,18 @@ def figure_out_multi_use(subsets, sizes):
 
         print("done function/var -> triple-output", file = sys.stderr)
 
+        # delete unused block-*-marker reg_uses
+        crud.execute('''
+            delete from reg_use
+             where kind in ('block-start-marker', 'block-end-marker')
+               and not exists (select null
+                                 from reg_use_linkage rul
+                                where reg_use_1 = reg_use.id
+                                   or reg_use_2 = reg_use.id)
+          ''')
+
+        print("done deleting unused block-*-marker reg_uses", file = sys.stderr)
+
         # function -> block-*-marker linkages
         #   function local variable linkage to block-*-markers for those
         #   variables.
