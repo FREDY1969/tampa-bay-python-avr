@@ -5,7 +5,7 @@
 r'''Dumps the icode database in a simple ascii format.
 
 fun_name.id: name [next id [/ id]] (predecessor ids)
-  id: [use_count] operator int1 int2 symbol string (predecessor ids) => sym
+  id: >abs_order_in_block [use_count] operator int1 int2 symbol string (predecessor ids) => sym
     child1
     child2
 
@@ -68,7 +68,8 @@ def dump_triples(db_cur, block_id):
     if Debug: print("dump_triples: ", block_id)
     # Do triples for block:
     db_cur.execute("""
-        select id, use_count, operator, int1, int2, symbol_id, string
+        select id, abs_order_in_block, use_count, operator, int1, int2,
+               symbol_id, string
           from triples
          where block_id = ?
          order by id""",
@@ -92,9 +93,10 @@ class triple:
     triple2 = None
     tagged = False
 
-    def __init__(self, db_cur, id, use_count, operator, int1, int2, symbol_id,
-                       string):
+    def __init__(self, db_cur, id, abs_order_in_block, use_count, operator,
+                       int1, int2, symbol_id, string):
         self.id = id
+        self.abs_order_in_block = abs_order_in_block
         self.use_count = use_count
         self.operator = operator
         self.int1 = int1
@@ -144,9 +146,11 @@ class triple:
                                 .format(get_symbol(db_cur, x[0])[0])
                               for x in db_cur.fetchall()])
 
-            print("{indent}{id}: [{uses}] {op}{int1}{int2}{sym}{st}{pred}{info}{lbls}"
+            print("{indent}{id}: >{abs_order_in_block} [{uses}] "
+                  "{op}{int1}{int2}{sym}{st}{pred}{info}{lbls}"
                     .format(indent=' ' * indent,
                             id=self.id,
+                            abs_order_in_block=self.abs_order_in_block,
                             uses=self.use_count,
                             op=self.operator,
                             int1=' ' + str(self.int1) if self.int1 else '',

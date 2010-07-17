@@ -286,7 +286,7 @@ create table triple_parameters (
     ghost bool default 0,      -- set to 1 if child already evaluated
                                -- (only during order_triples, later
                                --  invalidated by delink)
-    abs_order_in_block int,    -- abs order for all triples in block
+    abs_order_in_block int,    -- abs order of child for all triples in block
     parent_seq_num int,        -- seq_num for multiple parents of same triple
                                -- (in abs_order_in_block order).
                                -- (these do not re-start at 1 for each set of
@@ -326,7 +326,9 @@ create table triple_labels (
 create table triple_order_constraints (
     predecessor int not null references triples(id),
     successor int not null references triples(id),
-    depth int not null default 1,
+    depth int not null default 1,       -- number of triple_order_constraint
+                                        -- links from predecessor to successor
+                                        -- for transitive links.
     orig_pred int references triples(id),
     orig_succ int references triples(id),
     primary key (predecessor, successor, orig_pred, orig_succ)
@@ -386,27 +388,32 @@ create table reg_use (
         -- 'triple'
         -- 'function'
         -- 'function-return'
+        -- 'block-start-marker'
+        -- 'block-end-marker'
     ref_id int not null,
         -- references triples(id) for 'triple-output' and 'triple'
         -- references symbol_table(id) of function/task
         --   for 'function' and 'function-return'
+        -- references blocks(id) for 'block-start-marker' and 'block-end-marker'
     position_kind varchar(40),
         -- 'parameter' or 'temp' for 'triple' kind.
-        -- 'parameter' or 'var' for 'function' kind.
+        -- 'parameter' or 'var' for 'function' and 'block-*-marker' kinds.
     position int,
         -- NULL for 'triple-output' and 'function-return'
         -- references triple_parameters(parameter_num) for 'triple'/'parameter'
         -- references reg_requirements(num_needed) for 'triple'/'temp'
         --   used in conjunction with initial_reg_class.
-        -- references symbol_table(id) of var for 'function'/'var'
-        -- references symbol_table(int1) for 'function'/'parameter'
+        -- references symbol_table(id) of var
+        --   for 'function' or 'block-*-marker'/'var'
+        -- references symbol_table(int1) of parameter
+        --   for 'function' or 'block-*-marker'/'parameter'
     initial_reg_class int references reg_class(id),
     num_registers int,
     is_definition bool not null default 0,
     reg_group_id int references register_group(id),
     assigned_register varchar(20),
 
-    -- only for 'triple-output' and 'triple':
+    -- only for 'triple-output', 'triple' and 'block-*-marker':
     --
     -- collectively, these are the "time" element to determine overlaps.
     block_id int references block_id(id),
@@ -427,6 +434,14 @@ create table reg_use_linkage (
 
     is_segment bool not null default 0,
     broken bool not null default 0
+);
+
+create table last_locals (
+    block_id int not null references blocks(id),
+    symbol_id int not null references symbol_table(id),
+    triple_id int not null references triples(id),
+    tp_parameter_num int,       -- null to match 'triple-output'
+    primary key (block_id, symbol_id)
 );
 
 create table overlaps (
