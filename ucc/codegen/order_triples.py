@@ -7,9 +7,45 @@ from ucc.database import crud
 
 Debug = False
 
+def order_children():
+    update_order_constraints()
+
+    with crud.db_transaction():
+        iterations = 0
+        re_triple_count = re_block_count = re_fun_count = 0
+        tp_order_count = 1  # force calc_reg_est_for_triples first time through
+        tl_triple_order_count = 0
+        total = 1   # force first run through the loop
+        while total:
+            total = 0
+            if tp_order_count or re_fun_count:
+                re_triple_count = calc_reg_est_for_triples()
+                total += re_triple_count
+            else:
+                re_triple_count = 0
+            if re_triple_count:
+                re_block_count = calc_reg_est_for_blocks()
+                total += re_block_count
+            else:
+                re_block_count = 0
+            if re_block_count:
+                re_fun_count = calc_reg_est_for_functions()
+                total += re_fun_count
+            else:
+                re_fun_count = 0
+            if re_triple_count:
+                tp_order_count = update_triple_parameter_orders()
+                total += tp_order_count
+            else:
+                tp_order_count = 0
+            iterations += 1
+        update_top_level_triple_orders()
+    calc_master_order()
+    return iterations
+
 def update_order_constraints():
     with crud.db_transaction():
-        propogate_links()
+        print("propogate_links iterations:", propogate_links(), file=sys.stderr)
         delete_extranious_links()
         add_transitive_links()
 
@@ -51,15 +87,21 @@ def propogate_links():
 
 def delete_extranious_links():
     # When node A has both the predecessor and successor of a constraint as
-    # (deep) children, we don't need predecessor constraints from an outside
-    # node B, since it doesn't matter whether B is done before or after A.
-    # (This doesn't apply to outside successor links, where the order does
-    # matter).  Note that in this case node A will have a constraint showing A
-    # as both predecessor and successor.  This is how we'll identify these
-    # nodes.
+    # (deep) children; we don't need predecessor constraints from an outside
+    # node B that might be sharing those children, since it doesn't matter
+    # whether B is done before or after A (in either case the predecessor gets
+    # done before the successor: B -> A runs P in B, then S in A, and A -> B
+    # runs P and S in A).
+    #
+    # This doesn't apply to outside successor links.  In this case, the order
+    # does matter (B -> A runs S in B, then P in A).
+    #
+    # Note that in this case node A will have a constraint showing A as both
+    # predecessor and successor.  This is how we'll identify these nodes.
     #
     # So delete all links from predecessors to nodes that link the predecessor
-    # to themselves as the successor.
+    # to themselves as the successor.  (This also deletes nodes that have
+    # predecessor = successor).
     crud.execute('''
         delete from triple_order_constraints
          where exists (select null
@@ -76,11 +118,12 @@ def delete_extranious_links():
         delete from triple_order_constraints
          where predecessor = successor
             or (not exists (
-                    -- child relationship between predecessor and successor
+                    -- sibling relationship between predecessor and successor
                     select null
                       from triple_parameters ptp
-                             inner join triple_parameters stp
-                               on ptp.parent_id = stp.parent_id
+                           inner join triple_parameters stp
+                             on ptp.parent_id = stp.parent_id
+                             and ptp.parameter_num != stp.parameter_num
                      where ptp.parameter_id = predecessor
                        and stp.parameter_id = successor)
 
@@ -88,10 +131,11 @@ def delete_extranious_links():
                         -- predecessor and successor top-levels for same block
                         select null
                           from triples pt
-                                 inner join triples st
-                                   on pt.block_id = st.block_id
-                                   and pt.use_count = 0
-                                   and st.use_count = 0
+                               inner join triples st
+                                 on pt.block_id = st.block_id
+                                 and pt.use_count = 0
+                                 and st.use_count = 0
+                                 and pt.id != st.id
                          where pt.id = predecessor
                            and st.id = successor))
       ''')
@@ -129,42 +173,6 @@ def add_transitive_links():
                      (depth,))[0]
         if rowcount == 0:
             return depth
-
-def order_children():
-    update_order_constraints()
-
-    with crud.db_transaction():
-        iterations = 0
-        re_triple_count = re_block_count = re_fun_count = 0
-        tp_order_count = 1  # force calc_reg_est_for_triples first time through
-        tl_triple_order_count = 0
-        total = 1   # force first run through the loop
-        while total:
-            total = 0
-            if tp_order_count or re_fun_count:
-                re_triple_count = calc_reg_est_for_triples()
-                total += re_triple_count
-            else:
-                re_triple_count = 0
-            if re_triple_count:
-                re_block_count = calc_reg_est_for_blocks()
-                total += re_block_count
-            else:
-                re_block_count = 0
-            if re_block_count:
-                re_fun_count = calc_reg_est_for_functions()
-                total += re_fun_count
-            else:
-                re_fun_count = 0
-            if re_triple_count:
-                tp_order_count = update_triple_parameter_orders()
-                total += tp_order_count
-            else:
-                tp_order_count = 0
-            iterations += 1
-        update_top_level_triple_orders()
-    calc_master_order()
-    return iterations
 
 def calc_reg_est_for_triples():
     r'''Calc triples.register_est.
@@ -452,6 +460,12 @@ def calc_tree_sizes():
 
 def calc_abs_offsets():
     r'''Calculate abs_offsets for top-level triples and triple_parameters.
+
+    The abs_offset is the offset from the start of the block to the tree rooted
+    at that node.
+
+    The abs_offsets stored in the triple_parameters stand for the parameter_id
+    tree.
     '''
 
     # first for top-level triples:
@@ -514,8 +528,13 @@ def mark_ghost_links():
 
 def calc_abs_order_in_block():
     r'''Calc abs_order_in_block for triples and triple_parameters.
+
+    The abs_order_in_block in triple_parameters is for the parameter_id
+    triple.  This is later copied to the triples in reg_alloc.py.
     '''
-    # first for top-level triples:
+    # first for top-level triples.  Note that the root node is always
+    # evaluated last, so we just add the tree_size to the abs_offset of the
+    # start of the tree:
     crud.execute('''
         update triples
            set abs_order_in_block = abs_offset + tree_size
@@ -538,9 +557,9 @@ def calc_parent_seq_num():
     r'''Calculate triple_parameters.parent_seq_num.
 
     The parent_seq_num gives sequential numbers to all parents of the same
-    triple.  The numbers are in the order that the parameters will be used in
-    the code generation.  But the numbers do not start from 1 for each set of
-    parents...
+    triple.  The numbers are in the order that the triple_parameters will be
+    used in the code generation.  But the numbers do not start from 1 for each
+    set of parents...
     '''
 
     # Create table to assign sequential numbers to sorted triple_parameters.

@@ -7,7 +7,7 @@ import sys   # for debug traces
 import itertools
 import collections
 
-from ucc.database import crud, triple2
+from ucc.database import crud
 from ucc.codegen import code_seq
 
 class aggr_rc_subset:
@@ -259,7 +259,7 @@ def figure_out_multi_use(subsets, sizes):
                block_id, abs_order_in_block)
               select 'triple', t.id, 'parameter', csp.parameter_num,
                      csp.reg_class, csp.num_registers,
-                     t.block_id, tp.abs_order_in_block
+                     t.block_id, t.abs_order_in_block
                 from triples t
                      inner join triple_parameters tp
                        on t.id = tp.parent_id
@@ -297,7 +297,7 @@ def figure_out_multi_use(subsets, sizes):
               (kind, ref_id, position_kind, position,
                block_id, abs_order_in_block)
               select 'triple', t.id, 'parameter', tp.parameter_num,
-                     t.block_id, tp.abs_order_in_block
+                     t.block_id, t.abs_order_in_block
                 from triples t
                      inner join triple_parameters tp
                        on t.id = tp.parent_id
@@ -338,7 +338,7 @@ def figure_out_multi_use(subsets, sizes):
                        when 'parameter' then local.int1
                        else local.id
                      end,
-                     1
+                     local.num_registers
                 from symbol_table fn
                      inner join symbol_table local
                        on fn.id = local.context
@@ -361,6 +361,30 @@ def figure_out_multi_use(subsets, sizes):
                               where b.word_symbol_id = fn.id
                                 and ret_t.operator = 'return'
                                 and tp.parameter_num = 1)
+          ''')
+
+        # Populate reg_use for block-start-marker:
+        crud.execute('''
+            insert into reg_use
+              (kind, ref_id, position_kind, position, num_registers, block_id,
+               abs_order_in_block)
+              select 'block-start-marker', b.id, fn_ru.position_kind,
+                     fn_ru.position, fn_ru.num_registers, b.id, 0
+                from reg_use fn_ru
+                     inner join blocks b
+                       on fn_ru.ref_id = b.word_symbol_id
+               where fn_ru.kind = 'function'
+          ''')
+
+        # Populate reg_use for block-end-marker:
+        crud.execute('''
+            insert into reg_use
+              (kind, ref_id, position_kind, position, num_registers, block_id,
+               abs_order_in_block)
+              select 'block-end-marker', ru.ref_id, ru.position_kind,
+                     ru.position, ru.num_registers, ru.block_id, 999999999
+                from reg_use ru
+               where ru.kind = 'block-start-marker'
           ''')
 
     # Populate reg_use_linkage
@@ -444,6 +468,29 @@ def figure_out_multi_use(subsets, sizes):
 
         print("done triple-output -> function-return", file = sys.stderr)
 
+        # triple-output -> block-start-marker linkages
+        #   binding block-start-marker to triple-output of 'local' triples.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2, is_segment)
+              select ru1.id, ru2.id, 1
+                from reg_use ru1
+                     inner join triples t
+                       on ru1.ref_id = t.block_id
+                     inner join symbol_table local
+                       on local.id = t.symbol_id
+                     inner join reg_use ru2
+                       on ru2.ref_id = t.id
+               where ru1.kind = 'block-start-marker'
+                 and t.operator = 'local'
+                 and case ru1.position_kind
+                       when 'parameter' then ru1.position = local.int1
+                       else ru1.position = local.id
+                     end
+                 and ru2.kind = 'triple-output'
+          ''')
+
+        print("done triple-output -> block-start-marker", file = sys.stderr)
+
         # triple/parameter -> function/parameter linkages
         #   binding triple/parameter of 'call_direct' triples to
         #   function/parameters.
@@ -486,6 +533,125 @@ def figure_out_multi_use(subsets, sizes):
 
         print("done triple/parameter -> function-return", file = sys.stderr)
 
+        # Gather last references to locals
+        it = crud.fetchall('''
+                 -- get labels
+                 select t.block_id as block_id, tl.symbol_id as symbol_id,
+                        ifnull(p.id, t.id) as triple_id,
+                        tp.parameter_num as parameter_id,
+                        ifnull(p.abs_order_in_block, t.abs_order_in_block)
+                          as abs_order_in_block
+                   from triples t
+                        inner join triple_labels tl
+                          on tl.triple_id = t.id
+                        inner join symbol_table var
+                          on tl.symbol_id = var.id
+                          and var.kind in ('parameter', 'var')
+                        left join triple_parameters tp
+                          on tp.parameter_id = t.id
+                        left join triples p
+                          on tp.parent_id = p.id
+
+                 union
+
+                 -- get locals
+                 select t.block_id, t.symbol_id as symbol_id,
+                        p.id as triple_id, tp.parameter_num,
+                        p.abs_order_in_block
+                   from triples t
+                        inner join triple_parameters tp
+                          on tp.parameter_id = t.id
+                        inner join triples p
+                          on tp.parent_id = p.id
+                  where t.operator = 'local'
+
+                  order by block_id, symbol_id,
+                           abs_order_in_block desc, parameter_num desc
+          ''')
+        crud.executemany('''
+            insert into last_locals
+                     (block_id, symbol_id, triple_id, tp_parameter_num)
+              values (?, ?, ?, ?)
+          ''', group_summary(it, lambda _, detail: next(iter(detail))[:-1],
+                             key = lambda x: (x[0], x[1])))
+
+        # triple/parameter -> block-end-marker linkages
+        #   links last triple/parameter in last_locals to block-end-marker.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2, is_segment)
+              select ru1.id, ru2.id, 1
+                from last_locals l
+                     inner join symbol_table sym
+                       on l.symbol_id = sym.id
+                     inner join reg_use ru1
+                       on ru1.kind = 'triple'
+                       and ru1.position_kind = 'parameter'
+                       and l.triple_id = ru1.ref_id
+                       and l.tp_parameter_num = ru1.position
+                     inner join reg_use ru2
+                       on ru2.kind = 'block-end-marker'
+                       and ru2.ref_id = l.block_id
+                       and ru2.position_kind = sym.kind
+                       and case ru2.position_kind
+                             when 'parameter' then ru2.position = sym.int1
+                             else ru2.position = sym.id
+                           end
+               where l.tp_parameter_num notnull
+          ''')
+
+        print("done triple/parameter -> block-end-marker", file = sys.stderr)
+
+        # triple-output -> block-end-marker linkages
+        #   links last triple-output in last_locals to block-end-marker.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2, is_segment)
+              select ru1.id, ru2.id, 1
+                from last_locals l
+                     inner join symbol_table sym
+                       on l.symbol_id = sym.id
+                     inner join reg_use ru1
+                       on ru1.kind = 'triple-output'
+                       and l.triple_id = ru1.ref_id
+                     inner join reg_use ru2
+                       on ru2.kind = 'block-end-marker'
+                       and ru2.ref_id = l.block_id
+                       and ru2.position_kind = sym.kind
+                       and case ru2.position_kind
+                             when 'parameter' then ru2.position = sym.int1
+                             else ru2.position = sym.id
+                           end
+               where l.tp_parameter_num isnull
+          ''')
+
+        print("done triple-output -> block-end-marker", file = sys.stderr)
+
+        # block-start-marker -> block-end-marker linkages
+        #   links block-start-marker to block-end-marker if var not set or
+        #   referenced in block.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2, is_segment)
+              select ru1.id, ru2.id, 1
+                from reg_use ru1
+                     inner join reg_use ru2
+                       on ru2.kind = 'block-end-marker'
+                       and ru1.ref_id = ru2.ref_id
+                       and ru1.position_kind = ru2.position_kind
+                       and ru1.position = ru2.position
+               where ru1.kind = 'block-start-marker'
+                 and not exists (select null
+                                   from last_locals l
+                                        inner join symbol_table sym
+                                          on sym.id = l.symbol_id
+                                  where l.block_id = ru1.ref_id
+                                    and case ru1.position_kind
+                                          when 'parameter'
+                                            then sym.int1 = ru1.position
+                                          else sym.id = ru1.position
+                                        end)
+          ''')
+
+        print("done block-start-marker -> block-end-marker", file = sys.stderr)
+
         # function/parameter -> triple-output linkages
         #   function parameter use inside the function.
         crud.execute('''
@@ -525,6 +691,25 @@ def figure_out_multi_use(subsets, sizes):
           ''')
 
         print("done function/var -> triple-output", file = sys.stderr)
+
+        # function -> block-*-marker linkages
+        #   function local variable linkage to block-*-markers for those
+        #   variables.
+        crud.execute('''
+            insert into reg_use_linkage (reg_use_1, reg_use_2)
+              select ru1.id, ru2.id
+                from reg_use ru1
+                     inner join blocks b
+                       on ru1.ref_id = b.word_symbol_id
+                     inner join reg_use ru2
+                       on b.id = ru2.ref_id
+                       and ru1.position_kind = ru2.position_kind
+                       and ru1.position = ru2.position
+               where ru1.kind = 'function'
+                 and ru2.kind in ('block-start-marker', 'block-end-marker')
+          ''')
+
+        print("done function -> block-*-marker", file = sys.stderr)
 
     # Populate reg_group_id
     with crud.db_transaction():
@@ -637,6 +822,7 @@ def figure_out_multi_use(subsets, sizes):
                      where ru1.id = reg_use_linkage.reg_use_1
                        and ru2.id = reg_use_linkage.reg_use_2)
          ''')
+
     set_reg_classes()
 
 def set_reg_classes():
@@ -650,6 +836,10 @@ def set_reg_classes():
                                       from reg_use ru2
                                      where ru2.reg_group_id = register_group.id)
          ''')
+
+def group_summary(it, summary_fn, key = None):
+    for key, detail in itertools.groupby(it, key):
+        yield summary_fn(key, detail)
 
 def split(conflicts, neighbors):
     r'''Yields sets of ru_ids for disjoint groups based on conflicts.
@@ -958,6 +1148,29 @@ def split(conflicts, neighbors):
 
 def create_reg_map(subsets, sizes, code_seqs):
     with crud.db_transaction():
+        crud.execute('''
+            insert into overlaps (linkage_id, reg_use_id)
+            select rul.id, ru3.id
+              from reg_use_linkage rul
+                   inner join reg_use ru1
+                     on ru1.id = reg_use_1
+                   inner join reg_use ru2
+                     on ru2.id = reg_use_2
+                     and ru1.block_id = ru2.block_id
+                   inner join reg_use ru3
+                     on ru1.block_id = ru3.block_id
+                     and ru1.abs_order_in_block <= ru3.abs_order_in_block
+                     and ru2.abs_order_in_block >= ru3.abs_order_in_block
+             where ru1.block_id notnull
+               and ru1.abs_order_in_block notnull
+               and ru2.block_id notnull
+               and ru2.abs_order_in_block notnull
+               and ru3.block_id notnull
+               and ru3.abs_order_in_block notnull
+               and not broken
+               and ru3.reg_group_id != ru1.reg_group_id
+          ''')
+
         # FIX: This is a temp kludge to get blinky2 going!
         regs_assigned = set()
         for v_height in range(1, 1 + max(crud.read_column('vertex', 'height'))):
