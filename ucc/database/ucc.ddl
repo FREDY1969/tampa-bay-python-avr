@@ -455,16 +455,27 @@ create table rg_neighbors (
     -- rg1 < rg2
     id integer not null primary key,
     rg1 int not null references register_group(id),
-    rg2 int not null references register_group(id)
+    rg2 int not null references register_group(id),
+    broken bool not null default 0
 );
 
 create table register_group (
     id integer not null primary key,
     reg_class int references reg_class(id),
     num_registers int,
+    Z int,                      -- Z(n, R) from paper, where 'n' is this
+                                -- register_group, and R is the root vertex.
     assigned_register varchar(20)
 );
 
+create table rawZ (
+    -- cached rawZ(n, v) values from paper.
+    -- 'n' is reg_group_id, 'v' is vertex_id and 'rawZ(n, v)' is value.
+    reg_group_id int not null references register_group(id),
+    vertex_id int not null references vertex(id),
+    value int not null,
+    primary key (reg_group_id, vertex_id)
+);
 
 -----------------------------------------------------------------------------
 -----------------------------------------------------------------------------
