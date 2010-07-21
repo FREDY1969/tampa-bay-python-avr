@@ -428,12 +428,12 @@ create table reg_use_linkage (
     --   reg_use_1.abs_order_in_block < reg_use_2.abs_order_in_block
     id integer not null primary key,
 
-    -- these both reference reg_use(id) for level 1, else reg_use_linkage(id)
-    reg_use_1 int not null,
-    reg_use_2 int not null,
+    reg_use_1 int not null references reg_use(id),
+    reg_use_2 int not null references reg_use(id),
 
     is_segment bool not null default 0,
-    broken bool not null default 0
+    broken bool not null default 0,
+    reg_group_id int
 );
 
 create table last_locals (
@@ -446,7 +446,16 @@ create table last_locals (
 
 create table overlaps (
     linkage_id int not null references reg_use_linkage(id),
-    reg_use_id int not null references reg_use(id)
+    reg_use_id int not null references reg_use(id),
+    rg_neighbor_id int,
+    primary key (linkage_id, reg_use_id)
+);
+
+create table rg_neighbors (
+    -- rg1 < rg2
+    id integer not null primary key,
+    rg1 int not null references register_group(id),
+    rg2 int not null references register_group(id)
 );
 
 create table register_group (
