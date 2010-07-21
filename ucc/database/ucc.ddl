@@ -465,6 +465,7 @@ create table register_group (
     num_registers int,
     Z int,                      -- Z(n, R) from paper, where 'n' is this
                                 -- register_group, and R is the root vertex.
+    stacking_order int,
     assigned_register varchar(20)
 );
 
@@ -474,6 +475,7 @@ create table rawZ (
     reg_group_id int not null references register_group(id),
     vertex_id int not null references vertex(id),
     value int not null,
+    delta int,
     primary key (reg_group_id, vertex_id)
 );
 

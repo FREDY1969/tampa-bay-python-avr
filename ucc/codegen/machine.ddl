@@ -36,6 +36,7 @@ create table reg_class (
     id integer not null primary key,
     name varchar(20) not null unique,
     num_registers int not null default 1,       -- ie, register width
+    class_size int,                             -- count of reg_in_class
     v int references vertex(id)
 );
 

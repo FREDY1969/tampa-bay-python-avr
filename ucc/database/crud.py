@@ -137,7 +137,7 @@ class db_connection:
     def executemany(self, str, seq):
         r'''Executes an insert/update/delete on many parameter sets.
         
-        Returns the rowcount.
+        Returns the rowcount (which doesn't work for update commands).
         '''
         if not self.in_transaction:
             raise AssertionError(

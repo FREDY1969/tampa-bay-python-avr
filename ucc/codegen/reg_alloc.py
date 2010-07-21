@@ -1219,6 +1219,7 @@ def create_reg_map(subsets, sizes, code_seqs):
                       and overlaps.reg_use_id = ru.id)
           ''')
 
+    with crud.db_transaction():
         # {vertex_id: parent_vertex_id}
         parent_vertex = dict(crud.read_as_tuples('vertex', 'id', 'parent'))
         def gen_parents(x):
@@ -1304,6 +1305,88 @@ def create_reg_map(subsets, sizes, code_seqs):
                            and root.reg_group_id = register_group.id)
           ''')
 
+    with crud.db_transaction():
+        # stack register_groups
+        stacking_order = iter(itertools.count(1))
+        row_count = 1  # force first iteration
+        while row_count:
+            i = next(stacking_order)
+            row_count = crud.execute('''
+                update register_group
+                   set stacking_order = ?
+                 where stacking_order isnull
+                   and Z < 
+                   (select class_size
+                      from reg_class rc
+                     where rc.id = register_group.reg_class)
+              ''', (i,))[0]
+            print("stacking", i, "got", row_count, file=sys.stderr)
+            if row_count == 0: break
+
+            it = crud.fetchall('''
+                     select -w.value as delta, rg.id as n, rc.v as C_v
+                       from register_group rg_stacked
+                            inner join rg_neighbors rgn
+                              on  rg_stacked.id in (rg1, rg2)
+                            inner join register_group rg
+                              on  rg.id in (rg1, rg2)
+                              and rg.stacking_order isnull
+                            inner join reg_class rc
+                              on  rg_stacked.reg_class = rc.id
+                            inner join worst w
+                              on  w.N = rg.reg_class
+                              and w.C = rg_stacked.reg_class
+                      where rg_stacked.stacking_order = ?
+                        and not rgn.broken
+              ''', (i,))
+            crud.executemany('''
+                update rawZ
+                   set delta = ?
+                 where reg_group_id = ?
+                   and vertex_id = ?
+              ''', it)
+
+            delta_count = 1
+            while delta_count:
+                it = crud.fetchall('''
+                         select min(0,
+                                    max(child.delta,
+                                        child.delta - (b.value - child.value))),
+                                parent.reg_group_id, parent.vertex_id
+                           from rawZ parent
+                                inner join vertex child_v
+                                  on  parent.vertex_id = child_v.parent
+                                inner join rawZ child
+                                  on  child.vertex_id = child_v.id
+                                  and child.reg_group_id = parent.reg_group_id
+                                inner join register_group rg
+                                  on  child.reg_group_id = rg.id
+                                inner join bound b
+                                  on  b.N = rg.reg_class
+                                  and b.v = child_v.id
+                          where parent.delta isnull
+                            and child.delta
+                       ''')
+                it = tuple(it)
+                crud.executemany('''
+                        update rawZ
+                           set delta = ?
+                         where reg_group_id = ?
+                           and vertex_id = ?
+                      ''', it)
+                delta_count = len(it)
+                print("propagating deltas got", delta_count, file=sys.stderr)
+
+            # add deltas to values and clear deltas
+            crud.execute('''
+                update rawZ
+                   set value = value + delta,
+                       delta = NULL
+                 where delta notnull
+              ''')
+
+
+    with crud.db_transaction():
         # FIX: This is a temp kludge to get blinky2 going!
         regs_assigned = set()
         for v_height in v_heights:
