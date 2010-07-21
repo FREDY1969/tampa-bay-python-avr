@@ -780,7 +780,7 @@ def figure_out_multi_use(subsets, sizes):
         neighbors = dict((use, set(u[1] for u in uses))
                          for use, uses
                           in itertools.groupby(links, key=lambda row: row[0]))
-        print("neighbors", neighbors, file=sys.stderr)
+        #print("neighbors", neighbors, file=sys.stderr)
         it = crud.fetchall('''
                  select ru1.reg_group_id, ru1.id as id1, ru2.id as id2
                    from reg_use ru1
@@ -833,6 +833,13 @@ def figure_out_multi_use(subsets, sizes):
                       from reg_use ru1, reg_use ru2
                      where ru1.id = reg_use_linkage.reg_use_1
                        and ru2.id = reg_use_linkage.reg_use_2)
+         ''')
+
+        crud.execute('''
+            update reg_use_linkage
+               set reg_group_id = (select reg_group_id
+                                     from reg_use ru
+                                    where ru.id = reg_use_linkage.reg_use_1)
          ''')
 
     set_reg_classes()
@@ -1160,6 +1167,8 @@ def split(conflicts, neighbors):
 
 def create_reg_map(subsets, sizes, code_seqs):
     with crud.db_transaction():
+        # Figure out overlaps between reg_use_linkages and reg_uses in other
+        # register_groups.
         crud.execute('''
             insert into overlaps (linkage_id, reg_use_id)
             select rul.id, ru3.id
@@ -1181,6 +1190,33 @@ def create_reg_map(subsets, sizes, code_seqs):
                and ru3.abs_order_in_block notnull
                and not broken
                and ru3.reg_group_id != ru1.reg_group_id
+          ''')
+
+        # Figure out rg_neighbors.
+        crud.execute('''
+            insert into rg_neighbors (rg1, rg2)
+            select distinct min(rul.reg_group_id, ru.reg_group_id),
+                            max(rul.reg_group_id, ru.reg_group_id)
+              from overlaps ov
+                   inner join reg_use_linkage rul
+                     on ov.linkage_id = rul.id
+                   inner join reg_use ru
+                     on ov.reg_use_id = ru.id
+          ''')
+
+        # Link overlaps to rg_neighbors.
+        crud.execute('''
+            update overlaps
+               set rg_neighbor_id = (
+                   select rgn.id
+                     from rg_neighbors rgn
+                          inner join reg_use_linkage rul
+                            on rul.reg_group_id in (rg1, rg2)
+                          inner join reg_use ru
+                            on ru.reg_group_id in (rg1, rg2)
+                            and ru.reg_group_id != rul.reg_group_id
+                    where overlaps.linkage_id = rul.id
+                      and overlaps.reg_use_id = ru.id)
           ''')
 
         # FIX: This is a temp kludge to get blinky2 going!
