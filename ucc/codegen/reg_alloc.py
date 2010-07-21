@@ -1219,9 +1219,94 @@ def create_reg_map(subsets, sizes, code_seqs):
                       and overlaps.reg_use_id = ru.id)
           ''')
 
+        # {vertex_id: parent_vertex_id}
+        parent_vertex = dict(crud.read_as_tuples('vertex', 'id', 'parent'))
+        def gen_parents(x):
+            while x:
+                yield x
+                x = parent_vertex[x]
+        parents_of_vertex = {x: tuple(gen_parents(x)) for x in parent_vertex}
+        print("parents_of_vertex", parents_of_vertex, file=sys.stderr)
+
+        # insert sum(worst) values part of rawZ:
+        crud.execute('''
+            insert into rawZ (reg_group_id, vertex_id, value)
+            select n_id, v, sum(degree * w.value)
+              from (select n.id as n_id, n.reg_class as n_rc,
+                           c.id as c_id, c.v as v, count(rg.id) as degree
+                      from register_group n
+                           inner join rg_neighbors rgn
+                             on n.id in (rg1, rg2)
+                           inner join register_group rg
+                             on rg.id in (rg1, rg2)
+                             and rg.id != n.id
+                           inner join reg_class c
+                             on rg.reg_class = c.id
+                     group by n.id, c.id)
+                   inner join worst w
+                     on w.N = n_rc
+                     and w.C = c_id
+             group by n_id, v
+          ''')
+
+        # insert 0 rawZ nodes where there are children
+        v_heights = \
+          tuple(range(1, 1 + max(crud.read_column('vertex', 'height'))))
+        for v_height in v_heights[1:]:
+            crud.execute('''
+                insert or ignore into rawZ (reg_group_id, vertex_id, value)
+                select r.reg_group_id, v.parent, 0
+                  from rawZ r
+                       inner join vertex v
+                         on r.vertex_id = v.id
+                         and v.height = ?
+              ''', (v_height,))
+
+        # add children to rawZ nodes
+        for v_height in v_heights[1:]:
+            crud.execute('''
+                update rawZ
+                   set value = value + (
+                           select sum(min(b.value, child.value))
+                             from rawZ child
+                                  inner join vertex v
+                                    on  child.vertex_id = v.id
+                                  inner join register_group rg
+                                    on  child.reg_group_id = rg.id
+                                  inner join bound b
+                                    on  b.N = rg.reg_class
+                                    and b.v = v.id
+                            where child.reg_group_id = rawZ.reg_group_id
+                              and v.parent = rawZ.vertex_id
+                              and v.height = ?)
+                 where exists (select null
+                                 from rawZ child
+                                      inner join vertex v
+                                        on child.vertex_id = v.id
+                                where child.reg_group_id = rawZ.reg_group_id
+                                  and v.parent = rawZ.vertex_id
+                                  and v.height = ?)
+              ''', (v_height, v_height))
+
+        # perform final Z(n, R) calculation for register_groups.
+        crud.execute('''
+            update register_group
+               set Z = (select sum(min(b.value, root.value))
+                          from rawZ root
+                               inner join vertex v
+                                 on  root.vertex_id = v.id
+                               inner join register_group rg
+                                 on  root.reg_group_id = rg.id
+                               inner join bound b
+                                 on  b.N = rg.reg_class
+                                 and b.v = v.id
+                         where v.parent isnull
+                           and root.reg_group_id = register_group.id)
+          ''')
+
         # FIX: This is a temp kludge to get blinky2 going!
         regs_assigned = set()
-        for v_height in range(1, 1 + max(crud.read_column('vertex', 'height'))):
+        for v_height in v_heights:
             for rc in crud.fetchall('''
                           select rc.id
                             from vertex v
