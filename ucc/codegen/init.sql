@@ -206,4 +206,9 @@ insert or ignore into reg_class_subsets (rc1, rc2, subset)
     select rc2, rc1, rc2
       from reg_class_subsets;
 
+update reg_class
+   set class_size = (select count(*)
+                       from reg_in_class
+                      where reg_class = reg_class.id);
+
 analyze;
