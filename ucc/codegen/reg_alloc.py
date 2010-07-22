@@ -1321,7 +1321,9 @@ def create_reg_map(subsets, sizes, code_seqs):
                      where rc.id = register_group.reg_class)
               ''', (i,))[0]
             print("stacking", i, "got", row_count, file=sys.stderr)
-            if row_count == 0: break
+            if row_count == 0:
+                max_stacking_order = i - 1
+                break
 
             it = crud.fetchall('''
                      select -w.value as delta, rg.id as n, rc.v as C_v
@@ -1387,29 +1389,25 @@ def create_reg_map(subsets, sizes, code_seqs):
 
 
     with crud.db_transaction():
-        # FIX: This is a temp kludge to get blinky2 going!
-        regs_assigned = set()
-        for v_height in v_heights:
-            for rc in crud.fetchall('''
-                          select rc.id
-                            from vertex v
-                                 inner join reg_class rc
-                                   on v.id = rc.v
-                           where v.height = ?
-                        ''', (v_height,)):
-                regs = sorted(set(crud.read_column('reg_in_class', 'reg',
-                                                   reg_class=rc)) \
-                                - regs_assigned)
-                new_assigned = set()
-                for rg in crud.read_column('register_group', 'id',
-                                           reg_class=rc):
-                    reg = regs.pop(0)
-                    new_assigned.add(reg)
-                    crud.update('register_group', {'id': rg},
-                                assigned_register=reg)
-                if new_assigned:
-                    regs_assigned.update(crud.read_column('alias', 'r2',
-                                                          r1=new_assigned))
+        for i in range(max_stacking_order, 0, -1):
+            crud.execute('''
+                update register_group
+                   set assigned_register = (
+                           select reg
+                             from reg_in_class
+                            where reg_class = register_group.reg_class
+                              and reg not in (
+                                      select a.r2
+                                        from rg_neighbors rgn
+                                             inner join register_group n
+                                               on  n.id in (rg1, rg2)
+                                             inner join alias a
+                                               on  a.r1 = n.assigned_register
+                                       where register_group.id in (rg1, rg2)
+                                         and n.id != register_group.id
+                                         and n.assigned_register notnull))
+                 where stacking_order = ?
+              ''', (i,))
 
         # Copy to reg_use table
         crud.execute('''
