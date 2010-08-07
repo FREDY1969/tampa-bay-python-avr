@@ -13,7 +13,7 @@ It seems that conceptually syntax is composed of 4 things:
 I'm thinking that the first two are not extensible, but that the last two are
 (though declarations may not require any more than the question/answer
 facility).  I'm thinking that some kind of keyword parameter syntax should
-provide enough flexibility for expresions.
+provide enough flexibility for expressions.
 
 It doesn't seem, at first glance, that there should be a need for reserved
 words (aka, keywords).  These can just be part of __builtin__.  Thus, the list
