@@ -110,13 +110,17 @@ CLH = inst1('CLH', '1001 0100 1101 1000', 1)
 MOV = inst1('MOV', '0010 11rd dddd rrrr', 1)
 MOVW = inst1('MOVW', '0000 0001 dddd rrrr', 1, d=(0,30), r=(0,30))
 LDI = inst1('LDI', '1110 KKKK dddd KKKK', 1, d=(16,31))
-LD = inst1('LD', '1001 000d dddd xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
+LD = inst1('LD', '100z 000d dddd xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
+                                           # z=1 for X, (Y, Z) inc/dec
+                                           # z=0 for (Y, Z) no inc/dec
                                            # pp=00 no inc/dec
                                            #    01 post inc
                                            #    10 pre dec
 LDD = inst1('LDD', '10q0 qq0d dddd yqqq', 2) # y=1 for Y, 0 for Z
 LDS = inst2('LDS', '1001 000d dddd 0000 KKKK KKKK KKKK KKKK', 2)
-ST = inst1('ST', '1001 001r rrrr xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
+ST = inst1('ST', '100z 001r rrrr xxpp', 2) # x=11 for X, 10 for Y, 00 for Z
+                                           # z=1 for X, (Y, Z) inc/dec
+                                           # z=0 for (Y, Z) no inc/dec
                                            # pp=00 no inc/dec
                                            #    01 post inc
                                            #    10 pre dec
