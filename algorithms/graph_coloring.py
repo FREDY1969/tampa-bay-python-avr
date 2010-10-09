@@ -69,14 +69,18 @@ def node_in_stack(node, stack):
     return any(map(lambda nodes: node in nodes, stack))
 
 def stack_one(selector_fn, stack, graph):
-    stack.append([selector_fn(((count_links(stack, links), node)
+    unsafe_node = selector_fn(((count_links(stack, links), node)
                                for node, links in graph.items()
-                                if not node_in_stack(node, stack)))[1]])
+                                if not node_in_stack(node, stack)))[1]
+    stack.append([unsafe_node])
+    return unsafe_node
 
 def stack_random(stack, graph):
-    stack.append([random.choice(
+    unsafe_node = random.choice(
                     tuple(node for node in graph
-                                if not node_in_stack(node, stack)))])
+                                if not node_in_stack(node, stack)))
+    stack.append([unsafe_node])
+    return unsafe_node
 
 def stack_graph(graph, num_colors, stack_one_fn):
     r'''Stacks the graph using stack_one_fn to stack one unsafe node.
@@ -86,16 +90,17 @@ def stack_graph(graph, num_colors, stack_one_fn):
         >>> stack_graph({1: set((2,)), 2: set((1,3)), 3: set((2,4,5)),
         ...              4: set((3,5)), 5: set((3,4))},
         ...             2, functools.partial(stack_one, min))
-        [[1], [2], [3], [4, 5]]
+        ([[1], [2], [3], [4, 5]], {3})
     '''
     stack = []
+    unsafe_nodes = set()
     stack_safe(stack, graph, num_colors)
     while sum(map(len, stack)) < len(graph):
-        stack_one_fn(stack, graph)
+        unsafe_nodes.add(stack_one_fn(stack, graph))
         stack_safe(stack, graph, num_colors)
-    return stack
+    return stack, unsafe_nodes
 
-def color(graph, stack, num_colors, color_picker):
+def color(graph, stack, num_colors, color_picker, unsafe_nodes):
     r'''Unwinds stack to color the graph.
 
     Returns the number of spills needed.
@@ -103,12 +108,12 @@ def color(graph, stack, num_colors, color_picker):
         >>> color({1: set((2,)), 2: set((1,3)), 3: set((2,4,5)), 4: set((3,5)),
         ...        5: set((3,4))},
         ...       [[1],[2],[3],[4,5]],
-        ...       2, pick_min_color)
+        ...       2, pick_min_color, {3})
         1
         >>> color({1: set((2,)), 2: set((1,3)), 3: set((2,4,5)), 4: set((3,5)),
         ...        5: set((3,4))},
         ...       [[1],[2],[3],[4,5]],
-        ...       2, pick_dup_color)
+        ...       2, pick_dup_color, {3})
         1
     '''
     spills = 0
@@ -117,7 +122,8 @@ def color(graph, stack, num_colors, color_picker):
     for nodes in stack[::-1]:
         for node in nodes:
             try:
-                selected_color = color_picker(node, graph, colors, all_colors)
+                selected_color = \
+                  color_picker(node, graph, colors, all_colors, unsafe_nodes)
                 #print("assigned", selected_color, "to node", node)
                 colors[node] = selected_color
             except ValueError:
@@ -125,16 +131,17 @@ def color(graph, stack, num_colors, color_picker):
                 spills += 1
     return spills
 
-def pick_min_color(node, graph, colors, all_colors):
+def pick_min_color(node, graph, colors, all_colors, unsafe_nodes):
     return min(all_colors.difference(colors[link] for link in graph[node]
                                                    if link in colors))
 
-def pick_dup_color(node, graph, colors, all_colors):
+def pick_dup_color(node, graph, colors, all_colors, unsafe_nodes):
     available_colors = all_colors.difference(colors[link]
                                                for link in graph[node]
                                                 if link in colors)
     for color, _ in collections.Counter(color
-                      for link in graph[node] if link not in colors
+                      for link in graph[node] if link in unsafe_nodes and
+                                                 link not in colors
                         for color in frozenset(colors[link_link]
                                                for link_link in graph[link]
                                                 if link_link in
@@ -145,27 +152,46 @@ def pick_dup_color(node, graph, colors, all_colors):
     return min(available_colors)
 
 def color_graph(graph, num_colors, stack_one_fn):
-    stack = stack_graph(graph, num_colors, stack_one_fn)
-    return color(graph, stack, num_colors, pick_min_color), \
-           color(graph, stack, num_colors, pick_dup_color)
+    stack, unsafe_nodes = stack_graph(graph, num_colors, stack_one_fn)
+    return color(graph, stack, num_colors, pick_min_color, unsafe_nodes), \
+           color(graph, stack, num_colors, pick_dup_color, unsafe_nodes)
 
 def least_spills(graph, num_colors):
-    best_min = 100000000
-    best_dup = 100000000
-    for nodes in itertools.permutations(range(1, len(graph) + 1)):
-        spills_min = \
-          color(graph, [[node] for node in nodes], num_colors, pick_min_color)
-        if spills_min < best_min: best_min = spills_min
-        spills_dup = \
-          color(graph, [[node] for node in nodes], num_colors, pick_dup_color)
-        if spills_dup < best_dup: best_dup = spills_dup
-    return best_min, best_dup
+    nodes = set(graph)
+    colors = {}
+    all_colors = frozenset(range(1, num_colors + 1))
+
+    best_score = 100000000
+    for nodes in itertools.permutations(nodes):
+        def color_rest(i):
+            node = nodes[i]
+            avail_colors = all_colors.difference(colors[link]
+                                                   for link in graph[node]
+                                                    if link in colors)
+            if i + 1 == len(nodes):
+                return 1 if not avail_colors else 0
+            if not avail_colors: return 1 + color_rest(i + 1)
+            def spills_rest(color):
+                colors[node] = color
+                return color_rest(i + 1)
+            ans = 1000000000
+            for color in avail_colors:
+                spills = spills_rest(color)
+                if spills == 0:
+                    ans = 0
+                    break
+                if spills < ans: ans = spills
+            if node in colors: del colors[node]
+            return ans
+        spills = color_rest(0)
+        if spills < best_score: best_score = spills
+    return best_score
 
 def do_tests(num_nodes, min_links, num_colors, num_tests):
     min_spills = [0, 0]
     max_spills = [0, 0]
     random_spills = [0, 0]
-    lowest_spills = [0, 0]
+    lowest_spills = 0
     for i in range(num_tests):
         graph = gen_graph(num_nodes, min_links)
 
@@ -183,9 +209,7 @@ def do_tests(num_nodes, min_links, num_colors, num_tests):
         random_spills[0] += random_min
         random_spills[1] += random_dup
 
-        lowest_min, lowest_dup = least_spills(graph, num_colors)
-        lowest_spills[0] += lowest_min
-        lowest_spills[1] += lowest_dup
+        #lowest_spills += least_spills(graph, num_colors)
     print("total min spills", min_spills)
     print("total max spills", max_spills)
     print("total random spills", random_spills)
