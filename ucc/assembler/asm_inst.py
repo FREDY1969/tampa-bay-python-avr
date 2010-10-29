@@ -189,7 +189,9 @@ Convert = {
           1 if 'y' in arg.lower() else \
           0 if 'z' in arg.lower() else \
           invalid_operand(arg, "Y or Z"),
-
+    'z':        # X/Y/Z, 1 for X, (Y, Z) inc/dec, 0 for (Y, Z) no inc/dec
+        lambda arg, num_bits, note, labels, address: \
+          0 if len(arg)==1 and arg[0].lower() in 'yz' else 1,
 }
 
 def lookup(name, where, notes):
@@ -233,6 +235,7 @@ Order = {
     's': 40,      # bit# in status register (SREG) (0-7)
     'x': 30,      # X/Y/Z, 11=X, 10=Y, 00=Z
     'y': 30,      # Y/Z, 1=Y, 0=Z
+    'z': 30,      # X/Y/Z, 1=X or Y/Z w/inc/dec, 0=Y/Z w/o inc/dec
 
 }
 
