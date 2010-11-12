@@ -380,7 +380,7 @@ create table reg_use (
     --
     -- The combination of kind and ref_id is designed to reflect the situations
     -- where different registers are required.  The addition of position
-    -- uniquely identifieds the register use.
+    -- uniquely identifies the register use.
 
     id integer not null primary key,
     kind varchar(40) not null,

@@ -1,11 +1,28 @@
 # reg_alloc.py
 
 r'''Register allocation code.
+
+The only function called here from outside is alloc_reg (called from
+gen_assembler in ucc/codegen/codegen.py).
+
+The underlying algorithm here is taken from:
+
+    A Generalized Algorithm for Graph-Coloring Register Allocation
+        Michael D. Smith, Norman Ramsey, and Glenn Holloway
+            Division of Engineering and Applied Sciences
+            Harvard University
+
+printed in Proceedings of the ACM SIGPLAN ’04 Conference on Programming
+Language Design and Implementation
+
+see: http://www.cs.tufts.edu/~nr/pubs/gcra-abstract.html
 '''
 
+import time  # for testing query execution times
 import sys   # for debug traces
 import itertools
 import collections
+import operator
 
 from ucc.database import crud
 from ucc.codegen import code_seq
@@ -203,7 +220,40 @@ def figure_out_multi_use(subsets, sizes):
                                                            'call_indirect'))
           ''')
 
-    # Populate reg_use
+    # Who all needs a register?
+    populate_reg_use()
+
+    # Which pairs of reg_uses represent the same value and should be put into
+    # the same register?
+    populate_reg_use_linkage()
+
+    # Each register group represents a set of linked reg_uses.  The goal will
+    # be to assign a register to each register_group.
+    populate_register_group()
+
+    eliminate_conflicts()
+
+    set_reg_classes()
+
+def populate_reg_use():
+    r'''This populates the reg_use table.
+
+    The reg_use table brings all of the various situations where a register is
+    needed together into one place in preperation for register allocation.
+
+    This is a list of the different places where a register is needed:
+        - triple output for normal operators
+        - triple output for reference to global and local variable
+        - triple parameter (input to triple)
+        - 'call_direct' triple-output
+        - 'call_direct' triple/parameter
+        - triple/temp
+        - function
+        - function-return
+        - block-start-marker
+        - block-end-marker
+    '''
+
     with crud.db_transaction():
         # Populate reg_use for triple-output
         crud.execute('''
@@ -387,7 +437,13 @@ def figure_out_multi_use(subsets, sizes):
                where ru.kind = 'block-start-marker'
           ''')
 
-    # Populate reg_use_linkage
+def populate_reg_use_linkage():
+    r'''Populate the reg_use_linkage table.
+
+    This table pairs the reg_uses that should try to be placed into the same
+    register.
+    '''
+
     with crud.db_transaction():
         # triple(-output) -> triple/parameter linkages
         #   chaining the triple-output to its parent's triple_parameters.
@@ -723,7 +779,26 @@ def figure_out_multi_use(subsets, sizes):
 
         print("done function -> block-*-marker", file = sys.stderr)
 
-    # Populate reg_group_id
+def populate_register_group():
+    r'''Populate the register_group table.
+
+    This table has one row per set of linked reg_uses.
+
+    The algorithm here does not end up assigning consecutive ids to the
+    register_groups.  Rather, there will be missing ids; but nobody cares.
+    
+    First, each reg_use is given unique reg_group_id, by simply copying it's
+    own id to its reg_group_id.
+
+    Then we want to select a unique reg_group_id amoung each set of linked
+    reg_uses.  We do this by selecting the min reg_group_id within each set and
+    updating all of the reg_use.reg_group_ids to this min value.  Since the
+    links are only pairwise, this update is done by repeatedly updating the
+    reg_group_id of each reg_use to the min of all of its linked reg_uses.
+    This will eventually propogate the min value to all of reg_uses in the set
+    through transitive closure.
+    '''
+
     with crud.db_transaction():
         # Copy all reg_use.ids to reg_use.reg_group_id
         crud.execute('''
@@ -772,15 +847,28 @@ def figure_out_multi_use(subsets, sizes):
 
         print("done populating register_group", file = sys.stderr)
 
-    # Eliminate conflicts
+def eliminate_conflicts():
+    r'''Eliminate conflicts between reg_uses in the same register_group.
+
+    The two causes of conflict are incompatible register classes, and two
+    reg_uses for the same kind and ref_id.
+    '''
     with crud.db_transaction():
+        # all links as two-tuples
         links1 = tuple(crud.read_as_tuples('reg_use_linkage',
                                            'reg_use_1', 'reg_use_2'))
+        # include reverse links, and sort by first id
         links = sorted(itertools.chain(links1, ((b, a) for a, b in links1)))
-        neighbors = dict((use, set(u[1] for u in uses))
+
+        # {id: {neighbor_id: link_count}} based on links
+        neighbors = dict((use, collections.Counter(u[1] for u in uses))
                          for use, uses
-                          in itertools.groupby(links, key=lambda row: row[0]))
+                          in itertools.groupby(links,
+                                               key=operator.itemgetter(0)))
         #print("neighbors", neighbors, file=sys.stderr)
+
+        # reg_group_id, id1, id2 of all conflicts (id1 < id2).
+        # sorted by reg_group_id.
         it = crud.fetchall('''
                  select ru1.reg_group_id, ru1.id as id1, ru2.id as id2
                    from reg_use ru1
@@ -790,24 +878,28 @@ def figure_out_multi_use(subsets, sizes):
                   where ru1.initial_reg_class notnull
                     and ru2.initial_reg_class notnull
                     and not exists (select null
-                                      from reg_class_subsets rcs
+                                      from reg_class_subsets
                                      where rc1 = ru1.initial_reg_class
-                                       and rc2 = ru2.initial_reg_class
-                                        or rc2 = ru1.initial_reg_class
-                                       and rc1 = ru2.initial_reg_class)
+                                       and rc2 = ru2.initial_reg_class)
                      or ru1.kind = ru2.kind
                     and ru1.ref_id = ru2.ref_id
                   order by ru1.reg_group_id
                ''', ctor_factory=crud.row.factory_from_cur)
+
+        # split conflicts within each reg_group_id, this will replace the
+        # register_group with conflicting reg_uses with a set of
+        # register_groups with non-conflicting reg_uses.
         for reg_group_id, conflicts \
-         in itertools.groupby(it, lambda row: row.reg_group_id):
+         in itertools.groupby(it, operator.attrgetter('reg_group_id')):
 
             # only for print ..., comment out with print
             conflicts = tuple(conflicts)
             print("reg_group_id", reg_group_id, "conflicts", conflicts,
                   file=sys.stderr)
 
+            # split yields groups of non-conflicting ru_ids
             for ru_ids in split(conflicts, neighbors):
+                # create new register_group (let sqlite assign reg_group_id)
                 ru_qmarks = ', '.join(('?',) * len(ru_ids))
                 new_group_id = crud.execute('''
                     insert into register_group (reg_class, num_registers)
@@ -818,14 +910,20 @@ def figure_out_multi_use(subsets, sizes):
                   '''.format(ru_qmarks),
                   ru_ids)[1]
                 print("new_group_id", new_group_id, file=sys.stderr)
+
+                # update reg_group_id to new_group_id in all ru_ids
                 crud.execute('''
                     update reg_use
                        set reg_group_id = ?
                      where id in ({})
                   '''.format(ru_qmarks),
                   (new_group_id,) + ru_ids)
+
+            # delete old register_group
             crud.delete('reg_group', id=reg_group_id)
 
+        # set broken flag on all reg_use_linkages for reg_uses now in
+        # different register_groups.
         crud.execute('''
             update reg_use_linkage
                set broken = 1
@@ -835,14 +933,13 @@ def figure_out_multi_use(subsets, sizes):
                        and ru2.id = reg_use_linkage.reg_use_2)
          ''')
 
+        # set reg_group_id in all reg_use_linkages to reg_use_1.reg_group_id.
         crud.execute('''
             update reg_use_linkage
                set reg_group_id = (select reg_group_id
                                      from reg_use ru
                                     where ru.id = reg_use_linkage.reg_use_1)
          ''')
-
-    set_reg_classes()
 
 def set_reg_classes():
     with crud.db_transaction():
@@ -861,10 +958,10 @@ def group_summary(it, summary_fn, key = None):
         yield summary_fn(key, detail)
 
 def split(conflicts, neighbors):
-    r'''Yields sets of ru_ids for disjoint groups based on conflicts.
+    r'''Yields disjoint sets of ru_ids containing no conflicts between them.
 
         'conflicts' is a sequence of objects with 'id1' and 'id2' attributes.
-        'neighbors' is {id: {id}}
+        'neighbors' shows all ru_id linkage as {id: {neighbor_id: link_count}}
 
         >>> class conflict:
         ...     def __init__(self, id1, id2):
@@ -878,7 +975,8 @@ def split(conflicts, neighbors):
         ...          {}))
         [[1, 4], [2, 3]]
         >>> pp(split((conflict(1, 2), conflict(3, 4)),
-        ...          {1: {2, 3}, 2: {1, 4}, 3: {1, 4}, 4: {2, 3}}))
+        ...          {1: {2:1, 3:1, 4:0}, 2: {1:1, 3:0, 4:1},
+        ...           3: {1:1, 2:0, 4:1}, 4: {1:0, 2:1, 3:1}}))
         [[1, 3], [2, 4]]
         >>> pp(split((conflict(1, 2), conflict(1, 3), conflict(1, 4),
         ...           conflict(1, 5), conflict(2, 3), conflict(2, 5),
@@ -890,61 +988,80 @@ def split(conflicts, neighbors):
         ...           conflict(3, 4)),
         ...          {}))
         [[1], [2, 4], [3, 5]]
+        >>> pp(split((conflict(1, 2),),
+        ...          {1: {2:1, 3:1, 4:0}, 2: {1:1, 3:0, 4:1},
+        ...           3: {1:1, 2:0, 4:1}, 4: {1:0, 2:1, 3:1}}))
+        [[1, 3], [2, 4]]
     '''
+
+    # d1 = {ru_id: {conflicting_ru_id}}
     d1 = collections.defaultdict(set)
     for c in conflicts:
         d1[c.id1].add(c.id2)
         d1[c.id2].add(c.id1)
 
-    colors = {}                              # {id: color}
-    ids_by_color = {1: set(), 2: set()}      # {color: {id}}
-    last_color = 2
-
-    stack = []
-    def prune(max_colors):
-        again = True
-        while again:
-            again = False
-            ids = []
-            for k, v in tuple(d1.items()):
-                if k not in colors and len(v) <= max_colors - 1:
-                    again = True
-                    stack.insert(0, (k, v))
-                    del d1[k]
-                    for x in v: d1[x].remove(k)
-        print("prune({}): stack is".format(max_colors), stack, file=sys.stderr)
-
-    prune(2)
-
     def pick_color(colors, id):
+        r'''Pick the best color from colors for id.
+
+        Picks the color assigned to the greatest number of links to id.
+        '''
         if len(colors) == 1: return colors.pop()
-        n = neighbors.get(id, frozenset())
-        return max(((c, len(ids_by_color[c] & n)) for c in colors),
+        n = neighbors.get(id, collections.Counter())
+        return max(((c, sum(n[id] for id in ids_by_color[c])) for c in colors),
                    key=lambda t: t[1])[0]
 
-    while len(colors) < len(d1):
-        next_id, colored_conflicts, uncolored_conflicts = \
-            max(((k, v & colors.keys(), v - colors.keys())
-                 for k, v in d1.items()
-                 if k not in colors.keys()),
-                key=lambda t: (len(t[1]), len(t[2])))
-        ok_colors = ids_by_color.keys() - (colors[id]
-                                             for id in colored_conflicts)
-        if ok_colors:
-            color = pick_color(ok_colors, next_id)
-            colors[next_id] = color
-            ids_by_color[color].add(next_id)
-        else:
-            last_color += 1
-            ids_by_color[last_color] = set()
-            prune(len(ids_by_color))
+    # colors are numbered starting at 1
+    colors = {}                         # {id: color}
+    ids_by_color = {}                   # {color: {id}}
+    num_colors = 0
 
+    # stack conflicting ru_ids, picking the one with the least conflicts each
+    # time.
+    stack = collections.deque()         # [(id, {conflicting_ru_id})]
+    while d1:
+        k, v = item = min(d1.items(), key=lambda item: len(item[1]))
+        stack.appendleft(item)
+        del d1[k]
+        for x in v: d1[x].remove(k)
+
+    # assign colors
     for k, v in stack:
         #print("split: unstacking", k, v, file=sys.stderr)
-        color = pick_color(ids_by_color.keys() - (colors[id] for id in v),
-                           k)
+        ok_colors = ids_by_color.keys() - (colors[id] for id in v)
+        if ok_colors:
+            color = pick_color(ok_colors, k)
+        else:
+            num_colors += 1
+            color = num_colors
+            ids_by_color[color] = set()
         colors[k] = color
         ids_by_color[color].add(k)
+
+    print("split: stack is", tuple(stack), file=sys.stderr)
+    print("split: ids_by_color", ids_by_color, file=sys.stderr)
+
+    def pick_best_color(id):
+        neighbor_ids = neighbors[id]
+        color, colored_sum = max(((c, sum(neighbor_ids[nid] for nid in ids))
+                                  for c, ids in ids_by_color.items()),
+                                 key=operator.itemgetter(1))
+        uncolored_sum = sum(neighbor_ids[nid]
+                            for nid in neighbor_ids.keys() - colors.keys())
+        return color, colored_sum, uncolored_sum
+
+    nonconflicting_ids = neighbors.keys() - colors.keys()
+    while nonconflicting_ids:
+        # pick the next_id and color to assign with the greatest number of
+        # neighbors with that color.  If a tie, pick the one with the greatest
+        # number of uncolored neighbors.
+        next_id, (color, colored_sum, uncolored_sum) = \
+            max(((id, pick_best_color(id)) for id in nonconflicting_ids),
+                key=lambda t: t[1][1:2])
+
+        if not colored_sum: color = 1
+        colors[next_id] = color
+        ids_by_color[color].add(next_id)
+        nonconflicting_ids.remove(next_id)
 
     return ids_by_color.values()
 
