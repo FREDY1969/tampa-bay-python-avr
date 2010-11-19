@@ -4,24 +4,10 @@ r'''Register allocation code.
 
 The only function called here from outside is alloc_reg (called from
 gen_assembler in ucc/codegen/codegen.py).
-
-The underlying algorithm here is taken from:
-
-    A Generalized Algorithm for Graph-Coloring Register Allocation
-        Michael D. Smith, Norman Ramsey, and Glenn Holloway
-            Division of Engineering and Applied Sciences
-            Harvard University
-
-printed in Proceedings of the ACM SIGPLAN ’04 Conference on Programming
-Language Design and Implementation
-
-see: http://www.cs.tufts.edu/~nr/pubs/gcra-abstract.html
 '''
 
 import sys   # for debug traces
 import itertools
-import collections
-import operator
 
 from ucc.database import crud
 from ucc.codegen import code_seq, extend_sqlite, populate_register_groups
