@@ -1,5 +1,7 @@
 # function.py
 
+# FIX: This module isn't used by anybody...
+
 import itertools
 
 from ucc.database import crud
