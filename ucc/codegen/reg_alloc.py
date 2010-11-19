@@ -133,13 +133,25 @@ def alloc_regs():
     crud.Db_conn.db_conn.create_aggregate("aggr_rc_subset", 1, aggr_rc_subset)
     crud.Db_conn.db_conn.create_aggregate("aggr_num_regs", 1, aggr_num_regs)
 
-    figure_out_register_groups()
+    # start from a clean slate
+    delete()
+
+    # copy information to and from triples and triple_parameters for easier
+    # access.
+    prepare_triples()
+
+    # Who all needs a register?
+    populate_reg_use()
+
+    # Which pairs of reg_uses represent the same value and should be put into
+    # the same register?
+    populate_reg_use_linkage()
 
     # FIX: Are these actually used anywhere?
     sizes = get_reg_class_sizes()
     code_seqs = code_seq.get_code_seq_info()
 
-    create_reg_map(Subsets, sizes, code_seqs)
+    while not assign_registers_to_groups(Subsets, sizes, code_seqs): pass
 
 def get_reg_class_subsets():
     r'''Returns {(reg_class1, reg_class2): subset_reg_class}.
@@ -172,36 +184,6 @@ def get_reg_class_sizes():
                       from reg_in_class
                      group by reg_class
                   '''))
-
-def figure_out_register_groups():
-    r'''Creates reg_uses, reg_use_linkages and register_groups.
-    '''
-
-    # start from a clean slate
-    delete()
-
-    # copy information to and from triples and triple_parameters for easier
-    # access.
-    prepare_triples()
-
-    # Who all needs a register?
-    populate_reg_use()
-
-    # Which pairs of reg_uses represent the same value and should be put into
-    # the same register?
-    populate_reg_use_linkage()
-
-    # Each register group represents a set of linked reg_uses.  The goal will
-    # be to assign a register to each register_group.
-    populate_register_group()
-
-    # Split register_groups that include conflicting reg_uses.  A conflict
-    # could be due to incompatible register classes, or two reg_uses for the
-    # same kind and ref_id.
-    eliminate_conflicts()
-
-    # Sets the reg_class and num_registers in each register_group.
-    set_reg_classes()
 
 def prepare_triples():
     r'''Do some prep work on the triples.
@@ -804,6 +786,238 @@ def populate_reg_use_linkage():
 
         print("done function -> block-*-marker", file = sys.stderr)
 
+def group_summary(it, summary_fn, key = None):
+    for key, detail in itertools.groupby(it, key):
+        yield summary_fn(key, detail)
+
+def assign_registers_to_groups(subsets, sizes, code_seqs):
+    r'''This assigns the actual registers to each register_group.
+
+    If this is not possible, it will break reg_use_linkages (spill) to try to
+    make it work.  But these changes ripple throughout the algorithm, so after
+    breaking reg_use_linkages, this function needs to be called again to take
+    a fresh look at things.
+
+    Note the reg_use_linkages are never restored after being broken (except
+    for those broken by eliminate_conflicts).
+
+    It returns True if successful, False if it needs to be re-run.
+    '''
+
+    # Each register group represents a set of linked reg_uses.  The goal will
+    # be to assign a register to each register_group.
+    populate_register_group()
+
+    # Split register_groups that include conflicting reg_uses.  A conflict
+    # could be due to incompatible register classes, or two reg_uses for the
+    # same kind and ref_id.
+    eliminate_conflicts()
+
+    # Sets the reg_class and num_registers in each register_group.
+    set_reg_classes()
+
+    populate_rg_neighbors()
+
+    with crud.db_transaction():
+        # {vertex_id: parent_vertex_id}
+        parent_vertex = dict(crud.read_as_tuples('vertex', 'id', 'parent'))
+        def gen_parents(x):
+            while x:
+                yield x
+                x = parent_vertex[x]
+        parents_of_vertex = {x: tuple(gen_parents(x)) for x in parent_vertex}
+        print("parents_of_vertex", parents_of_vertex, file=sys.stderr)
+
+        # insert sum(worst) values part of rawZ:
+        crud.execute('''
+            insert into rawZ (reg_group_id, vertex_id, value)
+            select n_id, v, sum(degree * w.value)
+              from (select n.id as n_id, n.reg_class as n_rc,
+                           c.id as c_id, c.v as v, count(rg.id) as degree
+                      from register_group n
+                           inner join rg_neighbors rgn
+                             on n.id in (rg1, rg2)
+                           inner join register_group rg
+                             on rg.id in (rg1, rg2)
+                             and rg.id != n.id
+                           inner join reg_class c
+                             on rg.reg_class = c.id
+                     group by n.id, c.id)
+                   inner join worst w
+                     on w.N = n_rc
+                     and w.C = c_id
+             group by n_id, v
+          ''')
+
+        # insert 0 rawZ nodes where there are children
+        v_heights = \
+          tuple(range(1, 1 + max(crud.read_column('vertex', 'height'))))
+        for v_height in v_heights[1:]:
+            crud.execute('''
+                insert or ignore into rawZ (reg_group_id, vertex_id, value)
+                select r.reg_group_id, v.parent, 0
+                  from rawZ r
+                       inner join vertex v
+                         on r.vertex_id = v.id
+                         and v.height = ?
+              ''', (v_height,))
+
+        # add children to rawZ nodes
+        for v_height in v_heights[1:]:
+            crud.execute('''
+                update rawZ
+                   set value = value + (
+                           select sum(min(b.value, child.value))
+                             from rawZ child
+                                  inner join vertex v
+                                    on  child.vertex_id = v.id
+                                  inner join register_group rg
+                                    on  child.reg_group_id = rg.id
+                                  inner join bound b
+                                    on  b.N = rg.reg_class
+                                    and b.v = v.id
+                            where child.reg_group_id = rawZ.reg_group_id
+                              and v.parent = rawZ.vertex_id
+                              and v.height = ?)
+                 where exists (select null
+                                 from rawZ child
+                                      inner join vertex v
+                                        on child.vertex_id = v.id
+                                where child.reg_group_id = rawZ.reg_group_id
+                                  and v.parent = rawZ.vertex_id
+                                  and v.height = ?)
+              ''', (v_height, v_height))
+
+        # perform final Z(n, R) calculation for register_groups.
+        crud.execute('''
+            update register_group
+               set Z = (select sum(min(b.value, root.value))
+                          from rawZ root
+                               inner join vertex v
+                                 on  root.vertex_id = v.id
+                               inner join register_group rg
+                                 on  root.reg_group_id = rg.id
+                               inner join bound b
+                                 on  b.N = rg.reg_class
+                                 and b.v = v.id
+                         where v.parent isnull
+                           and root.reg_group_id = register_group.id)
+          ''')
+
+    with crud.db_transaction():
+        # stack register_groups
+        stacking_order = iter(itertools.count(1))
+        row_count = 1  # force first iteration
+        while row_count:
+            i = next(stacking_order)
+            row_count = crud.execute('''
+                update register_group
+                   set stacking_order = ?
+                 where stacking_order isnull
+                   and Z < 
+                   (select class_size
+                      from reg_class rc
+                     where rc.id = register_group.reg_class)
+              ''', (i,))[0]
+            print("stacking", i, "got", row_count, file=sys.stderr)
+            if row_count == 0:
+                max_stacking_order = i - 1
+                break
+
+            it = crud.fetchall('''
+                     select -w.value as delta, rg.id as n, rc.v as C_v
+                       from register_group rg_stacked
+                            inner join rg_neighbors rgn
+                              on  rg_stacked.id in (rg1, rg2)
+                            inner join register_group rg
+                              on  rg.id in (rg1, rg2)
+                              and rg.stacking_order isnull
+                            inner join reg_class rc
+                              on  rg_stacked.reg_class = rc.id
+                            inner join worst w
+                              on  w.N = rg.reg_class
+                              and w.C = rg_stacked.reg_class
+                      where rg_stacked.stacking_order = ?
+                        and not rgn.broken
+              ''', (i,))
+            crud.executemany('''
+                update rawZ
+                   set delta = ?
+                 where reg_group_id = ?
+                   and vertex_id = ?
+              ''', it)
+
+            delta_count = 1
+            while delta_count:
+                it = crud.fetchall('''
+                         select min(0,
+                                    max(child.delta,
+                                        child.delta - (b.value - child.value))),
+                                parent.reg_group_id, parent.vertex_id
+                           from rawZ parent
+                                inner join vertex child_v
+                                  on  parent.vertex_id = child_v.parent
+                                inner join rawZ child
+                                  on  child.vertex_id = child_v.id
+                                  and child.reg_group_id = parent.reg_group_id
+                                inner join register_group rg
+                                  on  child.reg_group_id = rg.id
+                                inner join bound b
+                                  on  b.N = rg.reg_class
+                                  and b.v = child_v.id
+                          where parent.delta isnull
+                            and child.delta
+                       ''')
+                it = tuple(it)
+                crud.executemany('''
+                        update rawZ
+                           set delta = ?
+                         where reg_group_id = ?
+                           and vertex_id = ?
+                      ''', it)
+                delta_count = len(it)
+                print("propagating deltas got", delta_count, file=sys.stderr)
+
+            # add deltas to values and clear deltas
+            crud.execute('''
+                update rawZ
+                   set value = value + delta,
+                       delta = NULL
+                 where delta notnull
+              ''')
+
+
+    with crud.db_transaction():
+        for i in range(max_stacking_order, 0, -1):
+            crud.execute('''
+                update register_group
+                   set assigned_register = (
+                           select reg
+                             from reg_in_class
+                            where reg_class = register_group.reg_class
+                              and reg not in (
+                                      select a.r2
+                                        from rg_neighbors rgn
+                                             inner join register_group n
+                                               on  n.id in (rg1, rg2)
+                                             inner join alias a
+                                               on  a.r1 = n.assigned_register
+                                       where register_group.id in (rg1, rg2)
+                                         and n.id != register_group.id
+                                         and n.assigned_register notnull))
+                 where stacking_order = ?
+              ''', (i,))
+
+        # Copy to reg_use table
+        crud.execute('''
+            update reg_use
+               set assigned_register = (select rg.assigned_register
+                                          from register_group rg
+                                         where rg.id = reg_use.reg_group_id)
+          ''')
+
+    return True
+
 def populate_register_group():
     r'''Populate the register_group table.
 
@@ -1008,10 +1222,6 @@ def set_reg_classes():
                                      where ru2.reg_group_id = register_group.id)
          ''')
 
-def group_summary(it, summary_fn, key = None):
-    for key, detail in itertools.groupby(it, key):
-        yield summary_fn(key, detail)
-
 def split(conflicts, neighbors):
     r'''Yields disjoint sets of ru_ids containing no conflicts between them.
 
@@ -1120,211 +1330,10 @@ def split(conflicts, neighbors):
 
     return ids_by_color.values()
 
-def create_reg_map(subsets, sizes, code_seqs):
-    figure_out_rg_neighbors()
+def populate_rg_neighbors():
+    r'''Populates rg_neighbors.
 
-    with crud.db_transaction():
-        # {vertex_id: parent_vertex_id}
-        parent_vertex = dict(crud.read_as_tuples('vertex', 'id', 'parent'))
-        def gen_parents(x):
-            while x:
-                yield x
-                x = parent_vertex[x]
-        parents_of_vertex = {x: tuple(gen_parents(x)) for x in parent_vertex}
-        print("parents_of_vertex", parents_of_vertex, file=sys.stderr)
-
-        # insert sum(worst) values part of rawZ:
-        crud.execute('''
-            insert into rawZ (reg_group_id, vertex_id, value)
-            select n_id, v, sum(degree * w.value)
-              from (select n.id as n_id, n.reg_class as n_rc,
-                           c.id as c_id, c.v as v, count(rg.id) as degree
-                      from register_group n
-                           inner join rg_neighbors rgn
-                             on n.id in (rg1, rg2)
-                           inner join register_group rg
-                             on rg.id in (rg1, rg2)
-                             and rg.id != n.id
-                           inner join reg_class c
-                             on rg.reg_class = c.id
-                     group by n.id, c.id)
-                   inner join worst w
-                     on w.N = n_rc
-                     and w.C = c_id
-             group by n_id, v
-          ''')
-
-        # insert 0 rawZ nodes where there are children
-        v_heights = \
-          tuple(range(1, 1 + max(crud.read_column('vertex', 'height'))))
-        for v_height in v_heights[1:]:
-            crud.execute('''
-                insert or ignore into rawZ (reg_group_id, vertex_id, value)
-                select r.reg_group_id, v.parent, 0
-                  from rawZ r
-                       inner join vertex v
-                         on r.vertex_id = v.id
-                         and v.height = ?
-              ''', (v_height,))
-
-        # add children to rawZ nodes
-        for v_height in v_heights[1:]:
-            crud.execute('''
-                update rawZ
-                   set value = value + (
-                           select sum(min(b.value, child.value))
-                             from rawZ child
-                                  inner join vertex v
-                                    on  child.vertex_id = v.id
-                                  inner join register_group rg
-                                    on  child.reg_group_id = rg.id
-                                  inner join bound b
-                                    on  b.N = rg.reg_class
-                                    and b.v = v.id
-                            where child.reg_group_id = rawZ.reg_group_id
-                              and v.parent = rawZ.vertex_id
-                              and v.height = ?)
-                 where exists (select null
-                                 from rawZ child
-                                      inner join vertex v
-                                        on child.vertex_id = v.id
-                                where child.reg_group_id = rawZ.reg_group_id
-                                  and v.parent = rawZ.vertex_id
-                                  and v.height = ?)
-              ''', (v_height, v_height))
-
-        # perform final Z(n, R) calculation for register_groups.
-        crud.execute('''
-            update register_group
-               set Z = (select sum(min(b.value, root.value))
-                          from rawZ root
-                               inner join vertex v
-                                 on  root.vertex_id = v.id
-                               inner join register_group rg
-                                 on  root.reg_group_id = rg.id
-                               inner join bound b
-                                 on  b.N = rg.reg_class
-                                 and b.v = v.id
-                         where v.parent isnull
-                           and root.reg_group_id = register_group.id)
-          ''')
-
-    with crud.db_transaction():
-        # stack register_groups
-        stacking_order = iter(itertools.count(1))
-        row_count = 1  # force first iteration
-        while row_count:
-            i = next(stacking_order)
-            row_count = crud.execute('''
-                update register_group
-                   set stacking_order = ?
-                 where stacking_order isnull
-                   and Z < 
-                   (select class_size
-                      from reg_class rc
-                     where rc.id = register_group.reg_class)
-              ''', (i,))[0]
-            print("stacking", i, "got", row_count, file=sys.stderr)
-            if row_count == 0:
-                max_stacking_order = i - 1
-                break
-
-            it = crud.fetchall('''
-                     select -w.value as delta, rg.id as n, rc.v as C_v
-                       from register_group rg_stacked
-                            inner join rg_neighbors rgn
-                              on  rg_stacked.id in (rg1, rg2)
-                            inner join register_group rg
-                              on  rg.id in (rg1, rg2)
-                              and rg.stacking_order isnull
-                            inner join reg_class rc
-                              on  rg_stacked.reg_class = rc.id
-                            inner join worst w
-                              on  w.N = rg.reg_class
-                              and w.C = rg_stacked.reg_class
-                      where rg_stacked.stacking_order = ?
-                        and not rgn.broken
-              ''', (i,))
-            crud.executemany('''
-                update rawZ
-                   set delta = ?
-                 where reg_group_id = ?
-                   and vertex_id = ?
-              ''', it)
-
-            delta_count = 1
-            while delta_count:
-                it = crud.fetchall('''
-                         select min(0,
-                                    max(child.delta,
-                                        child.delta - (b.value - child.value))),
-                                parent.reg_group_id, parent.vertex_id
-                           from rawZ parent
-                                inner join vertex child_v
-                                  on  parent.vertex_id = child_v.parent
-                                inner join rawZ child
-                                  on  child.vertex_id = child_v.id
-                                  and child.reg_group_id = parent.reg_group_id
-                                inner join register_group rg
-                                  on  child.reg_group_id = rg.id
-                                inner join bound b
-                                  on  b.N = rg.reg_class
-                                  and b.v = child_v.id
-                          where parent.delta isnull
-                            and child.delta
-                       ''')
-                it = tuple(it)
-                crud.executemany('''
-                        update rawZ
-                           set delta = ?
-                         where reg_group_id = ?
-                           and vertex_id = ?
-                      ''', it)
-                delta_count = len(it)
-                print("propagating deltas got", delta_count, file=sys.stderr)
-
-            # add deltas to values and clear deltas
-            crud.execute('''
-                update rawZ
-                   set value = value + delta,
-                       delta = NULL
-                 where delta notnull
-              ''')
-
-
-    with crud.db_transaction():
-        for i in range(max_stacking_order, 0, -1):
-            crud.execute('''
-                update register_group
-                   set assigned_register = (
-                           select reg
-                             from reg_in_class
-                            where reg_class = register_group.reg_class
-                              and reg not in (
-                                      select a.r2
-                                        from rg_neighbors rgn
-                                             inner join register_group n
-                                               on  n.id in (rg1, rg2)
-                                             inner join alias a
-                                               on  a.r1 = n.assigned_register
-                                       where register_group.id in (rg1, rg2)
-                                         and n.id != register_group.id
-                                         and n.assigned_register notnull))
-                 where stacking_order = ?
-              ''', (i,))
-
-        # Copy to reg_use table
-        crud.execute('''
-            update reg_use
-               set assigned_register = (select rg.assigned_register
-                                          from register_group rg
-                                         where rg.id = reg_use.reg_group_id)
-          ''')
-
-def figure_out_rg_neighbors():
-    r'''Figures out rg_neighbors.
-
-    First figures out overlaps, then uses this for rg_neighbors.
+    First populates overlaps, then uses this for rg_neighbors.
 
     This function deletes all overlaps and rg_neighbors first so that it can
     be run multiple times.
