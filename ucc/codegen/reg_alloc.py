@@ -125,16 +125,20 @@ def chk_num_regs(nr1, nr2):
     raise AssertionError("non-conforming num_regs: {{{}, {}}}".format(nr1, nr2))
 
 def alloc_regs():
+    # Set up sqlite3 user functions:
     global Subsets
-    delete()  # start from a clean slate
-    Subsets = get_reg_class_subsets()
+    Subsets = get_reg_class_subsets()  # needed by rc_subset and aggr_rc_subset
     crud.Db_conn.db_conn.create_function("rc_subset", 2, rc_subset)
     crud.Db_conn.db_conn.create_function("chk_num_regs", 2, chk_num_regs)
     crud.Db_conn.db_conn.create_aggregate("aggr_rc_subset", 1, aggr_rc_subset)
     crud.Db_conn.db_conn.create_aggregate("aggr_num_regs", 1, aggr_num_regs)
+
+    figure_out_register_groups()
+
+    # FIX: Are these actually used anywhere?
     sizes = get_reg_class_sizes()
-    figure_out_multi_use(Subsets, sizes)
     code_seqs = code_seq.get_code_seq_info()
+
     create_reg_map(Subsets, sizes, code_seqs)
 
 def get_reg_class_subsets():
@@ -169,7 +173,43 @@ def get_reg_class_sizes():
                      group by reg_class
                   '''))
 
-def figure_out_multi_use(subsets, sizes):
+def figure_out_register_groups():
+    r'''Creates reg_uses, reg_use_linkages and register_groups.
+    '''
+
+    # start from a clean slate
+    delete()
+
+    # copy information to and from triples and triple_parameters for easier
+    # access.
+    prepare_triples()
+
+    # Who all needs a register?
+    populate_reg_use()
+
+    # Which pairs of reg_uses represent the same value and should be put into
+    # the same register?
+    populate_reg_use_linkage()
+
+    # Each register group represents a set of linked reg_uses.  The goal will
+    # be to assign a register to each register_group.
+    populate_register_group()
+
+    # Split register_groups that include conflicting reg_uses.  A conflict
+    # could be due to incompatible register classes, or two reg_uses for the
+    # same kind and ref_id.
+    eliminate_conflicts()
+
+    # Sets the reg_class and num_registers in each register_group.
+    set_reg_classes()
+
+def prepare_triples():
+    r'''Do some prep work on the triples.
+
+    This is just copying information between triple_parameters and triples to
+    make it easier to access (without having to join to the other table).
+    '''
+
     # Copy the triple_parameters.abs_order_in_block down to its child.
     with crud.db_transaction():
         crud.execute('''
@@ -219,21 +259,6 @@ def figure_out_multi_use(subsets, sizes):
                                       where t.operator in ('call_direct',
                                                            'call_indirect'))
           ''')
-
-    # Who all needs a register?
-    populate_reg_use()
-
-    # Which pairs of reg_uses represent the same value and should be put into
-    # the same register?
-    populate_reg_use_linkage()
-
-    # Each register group represents a set of linked reg_uses.  The goal will
-    # be to assign a register to each register_group.
-    populate_register_group()
-
-    eliminate_conflicts()
-
-    set_reg_classes()
 
 def populate_reg_use():
     r'''This populates the reg_use table.
@@ -784,6 +809,10 @@ def populate_register_group():
 
     This table has one row per set of linked reg_uses.
 
+    This function can be called repeatedly.  It deletes all prior
+    register_groups each time and starts over scratch, but it observes the
+    'broken' flag in the reg_use_linkage; which may lead to different results.
+
     The algorithm here does not end up assigning consecutive ids to the
     register_groups.  Rather, there will be missing ids; but nobody cares.
     
@@ -800,12 +829,27 @@ def populate_register_group():
     '''
 
     with crud.db_transaction():
-        # Copy all reg_use.ids to reg_use.reg_group_id
+        # Delete any prior register_groups
+        crud.delete('register_group')
+
+        # And set all broken 1's back to 0 for now.  These will be
+        # recalculated later by eliminate_conflicts.  Leave other broken
+        # values unchanged (these were set due to graph coloring conflicts on
+        # a prior pass).
+        crud.update('reg_use_linkage', {'broken': 1}, broken=0)
+
+    with crud.db_transaction():
+        # Tentatively assign all reg_use.reg_group_ids as simply the reg_use.id
+        # (a simple source of unique numbers).
         crud.execute('''
             update reg_use
                set reg_group_id = id
           ''')
 
+        # Now set the reg_group_ids of all pairs of reg_uses that are linked
+        # through a reg_use_linkage to be the same number.  Do this by setting
+        # the one with the greater number to match the one with the smaller
+        # number.  Repeat this until no more reg_uses are updated.
         rowcount = 1
         while rowcount:
             rowcount = crud.execute('''
@@ -819,7 +863,8 @@ def populate_register_group():
                                on reg_use_1 = ru1.id
                              inner join reg_use ru2
                                on reg_use_2 = ru2.id
-                       where ru1.reg_group_id != ru2.reg_group_id
+                       where not broken
+                         and ru1.reg_group_id != ru2.reg_group_id
                          and (   ru1.reg_group_id = reg_use.reg_group_id
                               or ru2.reg_group_id = reg_use.reg_group_id))
                  where exists (
@@ -829,7 +874,8 @@ def populate_register_group():
                                   on reg_use_1 = ru1.id
                                 inner join reg_use ru2
                                   on reg_use_2 = ru2.id
-                          where ru1.reg_group_id != ru2.reg_group_id
+                          where not broken
+                            and ru1.reg_group_id != ru2.reg_group_id
                             and (   ru1.reg_group_id = reg_use.reg_group_id
                                  or ru2.reg_group_id = reg_use.reg_group_id)
                             and min(ru1.reg_group_id, ru2.reg_group_id) <
@@ -852,11 +898,16 @@ def eliminate_conflicts():
 
     The two causes of conflict are incompatible register classes, and two
     reg_uses for the same kind and ref_id.
+
+    This function sets the 'broken' flag in affected reg_use_linkages to 1.
+    If no other function sets uses 1 for the broken value, this function can
+    be re-run.
     '''
     with crud.db_transaction():
         # all links as two-tuples
         links1 = tuple(crud.read_as_tuples('reg_use_linkage',
-                                           'reg_use_1', 'reg_use_2'))
+                                           'reg_use_1', 'reg_use_2',
+                                           broken=0))
         # include reverse links, and sort by first id
         links = sorted(itertools.chain(links1, ((b, a) for a, b in links1)))
 
@@ -927,7 +978,8 @@ def eliminate_conflicts():
         crud.execute('''
             update reg_use_linkage
                set broken = 1
-             where (select ru1.reg_group_id != ru2.reg_group_id
+             where not broken
+               and (select ru1.reg_group_id != ru2.reg_group_id
                       from reg_use ru1, reg_use ru2
                      where ru1.id = reg_use_linkage.reg_use_1
                        and ru2.id = reg_use_linkage.reg_use_2)
@@ -939,9 +991,12 @@ def eliminate_conflicts():
                set reg_group_id = (select reg_group_id
                                      from reg_use ru
                                     where ru.id = reg_use_linkage.reg_use_1)
+             where not broken
          ''')
 
 def set_reg_classes():
+    r'''Sets the reg_class and num_registers in each register_group.
+    '''
     with crud.db_transaction():
         crud.execute('''
             update register_group
@@ -1065,276 +1120,8 @@ def split(conflicts, neighbors):
 
     return ids_by_color.values()
 
-
-######################### OLD figure_out_multi_use code ###################
-"""
-    # Copy reg_class and num_regs_output from code_seq to triples.
-    with crud.db_transaction():
-        crud.execute('''
-            update triples
-               set reg_class =       (select cs.output_reg_class
-                                        from code_seq cs
-                                       where triples.code_seq_id = cs.id),
-                   num_regs_output = (select cs.num_output
-                                        from code_seq cs
-                                       where triples.code_seq_id = cs.id)
-             where code_seq_id not null
-               and operator not in
-                     ('output', 'output-bit-set', 'output-bit-clear',
-                      'global_addr', 'global', 'local_addr', 'local',
-                      'call_direct', 'call_indirect', 'return',
-                      'if_false', 'if_true')
-          ''')
-
-    for next_fn_layer in get_functions():
-        for symbol_id in next_fn_layer:
-            with crud.db_transaction():
-                it = crud.fetchall('''
-                         select exp_t.reg_class, exp_t.num_regs_output
-                           from blocks b
-                                inner join triples ret_t
-                                  on b.id = ret_t.block_id
-                                inner join triple_parameters tp
-                                  on tp.parent_id = ret_t.id
-                                inner join triples exp_t
-                                  on exp_t.id = tp.parameter_id
-                          where b.word_symbol_id = ?
-                            and ret_t.operator = 'return'
-                       ''', (symbol_id,))
-                for rc, num in it:
-                    # FIX: Finish!
-                    pass
-
-    with crud.db_transaction():
-        # FIX: Need to add info for function call parameters!
-        crud.execute('''
-            update triple_parameters
-               set reg_class_for_parent =
-                     (select csp.reg_class
-                        from code_seq_parameter csp
-                       where triple_parameters.parent_code_seq_id =
-                               csp.code_seq_id
-                         and triple_parameters.parameter_num =
-                               csp.parameter_num),
-                   num_regs_for_parent =
-                     (select csp.num_registers
-                        from code_seq_parameter csp
-                       where triple_parameters.parent_code_seq_id =
-                               csp.code_seq_id
-                         and triple_parameters.parameter_num =
-                               csp.parameter_num),
-                   trashed =
-                     (select csp.trashes
-                        from code_seq_parameter csp
-                       where triple_parameters.parent_code_seq_id =
-                               csp.code_seq_id
-                         and triple_parameters.parameter_num =
-                               csp.parameter_num),
-                   delink =
-                     (select csp.delink
-                        from code_seq_parameter csp
-                       where triple_parameters.parent_code_seq_id =
-                               csp.code_seq_id
-                         and triple_parameters.parameter_num =
-                               csp.parameter_num)
-             where parent_id not in (select t.id
-                                       from triples t
-                                      where t.operator in ('call_direct',
-                                                           'call_indirect'))
-          ''')
-
-    # This will handle the vast majority of triple_parameters:
-    with crud.db_transaction():
-        crud.execute('''
-            update triple_parameters
-               set needed_reg_class = reg_class_for_parent
-             where last_parameter_use
-               and reg_class_for_parent notnull
-          ''')
-
-    with crud.db_transaction():
-        rows = tuple(crud.read_as_dicts('triple_parameters',
-                     'id', 'parameter_id', 'trashed', 'reg_class_for_parent',
-                     'last_parameter_use',
-                     order_by=('parameter_id', ('parent_seq_num', 'desc'))))
-        for k, params \
-         in itertools.groupby(rows, key=lambda row: row['parameter_id']):
-            params = tuple(params)
-            for i, row in enumerate(params):
-                if i == 0:
-                    next_rc = row['reg_class_for_parent']
-                    assert row['last_parameter_use']
-                    if next_rc is None: break
-                elif row['trashed']:
-                    crud.update('triple_parameters',
-                                {'id': row['id']},
-                                needed_reg_class = next_rc,
-                                move_needed_to_parent = 1)
-                elif row['reg_class_for_parent'] is None:
-                    break
-                elif (next_rc, row['reg_class_for_parent']) in subsets:
-                    next_rc = subsets[next_rc, row['reg_class_for_parent']]
-                    crud.update('triple_parameters',
-                                {'id': row['id']},
-                                needed_reg_class = next_rc)
-                else:
-                    prior = i + 1
-                    done = False
-                    if prior < len(params):
-                        p = params[prior]
-                        if p['reg_class_for_parent'] is None \
-                           or p['trashed'] is None:
-                            break
-                        if not p['trashed']:
-                            subset = subsets.get((p['reg_class_for_parent'],
-                                                  row['reg_class_for_parent']))
-                            if subset is not None:
-                                if sizes[subset] > sizes[next_rc]:
-                                    next_rc = subset
-                                    crud.update('triple_parameters',
-                                      {'id': row['id']},
-                                      needed_reg_class = next_rc)
-                                    crud.update('triple_parameters',
-                                      {'id': params[i - 1]['id']},
-                                      move_prior_to_needed = 1)
-                                else:
-                                    next_rc = subset
-                                    crud.update('triple_parameters',
-                                      {'id': row['id']},
-                                      needed_reg_class = next_rc,
-                                      move_needed_to_next = 1)
-                                done = True
-                            else:
-                                subset = subsets.get((p['reg_class_for_parent'],
-                                                      next_rc))
-                                if subset is not None:
-                                    next_rc = subset
-                                    crud.update('triple_parameters',
-                                      {'id': row['id']},
-                                      needed_reg_class = next_rc,
-                                      move_needed_to_parent = 1)
-                                    done = True
-                    if not done:
-                        if sizes[row['reg_class_for_parent']] > sizes[next_rc]:
-                            next_rc = row['reg_class_for_parent']
-                            crud.update('triple_parameters',
-                                        {'id': row['id']},
-                                        needed_reg_class = next_rc)
-                            crud.update('triple_parameters',
-                                        {'id': params[i - 1]['id']},
-                                        move_prior_to_needed = 1)
-                        else:
-                            crud.update('triple_parameters',
-                                        {'id': row['id']},
-                                        needed_reg_class = next_rc,
-                                        move_needed_to_parent = 1)
-
-    # Reset ghost flag for delinked triple_parameters:
-    # FIX: This could violate a triple_order_constraint!
-    #      But I don't think that it will because it should only be
-    #      constant parameters that are delinked.
-    with crud.db_transaction():
-        # Mark delinks as ghosts.
-        crud.execute('''
-            update triple_parameters
-               set ghost = 1
-             where ghost = 0 and delink
-          ''')
-
-        # And pick another triple_parameter to evaluate the parameter triple.
-        # Note that if all triple_parameters are marked 'delink', then the
-        # parameter triple will not have any ghost = 0, so will not have code
-        # generated for it.
-        crud.execute('''
-            update triple_parameters
-               set ghost = 0
-             where not exists
-                     (select null
-                        from triple_parameters tp
-                       where tp.parameter_id = triple_parameters.parameter_id
-                         and tp.ghost = 0)
-               and parent_seq_num =
-                     (select min(parent_seq_num)
-                        from triple_parameters tp
-                       where tp.parameter_id = triple_parameters.parameter_id
-                         and not tp.delink)
-          ''')
-
-    # Finally, copy the triple_parameters.abs_order_in_block down to its
-    # child.
-    with crud.db_transaction():
-        crud.execute('''
-            update triples
-               set abs_order_in_block = (select abs_order_in_block
-                                           from triple_parameters tp
-                                          where triples.id = tp.parameter_id
-                                            and tp.ghost = 0),
-                   needed_reg_class =   (select tp.needed_reg_class
-                                           from triple_parameters tp
-                                          where triples.id = tp.parameter_id
-                                            and tp.ghost = 0),
-                   num_needed_regs =    (select tp.num_regs_for_parent
-                                           from triple_parameters tp
-                                          where triples.id = tp.parameter_id
-                                            and tp.ghost = 0)
-             where use_count != 0
-          ''')
-"""
-
-
 def create_reg_map(subsets, sizes, code_seqs):
-    with crud.db_transaction():
-        # Figure out overlaps between reg_use_linkages and reg_uses in other
-        # register_groups.
-        crud.execute('''
-            insert into overlaps (linkage_id, reg_use_id)
-            select rul.id, ru3.id
-              from reg_use_linkage rul
-                   inner join reg_use ru1
-                     on ru1.id = reg_use_1
-                   inner join reg_use ru2
-                     on ru2.id = reg_use_2
-                     and ru1.block_id = ru2.block_id
-                   inner join reg_use ru3
-                     on ru1.block_id = ru3.block_id
-                     and ru1.abs_order_in_block <= ru3.abs_order_in_block
-                     and ru2.abs_order_in_block >= ru3.abs_order_in_block
-             where ru1.block_id notnull
-               and ru1.abs_order_in_block notnull
-               and ru2.block_id notnull
-               and ru2.abs_order_in_block notnull
-               and ru3.block_id notnull
-               and ru3.abs_order_in_block notnull
-               and not broken
-               and ru3.reg_group_id != ru1.reg_group_id
-          ''')
-
-        # Figure out rg_neighbors.
-        crud.execute('''
-            insert into rg_neighbors (rg1, rg2)
-            select distinct min(rul.reg_group_id, ru.reg_group_id),
-                            max(rul.reg_group_id, ru.reg_group_id)
-              from overlaps ov
-                   inner join reg_use_linkage rul
-                     on ov.linkage_id = rul.id
-                   inner join reg_use ru
-                     on ov.reg_use_id = ru.id
-          ''')
-
-        # Link overlaps to rg_neighbors.
-        crud.execute('''
-            update overlaps
-               set rg_neighbor_id = (
-                   select rgn.id
-                     from rg_neighbors rgn
-                          inner join reg_use_linkage rul
-                            on rul.reg_group_id in (rg1, rg2)
-                          inner join reg_use ru
-                            on ru.reg_group_id in (rg1, rg2)
-                            and ru.reg_group_id != rul.reg_group_id
-                    where overlaps.linkage_id = rul.id
-                      and overlaps.reg_use_id = ru.id)
-          ''')
+    figure_out_rg_neighbors()
 
     with crud.db_transaction():
         # {vertex_id: parent_vertex_id}
@@ -1532,6 +1319,73 @@ def create_reg_map(subsets, sizes, code_seqs):
                set assigned_register = (select rg.assigned_register
                                           from register_group rg
                                          where rg.id = reg_use.reg_group_id)
+          ''')
+
+def figure_out_rg_neighbors():
+    r'''Figures out rg_neighbors.
+
+    First figures out overlaps, then uses this for rg_neighbors.
+
+    This function deletes all overlaps and rg_neighbors first so that it can
+    be run multiple times.
+    '''
+
+    # Delete overlaps and rg_neighbors
+    with crud.db_transaction():
+        crud.delete('overlaps')
+        crud.delete('rg_neighbors')
+
+    with crud.db_transaction():
+        # Figure out overlaps between reg_use_linkages and reg_uses in other
+        # register_groups.  These go in the overlaps table.
+        crud.execute('''
+            insert into overlaps (linkage_id, reg_use_id)
+            select rul.id, ru3.id
+              from reg_use_linkage rul
+                   inner join reg_use ru1
+                     on ru1.id = reg_use_1
+                   inner join reg_use ru2
+                     on ru2.id = reg_use_2
+                     and ru1.block_id = ru2.block_id
+                   inner join reg_use ru3
+                     on ru1.block_id = ru3.block_id
+                     and ru1.abs_order_in_block <= ru3.abs_order_in_block
+                     and ru2.abs_order_in_block >= ru3.abs_order_in_block
+             where ru1.block_id notnull
+               and ru1.abs_order_in_block notnull
+               and ru2.block_id notnull
+               and ru2.abs_order_in_block notnull
+               and ru3.block_id notnull
+               and ru3.abs_order_in_block notnull
+               and not rul.broken
+               and ru3.reg_group_id != ru1.reg_group_id
+          ''')
+
+        # Figure out rg_neighbors.  These are the conflicting register_groups.
+        crud.execute('''
+            insert into rg_neighbors (rg1, rg2)
+            select distinct min(rul.reg_group_id, ru.reg_group_id),
+                            max(rul.reg_group_id, ru.reg_group_id)
+              from overlaps ov
+                   inner join reg_use_linkage rul
+                     on ov.linkage_id = rul.id
+                   inner join reg_use ru
+                     on ov.reg_use_id = ru.id
+          ''')
+
+        # Link overlaps to rg_neighbors.
+        crud.execute('''
+            update overlaps
+               set rg_neighbor_id = (
+                   select rgn.id
+                     from rg_neighbors rgn
+                          inner join reg_use_linkage rul
+                            on rul.reg_group_id in (rg1, rg2)
+                          inner join reg_use ru
+                            on ru.reg_group_id in (rg1, rg2)
+                            and ru.reg_group_id != rul.reg_group_id
+                    where overlaps.linkage_id = rul.id
+                      and overlaps.reg_use_id = ru.id)
           ''')
 
 #def create_reg_map(subsets, sizes, code_seqs):
@@ -1732,6 +1586,5 @@ def delete():
     with crud.db_transaction():
         crud.delete('reg_use')
         crud.delete('reg_use_linkage')
-        crud.delete('overlaps')
         crud.delete('register_group')
 

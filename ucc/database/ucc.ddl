@@ -447,7 +447,7 @@ create table last_locals (
 create table overlaps (
     linkage_id int not null references reg_use_linkage(id),
     reg_use_id int not null references reg_use(id),
-    rg_neighbor_id int,
+    rg_neighbor_id int references rg_neighbors(id),
     primary key (linkage_id, reg_use_id)
 );
 
