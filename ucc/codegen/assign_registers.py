@@ -10,7 +10,7 @@ import itertools
 
 from ucc.database import crud
 
-def assign_registers(max_stacking_order):
+def assign_registers(max_stacking_order, attempt_number):
     r'''Pops register_groups off of the "stack" and assigns a register to each.
 
     Return True if everything goes OK and False if we need to rerun the
