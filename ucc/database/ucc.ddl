@@ -432,7 +432,7 @@ create table reg_use_linkage (
     reg_use_2 int not null references reg_use(id),
 
     is_segment bool not null default 0,
-    broken bool not null default 0,
+    broken int not null default 0,
     reg_group_id int
 );
 
@@ -456,7 +456,7 @@ create table rg_neighbors (
     id integer not null primary key,
     rg1 int not null references register_group(id),
     rg2 int not null references register_group(id),
-    broken bool not null default 0
+    broken int not null default 0
 );
 
 create table register_group (

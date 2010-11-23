@@ -30,13 +30,9 @@ def alloc_regs():
     # the same register?
     populate_reg_use_linkage()
 
-    # FIX: Are these actually used anywhere?
-    sizes = get_reg_class_sizes()
-    code_seqs = code_seq.get_code_seq_info()
-
-    while not populate_register_groups.attempt_register_allocation(sizes,
-                                                                   code_seqs):
-        pass
+    for attempt_number in itertools.count(1):
+        if populate_register_groups.attempt_register_allocation(attempt_number):
+            break
 
 def get_reg_class_sizes():
     r'''Returns the number of registers in each reg_class.

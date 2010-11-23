@@ -14,7 +14,7 @@ import operator
 from ucc.database import crud
 from ucc.codegen import assign_registers, stack_register_groups
 
-def attempt_register_allocation(sizes, code_seqs):
+def attempt_register_allocation(attempt_number):
     r'''This assigns the actual registers to each register_group.
 
     If this is not possible, it will break reg_use_linkages (spill) to try to
@@ -47,7 +47,7 @@ def attempt_register_allocation(sizes, code_seqs):
     max_stacking_order = \
       stack_register_groups.stack_register_groups(num_register_groups)
 
-    return assign_registers.assign_registers(max_stacking_order)
+    return assign_registers.assign_registers(max_stacking_order, attempt_number)
 
 def populate_register_group():
     r'''Populate the register_group table.
@@ -77,11 +77,11 @@ def populate_register_group():
         # Delete any prior register_groups
         crud.delete('register_group')
 
-        # And set all broken 1's back to 0 for now.  These will be
+        # And set all broken -1's back to 0 for now.  These will be
         # recalculated later by eliminate_conflicts.  Leave other broken
         # values unchanged (these were set due to graph coloring conflicts on
         # a prior pass).
-        crud.update('reg_use_linkage', {'broken': 1}, broken=0)
+        crud.update('reg_use_linkage', {'broken': -1}, broken=0)
 
     with crud.db_transaction():
         # Tentatively assign all reg_use.reg_group_ids as simply the reg_use.id
@@ -146,8 +146,8 @@ def eliminate_conflicts():
     The two causes of conflict are incompatible register classes, and two
     reg_uses for the same kind and ref_id.
 
-    This function sets the 'broken' flag in affected reg_use_linkages to 1.
-    If no other function sets uses 1 for the broken value, this function can
+    This function sets the 'broken' flag in affected reg_use_linkages to -1.
+    If no other function uses -1 for the broken value, this function can
     be re-run.
     '''
     with crud.db_transaction():
@@ -227,7 +227,7 @@ def eliminate_conflicts():
         # different register_groups.
         crud.execute('''
             update reg_use_linkage
-               set broken = 1
+               set broken = -1
              where not broken
                and (select ru1.reg_group_id != ru2.reg_group_id
                       from reg_use ru1, reg_use ru2
