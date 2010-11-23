@@ -37,15 +37,6 @@ def initialize_rawZ_and_Z():
         crud.delete('rawZ')
 
     with crud.db_transaction():
-        # {vertex_id: parent_vertex_id}
-        #parent_vertex = dict(crud.read_as_tuples('vertex', 'id', 'parent'))
-        #def gen_parents(x):
-        #    while x:
-        #        yield x
-        #        x = parent_vertex[x]
-        #parents_of_vertex = {x: tuple(gen_parents(x)) for x in parent_vertex}
-        #print("parents_of_vertex", parents_of_vertex, file=sys.stderr)
-
         # insert sum(worst) values part of rawZ:
         crud.execute('''
             insert into rawZ (reg_group_id, vertex_id, value)
@@ -105,24 +96,29 @@ def initialize_rawZ_and_Z():
                                   and v.parent = rawZ.vertex_id
                                   and v.height = ?)
               ''', (v_height, v_height))
+        set_Z()
 
-        # perform final Z(n, R) calculation for register_groups.
-        crud.execute('''
-            update register_group
-               set Z = (select sum(min(b.value, root.value))
-                          from rawZ root
-                               inner join vertex v
-                                 on  root.vertex_id = v.id
-                               inner join register_group rg
-                                 on  root.reg_group_id = rg.id
-                               inner join bound b
-                                 on  b.N = rg.reg_class
-                                 and b.v = v.id
-                         where v.parent isnull
-                           and root.reg_group_id = register_group.id)
-          ''')
+def set_Z():
+    r'''Perform final Z(n, R) calculation for register_groups.
 
-def stack_register_groups():
+    This updates all register_groups.
+    '''
+    crud.execute('''
+        update register_group
+           set Z = (select sum(min(b.value, root.value))
+                      from rawZ root
+                           inner join vertex v
+                             on  root.vertex_id = v.id
+                           inner join register_group rg
+                             on  root.reg_group_id = rg.id
+                           inner join bound b
+                             on  b.N = rg.reg_class
+                             and b.v = v.id
+                     where v.parent isnull
+                       and root.reg_group_id = register_group.id)
+      ''')
+
+def stack_register_groups(num_register_groups):
     r'''Stacks register_groups by setting register_group.stacking_order.
 
     The stacking_order starts with 1 at the bottom of the stack and works up.
@@ -130,25 +126,55 @@ def stack_register_groups():
 
     This function may be called multiple times.
     '''
+
+    if num_register_groups == 0:
+        return 0
+
     with crud.db_transaction():
         # stack register_groups
         stacking_order = iter(itertools.count(1))
-        row_count = 1  # force first iteration
-        while row_count:
+        while True:
             i = next(stacking_order)
+
+            # Stack all assignment_certain register_groups (if any):
             row_count = crud.execute('''
                 update register_group
-                   set stacking_order = ?
+                   set stacking_order = ?,
+                       assignment_certain = 1
                  where stacking_order isnull
                    and Z < 
                    (select class_size
                       from reg_class rc
                      where rc.id = register_group.reg_class)
               ''', (i,))[0]
-            print("stacking", i, "got", row_count, file=sys.stderr)
+            print("stacking", i, "assignment_certain got", row_count,
+                  file=sys.stderr)
             if row_count == 0:
-                return i - 1
+                # No assignment_certain register_groups, select 1
+                # register_group with least excess in registers required:
+                group_id = next(crud.fetchall('''
+                     select get_min(rg.Z - rc.class_size, rg.id)
+                       from register_group rg
+                            inner join reg_class rc
+                              on  rc.id = rg.reg_class
+                      where rg.stacking_order isnull
+                  '''))[0]
+                row_count = crud.execute('''
+                    update register_group
+                       set stacking_order = ?,
+                           assignment_certain = 0
+                     where id = ?
+                  ''', (i, group_id))[0]
+                print("stacking", i, "not assignment_certain got", row_count,
+                      "with", group_id, file=sys.stderr)
+                assert row_count == 1
 
+            num_register_groups -= row_count
+            if num_register_groups <= 0:
+                return i
+
+            # Update rawZ values to reflect deleted links to register_groups
+            # just stacked.
             it = crud.fetchall('''
                      select -w.value as delta, rg.id as n, rc.v as C_v
                        from register_group rg_stacked
@@ -210,4 +236,7 @@ def stack_register_groups():
                        delta = NULL
                  where delta notnull
               ''')
+
+            # Recalc Z values:
+            set_Z()
 
