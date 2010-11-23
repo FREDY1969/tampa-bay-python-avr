@@ -30,12 +30,12 @@ def attempt_register_allocation(sizes, code_seqs):
 
     # Each register group represents a set of linked reg_uses.  The goal will
     # be to assign a register to each register_group.
-    populate_register_group()
+    num_register_groups = populate_register_group()
 
     # Split register_groups that include conflicting reg_uses.  A conflict
     # could be due to incompatible register classes, or two reg_uses for the
     # same kind and ref_id.
-    eliminate_conflicts()
+    num_register_groups += eliminate_conflicts()
 
     # Sets the reg_class and num_registers in each register_group.
     set_reg_classes()
@@ -44,7 +44,8 @@ def attempt_register_allocation(sizes, code_seqs):
 
     stack_register_groups.initialize_rawZ_and_Z()
 
-    max_stacking_order = stack_register_groups.stack_register_groups()
+    max_stacking_order = \
+      stack_register_groups.stack_register_groups(num_register_groups)
 
     return assign_registers.assign_registers(max_stacking_order)
 
@@ -130,12 +131,14 @@ def populate_register_group():
         print("done updating reg_group_ids", file = sys.stderr)
 
         # Gather the remaining reg_group_ids into register_group
-        crud.execute('''
+        num_register_groups = crud.execute('''
             insert into register_group (id)
               select distinct reg_group_id from reg_use
-          ''')
+          ''')[0]
 
-        print("done populating register_group", file = sys.stderr)
+        print("created", num_register_groups, "register_groups",
+              file = sys.stderr)
+    return num_register_groups
 
 def eliminate_conflicts():
     r'''Eliminate conflicts between reg_uses in the same register_group.
@@ -184,6 +187,7 @@ def eliminate_conflicts():
         # split conflicts within each reg_group_id, this will replace the
         # register_group with conflicting reg_uses with a set of
         # register_groups with non-conflicting reg_uses.
+        num_new_register_groups = 0
         for reg_group_id, conflicts \
          in itertools.groupby(it, operator.attrgetter('reg_group_id')):
 
@@ -205,6 +209,7 @@ def eliminate_conflicts():
                   '''.format(ru_qmarks),
                   ru_ids)[1]
                 print("new_group_id", new_group_id, file=sys.stderr)
+                num_new_register_groups += 1
 
                 # update reg_group_id to new_group_id in all ru_ids
                 crud.execute('''
@@ -215,7 +220,8 @@ def eliminate_conflicts():
                   (new_group_id,) + ru_ids)
 
             # delete old register_group
-            crud.delete('reg_group', id=reg_group_id)
+            crud.delete('register_group', id=reg_group_id)
+            num_new_register_groups -= 1
 
         # set broken flag on all reg_use_linkages for reg_uses now in
         # different register_groups.
@@ -237,6 +243,7 @@ def eliminate_conflicts():
                                     where ru.id = reg_use_linkage.reg_use_1)
              where not broken
          ''')
+    return num_new_register_groups
 
 def set_reg_classes():
     r'''Sets the reg_class and num_registers in each register_group.

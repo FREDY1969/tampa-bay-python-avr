@@ -108,6 +108,76 @@ class aggr_num_regs:
         raise AssertionError(
                 "non-conforming num_regs: {}".format(self.num_regs))
 
+class get_max:
+    r'''Sqlite3 aggregate function for get_max.
+
+    Returns the second argument associated with the greatest first argument.
+
+        >>> gm = get_max()
+        >>> gm.finalize()       # NULL for 0 rows.
+        >>> gm = get_max()
+        >>> gm.step(1, 'a')
+        >>> gm.step(2, 'b')
+        >>> gm.step(3, 'c')
+        >>> gm.step(4, 'd')
+        >>> gm.finalize()
+        'd'
+        >>> gm = get_max()
+        >>> gm.step(3, 'c')
+        >>> gm.step(4, 'd')
+        >>> gm.step(1, 'a')
+        >>> gm.step(2, 'b')
+        >>> gm.finalize()
+        'd'
+    '''
+    def __init__(self):
+        self.max_value = None
+        self.result = None
+
+    def step(self, value, result):
+        if value is not None and result is not None and \
+           (self.max_value is None or self.max_value < value):
+            self.max_value = value
+            self.result = result
+
+    def finalize(self):
+        return self.result
+
+class get_min:
+    r'''Sqlite3 aggregate function for get_min.
+
+    Returns the second argument associated with the greatest first argument.
+
+        >>> gm = get_min()
+        >>> gm.finalize()       # NULL for 0 rows.
+        >>> gm = get_min()
+        >>> gm.step(1, 'a')
+        >>> gm.step(2, 'b')
+        >>> gm.step(3, 'c')
+        >>> gm.step(4, 'd')
+        >>> gm.finalize()
+        'a'
+        >>> gm = get_min()
+        >>> gm.step(3, 'c')
+        >>> gm.step(4, 'd')
+        >>> gm.step(1, 'a')
+        >>> gm.step(2, 'b')
+        >>> gm.finalize()
+        'a'
+    '''
+    def __init__(self):
+        self.min_value = None
+        self.result = None
+
+    def step(self, value, result):
+        if value is not None and result is not None and \
+           (self.min_value is None or value < self.min_value):
+            self.min_value = value
+            self.result = result
+
+    def finalize(self):
+        return self.result
+
 def rc_subset(rc1, rc2):
     if rc1 is None: return rc2
     if rc2 is None: return rc1
@@ -127,6 +197,8 @@ def register_functions():
     crud.Db_conn.db_conn.create_function("chk_num_regs", 2, chk_num_regs)
     crud.Db_conn.db_conn.create_aggregate("aggr_rc_subset", 1, aggr_rc_subset)
     crud.Db_conn.db_conn.create_aggregate("aggr_num_regs", 1, aggr_num_regs)
+    crud.Db_conn.db_conn.create_aggregate("get_max", 2, get_max)
+    crud.Db_conn.db_conn.create_aggregate("get_min", 2, get_min)
 
 def get_reg_class_subsets():
     r'''Returns {(reg_class1, reg_class2): subset_reg_class}.

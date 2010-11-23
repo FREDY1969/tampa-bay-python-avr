@@ -466,6 +466,10 @@ create table register_group (
     Z int,                      -- Z(n, R) from paper, where 'n' is this
                                 -- register_group, and R is the root vertex.
     stacking_order int,
+    assignment_certain bool not null default 1,
+                                -- True if it is certain that a register will
+                                -- be available to assign to this
+                                -- register_group.  (Set during stacking).
     assigned_register varchar(20)
 );
 
