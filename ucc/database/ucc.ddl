@@ -436,6 +436,9 @@ create table reg_use_linkage (
     reg_group_id int
 );
 
+create index rul_index1 on reg_use_linkage(reg_use_1, broken, reg_use_2);
+create index rul_index2 on reg_use_linkage(reg_use_2, broken, reg_use_1);
+
 create table last_locals (
     block_id int not null references blocks(id),
     symbol_id int not null references symbol_table(id),
@@ -459,6 +462,9 @@ create table rg_neighbors (
     broken int not null default 0
 );
 
+create index rg_neighbors_index1 on rg_neighbors(rg1, rg2);
+create index rg_neighbors_index2 on rg_neighbors(rg2, rg1);
+
 create table register_group (
     id integer not null primary key,
     reg_class int references reg_class(id),
@@ -472,6 +478,24 @@ create table register_group (
                                 -- register_group.  (Set during stacking).
     assigned_register varchar(20)
 );
+
+create index rg_stack_order_index on register_group(stacking_order);
+
+create view neighbors as
+    select rg1.id as id1, rg1.reg_class as reg_class1,
+           rg1.stacking_order as stacking_order1,
+           rg1.assigned_register as assigned_register1,
+           rg1.assignment_certain as assignment_certain1,
+           rg2.id as id2, rg2.reg_class as reg_class2,
+           rg2.stacking_order as stacking_order2,
+           rg2.assigned_register as assigned_register2,
+           rg2.assignment_certain as assignment_certain2
+      from rg_neighbors rgn
+           inner join register_group rg1
+             on  rg1.id in (rgn.rg1, rgn.rg2)
+           inner join register_group rg2
+             on  rg2.id in (rgn.rg1, rgn.rg2)
+     where rg1.id != rg2.id;
 
 create table rawZ (
     -- cached rawZ(n, v) values from paper.
