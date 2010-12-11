@@ -8,6 +8,7 @@ attempt_register_allocation in ucc/codegen/populate_register_groups.py).
 
 import sys              # only for debugging
 import itertools
+import operator
 
 from ucc.database import crud
 
@@ -114,19 +115,76 @@ def assign_registers(max_stacking_order, attempt_number):
                 if reg is None:
                     assert not assignment_certain
                     ans = False
-                    assert False        # FIX: implement breaking links here!
                 else:
                     # Assign reg to id!
                     crud.update('register_group', {'id': id},
                                 assigned_register = reg)
 
+    with crud.db_transaction():
         if ans:
-            # Copy to reg_use table
+            # Copy assigned_register to reg_use table
             crud.execute('''
                 update reg_use
                    set assigned_register = (select rg.assigned_register
                                               from register_group rg
                                              where rg.id = reg_use.reg_group_id)
               ''')
+        else:
+            break_links(attempt_number)
 
     return ans
+
+def break_links(attempt_number):
+    r'''
+    '''
+    assert False        # FIX: implement breaking links here!
+
+    # NOTE: One rul may be involved in more than one reg_class, through
+    #       multiple rg_neighbors!  ... But I guess it doesn't matter ...
+    it = crud.fetchall('''
+             select unassigned_rg.id, rc.reg, rul.id as rul_id
+               from reg_use_linkage rul
+                    inner join overlaps ov
+                      on  rul.id = ov.linkage_id
+                    inner join rg_neighbors rgn
+                      on  rgn.id = ov.rg_neighbor_id
+                    inner join register_group unassigned_rg
+                      on  unassigned_rg.id in (rgn.rg1, rgn.rg2)
+                    inner join register_group neighbor_rg
+                      on  neighbor_rg.id in (rgn.rg1, rgn.rg2)
+                      and neighbor_rg.id != unassigned_rg.id
+                    inner join reg_in_class rc
+                      on  rc.reg_class = unassigned_rg.reg_class
+                    inner join alias a
+                      on  a.r1 = rc.reg
+                      and a.r2 = neighbor_rg.assigned_register
+              where unassigned_rg.assigned_register isnull
+                and neighbor_rg.assigned_register notnull
+                and rul.broken = 0
+              order by id, reg
+           ''')
+
+    # rg_ruls is [(rg_id, [{rul_id}])]
+    # This is in order that the rg_ids need to be processed (ascending min
+    # {rul_id} length).
+    rg_ruls = sorted(((rg_id, [{rul_id for _, _, rul_id in ruls}
+                               for _, ruls
+                                in itertools.groupby(
+                                     regs,
+                                     key=operator.itemgetter(1))])
+                      for rg_id, regs
+                       in itertools.groupby(it, key=operator.itemgetter(0))),
+                     key=lambda x: min(len(s) for s in x[1]))
+
+    ruls_broken = set()
+    for rg_id, rul_sets in rg_ruls:
+        rul_set = get_smallest_remaining_set(rul_sets, ruls_broken)
+        crud.executemany('''
+            update reg_use_linkage
+               set broken = ?
+             where id = ?
+          ''', zip(itertools.repeat(attempt_number), rul_set))
+        ruls_broken.update(rul_set)
+
+def get_smallest_remaining_set(source_sets, items_to_ignore):
+    return min((s.difference(items_to_ignore) for s in source_sets), key=len)
