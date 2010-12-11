@@ -135,9 +135,8 @@ def assign_registers(max_stacking_order, attempt_number):
     return ans
 
 def break_links(attempt_number):
-    r'''
+    r'''Break reg_use_linkage links blocking unassigned register_groups.
     '''
-    assert False        # FIX: implement breaking links here!
 
     # NOTE: One rul may be involved in more than one reg_class, through
     #       multiple rg_neighbors!  ... But I guess it doesn't matter ...
