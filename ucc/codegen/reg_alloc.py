@@ -47,8 +47,11 @@ def get_reg_class_sizes():
 
 def delete():
     with crud.db_transaction():
+        crud.delete('overlaps')
         crud.delete('reg_use')
         crud.delete('reg_use_linkage')
+        crud.delete('rg_neighbors')
+        crud.delete('rawZ')
         crud.delete('register_group')
 
 def prepare_triples():

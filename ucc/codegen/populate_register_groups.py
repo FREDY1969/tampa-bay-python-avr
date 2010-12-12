@@ -30,117 +30,108 @@ def attempt_register_allocation(attempt_number):
 
     # Each register group represents a set of linked reg_uses.  The goal will
     # be to assign a register to each register_group.
-    num_register_groups = populate_register_group()
+    num_register_groups = populate_register_group(attempt_number)
 
     # Split register_groups that include conflicting reg_uses.  A conflict
     # could be due to incompatible register classes, or two reg_uses for the
     # same kind and ref_id.
-    num_register_groups += eliminate_conflicts()
+    num_register_groups += eliminate_conflicts(attempt_number)
 
     # Sets the reg_class and num_registers in each register_group.
-    set_reg_classes()
+    set_reg_classes(attempt_number)
 
-    populate_rg_neighbors()
+    populate_rg_neighbors(attempt_number)
 
-    stack_register_groups.initialize_rawZ_and_Z()
+    stack_register_groups.initialize_rawZ_and_Z(attempt_number)
 
-    max_stacking_order = \
-      stack_register_groups.stack_register_groups(num_register_groups)
+    max_stacking_order = stack_register_groups.stack_register_groups(
+                           attempt_number,
+                           num_register_groups)
 
-    return assign_registers.assign_registers(max_stacking_order, attempt_number)
+    return assign_registers.assign_registers(attempt_number, max_stacking_order)
 
-def populate_register_group():
+def populate_register_group(attempt_number):
     r'''Populate the register_group table.
 
     This table has one row per set of linked reg_uses.
 
-    This function can be called repeatedly.  It deletes all prior
-    register_groups each time and starts over scratch, but it observes the
-    'broken' flag in the reg_use_linkage; which may lead to different results.
-
-    The algorithm here does not end up assigning consecutive ids to the
-    register_groups.  Rather, there will be missing ids; but nobody cares.
-    
-    First, each reg_use is given unique reg_group_id, by simply copying it's
-    own id to its reg_group_id.
-
-    Then we want to select a unique reg_group_id amoung each set of linked
-    reg_uses.  We do this by selecting the min reg_group_id within each set and
-    updating all of the reg_use.reg_group_ids to this min value.  Since the
-    links are only pairwise, this update is done by repeatedly updating the
-    reg_group_id of each reg_use to the min of all of its linked reg_uses.
-    This will eventually propogate the min value to all of reg_uses in the set
-    through transitive closure.
+    This function can be called repeatedly with different attempt_numbers.
+    Each time it starts over scratch, but it observes the 'broken' flag in the
+    reg_use_linkage; which may lead to different results.
     '''
 
     with crud.db_transaction():
-        # Delete any prior register_groups
-        crud.delete('register_group')
-
-        # And set all broken -1's back to 0 for now.  These will be
+        # Set all broken -1's back to 0 for now.  These will be
         # recalculated later by eliminate_conflicts.  Leave other broken
         # values unchanged (these were set due to graph coloring conflicts on
         # a prior pass).
         crud.update('reg_use_linkage', {'broken': -1}, broken=0)
 
     with crud.db_transaction():
-        # Tentatively assign all reg_use.reg_group_ids as simply the reg_use.id
-        # (a simple source of unique numbers).
-        crud.execute('''
-            update reg_use
-               set reg_group_id = id
-          ''')
+        # Gather reg_uses into shared sets based on reg_use_linkage:
+        ru_to_set = {}          # {ru_id: set_id}
+        set_to_rus = {}         # {set_id: {ru_id}}
+        next_set_id = 0
+        for ru1, ru2 in crud.read_as_tuples('reg_use_linkage',
+                                            'reg_use_1', 'reg_use_2',
+                                            broken=0):
+            if ru1 in ru_to_set:
+                if ru2 in ru_to_set:
+                    ru1_set = ru_to_set[ru1]
+                    ru2_set = ru_to_set[ru2]
+                    if ru1_set != ru2_set:
+                        # merge one set into the other
+                        if len(set_to_rus[ru1_set]) < len(set_to_rus[ru2_set]):
+                            # transfer ru1_set to ru2_set
+                            for ru in set_to_rus[ru1_set]:
+                                ru_to_set[ru] = ru2_set
+                            set_to_rus[ru2_set].update(set_to_rus[ru1_set])
+                            del set_to_rus[ru1_set]
+                        else:
+                            # transfer ru2_set to ru1_set
+                            for ru in set_to_rus[ru2_set]:
+                                ru_to_set[ru] = ru1_set
+                            set_to_rus[ru1_set].update(set_to_rus[ru2_set])
+                            del set_to_rus[ru2_set]
+                else:
+                    # add ru2 to ru1 set
+                    ru_to_set[ru2] = ru_to_set[ru1]
+                    set_to_rus[ru_to_set[ru1]].add(ru2)
+            else:
+                # ru1 not in ru_to_set
+                if ru2 in ru_to_set:
+                    # add ru1 to ru2 set
+                    ru_to_set[ru1] = ru_to_set[ru2]
+                    set_to_rus[ru_to_set[ru2]].add(ru1)
+                else:
+                    # create new set
+                    set_to_rus[next_set_id] = {ru1, ru2}
+                    ru_to_set[ru1] = ru_to_set[ru2] = next_set_id
+                    next_set_id += 1
 
-        # Now set the reg_group_ids of all pairs of reg_uses that are linked
-        # through a reg_use_linkage to be the same number.  Do this by setting
-        # the one with the greater number to match the one with the smaller
-        # number.  Repeat this until no more reg_uses are updated.
-        rowcount = 1
-        while rowcount:
-            rowcount = crud.execute('''
+        # Make sure that all ru_ids are accounted for:
+        for ru_id in crud.read_column('reg_use', 'id'):
+            if ru_id not in ru_to_set:
+                # create new set just for ru_id
+                set_to_rus[next_set_id] = {ru_id}
+                ru_to_set[ru_id] = next_set_id
+                next_set_id += 1
+
+        # Create register_groups
+        for ru_ids in set_to_rus.values():
+            rg_id = crud.insert('register_group', attempt_number=attempt_number)
+            crud.execute('''
                 update reg_use
-                   set reg_group_id =
-                     -- Set reg_group_id to min reg_group_id of all directly
-                     -- linked reg_uses.
-                     (select min(min(ru1.reg_group_id), min(ru2.reg_group_id))
-                        from reg_use_linkage
-                             inner join reg_use ru1
-                               on reg_use_1 = ru1.id
-                             inner join reg_use ru2
-                               on reg_use_2 = ru2.id
-                       where not broken
-                         and ru1.reg_group_id != ru2.reg_group_id
-                         and (   ru1.reg_group_id = reg_use.reg_group_id
-                              or ru2.reg_group_id = reg_use.reg_group_id))
-                 where exists (
-                         select null
-                           from reg_use_linkage
-                                inner join reg_use ru1
-                                  on reg_use_1 = ru1.id
-                                inner join reg_use ru2
-                                  on reg_use_2 = ru2.id
-                          where not broken
-                            and ru1.reg_group_id != ru2.reg_group_id
-                            and (   ru1.reg_group_id = reg_use.reg_group_id
-                                 or ru2.reg_group_id = reg_use.reg_group_id)
-                            and min(ru1.reg_group_id, ru2.reg_group_id) <
-                                  reg_use.reg_group_id)
-              ''')[0]
-            print("updated", rowcount, "reg_use.reg_group_ids",
-                  file = sys.stderr)
-        print("done updating reg_group_ids", file = sys.stderr)
+                   set reg_group_id = ?
+                 where id in ({})
+              '''.format(','.join(('?',)*len(ru_ids)),),
+              (rg_id,) + tuple(ru_ids))
 
-        # Gather the remaining reg_group_ids into register_group
-        num_register_groups = crud.execute('''
-            insert into register_group (id)
-              select distinct reg_group_id from reg_use
-          ''')[0]
-
-        print("created", num_register_groups, "register_groups",
+        print("created", len(set_to_rus), "register_groups",
               file = sys.stderr)
-    return num_register_groups
+    return len(set_to_rus)
 
-def eliminate_conflicts():
+def eliminate_conflicts(attempt_number):
     r'''Eliminate conflicts between reg_uses in the same register_group.
 
     The two causes of conflict are incompatible register classes, and two
@@ -201,13 +192,14 @@ def eliminate_conflicts():
                 # create new register_group (let sqlite assign reg_group_id)
                 ru_qmarks = ', '.join(('?',) * len(ru_ids))
                 new_group_id = crud.execute('''
-                    insert into register_group (reg_class, num_registers)
-                    select aggr_rc_subset(initial_reg_class),
+                    insert into register_group
+                           (attempt_number, reg_class, num_registers)
+                    select ?, aggr_rc_subset(initial_reg_class),
                            aggr_num_regs(num_registers)
                       from reg_use
                      where id in ({})
                   '''.format(ru_qmarks),
-                  ru_ids)[1]
+                  [attempt_number] + ru_ids)[1]
                 print("new_group_id", new_group_id, file=sys.stderr)
                 num_new_register_groups += 1
 
@@ -245,7 +237,7 @@ def eliminate_conflicts():
          ''')
     return num_new_register_groups
 
-def set_reg_classes():
+def set_reg_classes(attempt_number):
     r'''Sets the reg_class and num_registers in each register_group.
     '''
     with crud.db_transaction():
@@ -257,7 +249,8 @@ def set_reg_classes():
                    num_registers = (select aggr_num_regs(num_registers)
                                       from reg_use ru2
                                      where ru2.reg_group_id = register_group.id)
-         ''')
+             where attempt_number = ?
+         ''', (attempt_number,))
 
 def split(conflicts, neighbors):
     r'''Yields disjoint sets of ru_ids containing no conflicts between them.
@@ -367,26 +360,20 @@ def split(conflicts, neighbors):
 
     return ids_by_color.values()
 
-def populate_rg_neighbors():
+def populate_rg_neighbors(attempt_number):
     r'''Populates rg_neighbors.
 
     First populates overlaps, then uses this for rg_neighbors.
 
-    This function deletes all overlaps and rg_neighbors first so that it can
-    be run multiple times.
+    This function can be run multiple times with different attempt_numbers.
     '''
-
-    # Delete overlaps and rg_neighbors
-    with crud.db_transaction():
-        crud.delete('overlaps')
-        crud.delete('rg_neighbors')
 
     with crud.db_transaction():
         # Figure out overlaps between reg_use_linkages and reg_uses in other
         # register_groups.  These go in the overlaps table.
         crud.execute('''
-            insert into overlaps (linkage_id, reg_use_id)
-            select rul.id, ru3.id
+            insert into overlaps (attempt_number, linkage_id, reg_use_id)
+            select ?, rul.id, ru3.id
               from reg_use_linkage rul
                    inner join reg_use ru1
                      on ru1.id = reg_use_1
@@ -405,19 +392,20 @@ def populate_rg_neighbors():
                and ru3.abs_order_in_block notnull
                and not rul.broken
                and ru3.reg_group_id != ru1.reg_group_id
-          ''')
+          ''', (attempt_number,))
 
         # Figure out rg_neighbors.  These are the conflicting register_groups.
         crud.execute('''
-            insert into rg_neighbors (rg1, rg2)
-            select distinct min(rul.reg_group_id, ru.reg_group_id),
-                            max(rul.reg_group_id, ru.reg_group_id)
+            insert into rg_neighbors (attempt_number, rg1, rg2)
+            select distinct ?, min(rul.reg_group_id, ru.reg_group_id),
+                               max(rul.reg_group_id, ru.reg_group_id)
               from overlaps ov
                    inner join reg_use_linkage rul
                      on ov.linkage_id = rul.id
                    inner join reg_use ru
                      on ov.reg_use_id = ru.id
-          ''')
+             where ov.attempt_number = ?
+          ''', (attempt_number, attempt_number))
 
         # Link overlaps to rg_neighbors.
         crud.execute('''
@@ -430,9 +418,11 @@ def populate_rg_neighbors():
                           inner join reg_use ru
                             on ru.reg_group_id in (rg1, rg2)
                             and ru.reg_group_id != rul.reg_group_id
-                    where overlaps.linkage_id = rul.id
+                    where rgn.attempt_number = ?
+                      and overlaps.linkage_id = rul.id
                       and overlaps.reg_use_id = ru.id)
-          ''')
+             where attempt_number = ?
+          ''', (attempt_number, attempt_number))
 
 """ DO WE STILL NEED THIS STUFF?
 #def create_reg_map(subsets, sizes, code_seqs):

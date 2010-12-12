@@ -27,49 +27,47 @@ import itertools
 
 from ucc.database import crud
 
-def initialize_rawZ_and_Z():
+def initialize_rawZ_and_Z(attempt_number):
     r'''Initialize the rawZ and Z values.
 
-    This function may be called repeatedly, so it must delete info from prior
-    calls.
+    This function may be called repeatedly with different attempt_numbers. 
     '''
-    with crud.db_transaction():
-        crud.delete('rawZ')
-
     with crud.db_transaction():
         # insert sum(worst) values part of rawZ:
         crud.execute('''
-            insert into rawZ (reg_group_id, vertex_id, value)
-            select n_id, v, sum(degree * w.value)
+            insert into rawZ (attempt_number, reg_group_id, vertex_id, value)
+            select ?, n_id, v, sum(degree * w.value)
               from (select n.id as n_id, n.reg_class as n_rc,
                            c.id as c_id, c.v as v, count(rg.id) as degree
-                      from register_group n
-                           inner join rg_neighbors rgn
-                             on n.id in (rg1, rg2)
+                      from rg_neighbors rgn
+                           inner join register_group n
+                             on  n.id in (rgn.rg1, rgn.rg2)
                            inner join register_group rg
-                             on rg.id in (rg1, rg2)
+                             on  rg.id in (rgn.rg1, rgn.rg2)
                              and rg.id != n.id
                            inner join reg_class c
                              on rg.reg_class = c.id
+                     where rgn.attempt_number = ?
                      group by n.id, c.id)
                    inner join worst w
                      on w.N = n_rc
                      and w.C = c_id
              group by n_id, v
-          ''')
+          ''', (attempt_number, attempt_number))
 
         # insert 0 rawZ nodes where there are children
         v_heights = \
           tuple(range(1, 1 + max(crud.read_column('vertex', 'height'))))
         for v_height in v_heights[1:]:
             crud.execute('''
-                insert or ignore into rawZ (reg_group_id, vertex_id, value)
-                select r.reg_group_id, v.parent, 0
+                insert or ignore into rawZ
+                       (attempt_number, reg_group_id, vertex_id, value)
+                select ?, r.reg_group_id, v.parent, 0
                   from rawZ r
                        inner join vertex v
                          on r.vertex_id = v.id
                          and v.height = ?
-              ''', (v_height,))
+              ''', (attempt_number, v_height))
 
         # add children to rawZ nodes
         for v_height in v_heights[1:]:
@@ -88,17 +86,18 @@ def initialize_rawZ_and_Z():
                             where child.reg_group_id = rawZ.reg_group_id
                               and v.parent = rawZ.vertex_id
                               and v.height = ?)
-                 where exists (select null
+                 where attempt_number = ?
+                   and exists (select null
                                  from rawZ child
                                       inner join vertex v
                                         on child.vertex_id = v.id
                                 where child.reg_group_id = rawZ.reg_group_id
                                   and v.parent = rawZ.vertex_id
                                   and v.height = ?)
-              ''', (v_height, v_height))
-        set_Z()
+              ''', (v_height, attempt_number, v_height))
+        set_Z(attempt_number)
 
-def set_Z():
+def set_Z(attempt_number):
     r'''Perform final Z(n, R) calculation for register_groups.
 
     This updates all register_groups.
@@ -116,9 +115,10 @@ def set_Z():
                              and b.v = v.id
                      where v.parent isnull
                        and root.reg_group_id = register_group.id)
-      ''')
+         where attempt_number = ?
+      ''', (attempt_number,))
 
-def stack_register_groups(num_register_groups):
+def stack_register_groups(attempt_number, num_register_groups):
     r'''Stacks register_groups by setting register_group.stacking_order.
 
     The stacking_order starts with 1 at the bottom of the stack and works up.
@@ -141,12 +141,13 @@ def stack_register_groups(num_register_groups):
                 update register_group
                    set stacking_order = ?,
                        assignment_certain = 1
-                 where stacking_order isnull
+                 where attempt_number = ?
+                   and stacking_order isnull
                    and Z < 
                    (select class_size
                       from reg_class rc
                      where rc.id = register_group.reg_class)
-              ''', (i,))[0]
+              ''', (i, attempt_number))[0]
             print("stacking", i, "assignment_certain got", row_count,
                   file=sys.stderr)
             if row_count == 0:
@@ -157,8 +158,9 @@ def stack_register_groups(num_register_groups):
                        from register_group rg
                             inner join reg_class rc
                               on  rc.id = rg.reg_class
-                      where rg.stacking_order isnull
-                  '''))[0]
+                      where rg.attempt_number = ?
+                        and rg.stacking_order isnull
+                  ''', (attempt_number,)))[0]
                 row_count = crud.execute('''
                     update register_group
                        set stacking_order = ?,
@@ -188,9 +190,10 @@ def stack_register_groups(num_register_groups):
                             inner join worst w
                               on  w.N = rg.reg_class
                               and w.C = rg_stacked.reg_class
-                      where rg_stacked.stacking_order = ?
+                      where rg_stacked.attempt_number = ?
+                        and rg_stacked.stacking_order = ?
                         and not rgn.broken
-              ''', (i,))
+              ''', (attempt_number, i))
             crud.executemany('''
                 update rawZ
                    set delta = ?
@@ -204,7 +207,8 @@ def stack_register_groups(num_register_groups):
                          select min(0,
                                     max(child.delta,
                                         child.delta - (b.value - child.value))),
-                                parent.reg_group_id, parent.vertex_id
+                                parent.reg_group_id,
+                                parent.vertex_id
                            from rawZ parent
                                 inner join vertex child_v
                                   on  parent.vertex_id = child_v.parent
@@ -216,9 +220,10 @@ def stack_register_groups(num_register_groups):
                                 inner join bound b
                                   on  b.N = rg.reg_class
                                   and b.v = child_v.id
-                          where parent.delta isnull
+                          where parent.attempt_number = ?
+                            and parent.delta isnull
                             and child.delta
-                       ''')
+                       ''', (attempt_number,))
                 it = tuple(it)
                 crud.executemany('''
                         update rawZ
@@ -234,9 +239,10 @@ def stack_register_groups(num_register_groups):
                 update rawZ
                    set value = value + delta,
                        delta = NULL
-                 where delta notnull
-              ''')
+                 where attempt_number = ?
+                   and delta notnull
+              ''', (attempt_number,))
 
             # Recalc Z values:
-            set_Z()
+            set_Z(attempt_number)
 
