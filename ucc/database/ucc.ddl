@@ -448,25 +448,28 @@ create table last_locals (
 );
 
 create table overlaps (
+    attempt_number int not null,
     linkage_id int not null references reg_use_linkage(id),
     reg_use_id int not null references reg_use(id),
     rg_neighbor_id int references rg_neighbors(id),
-    primary key (linkage_id, reg_use_id)
+    primary key (attempt_number, linkage_id, reg_use_id)
 );
 
 create table rg_neighbors (
     -- rg1 < rg2
     id integer not null primary key,
+    attempt_number int not null,
     rg1 int not null references register_group(id),
     rg2 int not null references register_group(id),
     broken int not null default 0
 );
 
-create index rg_neighbors_index1 on rg_neighbors(rg1, rg2);
-create index rg_neighbors_index2 on rg_neighbors(rg2, rg1);
+create index rg_neighbors_index1 on rg_neighbors(rg1, rg2, id);
+create index rg_neighbors_index2 on rg_neighbors(rg2, rg1, id);
 
 create table register_group (
     id integer not null primary key,
+    attempt_number int not null,
     reg_class int references reg_class(id),
     num_registers int,
     Z int,                      -- Z(n, R) from paper, where 'n' is this
@@ -479,7 +482,8 @@ create table register_group (
     assigned_register varchar(20)
 );
 
-create index rg_stack_order_index on register_group(stacking_order);
+create index rg_stack_order_index
+  on register_group(attempt_number, stacking_order, id);
 
 create view neighbors as
     select rg1.id as id1, rg1.reg_class as reg_class1,
@@ -500,11 +504,12 @@ create view neighbors as
 create table rawZ (
     -- cached rawZ(n, v) values from paper.
     -- 'n' is reg_group_id, 'v' is vertex_id and 'rawZ(n, v)' is value.
+    attempt_number int not null,
     reg_group_id int not null references register_group(id),
     vertex_id int not null references vertex(id),
     value int not null,
     delta int,
-    primary key (reg_group_id, vertex_id)
+    primary key (attempt_number, reg_group_id, vertex_id)
 );
 
 -----------------------------------------------------------------------------

@@ -20,7 +20,8 @@ def create_views():
     if not Init_done:
         crud.execute('''
             create temp view available_registers as
-              select rg.id, rg.stacking_order, rg.assignment_certain, ric.reg
+              select rg.attempt_number, rg.id, rg.stacking_order,
+                     rg.assignment_certain, ric.reg
                 from register_group rg
                      left outer join reg_in_class ric
                        on  ric.reg_class = rg.reg_class
@@ -37,7 +38,8 @@ def create_views():
 
         crud.execute('''
             create temp view score as
-              select ar.id, ar.stacking_order, ar.reg, count(n.id2) as score
+              select ar.attempt_number, ar.id, ar.stacking_order, ar.reg,
+                     count(n.id2) as score
                 from available_registers ar
                      left outer join neighbors n
                        on  ar.id = n.id1
@@ -63,7 +65,7 @@ def create_views():
 
         Init_done = True
 
-def assign_registers(max_stacking_order, attempt_number):
+def assign_registers(attempt_number, max_stacking_order):
     r'''Pops register_groups off of the "stack" and assigns a register to each.
 
     Return True if everything goes OK and False if we need to rerun the
@@ -89,19 +91,23 @@ def assign_registers(max_stacking_order, attempt_number):
             # 3. Assign the highest scoring register.
 
             print("available_registers", file = sys.stderr)
-            for row in crud.read_as_rows('available_registers'):
+            for row in crud.read_as_rows('available_registers',
+                                         attempt_number=attempt_number):
                 print("row:", row, file = sys.stderr)
             print(file = sys.stderr)
 
             print("score", file = sys.stderr)
-            for row in crud.read_as_rows('score'):
+            for row in crud.read_as_rows('score',
+                                         attempt_number=attempt_number):
                 print("row:", row, file = sys.stderr)
             print(file = sys.stderr)
 
             for id, assignment_certain, reg_class \
              in crud.read_as_tuples('register_group', 'id',
                                     'assignment_certain', 'reg_class',
-                                    stacking_order=i, order_by='id'):
+                                    attempt_number=attempt_number,
+                                    stacking_order=i,
+                                    order_by='id'):
 
                 reg = next(crud.fetchall('''
                                 select get_max(score, reg)
@@ -109,8 +115,10 @@ def assign_registers(max_stacking_order, attempt_number):
                                  where id = :id
                               ''', (id,)), (None,))[0]
 
-                print("assigning", id, "assignment_certain",
-                      assignment_certain, "reg", reg, file = sys.stderr)
+                print("assigning", id,
+                      "assignment_certain", assignment_certain,
+                      "reg", reg,
+                      file = sys.stderr)
 
                 if reg is None:
                     assert not assignment_certain
@@ -145,6 +153,7 @@ def break_links(attempt_number):
                from reg_use_linkage rul
                     inner join overlaps ov
                       on  rul.id = ov.linkage_id
+                      and ov.attempt_number = ?
                     inner join rg_neighbors rgn
                       on  rgn.id = ov.rg_neighbor_id
                     inner join register_group unassigned_rg
@@ -161,7 +170,7 @@ def break_links(attempt_number):
                 and neighbor_rg.assigned_register notnull
                 and rul.broken = 0
               order by id, reg
-           ''')
+           ''', (attempt_number,))
 
     # rg_ruls is [(rg_id, [{rul_id}])]
     # This is in order that the rg_ids need to be processed (ascending min
