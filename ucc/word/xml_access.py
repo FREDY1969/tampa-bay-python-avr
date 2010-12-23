@@ -67,8 +67,8 @@ def write_word_list(package_name, word_list, package_dir):
 def write_element(root, filename):
     r'''Writes root ElementTree element to filename with pretty indenting.'''
     indent(root)
-    with open(filename, 'w') as xml_file:
-        xml_file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+    with open(filename, 'wb') as xml_file:
+        xml_file.write(b'<?xml version="1.0" encoding="UTF-8"?>\n')
         ElementTree.ElementTree(root).write(xml_file, 'utf-8')
 
 def indent(element, level = 0, amount = 4):

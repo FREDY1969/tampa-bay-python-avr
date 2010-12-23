@@ -84,13 +84,11 @@ def from_xml(root, package_dir, top_package):
                 my_questions)
 
 class word:
-    
     r'''This represents a single generic word.
     
     At this point, this is a one-size-fits-all-kinds-of-words class.
-    
     '''
-    
+
     def __init__(self, package_dir, name, label, defining, kind,
                  answers = None, questions = None):
         r'''This is called by the `read_word` function.

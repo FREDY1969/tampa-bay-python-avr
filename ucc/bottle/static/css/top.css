@@ -6,13 +6,16 @@
 .package-dir {   /* li */
 }
 
+.packages {  /* ul */
+}
+
+.create-package {   /* li */
+}
+
 .create-form {   /* form */
 }
 
 .create-input {   /* input type="text" */
-}
-
-.packages {  /* ul */
 }
 
 .package {   /* li */
