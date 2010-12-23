@@ -5,13 +5,13 @@
       <th>Omit</th>
       <th>Answer</th>
     </tr>
-    %for q_type, label, min_answers, max_answers, q_info in questions:
-      %if min_answers == 0 and max_answers == 1:
-        %include optional_question packages_name=packages_name, package_name=package_name, word=word, q_type=q_type, label=label, q_info=q_info
-      %elif max_answers != 1:
-        %include repeatable_question packages_name=packages_name, package_name=package_name, word=word, q_type=q_type, label=label, min_answers=min_answers, max_answers=max_answers, q_info=q_info
+    %for q, a in word_word.gen_questions():
+      %if q.is_optional():
+        %include optional_question packages_name=packages_name, package_name=package_name, word=word, word_word=word_word, q=q, a=a
+      %elif q.is_repeatable():
+        %include repeatable_question packages_name=packages_name, package_name=package_name, word=word, word_word=word_word, q=q, a=a
       %else:
-        %include required_question packages_name=packages_name, package_name=package_name, word=word, q_type=q_type, label=label, q_info=q_info
+        %include required_question packages_name=packages_name, package_name=package_name, word=word, word_word=word_word, q=q, a=a
       %end
     %end
   </table>

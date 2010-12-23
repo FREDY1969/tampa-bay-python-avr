@@ -2,6 +2,7 @@
 
 import os
 import collections
+import operator
 import webbrowser
 import bottle
 
@@ -32,6 +33,24 @@ def lookup_packages(packages_name):
         if packages_name == packages_info.packages_name:
             return packages_info
     raise ValueError("packages {} not found".format(packages_name))
+
+def get_package(packages_name, package_name):
+    global Current_package
+    if not Current_package or \
+       Current_package.packages[-1].package_name != \
+           "{}.{}".format(packages_name, package_name):
+        packages_info = lookup_packages(packages_name)
+        if package_name not in packages_info.package_names:
+            raise ValueError("package {} not in {}"
+                             .format(package_name, packages_name))
+        if packages_name == 'ucclib' and package_name == 'built_in':
+            Current_package = top_package.top()
+        else:
+            Current_package = \
+              top_package.top(os.path.join(packages_info.packages_dir,
+                                           package_name))
+        print("Current_package", Current_package.packages[-1].package_name)
+    return Current_package
 
 def redirect_to_word(packages_name, package_name, word=None):
     if word is None:
@@ -94,48 +113,30 @@ def update_text(packages_name, package_name, word):
 @get('/:packages_name/:package_name/:word')
 @view('word')
 def open_package(packages_name, package_name, word=None):
-    global Current_package
-    if not Current_package or \
-       Current_package.packages[-1].package_name != \
-           "{}.{}".format(packages_name, package_name):
-        packages_info = lookup_packages(packages_name)
-        if package_name not in packages_info.package_names:
-            raise ValueError("package {} not in {}"
-                             .format(package_name, packages_name))
-        Current_package = \
-          top_package.top(os.path.join(packages_info.packages_dir,
-                                       package_name))
-        print("Current_package", Current_package.packages[-1].package_name)
+    package = get_package(packages_name, package_name)
     if word:
-        word_word = Current_package.get_word_by_label(word)
+        word_word = package.get_word_by_label(word)
         print("word_word", word_word)
+        print("answer question_names", tuple(word_word.answers.keys()))
         print("kind", word_word.kind_obj)
+        print("kind question names", [(q.name, q.label) for q in word_word.kind_obj.questions])
     else:
         word_word = None
     return {'packages_name': packages_name,
             'package_name': package_name,
             'word': word,
-            'index': (
-                ('ucclib', 'built-in', 'assembler-word', ()),
-                ('ucclib', 'built-in', 'const', ()),
-                ('ucclib', 'built-in', 'function', ()),
-                ('ucclib', 'built-in', 'input-pin', ()),
-                ('ucclib', 'built-in', 'output-pin', ('led-pin',)),
-                ('ucclib', 'built-in', 'task', ('run',)),
-                ('ucclib', 'built-in', 'var', ()),
-              ),
-            'questions': (
-                ('string', 'argument', 0, 'infinite', ()),
-              ),
+            'index': build_index(package),
             'word_word': word_word,
-            'text':     # None if this word never has text
-'''repeat:
-    toggle led-pin
-    repeat 800:
-        repeat 1000: pass
-''',
-
            }
+
+def build_index(package):
+    return sorted(((tuple(w.package.package_name.split('.')) +
+                    (w.label, tuple(my_w.label
+                                    for my_w in package.gen_top_words()
+                                    if my_w.kind_obj == w)))
+                   for w in package.gen_words()
+                   if w.defining),
+                  key=lambda t: t[2].lower())
 
 def start(host, port, packages_name=None, package_name=None):
     global Config, Packages_dirs

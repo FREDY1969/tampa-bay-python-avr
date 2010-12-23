@@ -6,7 +6,7 @@ These are designed to preserve the text that the user typed in to answer the
 `questions.question`.  Thus, they are special answer objects, rather than
 simple python types.
 
-They are stored in xml format to be able to track and merge in source code
+They are stored in xml format to be able to track and merge within source code
 control systems.
 
 Answer series use an "answers" tag, all other answers use an "answer" tag.

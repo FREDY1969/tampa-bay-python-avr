@@ -47,17 +47,17 @@
 </tr>
 <tr>
   <td id="questions">
-    %if questions:
-      %include questions packages_name=packages_name, package_name=package_name, word=word, questions=questions
+    %if word_word is not None and word_word.has_questions():
+      %include questions packages_name=packages_name, package_name=package_name, word=word, word_word=word_word
     %end
   </td>
 </tr>
 
 <tr>
   <td id="text">
-    %if text is not None:
+    %if word_word is not None and word_word.has_text():
       <form method="POST" action="/update_text/{{packages_name}}/{{package_name}}/{{word}}">
-        <textarea name="text" rows="20" cols="80">{{text}}</textarea><br />
+        <textarea name="text" rows="20" cols="80">{{word_word.get_text()}}</textarea><br />
         <input type="submit" value="submit" id="submit-text">
       </form>
     %end

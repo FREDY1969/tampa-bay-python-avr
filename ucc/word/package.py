@@ -48,7 +48,7 @@ class package:
         return list(self.word_dict.values())
     
     def read_word(self, name, top_package):
-        ans = word.read_word(name, self.package_dir, top_package)
+        ans = word.read_word(name, self, top_package)
         ans.package_name = self.package_name
         return ans
 
