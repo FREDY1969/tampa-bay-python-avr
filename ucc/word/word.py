@@ -55,17 +55,18 @@ from ucc.gui import registry
 
 unique = object()
 
-def read_word(word_name, package_dir, top_package):
+def read_word(word_name, package, top_package):
     r'''Return a single `word` object read in from the word's xml file.
     
     Use `word.save` to write the xml file back out.
     
     '''
-    root = ElementTree.parse(os.path.join(package_dir, word_name + '.xml')) \
+    root = ElementTree.parse(os.path.join(package.package_dir,
+                                          word_name + '.xml')) \
                       .getroot()
-    return from_xml(root, package_dir, top_package)
+    return from_xml(root, package, top_package)
 
-def from_xml(root, package_dir, top_package):
+def from_xml(root, package, top_package):
     name = root.find('name').text
     label = root.find('label').text
     kind = root.find('kind').text
@@ -80,8 +81,7 @@ def from_xml(root, package_dir, top_package):
         my_questions = None
     else:
         my_questions = questions.from_xml(questions_element, top_package)
-    return word(package_dir, name, label, defining, kind, my_answers,
-                my_questions)
+    return word(package, name, label, defining, kind, my_answers, my_questions)
 
 class word:
     r'''This represents a single generic word.
@@ -89,7 +89,7 @@ class word:
     At this point, this is a one-size-fits-all-kinds-of-words class.
     '''
 
-    def __init__(self, package_dir, name, label, defining, kind,
+    def __init__(self, package, name, label, defining, kind,
                  answers = None, questions = None):
         r'''This is called by the `read_word` function.
         
@@ -97,7 +97,7 @@ class word:
         
         '''
         
-        self.package_dir = package_dir
+        self.package = package
         self.name = name            # internal name
         self.label = label          # name that user sees
         self.defining = defining    # subclass if True, instance if False
@@ -134,7 +134,8 @@ class word:
         '''
         
         xml_access.write_element(self.to_xml(),
-                                 os.path.join(package_dir or self.package_dir,
+                                 os.path.join(package_dir
+                                                or self.package.package_dir,
                                               self.name + '.xml'))
         source_filename = self.get_filename()
         if source_filename and registry.rightMainPanel:
@@ -171,7 +172,30 @@ class word:
     def delete_question():
         # TODO implement method to delete question and decendent answers
         pass
-    
+
+    def has_questions(self):
+        return bool(self.kind_obj.questions)
+
+    def gen_questions(self):
+        r'''Generates (question, answer) tuples.
+
+        This includes inherited questions and answers as appropriate (defining
+        words inherit answers).
+
+        Each answer can be one of two things:
+
+            An `answer` object
+              See `ucc.word.answers` for the possibilities here.
+            A list of 0 or more `answer` objects
+              for a repeating question
+
+        See also, `get_answer` and `get_value`.
+
+        '''
+
+        for q in self.kind_obj.questions:
+            yield q, self.get_answer(q.name)
+
     def get_answer(self, question_name, default = unique):
         r'''Return the answer to question_name.
 
@@ -234,7 +258,7 @@ class word:
     def set_value(self, question_name, answer_value):
         r'''Set the value of the answer to question_name.'''
         self.get_answer(question_name).set_value(answer_value)
-    
+
     def get_filename(self):
         r'''Returns the complete path to the source file.
         
@@ -244,5 +268,35 @@ class word:
         
         suffix = self.kind_obj.filename_suffix
         if suffix is None: return None
-        return os.path.join(self.package_dir, self.name + suffix)
+        return os.path.join(self.package.package_dir, self.name + suffix)
+
+    def has_text(self):
+        return self.kind_obj.filename_suffix is not None
+
+    def get_text(self):
+        r'''Returns the contents of the source file.
+
+        Or None if there is no source file for this kind of word.
+        
+        '''
+        
+        filename = self.get_filename()
+        if filename is None: return None
+        with open(filename) as f:
+            return f.read()
+
+    def write_text(self, text):
+        r'''Replaces the contents of the source file.
+
+        raises AssertionError if there is no source file for this kind of word.
+        
+        '''
+        
+        filename = self.get_filename()
+        if filename is None:
+            raise AssertionError(
+                    "{}.write_text called for word no source file defined"
+                    .format(self.label))
+        with open(filename, 'w') as f:
+            f.write(text)
 

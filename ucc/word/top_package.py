@@ -71,7 +71,7 @@ class top:
                 if suffix and suffix[0] != '.':
                     suffix = '.' + suffix
                 w.filename_suffix = suffix
-    
+
     def get_word(self, name_or_label):
         r'''Lookup `word` by name or label from all packages.'''
         return get_word_by_label(self, name_or_label)
@@ -79,8 +79,16 @@ class top:
     def get_word_by_name(self, name):
         r'''Lookup `word` by name from all packages.'''
         return self.word_dict[name]
-    
+
     def get_word_by_label(self, label):
         r'''Lookup `word` by label from all packages.'''
         return self.get_word_by_name(self.translation_dict.get(label, label))
-    
+
+    def gen_words(self):
+        r'''Generate all of the words in all of the packages.'''
+        return self.word_dict.values()
+
+    def gen_top_words(self):
+        r'''Generate all of the words in all of the packages.'''
+        return self.packages[-1].word_dict.values()
+

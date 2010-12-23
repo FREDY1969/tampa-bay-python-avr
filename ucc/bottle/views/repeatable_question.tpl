@@ -1,10 +1,7 @@
-<!-- packages_name=packages_name, package_name=package_name, word=word,
-q_type=q_type, label=label,
-min_answers=min_answers, max_answers=max_answers, q_info=q_info
--->
+<!-- packages_name, package_name, word, word_word, q, a -->
 
 <tr>
-  <td class="label">{{label}}</td>
+  <td class="label">{{q.label}}</td>
   <td class="omit-no"></td>
   <td class="answer-no"></td>
 </tr>
@@ -12,23 +9,24 @@ min_answers=min_answers, max_answers=max_answers, q_info=q_info
 <tr>
   <td colspan=3>
     <table class="repeat-table">
-      %if q_info:
+      %if a:
         <tr>
           <th class="repeat-title">up</th>
           <th class="repeat-title">del</th>
           <th class="empty-title"></th>
         </tr>
       %end
-      %for i, answer in enumerate(q_info):
+      %for i, answer in enumerate(a):
         <tr>
-          <td class="up-td"><input name="{{label}}-up-{{i}}" type="checkbox"></td>
-          <td class="del-td"><input name="{{label}}-del-{{i}}" type="checkbox"></td>
-          <td class="answer"><input name="{{label}}-{{i}}" type="text" value="{{answer}}"></td>
+          <td class="up-td"><input name="{{q.label}}-up-{{i}}" type="checkbox"></td>
+          <td class="del-td"><input name="{{q.label}}-del-{{i}}" type="checkbox"></td>
+          <td class="answer"><input name="{{q.label}}-{{i}}" type="text"
+          value="{{answer.value}}"></td>
         </tr>
       %end
       <tr>
-        <td class="add-td"><input name="{{label}}-add" type="checkbox"></td>
-        <td class="add-label" colspan=2>Add {{label}}</td>
+        <td class="add-td"><input name="{{q.label}}-add" type="checkbox"></td>
+        <td class="add-label" colspan=2>Add {{q.label}}</td>
       </tr>
     </table>
   </td>
