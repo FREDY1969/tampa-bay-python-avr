@@ -8,6 +8,9 @@
         <questions>
             <name>question</name>
             <label>question</label>
+            <min>0</min>
+            <max>infinite</max>
+            <orderable>True</orderable>
             <question>
                 <name>name</name>
                 <label>name</label>
