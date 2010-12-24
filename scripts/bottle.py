@@ -27,8 +27,8 @@ def run():
                          help="default: 8080")
 
     options, args = optparser.parse_args()
-    print("options", options)
-    print("args", args)
+    #print("options", options)
+    #print("args", args)
 
     if len(args) == 1:
         server.start(options.host, options.port, None, args[0])

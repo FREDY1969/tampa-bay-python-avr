@@ -1,4 +1,4 @@
-<form method="POST" action="/update_answers/{{packages_name}}/{{package_name}}/{{word}}">
+<form method="POST" action="/update_answers/${packages_name|u}/${package_name|u}/${word|u}">
   <table class="question-table">
     <tr>
       <th>Question</th>
@@ -6,14 +6,14 @@
       <th>Answer</th>
     </tr>
     %for q, a in word_word.gen_questions():
-      %if q.is_optional():
-        %include optional_question packages_name=packages_name, package_name=package_name, word=word, word_word=word_word, q=q, a=a
-      %elif q.is_repeatable():
-        %include repeatable_question packages_name=packages_name, package_name=package_name, word=word, word_word=word_word, q=q, a=a
+      %if q.is_repeatable():
+        ##<%include file="repeatable_question.tpl" />
+        <tr><td>repeating questions not ready yet</td></tr>
       %else:
-        %include required_question packages_name=packages_name, package_name=package_name, word=word, word_word=word_word, q=q, a=a
-      %end
-    %end
+        ##<%include file="single_question.tpl" />
+        <tr><td>single questions not ready yet</td></tr>
+      %endif
+    %endfor
   </table>
   <input type="submit" value="submit" id="submit-question">
 </form>

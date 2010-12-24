@@ -125,7 +125,7 @@ class question:
     
     def add_subelements(self, question):
         pass
-    
+
 
 class q_atomic(question):
     r'''The base class of all atomic questions.
@@ -153,7 +153,6 @@ class q_atomic(question):
     
     def make_default_answer(self):
         return self.answer_cls(self.name, self.default_value)
-    
 
 class q_bool(q_atomic):
     answer_cls = answers.ans_bool
@@ -215,6 +214,9 @@ class q_series(question):
         return answers.ans_series(self.name,
                                   {q.name: q.make_default_answer()
                                    for q in self.subquestions})
+
+    def gen_subquestions(self, answers):
+        return ((q, getattr(answers, q.name)) for q in self.subquestions)
     
 
 class q_choice(question):

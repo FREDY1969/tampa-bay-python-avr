@@ -1,14 +1,21 @@
-%rebase base title=package_name, css_files=['word.css']
+<%!
+    css_files = ['word.css']
+%>
+<%inherit file="base.tpl" />
+
+<%def name="title()">
+    ${package_name}
+</%def>
 
 <div class="menu">
   <a class="menu_item" href="/">Close</a>
   %if word is None:
-    <a class="menu_item" href="/compile/{{packages_name}}/{{package_name}}">Compile</a>
-    <a class="menu_item" href="/load/{{packages_name}}/{{package_name}}">Load</a>
+    <a class="menu_item" href="/compile/${packages_name|u}/${package_name|u}">Compile</a>
+    <a class="menu_item" href="/load/${packages_name|u}/${package_name|u}">Load</a>
   %else:
-    <a class="menu_item" href="/compile/{{packages_name}}/{{package_name}}/{{word}}">Compile</a>
-    <a class="menu_item" href="/load/{{packages_name}}/{{package_name}}/{{word}}">Load</a>
-  %end
+    <a class="menu_item" href="/compile/${packages_name|u}/${package_name|u}/${word|u}">Compile</a>
+    <a class="menu_item" href="/load/${packages_name|u}/${package_name|u}/${word|u}">Load</a>
+  %endif
 </div>
 
 <table id="outer-table">
@@ -17,50 +24,58 @@
   <td id="contents" rowspan=3>
     <ul class="outer-contents">
       %for decl_packages_name, decl_package_name, decl_word, local_words in index:
-        <li class="outer-element">
-          <a class="decl-link" href="/{{decl_packages_name}}/{{decl_package_name}}/{{decl_word}}">
-            {{decl_word}}
-          </a>
-        </li>
-        <ul class="inner-contents">
-          %for local_word in local_words:
-            <li class="inner-element">
-              <a class="word-link" href="/{{packages_name}}/{{package_name}}/{{local_word}}">
-                {{local_word}}
-              </a>
-            </li>
-          %end
-          <li class="create-word-li">
-            <form method="POST" action="/create_word/{{packages_name}}/{{package_name}}">
-              <input name="decl_packages_name" type="hidden" value="{{decl_packages_name}}"></input>
-              <input name="decl_package_name" type="hidden" value="{{decl_package_name}}"></input>
-              <input name="decl_word" type="hidden" value="{{decl_word}}"></input>
-              create: <input class="create-word-link" name="name" type="text"></input>
-            </form>
+        %if local_words:
+          <li class="outer-element">
+            <a class="decl-link" href="/${decl_packages_name|u}/${decl_package_name|u}/${decl_word.name|u}">
+              ${decl_word.label|h}
+            </a>
           </li>
-        </ul>
-      %end
+          <ul class="inner-contents">
+            %for local_word in local_words:
+              <li class="inner-element">
+                <a class="word-link" href="/${packages_name|u}/${package_name|u}/${local_word.name|u}">
+                  ${local_word.label|h}
+                </a>
+              </li>
+            %endfor
+
+          </ul>
+        %endif
+      %endfor
     </ul>
+    <form class="create-word-form" method="POST" action="/create_word/${packages_name|u}/${package_name|u}">
+      <div class="create-word">
+        create word:
+        <select class="create-word-decl" name="decl" size="1">
+          %for decl_packages_name, decl_package_name, decl_word, local_words in index:
+            <option value="${decl_packages_name|h}.${decl_package_name|h}.${decl_word.name|h}">
+              ${decl_word.label|h}
+            </option>
+          %endfor
+        </select>
+        <input class="create-word-name" name="name" type="text">
+      </div>
+    </form>
   </td>
-  <td id="name">{{word if word else ''}}
+  <td id="name">${(word if word else '')|h}
   </td>
 </tr>
 <tr>
   <td id="questions">
     %if word_word is not None and word_word.has_questions():
-      %include questions packages_name=packages_name, package_name=package_name, word=word, word_word=word_word
-    %end
+      <%include file="questions.tpl" />
+    %endif
   </td>
 </tr>
 
 <tr>
   <td id="text">
     %if word_word is not None and word_word.has_text():
-      <form method="POST" action="/update_text/{{packages_name}}/{{package_name}}/{{word}}">
-        <textarea name="text" rows="20" cols="80">{{word_word.get_text()}}</textarea><br />
+      <form method="POST" action="/update_text/${packages_name|u}/${package_name|u}/${word|u}">
+        <textarea name="text" rows="20" cols="80">${word_word.get_text()|h}</textarea><br />
         <input type="submit" value="submit" id="submit-text">
       </form>
-    %end
+    %endif
   </td>
 </tr>
 

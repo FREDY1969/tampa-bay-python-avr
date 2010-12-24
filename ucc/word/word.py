@@ -212,7 +212,7 @@ class word:
             A list of 0 or more `answer` objects
               for a repeating question
 
-        See also, `get_value`.
+        See also, `gen_questions` and `get_value`.
 
         '''
         
