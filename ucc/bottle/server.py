@@ -3,15 +3,17 @@
 import os
 import collections
 import operator
+import functools
 import webbrowser
 import bottle
 
 from ucc.word import top_package, xml_access
 from ucc import config
 
-from bottle import (get, post, view, request, response, run,
+from bottle import (get, post, mako_view as view, request, response, run,
                     send_file, redirect, abort,
                    )
+from mako import exceptions
 
 Bottle_dir = os.path.dirname(__file__)
 Static_dir = os.path.join(Bottle_dir, 'static')
@@ -27,6 +29,16 @@ packages_info_class = collections.namedtuple('packages_info_class',
 Packages_dirs = []
 
 Current_package = None
+
+def print_exception(fn):
+    @functools.wraps(fn)
+    def surrogate(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except:
+            print("print_exception called")
+            return exceptions.html_error_template().render()
+    return surrogate
 
 def lookup_packages(packages_name):
     for packages_info in Packages_dirs:
@@ -65,7 +77,8 @@ def static(filename):
 @get('/')
 @view('top')
 def top():
-    return {'packages_dirs': Packages_dirs}
+    return {'packages_dirs': Packages_dirs,
+           }
 
 @post('/create/:packages_name')
 def create_package(packages_name):
@@ -75,12 +88,10 @@ def create_package(packages_name):
 
 @post('/create_word/:packages_name/:package_name')
 def create_word(packages_name, package_name):
-    decl_packages_name = request.forms['decl_packages_name']
-    decl_package_name = request.forms['decl_package_name']
-    decl_word = request.forms['decl_word']
+    decl = request.forms['decl']
     word_name = request.forms['name']
     print("create_word", packages_name, package_name, word_name)
-    print("  of type", decl_packages_name, decl_package_name, decl_word)
+    print("  of type", decl)
     redirect_to_word(packages_name, package_name, word_name)
 
 @get('/compile/:packages_name/:package_name')
@@ -111,6 +122,7 @@ def update_text(packages_name, package_name, word):
 
 @get('/:packages_name/:package_name')
 @get('/:packages_name/:package_name/:word')
+@print_exception
 @view('word')
 def open_package(packages_name, package_name, word=None):
     package = get_package(packages_name, package_name)
@@ -131,12 +143,11 @@ def open_package(packages_name, package_name, word=None):
 
 def build_index(package):
     return sorted(((tuple(w.package.package_name.split('.')) +
-                    (w.label, tuple(my_w.label
-                                    for my_w in package.gen_top_words()
-                                    if my_w.kind_obj == w)))
+                    (w, tuple(my_w for my_w in package.gen_top_words()
+                                   if my_w.kind_obj == w)))
                    for w in package.gen_words()
                    if w.defining),
-                  key=lambda t: t[2].lower())
+                  key=lambda t: t[2].label.lower())
 
 def start(host, port, packages_name=None, package_name=None):
     global Config, Packages_dirs

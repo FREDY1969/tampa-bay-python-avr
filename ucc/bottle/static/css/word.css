@@ -31,10 +31,18 @@
     list-style: none;
 }
 
-.create-word-li {  /* li */
+.create-word-form {  /* form */
 }
 
-.create-word-link {  /* a */
+.create-word {  /* div */
+}
+
+.create-word-decl {  /* select */
+    display: block;
+}
+
+.create-word-name {  /* input */
+    display: block;
 }
 
 .inner-element { /* li */

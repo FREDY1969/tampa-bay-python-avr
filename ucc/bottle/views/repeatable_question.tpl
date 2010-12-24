@@ -1,7 +1,5 @@
-<!-- packages_name, package_name, word, word_word, q, a -->
-
 <tr>
-  <td class="label">{{q.label}}</td>
+  <td class="label">${q.label|h}</td>
   <td class="omit-no"></td>
   <td class="answer-no"></td>
 </tr>
@@ -15,18 +13,18 @@
           <th class="repeat-title">del</th>
           <th class="empty-title"></th>
         </tr>
-      %end
+      %endif
       %for i, answer in enumerate(a):
         <tr>
-          <td class="up-td"><input name="{{q.label}}-up-{{i}}" type="checkbox"></td>
-          <td class="del-td"><input name="{{q.label}}-del-{{i}}" type="checkbox"></td>
-          <td class="answer"><input name="{{q.label}}-{{i}}" type="text"
-          value="{{answer.value}}"></td>
+          <td class="up-td"><input name="${q.name|h}-up-${i|h}" type="checkbox"></td>
+          <td class="del-td"><input name="${q.name|h}-del-${i|h}" type="checkbox"></td>
+          <td class="answer"><input name="${q.name|h}-${i|h}" type="text"
+          value="${answer.value|h}"></td>
         </tr>
-      %end
+      %endfor
       <tr>
-        <td class="add-td"><input name="{{q.label}}-add" type="checkbox"></td>
-        <td class="add-label" colspan=2>Add {{q.label}}</td>
+        <td class="add-td"><input name="${q.name|h}-add" type="checkbox"></td>
+        <td class="add-label" colspan=2>Add ${q.label|h}</td>
       </tr>
     </table>
   </td>
