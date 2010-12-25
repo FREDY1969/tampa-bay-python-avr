@@ -1,19 +1,20 @@
+<%namespace name="atomic" file="atomic.tpl" />
+<%namespace name="simple_series" file="simple_series.tpl" />
+<%namespace name="series" file="series.tpl" />
+<%namespace name="simple_choice" file="simple_choice.tpl" />
+<%namespace name="choice" file="choice.tpl" />
+
+<%
+  layouts = {
+    'atomic': atomic,
+    'simple_series': simple_series,
+    'series': series,
+    'simple_choice': simple_choice,
+    'choice': choice,
+  }
+%>
+
 <form method="POST" action="/update_answers/${packages_name|u}/${package_name|u}/${word|u}">
-  <table class="question-table">
-    <tr>
-      <th>Question</th>
-      <th>Omit</th>
-      <th>Answer</th>
-    </tr>
-    %for q, a in word_word.gen_questions():
-      %if q.is_repeatable():
-        ##<%include file="repeatable_question.tpl" />
-        <tr><td>repeating questions not ready yet</td></tr>
-      %else:
-        ##<%include file="single_question.tpl" />
-        <tr><td>single questions not ready yet</td></tr>
-      %endif
-    %endfor
-  </table>
+  <%include file="question_list.tpl" args="qa_list=word_word.gen_questions(), layouts=layouts" />
   <input type="submit" value="submit" id="submit-question">
 </form>

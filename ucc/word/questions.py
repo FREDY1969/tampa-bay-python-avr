@@ -154,6 +154,9 @@ class q_atomic(question):
     def make_default_answer(self):
         return self.answer_cls(self.name, self.default_value)
 
+    def layout(self):
+        return 'atomic'
+
 class q_bool(q_atomic):
     answer_cls = answers.ans_bool
     default_value = "False"
@@ -217,7 +220,13 @@ class q_series(question):
 
     def gen_subquestions(self, answers):
         return ((q, getattr(answers, q.name)) for q in self.subquestions)
-    
+
+    def layout(self):
+        if len(self.subquestions) < 4 and \
+           all(q.layout() == 'atomic' for q in self.subquestions):
+            return 'simple_series'
+        return 'series'
+
 
 class q_choice(question):
     r'''A question where the user selects one of a set of choices.
@@ -229,6 +238,7 @@ class q_choice(question):
     answer_cls = answers.ans_string
     default_value = ""
     control = 'ChoiceCtrl'
+    layout = 'choice'
     
     def __init__(self, name, label, options = None, default = None,
                        min = None, max = None, orderable = None):
@@ -269,6 +279,11 @@ class q_choice(question):
                                            for q in subquestions})
         raise AssertionError("q_choice({}): default, {!r}, not found in options"
                                .format(self.name, self.default))
+
+    def layout(self):
+        if all(len(q) == 0 for _, _, q in self.options):
+            return 'simple_choice'
+        return 'choice'
 
 
 class q_multichoice(q_choice):
