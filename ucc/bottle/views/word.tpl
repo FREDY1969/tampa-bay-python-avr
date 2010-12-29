@@ -4,7 +4,7 @@
 <%inherit file="base.tpl" />
 
 <%def name="title()">
-    ${package_name}
+    ${package.package_label}
 </%def>
 
 <div class="menu">
@@ -57,7 +57,7 @@
       </div>
     </form>
   </td>
-  <td id="name">${(word if word else '')|h}
+  <td id="name">${(word_word.label if word_word else '')|h}
   </td>
 </tr>
 <tr>

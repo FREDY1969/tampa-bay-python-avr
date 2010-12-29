@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<word>
+    <name>bbogus</name>
+    <label>b bogus</label>
+    <kind>bogus</kind>
+    <defining>False</defining>
+    <answers>
+        <answers name="the_series" repeated="False">
+            <answer name="q1" repeated="True" type="string" value="hi mom" />
+            <answer name="q1" repeated="True" type="string" value="hi dad" />
+            <answer name="q1" repeated="True" type="string" value="hi jack" />
+            <answer name="q1" repeated="True" type="string" value="hi jill" />
+            <answer name="q2" repeated="False" type="int" value="47" />
+        </answers>
+    </answers>
+</word>

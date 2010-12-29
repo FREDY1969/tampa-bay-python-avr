@@ -1,5 +1,6 @@
 # package.py
 
+import sys   # only for debugging
 import os
 from doctest_tools import setpath
 from ucc.word import helpers, xml_access, word
@@ -28,6 +29,7 @@ class package:
         # Figure out package directories.
         self.package_dir = os.path.abspath(package_dir)
         root_dir = setpath.setpath(self.package_dir, False)[0]
+        print("package: root_dir", root_dir, file=sys.stderr)
         assert self.package_dir.startswith(root_dir), \
                "{}: setpath did not return a root of package_dir,\n" \
                "  got {}\n" \
@@ -37,20 +39,21 @@ class package:
         self.package_name = self.package_dir[len(root_dir) + 1:] \
                                 .replace(os.sep, '.') \
                                 .replace('/', '.')
-        self.load_words(top_package)
+        self.package_label = self.load_words(top_package)
+        print("package: package_name", self.package_name, file=sys.stderr)
+        print("package: package_label", self.package_label, file=sys.stderr)
 
     def load_words(self, top_package):
+        package_label, words = xml_access.read_word_list(self.package_dir)
         self.word_dict = {name: self.read_word(name, top_package)
-                          for name
-                           in xml_access.read_word_list(self.package_dir)[1]}
+                          for name in words}
+        return package_label
 
     def get_words(self):
         return list(self.word_dict.values())
     
     def read_word(self, name, top_package):
-        ans = word.read_word(name, self, top_package)
-        ans.package_name = self.package_name
-        return ans
+        return word.read_word(name, self, top_package)
 
 
 class built_in(package):

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <package>
-    <name>blinky</name>
+    <label>test-bruce</label>
     <words>
         <word name="led-pin" />
         <word name="output" />
         <word name="run" />
         <word name="bogus" />
         <word name="abogus" />
+        <word name="bbogus" />
     </words>
 </package>

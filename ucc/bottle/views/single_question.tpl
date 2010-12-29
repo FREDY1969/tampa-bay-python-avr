@@ -32,7 +32,7 @@
           ${q_layout.header(q)}
         </tr>
       %endif
-      %if hasattr(q_layout.single_line):
+      %if hasattr(q_layout, 'single_line'):
         <tr>
           ${q_layout.single_line(q, a, layouts, prefix)}
         </tr>

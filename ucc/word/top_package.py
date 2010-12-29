@@ -23,6 +23,9 @@ class top:
         self.add_package(self.packages[-1], True)
         self.connect_the_dots()
 
+    def get_top_package(self):
+        return self.packages[-1]
+
     def add_package(self, package, top):
         r'''Get `package` words and assign them to `word_dict`'''
         for w in package.get_words():
@@ -90,5 +93,5 @@ class top:
 
     def gen_top_words(self):
         r'''Generate all of the words in all of the packages.'''
-        return self.packages[-1].word_dict.values()
+        return self.get_top_package().word_dict.values()
 

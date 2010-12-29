@@ -186,7 +186,8 @@ class high_level_word(word):
 def load_class(ww):
     r'''Imports and initializes the Python class for a defining word.
     '''
-    mod = helpers.import_module("{}.{}".format(ww.package_name, ww.name))
+    mod = helpers.import_module("{}.{}".format(ww.package.package_name,
+                                               ww.name))
     new_subclass = getattr(mod, ww.name)
     new_subclass.init_class(ww)
     return new_subclass

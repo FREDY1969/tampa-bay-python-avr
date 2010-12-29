@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <package>
-    <name>washer</name>
+    <label>washer</label>
     <words>
         <word name="agitate" />
         <word name="buzz" />
