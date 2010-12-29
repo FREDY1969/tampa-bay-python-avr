@@ -7,7 +7,7 @@
     <answers>
         <answer name="on_is" repeated="False" type="choice">
             <options>
-                <option value="HIGH" />
+                <option value="1" />
             </options>
         </answer>
         <answer name="pin_number" repeated="False" type="int" value="13" />

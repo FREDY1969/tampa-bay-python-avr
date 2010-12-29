@@ -1,13 +1,3 @@
-<%
-    def gen_multi_info(q, a, layouts, prefix, suffix=''):
-        return q.subquestions
-%>
-
-<%def name="multi(q, answer, sub_q, layouts, prefix, suffix='')">
-  <% sub_prefix = "{}{}{}.".format(prefix, q.name, suffix) %>
-  <td>${sub_q.label|h}</td>
-
-  ##FIX: This should box complicated sub questions!
-  ${layouts[sub_q.layout()].single(sub_q, a, layouts, sub_prefix)}
-
+<%def name="rows(q, a, layouts, prefix, suffix='')">
+  <%include file="question_list.tpl" args="qa_list=q.gen_subquestions(a), layouts=layouts, prefix='{}{}{}.'.format(prefix, q.name, suffix)" />
 </%def>

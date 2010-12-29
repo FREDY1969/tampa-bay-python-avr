@@ -4,9 +4,9 @@
   %endfor
 </%def>
 
-<%def name="single(q, a, layouts, prefix, suffix='')">
+<%def name="single_line(q, a, layouts, prefix, suffix='')">
   <% sub_prefix = "{}{}{}.".format(prefix, q.name, suffix) %>
   %for sub_q in q.subquestions:
-    ${layouts[sub_q.layout()].single(sub_q, getattr(a, sub_q.name), layouts, sub_prefix)}
+    ${layouts[sub_q.layout()].single_line(sub_q, getattr(a, sub_q.name), layouts, sub_prefix)}
   %endfor
 </%def>

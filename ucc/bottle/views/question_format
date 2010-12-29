@@ -1,0 +1,52 @@
+types: integer, boolean, rational, floating point, string
+       choice
+       series
+
+required/optional/repeated(min/max/orderable)
+
+series has name for whole series
+
+label    [answer]               required
+label [] [answer]               optional
+label                           repeated
+  up del
+  [] []  [answer]               
+  [] Add label
+
+label []                        series required/optional
+  q1       q2       q3
+  [answer] [answer] [answer]
+label                           series repeated
+  up del q1       q2       q3
+  [] []  [answer] [answer] [answer]
+  [] Add label
+
+label []                        series required/optional
+  q1    [answer]
+  q2    [answer]
+  q3    [answer]
+label                           series repeated
+  up del
+  [] [] q1    [answer]
+        q2    [answer]
+        q3    [answer]
+  [] Add label
+
+label []  [choice][V]           choice required/optional
+label                           choice repeated
+  up del
+  [] []   [choice][V]
+  [] Add label
+
+label []                        choice required/optional
+  [] choice1
+       subquestion
+  [] choice2
+       subquestion
+label                           choice repeated
+  up del
+  [] [] [] choice1
+             subquestion
+        [] choice2
+             subquestion
+  [] Add label

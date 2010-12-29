@@ -5,20 +5,26 @@
 <tr>
   <td class="label">${q.label|h}</td>
   %if q.is_optional():
-    <td class="omit-yes">
-      <input name="${prefix|h}${q.name|h}-omit" type="checkbox">
-    </td>
+    %if a.is_answered():
+      <td class="omit-yes">
+        <input name="${prefix|h}${q.name|h}-omit" type="checkbox">
+      </td>
+    %else:
+      <td class="omit-yes">
+        <input name="${prefix|h}${q.name|h}-omit" type="checkbox" checked>
+      </td>
+    %endif
   %else:
     <td class="omit-no"></td>
   %endif
-  %if hasattr(q_layout, 'single'):
-    ${q_layout.single(q, a, layouts, prefix)}
+  %if hasattr(q_layout, 'single_line') and not hasattr(q_layout, 'header'):
+    ${q_layout.single_line(q, a, layouts, prefix)}
   %else:
     <td class="answer-no"></td>
   %endif
 </tr>
 
-%if hasattr(q_layout, 'header') or hasattr(q_layout, 'multi'):
+%if hasattr(q_layout, 'header') or hasattr(q_layout, 'rows'):
   <tr class="nested_row">
     <table class="nested_table">
       %if hasattr(q_layout, 'header'):
@@ -26,17 +32,12 @@
           ${q_layout.header(q)}
         </tr>
       %endif
-      %if hasattr(q_layout.single):
+      %if hasattr(q_layout.single_line):
         <tr>
-          ${q_layout.single(q, a, layouts, prefix)}
+          ${q_layout.single_line(q, a, layouts, prefix)}
         </tr>
-      %endif
-      %if hasattr(q_layout.multi):
-        %for info in q_layout.gen_multi_info(q, a, layouts, prefix):
-          <tr>
-            ${q_layout.multi(q, a, info, layouts, prefix)}
-          </tr>
-        %endfor
+      %else:
+        ${q_layout.rows(q, a, layouts, prefix)}
       %endif
     </table>
   </tr>

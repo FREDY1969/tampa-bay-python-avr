@@ -6,6 +6,7 @@ import operator
 import functools
 import webbrowser
 import bottle
+import urllib.parse
 
 from ucc.word import top_package, xml_access
 from ucc import config
@@ -66,9 +67,12 @@ def get_package(packages_name, package_name):
 
 def redirect_to_word(packages_name, package_name, word=None):
     if word is None:
-        redirect('/{}/{}'.format(packages_name, package_name))
+        redirect('/{}/{}'.format(urllib.parse.quote(packages_name),
+                                 urllib.parse(package_name)))
     else:
-        redirect('/{}/{}/{}'.format(packages_name, package_name, word))
+        redirect('/{}/{}/{}'.format(urllib.parse.quote(packages_name),
+                                    urllib.parse.quote(package_name),
+                                    urllib.parse.quote(word)))
 
 @get('/static/:filename#.*#')
 def static(filename):
@@ -129,9 +133,10 @@ def open_package(packages_name, package_name, word=None):
     if word:
         word_word = package.get_word_by_label(word)
         print("word_word", word_word)
-        print("answer question_names", tuple(word_word.answers.keys()))
+        print("answer question_names", word_word.answers and tuple(word_word.answers.keys()))
         print("kind", word_word.kind_obj)
-        print("kind question names", [(q.name, q.label) for q in word_word.kind_obj.questions])
+        print("kind question names",
+              [(q.name, q.label) for q in (word_word.kind_obj.questions or ())])
     else:
         word_word = None
     return {'packages_name': packages_name,
