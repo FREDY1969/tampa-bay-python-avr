@@ -218,8 +218,8 @@ class q_series(question):
                                   {q.name: q.make_default_answer()
                                    for q in self.subquestions})
 
-    def gen_subquestions(self, answers):
-        return ((q, getattr(answers, q.name)) for q in self.subquestions)
+    def gen_subquestions(self, answer):
+        return ((q, getattr(answer, q.name)) for q in self.subquestions)
 
     def layout(self):
         if len(self.subquestions) < 4 and \
@@ -280,6 +280,11 @@ class q_choice(question):
         raise AssertionError("q_choice({}): default, {!r}, not found in options"
                                .format(self.name, self.default))
 
+    def gen_subquestions(self, option, answer):
+        if answer.tag == option[1]:
+            return ((q, answer.subanswers[q.name]) for q in (option[2] or ()))
+        return ((q, None) for q in (option[2] or ()))
+
     def layout(self):
         if all(len(q) == 0 for _, _, q in self.options):
             return 'simple_choice'
@@ -297,6 +302,9 @@ class q_multichoice(q_choice):
     
     def make_default_answer(self):
         return answers.ans_multichoice(self.name, {})
+
+    def layout(self):
+        return 'choice'
 
 
 class q_indirect(question):
