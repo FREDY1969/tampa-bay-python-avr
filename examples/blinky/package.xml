@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <package>
-    <name>blinky</name>
+    <label>blinky</label>
     <words>
         <word name="run" />
     </words>

@@ -119,7 +119,7 @@ def parse_needed_words(top, package_parsers, quiet):
         ww = top.get_word_by_label(next_word)
         word_obj = ww.symbol.word_obj
         status, more_words_needed = \
-          parse_word(ww, word_obj, package_parsers[ww.package_name])
+          parse_word(ww, word_obj, package_parsers[ww.package.package_name])
         if status:
             words_done.add(next_word)
             words_needed.update(more_words_needed - words_done)

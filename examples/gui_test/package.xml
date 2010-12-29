@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <package>
-    <name>gui_test</name>
+    <label>gui_test</label>
     <words>
         <word name="test_basic_defining" />
         <word name="test_basic" />

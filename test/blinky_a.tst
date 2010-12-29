@@ -2,9 +2,9 @@
 
 Test the blinky example:
 
->>> import examples
+>>> import blinky_examples
 
->>> test1 = examples.test_compile('blinky', True)
->>> test1 == examples.target_blinky
+>>> test1 = blinky_examples.test_compile('blinky', True)
+>>> test1 == blinky_examples.target_blinky
 True
 

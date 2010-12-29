@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <package>
-    <name>built-in</name>
+    <label>built-in</label>
     <words>
         <word name="declaration" />
         <word name="output-pin" />

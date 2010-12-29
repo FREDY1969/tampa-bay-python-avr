@@ -223,7 +223,10 @@ class q_series(question):
 
     def layout(self):
         if len(self.subquestions) < 4 and \
-           all(q.layout() == 'atomic' for q in self.subquestions):
+           all(q.layout() == 'atomic' and 
+                 not q.is_repeatable() and
+                 not q.is_optional()
+               for q in self.subquestions):
             return 'simple_series'
         return 'series'
 

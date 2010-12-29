@@ -1,5 +1,6 @@
 # helpers.py
 
+import sys   # only for debugging
 import re
 
 Reserved_words = frozenset((
@@ -22,6 +23,10 @@ def legalize_name(name):
 
 def import_module(modulename):
     ''' ``modulename`` is full package path (with dots).'''
+    #print("import_module", repr(modulename), file=sys.stderr)
+    #print("sys.path", sys.path, file=sys.stderr)
+    #import examples
+    #print("examples.__file__", examples.__file__, file=sys.stderr)
     mod = __import__(modulename)
     for comp in modulename.split('.')[1:]:
         mod = getattr(mod, comp)

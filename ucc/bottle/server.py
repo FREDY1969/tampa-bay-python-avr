@@ -47,7 +47,7 @@ def lookup_packages(packages_name):
             return packages_info
     raise ValueError("packages {} not found".format(packages_name))
 
-def get_package(packages_name, package_name):
+def get_top_package(packages_name, package_name):
     global Current_package
     if not Current_package or \
        Current_package.packages[-1].package_name != \
@@ -129,9 +129,9 @@ def update_text(packages_name, package_name, word):
 @print_exception
 @view('word')
 def open_package(packages_name, package_name, word=None):
-    package = get_package(packages_name, package_name)
+    top_package = get_top_package(packages_name, package_name)
     if word:
-        word_word = package.get_word_by_label(word)
+        word_word = top_package.get_word_by_label(word)
         print("word_word", word_word)
         print("answer question_names", word_word.answers and tuple(word_word.answers.keys()))
         print("kind", word_word.kind_obj)
@@ -141,16 +141,17 @@ def open_package(packages_name, package_name, word=None):
         word_word = None
     return {'packages_name': packages_name,
             'package_name': package_name,
+            'package': top_package.get_top_package(),
             'word': word,
-            'index': build_index(package),
+            'index': build_index(top_package),
             'word_word': word_word,
            }
 
-def build_index(package):
+def build_index(top_package):
     return sorted(((tuple(w.package.package_name.split('.')) +
-                    (w, tuple(my_w for my_w in package.gen_top_words()
+                    (w, tuple(my_w for my_w in top_package.gen_top_words()
                                    if my_w.kind_obj == w)))
-                   for w in package.gen_words()
+                   for w in top_package.gen_words()
                    if w.defining),
                   key=lambda t: t[2].label.lower())
 

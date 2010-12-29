@@ -38,7 +38,7 @@ def write_package_list(package_list, packages_dir):
     write_element(root, os.path.join(packages_dir, PACKAGES_FILENAME))
 
 def read_word_list(package_dir):
-    r'''Returns the package_name and list of `word` names in the `package`.
+    r'''Returns the package_label and list of `word` names in the `package`.
     
     Read from the 'package.xml' file.
     
@@ -47,18 +47,18 @@ def read_word_list(package_dir):
     '''
     
     tree = ElementTree.parse(os.path.join(package_dir, PACKAGE_FILENAME))
-    return (tree.find('name').text,
+    return (tree.find('label').text,
             [e.get('name') for e in tree.getiterator('word')])
 
-def write_word_list(package_name, word_list, package_dir):
-    r'''Writes the package_name and list of `word` names to package.xml file.
+def write_word_list(package_label, word_list, package_dir):
+    r'''Writes the package_label and list of `word` names to package.xml file.
     
     Sorts the names to reduce merge conflicts.
     
     '''
     
     root = ElementTree.Element('package')
-    ElementTree.SubElement(root, 'name').text = package_name
+    ElementTree.SubElement(root, 'label').text = package_label
     words = ElementTree.SubElement(root, 'words')
     for name in sorted(word_list):
         ElementTree.SubElement(words, 'word', name = name)

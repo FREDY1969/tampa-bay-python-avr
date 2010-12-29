@@ -17,11 +17,7 @@ each word:
     top
       A boolean indicating whether this word is directly in the top-level
       package (the one opened in the IDE) or not.
-    
-    package_name
-      The full dotted module name of the `package` containing this word.
-      This is set by the `package.package` object.
-    
+
     kind_obj
       The kind `word` object (whereas 'kind' is just that object's name).
     
