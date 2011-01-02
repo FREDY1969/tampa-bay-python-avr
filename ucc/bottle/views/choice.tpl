@@ -1,16 +1,15 @@
 <%!
+    from ucc.word import questions
     import itertools
 %>
 
 <%def name="rows(q, a, layouts, prefix, suffix='')">
   %for name, value, subquestions in q.options:
     <tr>
-      <td class="choice-checkbox">
-        %if a.tag == value:
-          <input class="choice-checkbox" name="${prefix|h}${q.name|h}${suffix|h}-answer" type="checkbox" checked value="${value|h}">
-        %else:
-          <input class="choice-checkbox" name="${prefix|h}${q.name|h}${suffix|h}-answer" type="checkbox" value="${value|h}">
-        %endif
+      <td class="choice-input">
+        <% type = 'checkbox' if isinstance(q, questions.q_multichoice) else 'radio' %>
+        <% checked = 'checked' if a and a.tag == value else '' %>
+        <input class="choice-input" name="${prefix|h}${q.name|h}${suffix|h}-answer" type="${type}" ${checked} value="${value|h}">
       </td>
       <td class="choice-label">${name|h}</td>
     </tr>

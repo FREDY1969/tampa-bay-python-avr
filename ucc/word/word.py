@@ -190,7 +190,10 @@ class word:
         '''
 
         for q in self.kind_obj.questions:
-            yield q, self.get_answer(q.name)
+            if self.answers:
+                yield q, self.get_answer(q.name)
+            else:
+                yield q, None
 
     def get_answer(self, question_name, default = unique):
         r'''Return the answer to question_name.

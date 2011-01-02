@@ -5,7 +5,7 @@
 <tr>
   <td class="label">${q.label|h}</td>
   %if q.is_optional():
-    %if a.is_answered():
+    %if a and a.is_answered():
       <td class="omit-yes">
         <input name="${prefix|h}${q.name|h}-omit" type="checkbox">
       </td>

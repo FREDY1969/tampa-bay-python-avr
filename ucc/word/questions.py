@@ -219,7 +219,8 @@ class q_series(question):
                                    for q in self.subquestions})
 
     def gen_subquestions(self, answer):
-        return ((q, getattr(answer, q.name)) for q in self.subquestions)
+        return ((q, answer and getattr(answer, q.name))
+                for q in self.subquestions)
 
     def layout(self):
         if len(self.subquestions) < 4 and \
@@ -284,7 +285,7 @@ class q_choice(question):
                                .format(self.name, self.default))
 
     def gen_subquestions(self, option, answer):
-        if answer.tag == option[1]:
+        if answer and answer.tag == option[1]:
             return ((q, answer.subanswers[q.name]) for q in (option[2] or ()))
         return ((q, None) for q in (option[2] or ()))
 

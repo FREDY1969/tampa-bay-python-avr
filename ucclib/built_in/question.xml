@@ -4,6 +4,9 @@
     <label>question</label>
     <kind>declaration</kind>
     <defining>True</defining>
+    <answers>
+        <answer name="filename_suffix" null="True" repeated="False" type="string" />
+    </answers>
     <questions>
         <questions>
             <name>question</name>
