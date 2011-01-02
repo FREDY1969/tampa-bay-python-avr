@@ -65,5 +65,5 @@ class built_in(package):
         self.package_name = BUILT_IN
         self.package_dir = \
           os.path.split(helpers.import_module(self.package_name).__file__)[0]
-        self.load_words(top_package)
+        self.package_label = self.load_words(top_package)
 

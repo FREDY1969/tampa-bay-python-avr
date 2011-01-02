@@ -20,7 +20,7 @@
           <th colspan="0"></th>
         %endif
       </tr>
-      %for suffix, i, answer in (('@{}'.format(t_i), t_i, t_answer) for t_i, t_answer in enumerate(a)):
+      %for suffix, i, answer in (('@{}'.format(t_i), t_i, t_answer) for t_i, t_answer in enumerate(a or ())):
         <tr>
           <td><input class="up-input" name="${prefix|h}${q.name|h}${suffix|h}-up" type="checkbox"></td>
           <td><input class="del-input" name="${prefix|h}${q.name|h}${suffix|h}-del" type="checkbox"></td>
@@ -29,13 +29,13 @@
           %else:
             <td>
               <table class="boxed-question">
-                ${q_layout.rows(q, a, layouts, prefix, suffix)}
+                ${q_layout.rows(q, answer, layouts, prefix, suffix)}
               </table>
             </td>
           %endif
         </tr>
       %endfor
-      %if q.max is None or len(a) < q.max:
+      %if q.max is None or len(a or ()) < q.max:
         <tr>
           <td><input class="add-answer" name="${prefix|h}${q.name|h}-add" type="checkbox"></td>
           <td colspan="0">Add ${q.label|h}</td>
