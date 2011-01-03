@@ -10,6 +10,7 @@ build/
 *~
 *.kpf
 *.hex
+*.tpl.py
 parser.py
 parser_tables.py
 scanner_tables.py

@@ -42,6 +42,7 @@ declaration classes and instances.
 
 '''
 
+import sys
 import os.path
 import itertools
 from xml.etree import ElementTree
@@ -51,19 +52,21 @@ from ucc.gui import registry
 
 unique = object()
 
-def read_word(word_name, package, top_package):
+def read_word(word_name, package, top_package, debug = False):
     r'''Return a single `word` object read in from the word's xml file.
     
     Use `word.save` to write the xml file back out.
     
     '''
+    if debug: print("read_word", word_name, file=sys.stderr)
     root = ElementTree.parse(os.path.join(package.package_dir,
                                           word_name + '.xml')) \
                       .getroot()
-    return from_xml(root, package, top_package)
+    return from_xml(root, package, top_package, debug)
 
-def from_xml(root, package, top_package):
+def from_xml(root, package, top_package, debug):
     name = root.find('name').text
+    if debug: print("from_xml: name =", name, file=sys.stderr)
     label = root.find('label').text
     kind = root.find('kind').text
     defining = root.find('defining').text.lower() == 'true'
@@ -71,13 +74,17 @@ def from_xml(root, package, top_package):
     if not answers_element:
         my_answers = None
     else:
+        if debug: print("answers.from_xml", file=sys.stderr)
         my_answers = answers.from_xml(answers_element)
+    if debug: print("answers.from_xml done", file=sys.stderr)
     questions_element = root.find('questions')
     if not questions_element:
         my_questions = None
     else:
+        if debug: print("questions.from_xml", file=sys.stderr)
         my_questions = questions.from_xml(questions_element, top_package)
-    return word(package, name, label, defining, kind, my_answers, my_questions)
+    return word(package, name, label, defining, kind, my_answers, my_questions,
+                debug)
 
 class word:
     r'''This represents a single generic word.
@@ -86,13 +93,15 @@ class word:
     '''
 
     def __init__(self, package, name, label, defining, kind,
-                 answers = None, questions = None):
+                 answers = None, questions = None, debug = False):
         r'''This is called by the `read_word` function.
         
         Or you can call it directly to create a new word.
         
         '''
         
+        if debug: print("word", name, file=sys.stderr)
+
         self.package = package
         self.name = name            # internal name
         self.label = label          # name that user sees

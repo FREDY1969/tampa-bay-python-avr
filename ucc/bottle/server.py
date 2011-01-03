@@ -19,8 +19,9 @@ from mako import exceptions
 Bottle_dir = os.path.dirname(__file__)
 Static_dir = os.path.join(Bottle_dir, 'static')
 Root_dir = os.path.dirname(os.path.dirname(Bottle_dir))
+Views_dir = os.path.join(Bottle_dir, 'views')
 
-bottle.TEMPLATE_PATH = [os.path.join(Bottle_dir, 'views'),]
+bottle.TEMPLATE_PATH = [Views_dir]
 bottle.debug(True)
 
 packages_info_class = collections.namedtuple('packages_info_class',
@@ -79,7 +80,7 @@ def static(filename):
     send_file(filename, root=Static_dir)
 
 @get('/')
-@view('top')
+@view('top', template_settings={'module_directory': Views_dir})
 def top():
     return {'packages_dirs': Packages_dirs,
            }
@@ -127,7 +128,7 @@ def update_text(packages_name, package_name, word):
 @get('/:packages_name/:package_name')
 @get('/:packages_name/:package_name/:word')
 @print_exception
-@view('word')
+@view('word', template_settings={'module_directory': Views_dir})
 def open_package(packages_name, package_name, word=None):
     top_package = get_top_package(packages_name, package_name)
     if word:

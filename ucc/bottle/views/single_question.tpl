@@ -25,21 +25,23 @@
 </tr>
 
 %if hasattr(q_layout, 'header') or hasattr(q_layout, 'rows'):
-  <tr class="nested_row">
-    <table class="nested_table">
-      %if hasattr(q_layout, 'header'):
-        <tr>
-          ${q_layout.header(q)}
-        </tr>
-      %endif
-      %if hasattr(q_layout, 'single_line'):
-        <tr>
-          ${q_layout.single_line(q, a, layouts, prefix)}
-        </tr>
-      %else:
-        ${q_layout.rows(q, a, layouts, prefix)}
-      %endif
-    </table>
+  <tr class="nested-table">
+    <td class="nested-table">
+      <table class="nested-table">
+        %if hasattr(q_layout, 'header'):
+          <tr>
+            ${q_layout.header(q)}
+          </tr>
+        %endif
+        %if hasattr(q_layout, 'single_line'):
+          <tr>
+            ${q_layout.single_line(q, a, layouts, prefix)}
+          </tr>
+        %else:
+          ${q_layout.rows(q, a, layouts, prefix)}
+        %endif
+      </table>
+    </td>
   </tr>
 %endif
 

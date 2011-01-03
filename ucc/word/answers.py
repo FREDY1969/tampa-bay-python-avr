@@ -27,13 +27,19 @@ the ans_X classes defined in this module.
 Both series and choices have subordinate answers as nested (child) xml
 elements.  All other answers have a 'value' attribute with the answer to the
 question (unless the null="True" attribute is set).
+
+Choices have a single subordinate 'options' element, which itself has a set of
+subordinate 'option' elements.  Each 'option' element has a 'value' attribute
+and possibly a single subordinate 'answers' element containing the subanswers
+as children.
 '''
 
+import sys
 import collections
 
 from xml.etree import ElementTree
 
-def from_xml(answers_element):
+def from_xml(answers_element, debug = False):
     r'''Return a dictionary of `answer` objects from an answers etree node.
     
     The dictionary keys are the answer names, and the values are either:
@@ -47,6 +53,7 @@ def from_xml(answers_element):
     
     '''
     
+    if debug: print("answers.from_xml", file=sys.stderr)
     if answers_element is None: return {}
     ans = collections.defaultdict(list)
     for answer in answers_element.getchildren():
@@ -54,6 +61,9 @@ def from_xml(answers_element):
             name = answer.get('name')
             repeated = answer.get('repeated', 'false').lower() == 'true'
             type = answer.get('type', None)
+            if debug:
+                print("answers.from_xml: name =", name, " type =", type,
+                      file=sys.stderr)
             if answer.get('null', 'false').lower() == 'true': 
                 if repeated: 
                     ans[name] = []
@@ -65,6 +75,8 @@ def from_xml(answers_element):
                 else: ans[name] = value
         elif answer.tag == 'answers':
             name = answer.get('name')
+            if debug:
+                print("answers.from_xml: name =", name, file=sys.stderr)
             repeated = answer.get('repeated', 'false').lower() == 'true'
             if answer.get('null', 'false').lower() == 'true': 
                 if repeated: 
@@ -267,9 +279,8 @@ class ans_choice(answer):
     def __init__(self, name, tag = None, subanswers = None, answered = True):
         self.name = name
         self.answered = answered
-        if self.answered:
-            self.tag = tag
-            self.subanswers = subanswers
+        self.tag = tag
+        self.subanswers = subanswers
 
     @classmethod
     def from_element(cls, name, answer):
@@ -308,7 +319,9 @@ class ans_choice(answer):
         option_element = ElementTree.SubElement(options_element, 'option',
                                                 value = str(value))
         add_xml_subelement(option_element, subanswers)
-    
+
+    def option_present(self, option_value):
+        return self.tag == option_value
 
 def parse_options(answer):
     r'''Returns dict mapping tag to dict of subanswers (or None).'''
@@ -331,7 +344,7 @@ def convert_tag(value):
     '''
     try:
         return int(value)
-    except ValueError:
+    except (TypeError, ValueError):
         return value
 
 class ans_multichoice(ans_choice):
@@ -349,8 +362,7 @@ class ans_multichoice(ans_choice):
     def __init__(self, name, answers = None, answered = True):
         self.name = name
         self.answered = answered
-        if self.answered:
-            self.answers = answers
+        self.answers = answers
 
     @classmethod
     def from_element(cls, name, answer):
@@ -363,3 +375,5 @@ class ans_multichoice(ans_choice):
         for tag in sorted(self.answers.keys()):
             self.add_option(options_element, tag, self.answers[tag])
 
+    def option_present(self, option_value):
+        return self.answers and option_value in self.answers
