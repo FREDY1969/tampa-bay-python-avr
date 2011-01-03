@@ -11,14 +11,6 @@
         <questions>
             <name>question</name>
             <label>question</label>
-            <min>0</min>
-            <max>infinite</max>
-            <orderable>True</orderable>
-            <question>
-                <name>name</name>
-                <label>name</label>
-                <type>string</type>
-            </question>
             <question>
                 <name>label</name>
                 <label>label</label>
@@ -66,6 +58,26 @@
                     <option name="rational" value="rational" />
                     <option name="floating point" value="real" />
                     <option name="string" value="string" />
+                    <option name="indirect" value="indirect" />
+                        <questions>
+                            <question>
+                                <name>question_name</name>
+                                <label>question name</label>
+                                <type>string</type>
+                            </question>
+                        </questions>
+                    <option name="series" value="series" />
+                        <questions>
+                            <question>
+                                <name>subquestion</name>
+                                <label>subquestion</label>
+                                <min>2</min>
+                                <max>infinite</max>
+                                <orderable>True</orderable>
+                                <type>indirect</type>
+                                <use>question</use>
+                            </question>
+                        </questions>
                     <option name="choice" value="choice">
                         <questions>
                             <question>
@@ -80,7 +92,7 @@
                                 <max>infinite</max>
                                 <orderable>True</orderable>
                                 <question>
-                                    <name>name</name>
+                                    <name>label</name>
                                     <label>label</label>
                                     <type>string</type>
                                 </question>
@@ -90,8 +102,8 @@
                                     <type>string</type>
                                 </question>
                                 <question>
-                                    <name>value</name>
-                                    <label>value</label>
+                                    <name>subquestion</name>
+                                    <label>subquestion</label>
                                     <min>0</min>
                                     <max>infinite</max>
                                     <orderable>True</orderable>

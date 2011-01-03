@@ -10,9 +10,11 @@
 
 <tr>
   <td colspan="0">
-    <table class="nested_table">
+    <table class="nested-table">
       <tr>
-        <th>up</th>
+        %if q.is_orderable():
+          <th>up</th>
+        %endif
         <th>del</th>
         %if hasattr(q_layout, 'header'):
           ${q_layout.header(q)}
@@ -22,7 +24,13 @@
       </tr>
       %for suffix, i, answer in (('@{}'.format(t_i), t_i, t_answer) for t_i, t_answer in enumerate(a or ())):
         <tr>
-          <td><input class="up-input" name="${prefix|h}${q.name|h}${suffix|h}-up" type="checkbox"></td>
+          %if q.is_orderable():
+            <td>
+            %if i != 0:
+              <input class="up-input" name="${prefix|h}${q.name|h}${suffix|h}-up" type="checkbox">
+            %endif
+            </td>
+          %endif
           <td><input class="del-input" name="${prefix|h}${q.name|h}${suffix|h}-del" type="checkbox"></td>
           %if hasattr(q_layout, 'single_line'):
             ${q_layout.single_line(q, answer, layouts, prefix, suffix)}

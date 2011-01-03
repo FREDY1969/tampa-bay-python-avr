@@ -7,9 +7,8 @@
   %for name, value, subquestions in q.options:
     <tr>
       <td class="choice-input">
-        <% type = 'checkbox' if isinstance(q, questions.q_multichoice) else 'radio' %>
-        <% checked = 'checked' if a and a.tag == value else '' %>
-        <input class="choice-input" name="${prefix|h}${q.name|h}${suffix|h}-answer" type="${type}" ${checked} value="${value|h}">
+        <% checked = 'checked' if a and a.option_present(value) else '' %>
+        <input class="choice-input" name="${prefix|h}${q.name|h}${suffix|h}-answer" type="${q.input_type}" ${checked} value="${value|h}">
       </td>
       <td class="choice-label">${name|h}</td>
     </tr>

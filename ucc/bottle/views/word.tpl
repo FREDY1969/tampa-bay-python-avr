@@ -8,13 +8,13 @@
 </%def>
 
 <div class="menu">
-  <a class="menu_item" href="/">Close</a>
+  <a class="menu-item" href="/">Close</a>
   %if word is None:
-    <a class="menu_item" href="/compile/${packages_name|u}/${package_name|u}">Compile</a>
-    <a class="menu_item" href="/load/${packages_name|u}/${package_name|u}">Load</a>
+    <a class="menu-item" href="/compile/${packages_name|u}/${package_name|u}">Compile</a>
+    <a class="menu-item" href="/load/${packages_name|u}/${package_name|u}">Load</a>
   %else:
-    <a class="menu_item" href="/compile/${packages_name|u}/${package_name|u}/${word|u}">Compile</a>
-    <a class="menu_item" href="/load/${packages_name|u}/${package_name|u}/${word|u}">Load</a>
+    <a class="menu-item" href="/compile/${packages_name|u}/${package_name|u}/${word|u}">Compile</a>
+    <a class="menu-item" href="/load/${packages_name|u}/${package_name|u}/${word|u}">Load</a>
   %endif
 </div>
 

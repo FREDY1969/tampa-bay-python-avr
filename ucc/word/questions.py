@@ -242,6 +242,7 @@ class q_choice(question):
     answer_cls = answers.ans_string
     default_value = ""
     control = 'ChoiceCtrl'
+    input_type = 'radio'
     layout = 'choice'
     
     def __init__(self, name, label, options = None, default = None,
@@ -285,9 +286,11 @@ class q_choice(question):
                                .format(self.name, self.default))
 
     def gen_subquestions(self, option, answer):
-        if answer and answer.tag == option[1]:
-            return ((q, answer.subanswers[q.name]) for q in (option[2] or ()))
-        return ((q, None) for q in (option[2] or ()))
+        opt_name, opt_value, opt_subquestions = option
+        if answer and answer.subanswers and answer.tag == opt_value:
+            return ((q, answer.subanswers[q.name])
+                    for q in (opt_subquestions or ()))
+        return ((q, None) for q in (opt_subquestions or ()))
 
     def layout(self):
         if all(len(q) == 0 for _, _, q in self.options):
@@ -303,9 +306,17 @@ class q_multichoice(q_choice):
     '''
     
     control = 'MultiChoiceCtrl'
+    input_type = 'checkbox'
     
     def make_default_answer(self):
         return answers.ans_multichoice(self.name, {})
+
+    def gen_subquestions(self, option, answer):
+        opt_name, opt_value, opt_subquestions = option
+        if answer and answer.answers and answer.answers.get(opt_value):
+            return ((q, answer.answers[opt_value][q.name])
+                    for q in (opt_subquestions or ()))
+        return ((q, None) for q in (opt_subquestions or ()))
 
     def layout(self):
         return 'choice'

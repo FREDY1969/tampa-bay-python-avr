@@ -4,121 +4,228 @@
     <label>type</label>
     <kind>question</kind>
     <defining>False</defining>
-    <questions>
-        <question>
-            <name>type</name>
-            <label>type</label>
-            <type>choice</type>
-            <options>
-                <option name="int" value="int">
-                    <questions>
-                        <question>
-                            <name>min_value</name>
-                            <label>min value</label>
-                            <min>0</min>
-                            <max>1</max>
-                            <type>int</type>
-                        </question>
-                        <question>
-                            <name>max_value</name>
-                            <label>max value</label>
-                            <min>0</min>
-                            <max>1</max>
-                            <type>int</type>
-                        </question>
-                    </questions>
-                </option>
-                <option name="fixedpt" value="fixedpt">
-                    <questions>
-                        <question>
-                            <name>binary_pt</name>
-                            <label>binary point</label>
-                            <type>int</type>
-                        </question>
-                        <question>
-                            <name>precision</name>
-                            <label>precision</label>
-                            <type>int</type>
-                        </question>
-                        <question>
-                            <name>min_value</name>
-                            <label>min value</label>
-                            <min>0</min>
-                            <max>1</max>
-                            <type>int</type>
-                        </question>
-                        <question>
-                            <name>max_value</name>
-                            <label>max value</label>
-                            <min>0</min>
-                            <max>1</max>
-                            <type>int</type>
-                        </question>
-                    </questions>
-                </option>
-                <option name="array" value="array">
-                    <questions>
-                        <question>
-                            <name>min_value</name>
-                            <label>min size</label>
-                            <min>0</min>
-                            <max>1</max>
-                            <type>int</type>
-                        </question>
-                        <question>
-                            <name>max_value</name>
-                            <label>max size</label>
-                            <min>0</min>
-                            <max>1</max>
-                            <type>int</type>
-                        </question>
-                        <question>
-                            <name>element_type</name>
-                            <label>element type</label>
-                            <type>indirect</type>
-                            <use>type</use>
-                        </question>
-                    </questions>
-                </option>
-                <option name="pointer" value="pointer">
-                    <questions>
-                        <question>
-                            <name>memory</name>
-                            <label>memory</label>
-                            <type>indirect</type>
-                            <use>memory</use>
-                        </question>
-                        <question>
-                            <name>element_type</name>
-                            <label>element type</label>
-                            <type>indirect</type>
-                            <use>type</use>
-                        </question>
-                    </questions>
-                </option>
-                <option name="record" value="record">
-                    <questions>
-                        <questions>
-                            <name>memory</name>
-                            <label>memory</label>
-                            <min>1</min>
-                            <max>infinite</max>
-                            <orderable>True</orderable>
-                            <question>
-                                <name>name</name>
-                                <label>field name</label>
-                                <type>string</type>
-                            </question>
-                            <question>
-                                <name>element_type</name>
-                                <label>type</label>
-                                <type>indirect</type>
-                                <use>type</use>
-                            </question>
-                        </questions>
-                    </questions>
-                </option>
-            </options>
-        </question>
-    </questions>
+    <answers>
+        <answers name="question" repeated="False">
+            <answer name="label" repeated="False" type="string" value="type" />
+            <answer name="modifier" repeated="False" type="choice">
+                <options>
+                    <option name="required" />
+                </options>
+            </answer>
+            <answer name="type" repeated="False" type="choice">
+                <options>
+                    <option value="choice">
+                        <answers>
+                            <answer name="multiple" repeated="False" type="bool" value="False" />
+                            <answers name="options" repeated="True">
+                                <answer name="label" repeated="False" type="string" value="int" />
+                                <answer name="value" repeated="False" type="string" value="int" />
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="min value" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="optional" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="int" />
+                                        </options>
+                                    </answer>
+                                </answers>
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="max value" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="optional" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="int" />
+                                        </options>
+                                    </answer>
+                                </answers>
+                            </answers>
+                            <answers name="options" repeated="True">
+                                <answer name="label" repeated="False" type="string" value="fixedpt" />
+                                <answer name="value" repeated="False" type="string" value="fixedpt" />
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="binary pt" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="required" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="int" />
+                                        </options>
+                                    </answer>
+                                </answers>
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="precision" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="required" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="int" />
+                                        </options>
+                                    </answer>
+                                </answers>
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="min value" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="optional" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="rational" />
+                                        </options>
+                                    </answer>
+                                </answers>
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="max value" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="optional" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="rational" />
+                                        </options>
+                                    </answer>
+                                </answers>
+                            </answers>
+                            <answers name="options" repeated="True">
+                                <answer name="label" repeated="False" type="string" value="array" />
+                                <answer name="value" repeated="False" type="string" value="array" />
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="min size" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="optional" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="int" />
+                                        </options>
+                                    </answer>
+                                </answers>
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="max size" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="optional" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="int" />
+                                        </options>
+                                    </answer>
+                                </answers>
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="element_type" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="required" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="indirect">
+                                                <answers>
+                                                    <answer name="question_name" repeated="False" type="string" value="type" />
+                                                </answers>
+                                            </option>
+                                        </options>
+                                    </answer>
+                                </answers>
+                            </answers>
+                            <answers name="options" repeated="True">
+                                <answer name="label" repeated="False" type="string" value="pointer" />
+                                <answer name="value" repeated="False" type="string" value="pointer" />
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="memory" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="required" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="indirect">
+                                                <answers>
+                                                    <answer name="question_name" repeated="False" type="string" value="memory" />
+                                                </answers>
+                                            </option>
+                                        </options>
+                                    </answer>
+                                </answers>
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="element type" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="required" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="indirect">
+                                                <answers>
+                                                    <answer name="question_name" repeated="False" type="string" value="type" />
+                                                </answers>
+                                            </option>
+                                        </options>
+                                    </answer>
+                                </answers>
+                            </answers>
+                            <answers name="options" repeated="True">
+                                <answer name="label" repeated="False" type="string" value="record" />
+                                <answer name="value" repeated="False" type="string" value="record" />
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="field name" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="required" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="string" />
+                                        </options>
+                                    </answer>
+                                </answers>
+                                <answers name="subquestion" repeated="True">
+                                    <answer name="label" repeated="False" type="string" value="type" />
+                                    <answer name="modifier" repeated="False" type="choice">
+                                        <options>
+                                            <option name="required" />
+                                        </options>
+                                    </answer>
+                                    <answer name="type" repeated="False" type="choice">
+                                        <options>
+                                            <option name="indirect">
+                                                <answers>
+                                                    <answer name="question_name" repeated="False" type="string" value="type" />
+                                                </answers>
+                                            </option>
+                                        </options>
+                                    </answer>
+                                </answers>
+                            </answers>
+                        </answers>
+                    </option>
+                </options>
+            </answer>
+        </answers>
+    </answers>
 </word>
