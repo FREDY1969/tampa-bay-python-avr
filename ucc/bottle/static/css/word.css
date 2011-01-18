@@ -1,3 +1,21 @@
+/* [tag].class
+ * [tag]#id
+ */
+
+.menu {
+    margin-bottom: 3ex;
+}
+
+#name {
+    vertical-align: top;
+    text-align: center;
+    font-weight: bold;
+}
+
+.question-header {
+    vertical-align: top;
+}
+
 #outer-table { /* table */
     border-collapse: collapse;
 }
@@ -56,6 +74,7 @@
 }
 
 #questions { /* td */
+    vertical-align: top;
     padding-left: 1ex;
     padding-bottom: 1ex;
     border-bottom: 3px solid black;
@@ -64,7 +83,20 @@
 .question-table {  /* table */
 }
 
+td.nested-table {
+    margin-left: 2ex;
+}
+
+td.up-input {
+    vertical-align: top;
+}
+
+td.del-input {
+    vertical-align: top;
+}
+
 #text {  /* td */
+    vertical-align: top;
     padding-left: 1ex;
     padding-top: 1ex;
 }

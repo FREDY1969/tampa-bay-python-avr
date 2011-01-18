@@ -26,7 +26,7 @@
 
 %if hasattr(q_layout, 'header') or hasattr(q_layout, 'rows'):
   <tr class="nested-table">
-    <td class="nested-table">
+    <td class="nested-table" colspan="0">
       <table class="nested-table">
         %if hasattr(q_layout, 'header'):
           <tr>

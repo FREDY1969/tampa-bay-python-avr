@@ -34,7 +34,7 @@ single_line or rows must be defined (but not both):
 
 <form method="POST" action="/update_answers/${packages_name|u}/${package_name|u}/${word|u}">
   <table class="question-table">
-    <tr>
+    <tr class="question-header">
       <th>Question</th>
       <th>Omit</th>
       <th>Answer</th>

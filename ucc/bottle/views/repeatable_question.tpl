@@ -25,13 +25,13 @@
       %for suffix, i, answer in (('@{}'.format(t_i), t_i, t_answer) for t_i, t_answer in enumerate(a or ())):
         <tr>
           %if q.is_orderable():
-            <td>
+            <td class="up-input">
             %if i != 0:
               <input class="up-input" name="${prefix|h}${q.name|h}${suffix|h}-up" type="checkbox">
             %endif
             </td>
           %endif
-          <td><input class="del-input" name="${prefix|h}${q.name|h}${suffix|h}-del" type="checkbox"></td>
+          <td class="del-input"><input class="del-input" name="${prefix|h}${q.name|h}${suffix|h}-del" type="checkbox"></td>
           %if hasattr(q_layout, 'single_line'):
             ${q_layout.single_line(q, answer, layouts, prefix, suffix)}
           %else:
