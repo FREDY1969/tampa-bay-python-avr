@@ -6,8 +6,11 @@
     margin-bottom: 3ex;
 }
 
-#name {
+#name {  /* td */
     vertical-align: top;
+    margin-bottom: 0;
+    height: auto;
+    padding-bottom: 0;
     text-align: center;
     font-weight: bold;
 }
@@ -18,13 +21,22 @@
 
 #outer-table { /* table */
     border-collapse: collapse;
+    width: 100%;
+    margin-right: 0;
+    min-width: 90ex;
+    height: auto;
+    table-layout: auto;
 }
 
 #index-col {  /* col */
     border-right: 3px solid black;
 }
 
-#contents { /* td */
+tr.contents {
+    height: 0;
+}
+
+td.contents {
     vertical-align: top;
     padding-right: 1ex;
 }
@@ -71,9 +83,14 @@
 }
 
 #word-col {  /* col */
+    width: auto;
 }
 
-#questions { /* td */
+tr.questions {
+    height: 100%;
+}
+
+td.questions {
     vertical-align: top;
     padding-left: 1ex;
     padding-bottom: 1ex;
@@ -81,6 +98,8 @@
 }
 
 .question-table {  /* table */
+    width: 100%;
+    margin-right: 0;
 }
 
 td.nested-table {
@@ -88,14 +107,20 @@ td.nested-table {
 }
 
 td.up-input {
+    padding-top: 7px;
     vertical-align: top;
 }
 
 td.del-input {
+    padding-top: 7px;
     vertical-align: top;
 }
 
-#text {  /* td */
+tr.text {
+    height: auto;
+}
+
+td.text {
     vertical-align: top;
     padding-left: 1ex;
     padding-top: 1ex;

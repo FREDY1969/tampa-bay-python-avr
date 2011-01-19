@@ -19,21 +19,21 @@
 </div>
 
 <table id="outer-table">
-<col id="index-col"><col id="word-col">
-<tr>
-  <td id="contents" rowspan=3>
+<col id="index-col" width="0*"><col id="word-col">
+<tr class="contents">
+  <td class="contents" rowspan=3>
     <ul class="outer-contents">
       %for decl_packages_name, decl_package_name, decl_word, local_words in index:
         %if local_words:
           <li class="outer-element">
-            <a class="decl-link" href="/${decl_packages_name|u}/${decl_package_name|u}/${decl_word.name|u}">
+            <a class="decl-link" href="/view/${decl_packages_name|u}/${decl_package_name|u}/${decl_word.name|u}">
               ${decl_word.label|h}
             </a>
           </li>
           <ul class="inner-contents">
             %for local_word in local_words:
               <li class="inner-element">
-                <a class="word-link" href="/${packages_name|u}/${package_name|u}/${local_word.name|u}">
+                <a class="word-link" href="/view/${packages_name|u}/${package_name|u}/${local_word.name|u}">
                   ${local_word.label|h}
                 </a>
               </li>
@@ -60,16 +60,16 @@
   <td id="name">${(word_word.label if word_word else '')|h}
   </td>
 </tr>
-<tr>
-  <td id="questions">
+<tr class="questions">
+  <td class="questions">
     %if word_word is not None and word_word.has_questions():
       <%include file="questions.tpl" />
     %endif
   </td>
 </tr>
 
-<tr>
-  <td id="text">
+<tr class="text">
+  <td class="text">
     %if word_word is not None and word_word.has_text():
       <form method="POST" action="/update_text/${packages_name|u}/${package_name|u}/${word|u}">
         <textarea name="text" rows="20" cols="80">${word_word.get_text()|h}</textarea><br />

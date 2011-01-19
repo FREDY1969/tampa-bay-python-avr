@@ -13,9 +13,9 @@
     <table class="nested-table">
       <tr>
         %if q.is_orderable():
-          <th>up</th>
+          <th></th>
         %endif
-        <th>del</th>
+        <th></th>
         %if hasattr(q_layout, 'header'):
           ${q_layout.header(q)}
         %else:
@@ -27,11 +27,13 @@
           %if q.is_orderable():
             <td class="up-input">
             %if i != 0:
-              <input class="up-input" name="${prefix|h}${q.name|h}${suffix|h}-up" type="checkbox">
+              <a class="up-input" href="/up/${packages_name|h}/${package_name|h}/${word|h}/${i}/${prefix|h}${q.name|h}">up</a>
             %endif
             </td>
           %endif
-          <td class="del-input"><input class="del-input" name="${prefix|h}${q.name|h}${suffix|h}-del" type="checkbox"></td>
+          <td class="del-input">
+            <a class="del-input" href="/del/${packages_name|h}/${package_name|h}/${word|h}/${i}/${prefix|h}${q.name|h}">del</a>
+          </td>
           %if hasattr(q_layout, 'single_line'):
             ${q_layout.single_line(q, answer, layouts, prefix, suffix)}
           %else:
@@ -45,8 +47,9 @@
       %endfor
       %if q.max is None or len(a or ()) < q.max:
         <tr>
-          <td><input class="add-answer" name="${prefix|h}${q.name|h}-add" type="checkbox"></td>
-          <td colspan="0">Add ${q.label|h}</td>
+          <td colspan="0">
+            <a class="add-answer" href="/append/${packages_name|h}/${package_name|h}/${word|h}/${prefix|h}${q.name|h}">Add ${q.label|h}</a>
+          </td>
         </tr>
       %endif
     </table>
