@@ -6,37 +6,10 @@
     margin-bottom: 3ex;
 }
 
-#name {  /* td */
-    vertical-align: top;
-    margin-bottom: 0;
-    height: auto;
-    padding-bottom: 0;
-    text-align: center;
-    font-weight: bold;
-}
-
-.question-header {
-    vertical-align: top;
-}
-
-#outer-table { /* table */
-    border-collapse: collapse;
-    width: 100%;
-    margin-right: 0;
-    min-width: 90ex;
-    height: auto;
-    table-layout: auto;
-}
-
-#index-col {  /* col */
+#contents { /* div */
+    float: left;
     border-right: 3px solid black;
-}
-
-tr.contents {
-    height: 0;
-}
-
-td.contents {
+    margin-right: -3px;
     vertical-align: top;
     padding-right: 1ex;
 }
@@ -82,19 +55,31 @@ td.contents {
     color: green;
 }
 
-#word-col {  /* col */
-    width: auto;
+#right-column {
+    overflow: hidden;
+    border-left: 3px solid black;
+    /* min-width: 85ex; */
 }
 
-tr.questions {
-    height: 100%;
+#name {  /* div */
+    vertical-align: top;
+    margin-bottom: 0;
+    height: auto;
+    padding-bottom: 0;
+    text-align: center;
+    font-weight: bold;
 }
 
-td.questions {
+#questions {
     vertical-align: top;
     padding-left: 1ex;
     padding-bottom: 1ex;
     border-bottom: 3px solid black;
+    /* width: auto; */
+}
+
+.question-header {
+    vertical-align: top;
 }
 
 .question-table {  /* table */
@@ -116,12 +101,13 @@ td.del-input {
     vertical-align: top;
 }
 
-tr.text {
+#text { /* div */
     height: auto;
-}
-
-td.text {
+    min-height: 40ex;
     vertical-align: top;
     padding-left: 1ex;
     padding-top: 1ex;
+}
+
+#textarea {  /* textarea */
 }
