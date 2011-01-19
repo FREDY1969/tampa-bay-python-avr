@@ -68,12 +68,12 @@ def get_top_package(packages_name, package_name):
 
 def redirect_to_word(packages_name, package_name, word=None):
     if word is None:
-        redirect('/{}/{}'.format(urllib.parse.quote(packages_name),
-                                 urllib.parse(package_name)))
+        redirect('/view/{}/{}'.format(urllib.parse.quote(packages_name),
+                                      urllib.parse(package_name)))
     else:
-        redirect('/{}/{}/{}'.format(urllib.parse.quote(packages_name),
-                                    urllib.parse.quote(package_name),
-                                    urllib.parse.quote(word)))
+        redirect('/view/{}/{}/{}'.format(urllib.parse.quote(packages_name),
+                                         urllib.parse.quote(package_name),
+                                         urllib.parse.quote(word)))
 
 @get('/static/:filename#.*#')
 def static(filename):
@@ -111,6 +111,23 @@ def load(packages_name, package_name, word=None):
     print("load", packages_name, package_name, word)
     redirect_to_word(packages_name, package_name, word)
 
+@get('/up/:packages_name/:package_name/:word/:position/:question#.*#')
+def up(packages_name, package_name, word, position, question):
+    position = int(position)
+    print("up", packages_name, package_name, word, position, question)
+    redirect_to_word(packages_name, package_name, word)
+
+@get('/del/:packages_name/:package_name/:word/:position/:question#.*#')
+def delete(packages_name, package_name, word, position, question):
+    position = int(position)
+    print("del", packages_name, package_name, word, position, question)
+    redirect_to_word(packages_name, package_name, word)
+
+@get('/append/:packages_name/:package_name/:word/:question#.*#')
+def append(packages_name, package_name, word, question):
+    print("append", packages_name, package_name, word, question)
+    redirect_to_word(packages_name, package_name, word)
+
 @post('/update_answers/:packages_name/:package_name/:word')
 def update_answers(packages_name, package_name, word):
     print("update_answers", packages_name, package_name, word)
@@ -125,8 +142,8 @@ def update_text(packages_name, package_name, word):
     print("text", new_text)
     redirect_to_word(packages_name, package_name, word)
 
-@get('/:packages_name/:package_name')
-@get('/:packages_name/:package_name/:word')
+@get('/view/:packages_name/:package_name')
+@get('/view/:packages_name/:package_name/:word')
 @print_exception
 @view('word', template_settings={'module_directory': Views_dir})
 def open_package(packages_name, package_name, word=None):
@@ -202,7 +219,7 @@ def start(host, port, packages_name=None, package_name=None):
             if packages_name is None:
                 raise AssertionError(
                         "package {} not found".format(package_name))
-        webbrowser.open("http://{host}:{port}/{packages_name}/{package_name}"
+        webbrowser.open("http://{host}:{port}/view/{packages_name}/{package_name}"
                           .format(host=host, port=port,
                                   packages_name=packages_name,
                                   package_name=package_name),

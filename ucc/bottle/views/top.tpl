@@ -15,7 +15,7 @@
 
           %for package in packages_info.package_names:
             <li class="package">
-              <a class="open-package-link" href="/${packages_info.packages_name|u}/${package|u}">${package|h}</a>
+              <a class="open-package-link" href="/view/${packages_info.packages_name|u}/${package|u}">${package|h}</a>
             </li>
           %endfor
 
