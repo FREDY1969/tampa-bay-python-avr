@@ -287,6 +287,8 @@ class ans_choice(answer):
         d = parse_options(answer)
         assert len(d) == 1, \
                "{}: expected 1 option to choice, got {}".format(name, len(d))
+        #print("ans_choice({}).from_element got {} from parse_options"
+        #      .format(name, d))
         return cls(name, *list(d.items())[0])
 
     def __repr__(self):

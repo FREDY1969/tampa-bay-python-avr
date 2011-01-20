@@ -225,7 +225,7 @@ class word:
         '''
         
         if not self.answers or question_name not in self.answers:
-            if self.defining:
+            if self.defining and self.kind_obj != self:
                 try:
                     return self.kind_obj.get_answer(question_name)
                 except KeyError:
