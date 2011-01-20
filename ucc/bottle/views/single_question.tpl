@@ -1,5 +1,7 @@
 <%page args="q, a, layouts, prefix" />
 
+<% print("single_question.tpl got q:", q, "a:", a) %>
+
 <% q_layout = layouts[q.layout()] %>
 
 <tr>
