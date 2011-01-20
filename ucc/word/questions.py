@@ -81,6 +81,18 @@ class question:
     def additional_args_from_element(cls, element, top_package):
         return {}
 
+    @classmethod
+    def from_answer(cls, name, label, min, max, orderable, type_subanswers,
+                         top_package):
+        rest_arg = cls.additional_args_from_subanswers(type_subanswers,
+                                                       top_package)
+        return cls(name = name, label = label,
+                   min = min, max = max, orderable = orderable, **rest_args)
+
+    @classmethod
+    def additional_args_from_subanswers(cls, subanswers, top_package):
+        return {}
+
     def __repr__(self):
         return "<{} {}>".format(self.__class__.__name__, self.name)
 
@@ -206,7 +218,13 @@ class q_series(question):
     def additional_args_from_element(cls, element, top_package):
         return {'subquestions': from_xml(element, top_package,
                                          allow_unknown_tags = True)}
-    
+
+    @classmethod
+    def additional_args_from_subanswers(cls, subanswers, top_package):
+        return {'subquestions':
+                  [as_question(a, top_package) for a in subanswers.subquestion],
+               }
+
     def add_type(self, question):
         pass
     
@@ -243,8 +261,7 @@ class q_choice(question):
     default_value = ""
     control = 'ChoiceCtrl'
     input_type = 'radio'
-    layout = 'choice'
-    
+
     def __init__(self, name, label, options = None, default = None,
                        min = None, max = None, orderable = None):
         super(q_choice, self).__init__(name, label, min, max, orderable)
@@ -265,7 +282,30 @@ class q_choice(question):
                             answers.convert_tag(option.get('value')),
                             from_xml(option.find('questions'), top_package)))
         return {'options': options, 'default': default}
-    
+
+    @classmethod
+    def additional_args_from_subanswers(cls, subanswers, top_package):
+        return {'options':
+                  [cls.option_from_answer(a, top_package)
+                   for a in subanswers.q_options],
+                'default': None,
+               }
+
+    @classmethod
+    def option_from_answer(cls, answer, top_package):
+        return (answer.label.value, answer.value.value,
+                [as_question(a, top_package) for a in answer.subquestions])
+
+    @classmethod
+    def choose_choice(cls, name, label, min, max, orderable, type_subanswers,
+                           top_package):
+        if type_subanswers.multiple.value:
+            return q_multichoice.from_answer(name, label, min, max, orderable,
+                                             type_subanswers, top_package)
+        else:
+            return q_choice.from_answer(name, label, min, max, orderable,
+                                        type_subanswers, top_package)
+
     def add_subelements(self, question):
         if self.default is not None:
             ElementTree.SubElement(question, 'default').text = str(self.default)
@@ -339,6 +379,12 @@ class q_indirect(question):
         use = element.find('use').text
         return {'use': use, 'top_package': top_package}
 
+    @classmethod
+    def additional_args_from_subanswers(cls, subanswers, top_package):
+        return {'use': subanswers.question_name,
+                'top_package': top_package,
+               }
+
     def add_subelements(self, question):
         ElementTree.SubElement(question, 'use').text = self.use
 
@@ -348,8 +394,49 @@ class q_indirect(question):
     def get_real_question(self):
         if self.real_question is None:
             use_word = self.top_package.get_word_by_label(self.use)
-            assert len(use_word.questions) >= 1, \
-                   "{}: Using word with no questions".format(self.label)
-            self.real_question = use_word.questions[0]
+            if not hasattr(use_word, 'answer_as_question'):
+                use_word.answer_as_question = \
+                  as_question(use_word.get_answer('question'),
+                              self.top_package)
+            self.real_question = use_word.answer_as_question
         return self.real_question
 
+Type_to_question_class = {
+      'bool': q_bool.from_answer,
+      'int': q_int.from_answer,
+      'rational': q_rational.from_answer,
+      'real': q_real.from_answer,
+      'string': q_string.from_answer,
+      'series': q_series.from_answer,
+      'choice': q_choice.choose_choice,
+      'indirect': q_indirect.from_answer,
+  }
+
+def as_question(ans, top_package):
+    label = ans.q_label.value
+    name = ans.q_name.value
+    modifier = ans.modifier.tag
+    if modifier == 'required':
+        min = 1
+        max = 1
+        orderable = None
+    elif modifier == 'optional':
+        min = 0
+        max = 1
+        orderable = None
+    elif modifier == 'repeated':
+        subanswers = ans.modifier.subanswers
+        a = subanswers.q_min
+        min = a.value if a.is_answered() else None
+        a = subanswers.q_max
+        if not a.is_answered() or a.value == 'infinite':
+            max = None
+        else:
+            max = a.value
+        orderable = subanswers.q_orderable.value
+    else:
+        raise ValueError(
+                'unknown modifier for indirect question {}'.format(label))
+    type = ans.type.tag
+    return Type_to_question_class[type](name, label, min, max, orderable,
+                                        ans.type.subanswers, top_package)

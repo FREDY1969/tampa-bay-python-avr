@@ -6,7 +6,8 @@
     <defining>False</defining>
     <answers>
         <answers name="question" repeated="False">
-            <answer name="label" repeated="False" type="string" value="type" />
+            <answer name="q_label" repeated="False" type="string" value="type" />
+            <answer name="q_name" repeated="False" type="string" value="type" />
             <answer name="modifier" repeated="False" type="choice">
                 <options>
                     <option name="required" />
@@ -17,11 +18,12 @@
                     <option value="choice">
                         <answers>
                             <answer name="multiple" repeated="False" type="bool" value="False" />
-                            <answers name="options" repeated="True">
-                                <answer name="label" repeated="False" type="string" value="int" />
-                                <answer name="value" repeated="False" type="string" value="int" />
+                            <answers name="q_options" repeated="True">
+                                <answer name="q_label" repeated="False" type="string" value="int" />
+                                <answer name="q_value" repeated="False" type="string" value="int" />
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="min value" />
+                                    <answer name="q_label" repeated="False" type="string" value="min value" />
+                                    <answer name="q_name" repeated="False" type="string" value="min_value" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="optional" />
@@ -34,7 +36,8 @@
                                     </answer>
                                 </answers>
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="max value" />
+                                    <answer name="q_label" repeated="False" type="string" value="max value" />
+                                    <answer name="q_name" repeated="False" type="string" value="max_value" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="optional" />
@@ -47,11 +50,12 @@
                                     </answer>
                                 </answers>
                             </answers>
-                            <answers name="options" repeated="True">
-                                <answer name="label" repeated="False" type="string" value="fixedpt" />
-                                <answer name="value" repeated="False" type="string" value="fixedpt" />
+                            <answers name="q_options" repeated="True">
+                                <answer name="q_label" repeated="False" type="string" value="fixedpt" />
+                                <answer name="q_value" repeated="False" type="string" value="fixedpt" />
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="binary pt" />
+                                    <answer name="q_label" repeated="False" type="string" value="binary pt" />
+                                    <answer name="q_name" repeated="False" type="string" value="binary_pt" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="required" />
@@ -64,7 +68,8 @@
                                     </answer>
                                 </answers>
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="precision" />
+                                    <answer name="q_label" repeated="False" type="string" value="precision" />
+                                    <answer name="q_name" repeated="False" type="string" value="precision" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="required" />
@@ -77,7 +82,8 @@
                                     </answer>
                                 </answers>
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="min value" />
+                                    <answer name="q_label" repeated="False" type="string" value="min value" />
+                                    <answer name="q_name" repeated="False" type="string" value="min_value" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="optional" />
@@ -90,7 +96,8 @@
                                     </answer>
                                 </answers>
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="max value" />
+                                    <answer name="q_label" repeated="False" type="string" value="max value" />
+                                    <answer name="q_name" repeated="False" type="string" value="max_value" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="optional" />
@@ -103,11 +110,12 @@
                                     </answer>
                                 </answers>
                             </answers>
-                            <answers name="options" repeated="True">
-                                <answer name="label" repeated="False" type="string" value="array" />
-                                <answer name="value" repeated="False" type="string" value="array" />
+                            <answers name="q_options" repeated="True">
+                                <answer name="q_label" repeated="False" type="string" value="array" />
+                                <answer name="q_value" repeated="False" type="string" value="array" />
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="min size" />
+                                    <answer name="q_label" repeated="False" type="string" value="min size" />
+                                    <answer name="q_name" repeated="False" type="string" value="min_size" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="optional" />
@@ -120,7 +128,8 @@
                                     </answer>
                                 </answers>
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="max size" />
+                                    <answer name="q_label" repeated="False" type="string" value="max size" />
+                                    <answer name="q_name" repeated="False" type="string" value="max_size" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="optional" />
@@ -133,7 +142,8 @@
                                     </answer>
                                 </answers>
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="element_type" />
+                                    <answer name="q_label" repeated="False" type="string" value="element type" />
+                                    <answer name="q_name" repeated="False" type="string" value="element_type" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="required" />
@@ -150,11 +160,12 @@
                                     </answer>
                                 </answers>
                             </answers>
-                            <answers name="options" repeated="True">
-                                <answer name="label" repeated="False" type="string" value="pointer" />
-                                <answer name="value" repeated="False" type="string" value="pointer" />
+                            <answers name="q_options" repeated="True">
+                                <answer name="q_label" repeated="False" type="string" value="pointer" />
+                                <answer name="q_value" repeated="False" type="string" value="pointer" />
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="memory" />
+                                    <answer name="q_label" repeated="False" type="string" value="memory" />
+                                    <answer name="q_name" repeated="False" type="string" value="memory" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="required" />
@@ -171,7 +182,8 @@
                                     </answer>
                                 </answers>
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="element type" />
+                                    <answer name="q_label" repeated="False" type="string" value="element type" />
+                                    <answer name="q_name" repeated="False" type="string" value="element_type" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="required" />
@@ -188,11 +200,12 @@
                                     </answer>
                                 </answers>
                             </answers>
-                            <answers name="options" repeated="True">
-                                <answer name="label" repeated="False" type="string" value="record" />
-                                <answer name="value" repeated="False" type="string" value="record" />
+                            <answers name="q_options" repeated="True">
+                                <answer name="q_label" repeated="False" type="string" value="record" />
+                                <answer name="q_value" repeated="False" type="string" value="record" />
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="field name" />
+                                    <answer name="q_label" repeated="False" type="string" value="field name" />
+                                    <answer name="q_name" repeated="False" type="string" value="field_name" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="required" />
@@ -205,7 +218,8 @@
                                     </answer>
                                 </answers>
                                 <answers name="subquestion" repeated="True">
-                                    <answer name="label" repeated="False" type="string" value="type" />
+                                    <answer name="q_label" repeated="False" type="string" value="type" />
+                                    <answer name="q_name" repeated="False" type="string" value="type" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
                                             <option name="required" />

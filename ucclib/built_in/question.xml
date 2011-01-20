@@ -12,8 +12,13 @@
             <name>question</name>
             <label>question</label>
             <question>
-                <name>label</name>
+                <name>q_label</name>
                 <label>label</label>
+                <type>string</type>
+            </question>
+            <question>
+                <name>q_name</name>
+                <label>name</label>
                 <type>string</type>
             </question>
             <question>
@@ -26,21 +31,21 @@
                     <option name="repeated" value="repeated">
                         <questions>
                             <question>
-                                <name>min</name>
+                                <name>q_min</name>
                                 <label>min</label>
                                 <min>0</min>
                                 <max>1</max>
                                 <type>int</type>
                             </question>
                             <question>
-                                <name>max</name>
+                                <name>q_max</name>
                                 <label>max</label>
                                 <min>0</min>
                                 <max>1</max>
                                 <type>int</type>
                             </question>
                             <question>
-                                <name>orderable</name>
+                                <name>q_orderable</name>
                                 <label>orderable</label>
                                 <type>bool</type>
                             </question>
@@ -86,18 +91,18 @@
                                 <type>bool</type>
                             </question>
                             <questions>
-                                <name>options</name>
+                                <name>q_options</name>
                                 <label>options</label>
                                 <min>2</min>
                                 <max>infinite</max>
                                 <orderable>True</orderable>
                                 <question>
-                                    <name>label</name>
+                                    <name>q_label</name>
                                     <label>label</label>
                                     <type>string</type>
                                 </question>
                                 <question>
-                                    <name>value</name>
+                                    <name>q_value</name>
                                     <label>value</label>
                                     <type>string</type>
                                 </question>
