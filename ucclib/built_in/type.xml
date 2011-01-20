@@ -10,7 +10,7 @@
             <answer name="q_name" repeated="False" type="string" value="type" />
             <answer name="modifier" repeated="False" type="choice">
                 <options>
-                    <option name="required" />
+                    <option value="required" />
                 </options>
             </answer>
             <answer name="type" repeated="False" type="choice">
@@ -26,12 +26,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="min_value" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="optional" />
+                                            <option value="optional" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="int" />
+                                            <option value="int" />
                                         </options>
                                     </answer>
                                 </answers>
@@ -40,12 +40,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="max_value" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="optional" />
+                                            <option value="optional" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="int" />
+                                            <option value="int" />
                                         </options>
                                     </answer>
                                 </answers>
@@ -58,12 +58,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="binary_pt" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="required" />
+                                            <option value="required" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="int" />
+                                            <option value="int" />
                                         </options>
                                     </answer>
                                 </answers>
@@ -72,12 +72,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="precision" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="required" />
+                                            <option value="required" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="int" />
+                                            <option value="int" />
                                         </options>
                                     </answer>
                                 </answers>
@@ -86,12 +86,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="min_value" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="optional" />
+                                            <option value="optional" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="rational" />
+                                            <option value="rational" />
                                         </options>
                                     </answer>
                                 </answers>
@@ -100,12 +100,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="max_value" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="optional" />
+                                            <option value="optional" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="rational" />
+                                            <option value="rational" />
                                         </options>
                                     </answer>
                                 </answers>
@@ -118,12 +118,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="min_size" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="optional" />
+                                            <option value="optional" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="int" />
+                                            <option value="int" />
                                         </options>
                                     </answer>
                                 </answers>
@@ -132,12 +132,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="max_size" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="optional" />
+                                            <option value="optional" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="int" />
+                                            <option value="int" />
                                         </options>
                                     </answer>
                                 </answers>
@@ -146,12 +146,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="element_type" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="required" />
+                                            <option value="required" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="indirect">
+                                            <option value="indirect">
                                                 <answers>
                                                     <answer name="question_name" repeated="False" type="string" value="type" />
                                                 </answers>
@@ -168,12 +168,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="memory" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="required" />
+                                            <option value="required" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="indirect">
+                                            <option value="indirect">
                                                 <answers>
                                                     <answer name="question_name" repeated="False" type="string" value="memory" />
                                                 </answers>
@@ -186,12 +186,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="element_type" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="required" />
+                                            <option value="required" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="indirect">
+                                            <option value="indirect">
                                                 <answers>
                                                     <answer name="question_name" repeated="False" type="string" value="type" />
                                                 </answers>
@@ -208,12 +208,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="field_name" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="required" />
+                                            <option value="required" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="string" />
+                                            <option value="string" />
                                         </options>
                                     </answer>
                                 </answers>
@@ -222,12 +222,12 @@
                                     <answer name="q_name" repeated="False" type="string" value="type" />
                                     <answer name="modifier" repeated="False" type="choice">
                                         <options>
-                                            <option name="required" />
+                                            <option value="required" />
                                         </options>
                                     </answer>
                                     <answer name="type" repeated="False" type="choice">
                                         <options>
-                                            <option name="indirect">
+                                            <option value="indirect">
                                                 <answers>
                                                     <answer name="question_name" repeated="False" type="string" value="type" />
                                                 </answers>

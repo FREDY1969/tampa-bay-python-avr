@@ -12,7 +12,7 @@
       </td>
       <td class="choice-label">${name|h}</td>
     </tr>
-    %if subquestions:
+    %if a and a.option_present(value) and subquestions:
       <tr class="choice-subquestions">
         <td></td>
         <td class="choice-subquestions">

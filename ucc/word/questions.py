@@ -394,11 +394,16 @@ class q_indirect(question):
     def get_real_question(self):
         if self.real_question is None:
             use_word = self.top_package.get_word_by_label(self.use)
-            if not hasattr(use_word, 'answer_as_question'):
-                use_word.answer_as_question = \
-                  as_question(use_word.get_answer('question'),
-                              self.top_package)
-            self.real_question = use_word.answer_as_question
+            if use_word.defining:
+                # kludge to let the built_in "question" word refer to itself:
+                assert use_word.name == 'question'
+                self.real_question = use_word.questions[0]
+            else:
+                if not hasattr(use_word, 'answer_as_question'):
+                    use_word.answer_as_question = \
+                      as_question(use_word.get_answer('question'),
+                                  self.top_package)
+                self.real_question = use_word.answer_as_question
         return self.real_question
 
 Type_to_question_class = {
