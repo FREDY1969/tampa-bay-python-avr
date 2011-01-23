@@ -1,3 +1,8 @@
+<%!
+    def has_rows(q, a):
+        return False
+%>
+
 <%def name="single_line(q, a, layouts, prefix, suffix='')">
   <td>
     <select class="simple-choice-select" name="${prefix|h}${q.name|h}${suffix|h}-answer" size="1">

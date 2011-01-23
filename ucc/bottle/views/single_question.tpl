@@ -26,7 +26,7 @@
   %endif
 </tr>
 
-%if hasattr(q_layout, 'header') or hasattr(q_layout, 'rows'):
+%if hasattr(q_layout, 'header') or q_layout.attr.has_rows(q, a):
   <tr class="nested-table">
     <td class="nested-table" colspan="0">
       <table class="nested-table">
@@ -34,12 +34,13 @@
           <tr>
             ${q_layout.header(q)}
           </tr>
+          %if hasattr(q_layout, 'single_line'):
+            <tr>
+              ${q_layout.single_line(q, a, layouts, prefix)}
+            </tr>
+          %endif
         %endif
-        %if hasattr(q_layout, 'single_line'):
-          <tr>
-            ${q_layout.single_line(q, a, layouts, prefix)}
-          </tr>
-        %else:
+        %if q_layout.attr.has_rows(q, a):
           ${q_layout.rows(q, a, layouts, prefix)}
         %endif
       </table>

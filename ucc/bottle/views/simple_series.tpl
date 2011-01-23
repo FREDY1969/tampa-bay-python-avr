@@ -1,3 +1,9 @@
+<%!
+    def has_rows(q, a):
+        return False
+%>
+
+
 <%def name="header(q)">
   %for sub_q in q.subquestions:
     <th>${sub_q.label|h}</th>
