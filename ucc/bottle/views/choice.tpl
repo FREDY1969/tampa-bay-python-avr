@@ -1,18 +1,32 @@
 <%!
     from ucc.word import questions
     import itertools
+
+    def has_rows(q, a):
+        if not a: return False
+        for name, value, subquestions in q.options:
+            if a.option_present(value):
+                return bool(subquestions)
+        return False
 %>
+
+<%def name="single_line(q, a, layouts, prefix, suffix='')">
+  <td>
+    <select class="simple-choice-select" name="${prefix|h}${q.name|h}${suffix|h}-answer" size="1">
+      %for name, value, _ in q.options:
+        %if a and a.option_present(value):
+          <option value="${value|h}" selected>${name|h}</option>
+        %else:
+          <option value="${value|h}">${name|h}</option>
+        %endif
+      %endfor
+    </select>
+  </td>
+</%def>
 
 <%def name="rows(q, a, layouts, prefix, suffix='')">
   %for name, value, subquestions in q.options:
-    <tr>
-      <td class="choice-input">
-        <% checked = 'checked' if a and a.option_present(value) else '' %>
-        <input class="choice-input" name="${prefix|h}${q.name|h}${suffix|h}-answer" type="${q.input_type}" ${checked} value="${value|h}">
-      </td>
-      <td class="choice-label">${name|h}</td>
-    </tr>
-    %if a and a.option_present(value) and subquestions:
+    %if a.option_present(value):
       <tr class="choice-subquestions">
         <td></td>
         <td class="choice-subquestions">

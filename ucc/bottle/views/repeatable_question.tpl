@@ -10,8 +10,8 @@
   <td class="answer-no"></td>
 </tr>
 
-<tr>
-  <td colspan="0">
+<tr class="nested-table">
+  <td class="nested-table" colspan="0">
     <table class="nested-table">
       <tr>
         %if q.is_orderable():
@@ -38,7 +38,12 @@
           </td>
           %if hasattr(q_layout, 'single_line'):
             ${q_layout.single_line(q, answer, layouts, prefix, suffix)}
-          %else:
+            %if q_layout.attr.has_rows(q, answer):
+              </tr>
+              <tr>
+            %endif
+          %endif
+          %if q_layout.attr.has_rows(q, answer):
             <td>
               <table class="boxed-question">
                 ${q_layout.rows(q, answer, layouts, prefix, suffix)}

@@ -242,7 +242,7 @@ class q_series(question):
 
     def layout(self):
         if len(self.subquestions) < 4 and \
-           all(q.layout() == 'atomic' and 
+           all(q.layout() in ('atomic', 'simple_choice') and 
                  not q.is_repeatable() and
                  not q.is_optional()
                for q in self.subquestions):
@@ -359,7 +359,7 @@ class q_multichoice(q_choice):
         return ((q, None) for q in (opt_subquestions or ()))
 
     def layout(self):
-        return 'choice'
+        return 'multichoice'
 
 
 class q_indirect(question):

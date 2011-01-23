@@ -1,7 +1,7 @@
 <%doc>
 
-Each of the modules below has the following possible methods.  Either
-single_line or rows must be defined (but not both):
+Each of the modules below has the following possible methods.  Both
+single_line and rows may be defined:
 
     header(q)
         generates a series of <th> elements for column headers (if needed).
@@ -21,6 +21,7 @@ single_line or rows must be defined (but not both):
 <%namespace name="series" file="series.tpl" />
 <%namespace name="simple_choice" file="simple_choice.tpl" />
 <%namespace name="choice" file="choice.tpl" />
+<%namespace name="multichoice" file="multichoice.tpl" />
 
 <%
   layouts = {
@@ -29,6 +30,7 @@ single_line or rows must be defined (but not both):
     'series': series,
     'simple_choice': simple_choice,
     'choice': choice,
+    'multichoice': multichoice,
   }
 %>
 

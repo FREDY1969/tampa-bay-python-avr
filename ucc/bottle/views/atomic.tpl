@@ -1,3 +1,8 @@
+<%!
+    def has_rows(q, a):
+        return False
+%>
+
 <%def name="single_line(q, a, layouts, prefix, suffix='')">
   <% print("atomic.tpl got q:", q, "a:", a) %>
   <td>
