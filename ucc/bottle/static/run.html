@@ -1,0 +1,72 @@
+<!DOCTYPE xhtml>
+<html>
+<head>
+  <title>blinky2</title>
+  <link rel="stylesheet" href="/static/css/demo.css" type="text/css" media="screen" charset="utf-8">
+</head>
+<body>
+
+<table id="outer-table">
+<col id="package-col"><col id="word-col">
+<tr>
+  <td id="contents" rowspan=2>
+    <h2>Package</h2>
+    <h3>blinky2</h3>
+    <a href="close_package">Close</a>
+    <a href="rename_package">Rename</a>
+    <a href="delete_package">Delete</a>
+    <a href="compile">Compile</a>
+    <a href="load">Load</a>
+
+    <h3>Words:</h3>
+    <a href="new_word">new word</a>
+    <ul class="word-list">
+      <li class="inner-element"><a href="led-pin.html">led-pin</a></li>
+      <li class="inner-element">run</li>
+    </ul>
+  </td>
+  <td id="questions">
+
+    <h2>Word</h2>
+    <h3>run: task</h3>
+    <a href="rename">Rename</a>
+    <a href="delete">Delete</a>
+
+    <h4>Questions</h4>
+
+    <form method="POST">
+      <input type="submit" value="submit" id="submit-question">
+      <table class="question-table">
+        <tr>
+          <td class="q-name">
+            argument
+          </td>
+        </tr>
+          <td class="q-answer">
+            <a href="new_argument">new argument</a>
+          </td>
+        <tr>
+      </table>
+    </form>
+  </td>
+</tr>
+
+<tr>
+  <td id="text">
+    <h4>Text</h4>
+    <form method="POST">
+      <input type="submit" value="submit" id="submit-text">
+      <a href="edit">edit</a><br />
+      <textarea name="text" rows="20" cols="80">repeat:
+    toggle led-pin
+    repeat 800:
+        repeat 1000: pass
+</textarea><br />
+    </form>
+  </td>
+</tr>
+
+</table>
+
+</body>
+</html>

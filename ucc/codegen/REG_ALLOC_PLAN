@@ -87,7 +87,7 @@ each time it is referenced may not be needed (if a spill was not required
 during that stretch of time).  Therefore, spilling a _reference_ in the
 register usage always also spills the _head_; but not vice versa.
 
-Algorithm:
+Algorithm (obsolete):
 
 1.  Assign temps and locals to the vertex they need.  (No moving to subclasses
     yet).
