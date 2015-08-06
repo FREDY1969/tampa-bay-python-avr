@@ -1,0 +1,9 @@
+It seems that floating point numbers are not the right choice for fractional numbers on micro-controllers.  (Another reason why C isn't the best fit).
+
+To deal with fractional values, fixed point numbers are more efficient.  The difference between fixed and floating point numbers is that the fixed point numbers declare where the "binary point" is statically, while floating point numbers store the "binary point" in the number itself (as the exponent).
+
+The other appeal about fixed point numbers is that we might be able to keep track of the [accuracy](http://en.wikipedia.org/wiki/Accuracy_and_precision) of the number.  Remember in school when they said don't write 1.23456 if the number is only accurate to two decimal places?  It seems that this is easier to do with addition and subtraction, but more difficult with multiplication and division because the resulting accuracy depends on the values of the numbers in the latter case (but we can cheat!).  One of the problems with floating point numbers is that there is a fixed number of bits after the binary point, based on the width of the floating point number (single or double precision).  This is why it's generally difficult to compare floating point numbers (though I'm not sure if shooting for accuracy rather than precision will completely solve this).
+
+It seems to make sense to _type_ numbers by their minimum and maximum values, along with their accuracy expressed as a power of two (the "binary point").
+
+The ucc/parser/scanner.py module includes an _approx_ function that converts decimal representations of approximate numbers to binary.  For example, '1.5' is declared accurate to +/- `0.05` and would be represented as `24 (0x18) * 2**-4` which is declared accurate to +/- half of `2**-4` or `1/32` or `0.03125`.
